@@ -1,0 +1,82 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Женские половые железы, в которых созревают яйцеклетки.",
+      "en": "Female sex glands where egg cells mature."
+    },
+    {
+      "level": "easy",
+      "ru": "Вырабатывают женские половые гормоны — эстрогены.",
+      "en": "They make the female sex hormones, estrogens."
+    },
+    {
+      "level": "easy",
+      "ru": "Что созревает в яичниках?",
+      "en": "What matures in the ovaries?",
+      "answer": {
+        "ru": "Яйцеклетки",
+        "en": "Egg cells"
+      },
+      "wrong": {
+        "ru": [
+          "Сперматозоиды",
+          "Эритроциты",
+          "Камни"
+        ],
+        "en": [
+          "Sperm cells",
+          "Red blood cells",
+          "Stones"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Парные, размером с миндальный орех, лежат по бокам от матки.",
+      "en": "Paired, about the size of an almond, they lie on both sides of the uterus."
+    },
+    {
+      "level": "medium",
+      "ru": "Отсюда примерно раз в месяц выходит созревшая яйцеклетка — это овуляция.",
+      "en": "About once a month a mature egg is released from here: this is ovulation."
+    },
+    {
+      "level": "medium",
+      "ru": "Как называется выход созревшей яйцеклетки?",
+      "en": "What is the release of a mature egg called?",
+      "answer": {
+        "ru": "Овуляция",
+        "en": "Ovulation"
+      },
+      "wrong": {
+        "ru": [
+          "Менопауза",
+          "Оплодотворение",
+          "Имплантация"
+        ],
+        "en": [
+          "Menopause",
+          "Fertilization",
+          "Implantation"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "При рождении в них около 1–2 миллионов фолликулов, а созревают за жизнь лишь 400–500.",
+      "en": "At birth they hold 1–2 million follicles, but only 400–500 mature over a lifetime."
+    },
+    {
+      "level": "hard",
+      "ru": "Жёлтое тело на месте лопнувшего фолликула выделяет прогестерон.",
+      "en": "The corpus luteum left by a burst follicle releases progesterone."
+    },
+    {
+      "level": "hard",
+      "ru": "В менопаузу они перестают выпускать яйцеклетки.",
+      "en": "At menopause they stop releasing eggs."
+    }
+  ]
+}

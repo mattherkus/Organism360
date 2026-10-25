@@ -7,13 +7,13 @@ import numpy as np
 from ..colors import hex2rgb, mixa
 from ..geometry import CX, P, cr_spline, pip
 from ..models import load_parts
-from ..render2d.layers import over_rgba
 from ..render2d.noise import gblur, upsample, worley
 from ..render2d.organ import Org, finish, shade
 
 
 # --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
 COLOR = "#e58aa0"                      # цвет органа на схеме и полоски в карточке
+SYSTEMS = ("respiratory",)             # системы органов (первая - главная): тема и вопросы викторины
 
 
 # --------------------------------------------------------------- 2D: рисунок на схеме тела
@@ -88,21 +88,12 @@ def paint(Z, ss, seed=3):
     bump = 0.06 * n2 + 0.15 * n1 + 0.30 * dome - 0.45 * edge_m - 2.2 * grv
     rgba = shade(o, alb, bump, mask, spec=0.25, shin=14, amp=(5.0, 8.0))
 
-    # трахея и бронхи
+    # бронхи (трахея - отдельный орган, organs/trachea.py)
     inside = lambda pt: pip(pt, cr_spline(R, True)) or pip(pt, cr_spline(Lf, True))
     tree = o.ink("bronchi")
-    tr = o.ink("trachea")
-    tr.tube([(CX, 108), (CX, 140), (CX, 172)], [12, 12, 12])
     for (pts, ws) in bronchial_tree(rng, inside):
         tree.tube(pts, ws)
-    rings = o.L("rings")
-    for y in np.arange(110, 172, 3.4):
-        rings.line([(CX - 5.2, y), (CX + 5.2, y)], 1.15, smooth=False)
-    rg = o.m("rings", 0.45)
     rgba = tree.over(rgba, "#e6eef3", 0.95, amp=2.8, spec=0.35, edge_dark=0.35)
-    cov, col = tr.shaded("#dfe8ee", amp=4.5, spec=0.4, edge_dark=0.45)
-    col = col * (1 - 0.34 * rg[..., None])
-    rgba = over_rgba(rgba, col, cov * 0.97)
     hit = np.maximum(rgba[..., 3], gblur(tree.cov.get(), 0.6 * Z))
     return finish(o, rgba, hit)
 

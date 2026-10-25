@@ -1,5 +1,6 @@
-"""Главное окно: схема тела, наведение, карточка органа, панель слоёв, режим «Изучать» и три викторины:
-«Найди орган», «Угадай название» и «Угадай по факту» (со сложностью, таймером и повторением ошибок).
+"""Главное окно: схема тела, наведение, карточка органа, панель слоёв, режим «Изучать» и четыре викторины:
+«Найди орган», «Угадай название», «Угадай по факту» и «Вперемешку» (со сложностью, таймером, длиной игры,
+темой и повторением ошибок).
 Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя."""
 
 import math
@@ -10,14 +11,14 @@ import traceback
 
 from PIL import Image, ImageTk
 
-from .. import i18n, progress, questions, settings, theme
+from .. import i18n, progress, settings, theme
 from ..atlas import Atlas
 from ..body.base import BODY_LAYERS
 from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
-from ..organs import ORGANS
-from ..quiz import LEVELS, MODES, TIMERS, QuizSession, format_time
+from ..organs import ORGANS, SYSTEMS, for_body, in_system, other_sex
+from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from ..theme import C, style
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
@@ -42,9 +43,10 @@ class App:
         self.mode = "study"                    # study или режим викторины из quiz.MODES
         self.session = None                    # QuizSession во время игры (None - на карточке настройки)
         saved = settings.load()
-        # настройки викторины: сложность и таймер переживают перезапуск, набор вопросов - нет
+        # настройки викторины: сложность, таймер и длина переживают перезапуск, тема и набор вопросов - нет
         self.cfg = {"level": settings.get(saved, "quiz_level"), "timer": settings.get(saved, "quiz_timer"),
-                    "set": "all"}
+                    "length": settings.get(saved, "quiz_length"), "topic": None, "set": "all"}
+        self.body = settings.get(saved, "body")   # схема тела: female или male (органы малого таза)
         self.qset = "all"                      # набор вопросов текущей игры (для истории)
         self.timer_job = None
         self.atlas, self.cur = None, None
@@ -154,6 +156,24 @@ class App:
         self.quality = name
         set_quality(name)
         settings.save(quality=name)
+
+    def organs(self):
+        """органы на схеме: без органов другого пола"""
+        return for_body(self.body)
+
+    def set_body(self, value):
+        """женская или мужская схема тела; викторина начинается заново - вопросы могли быть о скрытых органах"""
+        if value == self.body:
+            return
+        self.body = value
+        settings.save(body=value)
+        self.hidden -= other_sex(value)
+        self.render_layers()
+        self.apply_view()
+        if self.mode != "study":
+            self.set_mode(self.mode)
+        elif self.card_fn != self.empty_card:
+            self.set_card(self.empty_card)
 
     def set_ui_scale(self, value):
         """масштаб меняет размеры всего окна и схемы, поэтому применяется со следующего запуска"""
@@ -295,15 +315,16 @@ class App:
 
     # --- слои
     def hidden_now(self):
-        """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым"""
-        return self.hidden if self.mode == "study" else ()
+        """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым;
+        органов другого пола нет на схеме всегда"""
+        return (self.hidden if self.mode == "study" else set()) | other_sex(self.body)
 
     def something_hidden(self):
         return bool(self.hidden or len(self.layers) < len(BODY_LAYERS))
 
     def organs_all_text(self):
         """подпись кнопки в заголовке органов: всё скрыто - вернуть, иначе - скрыть все"""
-        return t("layers_show_organs") if self.hidden == set(ORGANS) else t("layers_hide_organs")
+        return t("layers_show_organs") if self.hidden == set(self.organs()) else t("layers_hide_organs")
 
     def render_layers(self):
         """построить панель слоёв заново (смена языка)"""
@@ -311,7 +332,7 @@ class App:
             self.panel, t("layers_title"),
             [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
             t("layers_organs"),
-            [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in by_color(ORGANS)],
+            [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in by_color(self.organs())],
             self.toggle_layer, self.toggle_organ,
             show_all=(t("layers_show_all"), self.show_all, self.something_hidden()),
             organs_all=(self.organs_all_text(), self.toggle_all_organs))
@@ -322,7 +343,7 @@ class App:
         self.toggles[ORGANS_ALL].config(text=self.organs_all_text())
         for name in BODY_LAYERS:
             self.toggles[name].set(t("layer_" + name), name in self.layers)
-        for k in ORGANS:
+        for k in self.organs():
             self.toggles[k].set(i18n.name(k), k not in self.hidden)
 
     def show_panel(self):
@@ -339,7 +360,7 @@ class App:
             box.grid_remove()
 
     def toggle_all_organs(self):
-        self.hidden = set() if self.hidden == set(ORGANS) else set(ORGANS)
+        self.hidden = set() if self.hidden == set(self.organs()) else set(self.organs())
         self.apply_view()
 
     def toggle_layer(self, name):
@@ -391,10 +412,15 @@ class App:
         self.c.coords(self.hov, x, y)
         self.c.config(cursor="hand2")
 
+    def kind(self):
+        """тип текущего вопроса (quiz.KINDS); без игры - режим: study, find, name, facts или mix"""
+        s = self.session
+        return s.kind if s is not None and not s.finished else self.mode
+
     def on_move(self, e):
-        if not self.ready() or self.mode in ("name", "facts"):              # отвечают кнопками; в «Угадай название» подсвечен вопрос
+        if not self.ready() or self.kind() not in ("study", "find"):   # отвечают кнопками; в «Угадай название» подсвечен вопрос
             return
-        if self.mode == "find" and self.session and self.session.level == "hard":
+        if self.kind() == "find" and self.session and self.session.level == "hard":
             return                                      # на сложном уровне орган под курсором не подсвечивается
         key = self.atlas.organ_at(e.x, e.y)
         if key != self.cur:
@@ -426,9 +452,9 @@ class App:
         if not self.ready():
             return
         key = self.atlas.organ_at(e.x, e.y)
-        if key is None or self.mode in ("name", "facts"):
+        if key is None or self.kind() not in ("study", "find"):
             return
-        if self.mode == "find":
+        if self.mode != "study":
             self.answer(key)
             return
         self.show_info(key)
@@ -470,23 +496,44 @@ class App:
 
     # --- настройка викторины
     def question_keys(self, qset, data=None):
-        keys = list(ORGANS)
+        """органы набора вопросов qset (all, missed, due) в выбранной теме"""
+        keys = in_system(self.organs(), self.cfg["topic"])
         if qset == "missed":
             return progress.last_missed(self.mode, keys, data)
         if qset == "due":
             return progress.due(self.mode, keys, data)
         return keys
 
+    def topics(self):
+        """темы викторины: [(система или None - все органы, сколько органов)]; системы из одного органа
+        не предлагаются - по ним нечего спрашивать"""
+        out = [(None, len(self.organs()))]
+        for name in SYSTEMS:
+            n = len(in_system(self.organs(), name))
+            if n >= 2:
+                out.append((name, n))
+        return out
+
     def render_setup(self):
         data = progress.load()
+        topics = self.topics()
+        if self.cfg["topic"] not in dict(topics):
+            self.cfg["topic"] = None
         counts = {q: len(self.question_keys(q, data)) for q in ("all", "missed", "due")}
         if not counts.get(self.cfg["set"]):
             self.cfg["set"] = "all"
+        n = counts[self.cfg["set"]]
+        length = self.cfg["length"] if 0 < self.cfg["length"] < n else 0     # длиннее набора - значит «все»
         rows = [
             (t("setup_level"), [(t("level_" + v), v, True) for v in LEVELS], self.cfg["level"],
              lambda v: self.set_cfg("level", v), t("level_hint_" + self.cfg["level"]), False),
             (t("setup_timer"), [(t("timer_sec", sec=v) if v else t("timer_off"), v, True) for v in TIMERS],
              self.cfg["timer"], lambda v: self.set_cfg("timer", v), None, False),
+            (t("setup_length"), [(t("length_all", n=n) if not v else str(v), v, not v or v < n) for v in LENGTHS],
+             length, lambda v: self.set_cfg("length", v), None, False),
+            (t("setup_topic"), [(t("topic_all", n=k) if name is None else
+                                 t("topic_system", system=t("system_" + name), n=k), name, True) for name, k in topics],
+             self.cfg["topic"], lambda v: self.set_cfg("topic", v), None, 2),
             (t("setup_set"), [(t("set_" + q, n=counts[q]), q, counts[q] > 0) for q in ("all", "missed", "due")],
              self.cfg["set"], lambda v: self.set_cfg("set", v), t("setup_set_hint"), True),
         ]
@@ -508,7 +555,7 @@ class App:
 
     def set_cfg(self, key, value):
         self.cfg[key] = value
-        if key in ("level", "timer"):
+        if key in ("level", "timer", "length"):
             settings.save(**{"quiz_" + key: value})
         self.set_card(self.render_setup)
 
@@ -517,11 +564,11 @@ class App:
         qset = qset or self.cfg["set"]
         keys = self.question_keys(qset)
         if not keys:
-            qset, keys = "all", list(ORGANS)
+            qset, keys = "all", self.question_keys("all")
         self.stop_quiz()
         self.qset = qset
-        self.session = QuizSession(keys, pool=list(ORGANS), mode=self.mode, level=self.cfg["level"],
-                                   timer=self.cfg["timer"])
+        self.session = QuizSession(keys, pool=self.organs(), mode=self.mode, level=self.cfg["level"],
+                                   timer=self.cfg["timer"], count=game_length(self.cfg["length"], len(keys)))
         self.ask()
 
     # --- вопросы
@@ -550,16 +597,21 @@ class App:
     def render_question(self):
         s = self.session
         fb = self.feedback and (self.feedback_text(*self.feedback), self.feedback[2])
-        if self.mode == "find":
+        if s.kind == "find":
             self.progress, self.choices = fill_question(
                 self.card, self.progress_text(), t("find_title", name=i18n.name(s.current)),
                 t("find_hint"), fb)
+            self.show_target()                          # во «Вперемешку» прячет подсветку прошлого вопроса
             return
         opts = s.options()
-        if self.mode == "facts" and s.custom():          # вопрос со своими вариантами ответа
+        if s.kind == "facts" and s.custom():             # вопрос со своими вариантами ответа
             title, hint = s.prompt(), t("custom_hint", n=len(opts))
-        elif self.mode == "facts":
+        elif s.kind == "facts":
             title, hint = "«%s»" % s.prompt(), t("facts_hint", n=len(opts))
+        elif s.kind == "where":
+            title, hint = "«%s»" % s.prompt(), t("where_hint", n=len(opts))
+        elif s.kind == "system":
+            title, hint = t("system_title", name=i18n.name(s.current)), t("custom_hint", n=len(opts))
         else:
             title, hint = t("name_title"), t("name_hint", n=len(opts))
         self.progress, self.choices = fill_question(
@@ -568,11 +620,10 @@ class App:
             self.mark_wrong(self.choices[k])
         self.show_target()
 
-    @staticmethod
-    def feedback_text(key, organ, _color, idx=None):
-        """текст отзыва на текущем языке; idx - вопрос со своими вариантами: назвать верный ответ"""
-        if idx is not None:
-            return t(key, answer=questions.answer_text(organ, idx, 0))
+    def feedback_text(self, key, organ, _color, i=None):
+        """текст отзыва на текущем языке; i - номер вопроса, ответ на который не орган: назвать верный ответ"""
+        if i is not None:
+            return t(key, answer=self.session.answer_text(i))
         return t(key, name=i18n.name(organ))
 
     def tick(self):
@@ -582,14 +633,14 @@ class App:
         if s is None or s.finished or s.remaining() is None:
             return
         if self.next_job is None:                       # во время зелёной паузы после ответа не считаем
-            idx = s.prompts.get(s.current) if s.custom() else None
+            i = s.i if s.answer_text(s.i) is not None else None      # ответ - не орган: назовём его
             key = s.time_up()
             if key:
                 self.flash(key, "ok")                   # показать, где был нужный орган
                 if s.finished:
                     self.finish(key)
                     return
-                self.ask(("time_up", key, "bad") if idx is None else ("time_up_answer", key, "bad", idx))
+                self.ask(("time_up", key, "bad") if i is None else ("time_up_answer", key, "bad", i))
                 return
             if self.progress is not None and self.progress.winfo_exists():
                 self.progress.config(text=self.progress_text())
@@ -601,8 +652,11 @@ class App:
         btn.config(state="disabled", cursor="")
 
     def show_target(self):
-        """подсветить орган текущего вопроса (режим «Угадай название»)"""
-        if not self.ready() or self.mode != "name" or self.session is None or self.session.finished:
+        """подсветить орган текущего вопроса «Угадай название»; у вопроса другого типа подсветки нет"""
+        if not self.ready():
+            return
+        if self.session is None or self.session.kind != "name":
+            self.c.itemconfigure(self.tg, state="hidden")
             return
         ph, (x, y) = self.photo(self.session.current, "target")
         self.c.itemconfigure(self.tg, image=ph, state="normal")
@@ -684,7 +738,7 @@ class App:
             if e.keysym in ("Return", "KP_Enter"):
                 self.start_quiz()
             return
-        if self.mode in ("name", "facts") and e.char.isdigit():
+        if self.kind() != "find" and e.char.isdigit():
             keys = list(self.choices)
             i = int(e.char) - 1
             if 0 <= i < len(keys):
@@ -700,4 +754,4 @@ class App:
                 self.start_quiz(qset)
 
         show_results_dialog(self.root, s, on_again=again, on_retry=lambda: again("missed"),
-                            due=len(progress.due(mode, list(ORGANS))))
+                            due=len(progress.due(mode, self.organs())))

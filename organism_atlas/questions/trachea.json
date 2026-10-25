@@ -1,0 +1,77 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Дыхательная трубка, по которой воздух идёт из гортани к лёгким.",
+      "en": "A breathing tube that carries air from the larynx to the lungs."
+    },
+    {
+      "level": "easy",
+      "ru": "Её можно нащупать спереди на шее: она состоит из хрящевых колец.",
+      "en": "You can feel it at the front of your neck: it is made of rings of cartilage."
+    },
+    {
+      "level": "easy",
+      "ru": "Куда воздух попадает из трахеи?",
+      "en": "Where does air go after the trachea?",
+      "answer": {
+        "ru": "В бронхи и лёгкие",
+        "en": "Into the bronchi and lungs"
+      },
+      "wrong": {
+        "ru": [
+          "В желудок",
+          "В сердце",
+          "В пищевод"
+        ],
+        "en": [
+          "Into the stomach",
+          "Into the heart",
+          "Into the esophagus"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Внизу делится на два главных бронха.",
+      "en": "At the bottom it splits into the two main bronchi."
+    },
+    {
+      "level": "medium",
+      "ru": "Лежит перед пищеводом, а спереди на ней лежит щитовидная железа.",
+      "en": "Lies in front of the esophagus, with the thyroid gland on its front."
+    },
+    {
+      "level": "medium",
+      "ru": "Длина у взрослого около 10–12 см; каркас — хрящевые полукольца.",
+      "en": "About 10–12 cm long in an adult; its frame is made of cartilage half-rings."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько хрящевых полуколец в стенке трахеи?",
+      "en": "How many cartilage rings are in the wall of the trachea?",
+      "answer": "16–20",
+      "wrong": [
+        "3–5",
+        "50–60",
+        "100–120"
+      ]
+    },
+    {
+      "level": "hard",
+      "ru": "Место её деления на бронхи называют кариной.",
+      "en": "The point where it splits into bronchi is called the carina."
+    },
+    {
+      "level": "hard",
+      "ru": "Реснички слизистой непрерывно выметают пыль и слизь вверх, к глотке.",
+      "en": "Cilia in its lining constantly sweep dust and mucus up toward the throat."
+    },
+    {
+      "level": "hard",
+      "ru": "Задняя стенка без хряща позволяет пищеводу расширяться при глотании.",
+      "en": "Its back wall has no cartilage, so the esophagus can widen when you swallow."
+    }
+  ]
+}

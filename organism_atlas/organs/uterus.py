@@ -1,0 +1,51 @@
+"""Матка с маточными трубами: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра.
+Есть только на женской схеме (SEX); шейку матки спереди закрывает мочевой пузырь."""
+
+import numpy as np
+
+from ..colors import hex2rgb
+from ..geometry import CX, P, sym
+from ..models import load_parts
+from ..render2d.organ import Org, finish, shade
+
+
+# --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
+COLOR = "#d86f86"                      # цвет органа на схеме и полоски в карточке
+SYSTEMS = ("reproductive",)            # системы органов (первая - главная): тема и вопросы викторины
+SEX = "female"                         # орган есть только у одного пола (настройка «Схема тела»)
+
+
+# --------------------------------------------------------------- 2D: рисунок на схеме тела
+
+HALF = [(0, 336), (8, 336.5), (13.5, 339.5), (15, 346), (13, 354), (9, 361), (5.5, 367), (4.8, 374), (0, 375)]
+TUBE = [(12, 341), (18, 338.5), (24, 339.5), (29, 343.5), (32, 348.5)]       # маточная труба (правая)
+
+
+def paint(Z, ss, seed=61):
+    o = Org((CX - 40, 328, CX + 40, 382), Z, ss, seed)
+    m = o.L("mask")
+    m.poly(sym(HALF))
+    tubes = o.ink("tubes")
+    for s in (False, True):
+        tubes.tube(P(TUBE, s), [3.2, 2.8, 2.8, 3.2, 4.4])
+    mask = o.m("mask")
+    fib = o.noise(3.0, 3, 1)
+    big = o.noise(11, 2, 2)
+    alb = np.broadcast_to(hex2rgb("#d6738a"), o.shape + (3,)).copy()
+    alb = alb * (1 + 0.04 * fib + 0.06 * big)[..., None]
+    bump = 0.08 * fib + 0.08 * big
+    rgba = shade(o, alb, bump, mask, spec=0.5, shin=16, amp=(4.0, 5.0), ambient=0.48)
+    rgba = tubes.over(rgba, "#e0899b", 0.97, amp=1.8, spec=0.35, edge_dark=0.3)
+    # маточные артерии вдоль боков
+    a = o.ink("art")
+    for s in (False, True):
+        a.tube(P([(6, 372), (10.5, 362), (13.5, 352), (14, 343)], s), [1.2, 1.1, 1.0, 0.9])
+    rgba = a.over(rgba, "#c9404a", 0.6, amp=1.0, spec=0.25)
+    return finish(o, rgba)
+
+
+# --------------------------------------------------------------- 3D: модель (данные в models/uterus.json)
+
+def parts():
+    """3D-модель: примитивы из models/uterus.json"""
+    return load_parts("uterus")

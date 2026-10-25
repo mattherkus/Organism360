@@ -1,0 +1,36 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [-0.9, 0, 0.55],
+      "radii": [0.42, 0.18, 0.5],
+      "color": "#dda03a",
+      "texture": "gland",
+      "gloss": 0.45
+    },
+    {
+      "type": "ellipsoid",
+      "center": [-0.95, 0.05, -0.75],
+      "radii": [0.55, 0.4, 0.95],
+      "color": "#ad3b4d",
+      "texture": "muscle",
+      "gloss": 0.5
+    },
+    {
+      "type": "ellipsoid",
+      "center": [0.95, 0, 0.35],
+      "radii": [0.28, 0.18, 0.62],
+      "color": "#dda03a",
+      "texture": "gland",
+      "gloss": 0.45
+    },
+    {
+      "type": "ellipsoid",
+      "center": [1.0, 0.05, -0.85],
+      "radii": [0.55, 0.4, 0.95],
+      "color": "#ad3b4d",
+      "texture": "muscle",
+      "gloss": 0.5
+    }
+  ]
+}

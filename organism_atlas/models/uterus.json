@@ -1,0 +1,66 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [0, 0, 0.35],
+      "radii": [0.7, 0.45, 0.8],
+      "color": "#d6738a",
+      "texture": "muscle",
+      "gloss": 0.5
+    },
+    {
+      "type": "tube",
+      "path": [
+        [0, 0, -0.3],
+        [0, 0.05, -0.9],
+        [0, 0.1, -1.4]
+      ],
+      "radius": [0.38, 0.3, 0.28],
+      "color": "#d6738a",
+      "texture": "muscle",
+      "gloss": 0.5
+    },
+    {
+      "type": "tube",
+      "path": [
+        [0.6, 0, 0.85],
+        [1.1, 0, 0.95],
+        [1.6, 0.05, 0.75],
+        [1.85, 0.1, 0.35]
+      ],
+      "radius": [0.08, 0.08, 0.1, 0.16],
+      "color": "#e0899b",
+      "texture": "smooth",
+      "gloss": 0.4
+    },
+    {
+      "type": "tube",
+      "path": [
+        [-0.6, 0, 0.85],
+        [-1.1, 0, 0.95],
+        [-1.6, 0.05, 0.75],
+        [-1.85, 0.1, 0.35]
+      ],
+      "radius": [0.08, 0.08, 0.1, 0.16],
+      "color": "#e0899b",
+      "texture": "smooth",
+      "gloss": 0.4
+    },
+    {
+      "type": "ellipsoid",
+      "center": [1.6, 0.1, 0.15],
+      "radii": [0.32, 0.2, 0.2],
+      "color": "#ebbcae",
+      "texture": "gland",
+      "gloss": 0.4
+    },
+    {
+      "type": "ellipsoid",
+      "center": [-1.6, 0.1, 0.15],
+      "radii": [0.32, 0.2, 0.2],
+      "color": "#ebbcae",
+      "texture": "gland",
+      "gloss": 0.4
+    }
+  ]
+}

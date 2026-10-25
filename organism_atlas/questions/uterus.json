@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "В этом органе развивается ребёнок во время беременности.",
+      "en": "This is the organ where a baby grows during pregnancy."
+    },
+    {
+      "level": "easy",
+      "ru": "Полый мышечный орган женщины между мочевым пузырём и прямой кишкой.",
+      "en": "A hollow muscular organ in women, between the bladder and the rectum."
+    },
+    {
+      "level": "easy",
+      "ru": "Что развивается в матке во время беременности?",
+      "en": "What grows in the uterus during pregnancy?",
+      "answer": {
+        "ru": "Плод",
+        "en": "The fetus"
+      },
+      "wrong": {
+        "ru": [
+          "Камни",
+          "Яйцеклетки",
+          "Кости таза"
+        ],
+        "en": [
+          "Stones",
+          "Egg cells",
+          "Pelvic bones"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Её внутренний слой, эндометрий, обновляется в каждом менструальном цикле.",
+      "en": "Its inner lining, the endometrium, renews itself in every menstrual cycle."
+    },
+    {
+      "level": "medium",
+      "ru": "Её нижняя узкая часть называется шейкой.",
+      "en": "Its narrow lower part is called the cervix."
+    },
+    {
+      "level": "medium",
+      "ru": "Сокращения её стенки во время родов называют схватками.",
+      "en": "The contractions of its wall during childbirth are called labor contractions."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько примерно весит матка у нерожавшей женщины?",
+      "en": "About how much does the uterus weigh in a woman who has not given birth?",
+      "answer": {
+        "ru": "Около 50 г",
+        "en": "About 50 g"
+      },
+      "wrong": {
+        "ru": [
+          "Около 5 г",
+          "Около 500 г",
+          "Около 2 кг"
+        ],
+        "en": [
+          "About 5 g",
+          "About 500 g",
+          "About 2 kg"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "За беременность её масса вырастает с 50 г примерно до 1 кг.",
+      "en": "During pregnancy its mass grows from 50 g to about 1 kg."
+    },
+    {
+      "level": "hard",
+      "ru": "Миома — доброкачественная опухоль из мышечного слоя этого органа.",
+      "en": "A fibroid is a benign tumor of the muscle layer of this organ."
+    },
+    {
+      "level": "hard",
+      "ru": "Фаллопиевы трубы соединяют её полость с брюшной полостью.",
+      "en": "The fallopian tubes connect its cavity with the abdominal cavity."
+    }
+  ]
+}

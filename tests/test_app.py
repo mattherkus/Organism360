@@ -11,7 +11,7 @@ from unittest import mock
 
 from organism_atlas import i18n, questions
 from organism_atlas.atlas import Atlas
-from organism_atlas.organs import ORGANS
+from organism_atlas.organs import ORGANS, other_sex
 
 Z = 0.7
 
@@ -75,15 +75,72 @@ class AppTests(unittest.TestCase):
         self.app.unflash()
         self.root.update()
         self.assertEqual(self.errors, [])
-        self.assertEqual(self.app.atlas.hidden, frozenset())
+        self.assertEqual(self.app.atlas.hidden, self.other)
+
+    @property
+    def other(self):
+        """органы другого пола: на схеме их нет никогда"""
+        return other_sex(self.app.body)
 
     def test_hidden_organs_only_in_study(self):
         self.app.toggle_organ("heart")
-        self.assertEqual(self.app.atlas.hidden, {"heart"})
+        self.assertEqual(self.app.atlas.hidden, {"heart"} | self.other)
         self.app.set_mode("find")
-        self.assertEqual(self.app.atlas.hidden, frozenset())
+        self.assertEqual(self.app.atlas.hidden, self.other)
         self.app.set_mode("study")
-        self.assertEqual(self.app.atlas.hidden, {"heart"})
+        self.assertEqual(self.app.atlas.hidden, {"heart"} | self.other)
+        self.assertEqual(self.errors, [])
+
+    def test_body_switch(self):
+        """женская и мужская схема: органы другого пола скрыты и в панели, и в викторине"""
+        self.assertEqual(self.app.body, "male")
+        self.assertIn("prostate", self.app.toggles)
+        self.assertNotIn("uterus", self.app.toggles)
+        self.app.toggle_organ("prostate")
+        self.app.set_body("female")
+        self.assertEqual(self.app.atlas.hidden, {"prostate"})
+        self.assertIn("uterus", self.app.toggles)
+        self.assertNotIn("prostate", self.app.toggles)
+        self.app.set_mode("mix")
+        self.app.start_quiz()
+        self.assertNotIn("prostate", self.app.session.q)
+        self.app.set_body("male")
+        self.assertIsNone(self.app.session)             # игра началась заново с карточки настройки
+        self.assertEqual(self.errors, [])
+
+    def play(self):
+        """пройти начатую игру до конца, отвечая верно: кликом по схеме или кнопкой"""
+        s = self.app.session
+        while not s.finished:
+            if s.kind == "find":
+                self.app.answer(s.current)
+            else:
+                self.assertEqual(set(self.app.choices), set(s.options()))
+                self.app.pick(s.correct())
+                self.root.after_cancel(self.app.next_job)
+                self.app.next_question()
+            self.root.update()
+        if self.app.flash_job:
+            self.root.after_cancel(self.app.flash_job)
+        return s
+
+    def test_quiz_length_and_topic(self):
+        """длина игры и тема из карточки настройки; каждая игра проходится до конца"""
+        for mode in ("find", "name", "facts", "mix"):
+            self.app.set_mode(mode)
+            for length in (5, 10, 0):
+                self.app.set_cfg("length", length)
+                self.app.start_quiz()
+                s = self.play()
+                self.assertEqual(s.total, length or len(self.app.organs()), (mode, length))
+                self.assertEqual(s.first_try, s.total)
+                self.app.set_mode(mode)
+        self.app.set_cfg("topic", "digestive")
+        self.app.set_cfg("length", 20)
+        self.app.start_quiz()
+        self.assertTrue(all("digestive" in ORGANS[k]["systems"] for k in self.app.session.q))
+        self.assertEqual(self.app.session.total, 8)       # органов в теме меньше 20 - спрашиваем про все
+        self.play()
         self.assertEqual(self.errors, [])
 
     def test_hide_all_organs(self):
@@ -95,9 +152,9 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.atlas.hidden, set(ORGANS))
         self.assertIsNone(self.app.atlas.organ_at(int(210 * Z), int(230 * Z)))
         self.assertEqual(button.cget("text"), i18n.t("layers_show_organs"))
-        self.assertFalse(any(self.app.toggles[k].on for k in ORGANS))
+        self.assertFalse(any(self.app.toggles[k].on for k in self.app.organs()))
         button.invoke()
-        self.assertEqual(self.app.atlas.hidden, frozenset())
+        self.assertEqual(self.app.atlas.hidden, self.other)
         self.assertEqual(button.cget("text"), i18n.t("layers_hide_organs"))
         self.assertEqual(self.errors, [])
 
@@ -105,7 +162,7 @@ class AppTests(unittest.TestCase):
         """в викторине панели слоёв нет, а схема стоит на месте и не перерисовывается"""
         self.root.update()
         x = self.app.c.winfo_rootx()
-        for mode in ("find", "name", "facts"):
+        for mode in ("find", "name", "facts", "mix"):
             self.app.set_mode(mode)
             self.root.update()
             self.assertFalse(self.app.panel_box.winfo_ismapped(), mode)
@@ -148,7 +205,7 @@ class ColorGroupTests(unittest.TestCase):
         self.assertEqual(sorted(order), sorted(ORGANS))
         fams = [color_family(ORGANS[k]["color"])[0] for k in order]
         self.assertEqual(fams, sorted(fams))
-        self.assertEqual(order[-1], "gallbladder")
+        self.assertEqual(order[-2:], ["gallbladder", "trachea"])      # зелёный, затем серо-голубая трахея
         self.assertLess(abs(order.index("lungs") - order.index("brain")), 2)
 
 

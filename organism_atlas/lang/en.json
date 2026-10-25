@@ -100,7 +100,29 @@
     "results_due": "Organs due for review today: {n}. Choose “Due for review” before your next game.",
     "results_retry": "Retry mistakes",
     "custom_hint": "Pick an answer or press 1–{n}.",
-    "time_up_answer": "Time's up! The right answer was: {answer}."
+    "time_up_answer": "Time's up! The right answer was: {answer}.",
+    "mode_mix": "Mixed",
+    "setup_desc_mix": "All question types mixed together: find the organ, guess its name, guess it by a fact or by its location, and name its organ system.",
+    "where_hint": "Which organ is located here? Pick an option or press 1–{n}.",
+    "system_title": "Which organ system does this belong to: {name}?",
+    "setup_length": "Number of questions",
+    "length_all": "All ({n})",
+    "setup_topic": "Topic",
+    "topic_all": "All systems ({n})",
+    "topic_system": "{system} ({n})",
+    "card_system": "Organ system",
+    "settings_body": "Body diagram",
+    "body_female": "Female",
+    "body_male": "Male",
+    "settings_body_hint": "Pelvic organs: the female diagram shows the uterus and ovaries, the male one shows the prostate.",
+    "system_digestive": "Digestive",
+    "system_respiratory": "Respiratory",
+    "system_circulatory": "Cardiovascular",
+    "system_nervous": "Nervous",
+    "system_endocrine": "Endocrine",
+    "system_urinary": "Urinary",
+    "system_reproductive": "Reproductive",
+    "system_immune": "Immune"
   },
   "organs": {
     "lungs": {
@@ -374,6 +396,188 @@
         "People usually urinate 4–8 times a day",
         "The muscle of its wall is called the detrusor, from Latin for “to push out”",
         "A full bladder rises above the pubic bone and can be felt"
+      ]
+    },
+    "esophagus": {
+      "name": "Esophagus",
+      "desc": "A muscular tube that carries swallowed food and water from the throat to the stomach.",
+      "location": "In the neck and chest: behind the trachea and heart, in front of the spine; passes through the diaphragm into the abdomen",
+      "facts": [
+        "About 25 cm long",
+        "Food travels down it in 5–10 seconds, pushed by waves of contraction called peristalsis",
+        "A ring of muscle (sphincter) at the bottom keeps stomach contents from flowing back up"
+      ],
+      "diseases": [
+        "Gastroesophageal reflux disease (GERD)",
+        "Esophagitis",
+        "Barrett’s esophagus",
+        "Hiatal hernia"
+      ],
+      "daily": [
+        "Thanks to peristalsis you can swallow even while standing on your head",
+        "Heartburn is acidic stomach content flowing back into the esophagus",
+        "Between swallows its walls are pressed together and the passage is nearly closed",
+        "The upper part of its wall is skeletal muscle and the lower part is smooth muscle",
+        "It has three natural narrowings where swallowed objects most often get stuck"
+      ]
+    },
+    "trachea": {
+      "name": "Trachea",
+      "desc": "The windpipe: air travels through it from the larynx to the bronchi and lungs.",
+      "location": "Front of the neck and upper chest, in front of the esophagus; at the bottom it splits into the two main bronchi",
+      "facts": [
+        "About 10–12 cm long in an adult",
+        "Its frame is 16–20 C-shaped rings of cartilage, open at the back",
+        "Tiny hairs (cilia) in its lining constantly sweep dust and mucus up toward the throat"
+      ],
+      "diseases": [
+        "Tracheitis",
+        "Tracheal stenosis",
+        "Inhaled foreign body",
+        "Tracheomalacia"
+      ],
+      "daily": [
+        "Its soft back wall without cartilage lets the esophagus widen when you swallow",
+        "The point where it splits into two bronchi is called the bifurcation, or carina",
+        "The isthmus of the thyroid gland lies on its front",
+        "An opening cut into it (a tracheostomy) lets a person breathe bypassing the larynx",
+        "Its cartilage rings keep the tube from collapsing when you breathe in"
+      ]
+    },
+    "adrenals": {
+      "name": "Adrenal glands",
+      "desc": "A pair of endocrine glands that make adrenaline, cortisol and aldosterone.",
+      "location": "Behind the abdominal cavity (retroperitoneum), on top of the upper poles of the kidneys",
+      "facts": [
+        "Each one weighs about 5 g",
+        "The outer layer (cortex) makes cortisol and aldosterone; the inner layer (medulla) makes adrenaline and noradrenaline",
+        "The right one is shaped like a triangle, the left one like a crescent"
+      ],
+      "diseases": [
+        "Adrenal insufficiency (Addison’s disease)",
+        "Cushing’s syndrome",
+        "Pheochromocytoma",
+        "Primary aldosteronism (Conn’s syndrome)"
+      ],
+      "daily": [
+        "Adrenaline triggers the fight-or-flight response: the heart speeds up and the pupils widen",
+        "Cortisol peaks in the morning, soon after waking up",
+        "Aldosterone makes the kidneys hold on to sodium and water, keeping blood pressure up",
+        "The word “adrenaline” comes from Latin ad renes, “near the kidneys”",
+        "The cortex also releases small amounts of sex hormones"
+      ]
+    },
+    "appendix": {
+      "name": "Appendix",
+      "desc": "A worm-like pouch of the cecum: a narrow tube closed at one end, with a lot of lymphoid tissue in its wall.",
+      "location": "Lower right abdomen (right iliac region), attached to the cecum",
+      "facts": [
+        "Usually 7–10 cm long and less than 1 cm thick",
+        "Its position varies: it may lie behind the cecum or hang down into the pelvis",
+        "The lymphoid tissue in its wall helps protect the gut from infection"
+      ],
+      "diseases": [
+        "Appendicitis",
+        "Appendiceal tumors",
+        "Appendiceal mucocele"
+      ],
+      "daily": [
+        "Acute appendicitis is one of the most common reasons for emergency abdominal surgery",
+        "Appendicitis pain often starts near the navel and then moves to the lower right",
+        "One hypothesis says it is a reserve of helpful gut bacteria",
+        "Its Latin name vermiformis means “worm-shaped”",
+        "You can live without it: removing it usually does not affect health"
+      ]
+    },
+    "rectum": {
+      "name": "Rectum",
+      "desc": "The last part of the large intestine: it stores feces and pushes them out of the body.",
+      "location": "In the pelvis, in front of the sacrum and coccyx; behind the bladder in men and behind the uterus in women",
+      "facts": [
+        "About 12–15 cm long",
+        "Its wider lower part is called the ampulla",
+        "The exit is closed by two rings of muscle, the internal and external sphincters"
+      ],
+      "diseases": [
+        "Hemorrhoids",
+        "Anal fissure",
+        "Proctitis",
+        "Colorectal cancer"
+      ],
+      "daily": [
+        "Despite its name (Latin for “straight”), it curves along the sacrum",
+        "The urge to empty the bowels comes when the ampulla stretches",
+        "You can control the external sphincter at will, but not the internal one",
+        "Stool tests for hidden blood and colonoscopy help find cancer early",
+        "Medicines given as suppositories are quickly absorbed through its wall into the blood"
+      ]
+    },
+    "uterus": {
+      "name": "Uterus",
+      "desc": "A hollow muscular organ of the female reproductive system where a baby grows during pregnancy.",
+      "location": "In the pelvis, between the urinary bladder (in front) and the rectum (behind)",
+      "facts": [
+        "About 7–8 cm long and about 50 g in a woman who has not given birth",
+        "During pregnancy its mass grows to about 1 kg",
+        "Its inner lining, the endometrium, renews itself in every menstrual cycle"
+      ],
+      "diseases": [
+        "Uterine fibroids",
+        "Endometriosis",
+        "Cervical cancer",
+        "Endometritis"
+      ],
+      "daily": [
+        "The fallopian tubes connect its cavity with the abdominal cavity near the ovaries",
+        "Fertilization usually happens not in the uterus itself but in a fallopian tube",
+        "Its narrow lower part is called the cervix and opens into the vagina",
+        "The contractions of its muscular wall during childbirth are called labor contractions",
+        "The HPV vaccine prevents most cases of cervical cancer"
+      ]
+    },
+    "ovaries": {
+      "name": "Ovaries",
+      "desc": "A pair of female sex glands where egg cells mature and the hormones estrogen and progesterone are made.",
+      "location": "In the pelvis, on both sides of the uterus, next to the open ends of the fallopian tubes",
+      "facts": [
+        "Each is about 3–4 cm long, roughly the size and shape of an almond",
+        "At birth they hold about 1–2 million immature eggs (follicles)",
+        "Only about 400–500 eggs mature and are released over a lifetime"
+      ],
+      "diseases": [
+        "Polycystic ovary syndrome",
+        "Ovarian cyst",
+        "Ovarian cancer",
+        "Ovarian apoplexy"
+      ],
+      "daily": [
+        "The release of a mature egg is called ovulation and usually happens once a month",
+        "The egg is one of the largest human cells: about 0.1 mm across",
+        "The burst follicle turns into the corpus luteum, which releases progesterone",
+        "The supply of follicles shrinks with age, and ovulation stops at menopause",
+        "Usually only one egg matures in each cycle"
+      ]
+    },
+    "prostate": {
+      "name": "Prostate",
+      "desc": "A male gland that makes part of the seminal fluid; it surrounds the beginning of the urethra.",
+      "location": "In the pelvis, below the urinary bladder and in front of the rectum",
+      "facts": [
+        "About the size and shape of a chestnut",
+        "Weighs about 20 g in an adult man",
+        "Its secretion makes up about a third of the seminal fluid"
+      ],
+      "diseases": [
+        "Prostatitis",
+        "Benign prostatic hyperplasia",
+        "Prostate cancer"
+      ],
+      "daily": [
+        "It often grows with age and can make urination harder",
+        "A doctor can feel it through the wall of the rectum",
+        "A PSA (prostate-specific antigen) blood test helps detect its diseases",
+        "Prostate cancer is one of the most common cancers in men",
+        "Enzymes in its secretion make the seminal fluid more liquid"
       ]
     }
   }

@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Вырабатывают адреналин — гормон испуга и волнения.",
+      "en": "They make epinephrine, the hormone of fear and excitement."
+    },
+    {
+      "level": "easy",
+      "ru": "Две маленькие железы, которые сидят на почках, как шапочки.",
+      "en": "Two small endocrine organs that sit on top of the kidneys like caps."
+    },
+    {
+      "level": "easy",
+      "ru": "Какой гормон вырабатывают надпочечники?",
+      "en": "Which hormone do the adrenal glands make?",
+      "answer": {
+        "ru": "Адреналин",
+        "en": "Adrenaline"
+      },
+      "wrong": {
+        "ru": [
+          "Инсулин",
+          "Тироксин",
+          "Мелатонин"
+        ],
+        "en": [
+          "Insulin",
+          "Thyroxine",
+          "Melatonin"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Вырабатывают кортизол — гормон стресса.",
+      "en": "They make cortisol, the stress hormone."
+    },
+    {
+      "level": "medium",
+      "ru": "Их гормон альдостерон заставляет почки задерживать натрий и воду.",
+      "en": "Their hormone aldosterone makes the kidneys hold on to sodium and water."
+    },
+    {
+      "level": "medium",
+      "ru": "Правый похож на треугольник, левый — на полумесяц.",
+      "en": "The right one is shaped like a triangle, the left one like a crescent."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько весит один надпочечник?",
+      "en": "How much does one adrenal gland weigh?",
+      "answer": {
+        "ru": "Около 5 г",
+        "en": "About 5 g"
+      },
+      "wrong": {
+        "ru": [
+          "Около 50 г",
+          "Около 0,5 г",
+          "Около 300 г"
+        ],
+        "en": [
+          "About 50 g",
+          "About 0.5 g",
+          "About 300 g"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Кора делает кортизол, а мозговое вещество — адреналин и норадреналин.",
+      "en": "The cortex makes cortisol, and the medulla makes epinephrine and norepinephrine."
+    },
+    {
+      "level": "hard",
+      "ru": "При болезни Аддисона эти органы вырабатывают слишком мало гормонов.",
+      "en": "In Addison’s disease these organs make too few hormones."
+    },
+    {
+      "level": "hard",
+      "ru": "Опухоль феохромоцитома выбрасывает из них в кровь избыток адреналина.",
+      "en": "A pheochromocytoma tumor releases too much epinephrine from them into the blood."
+    }
+  ]
+}

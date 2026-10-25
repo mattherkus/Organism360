@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Последний отдел пищеварительного тракта: здесь копится кал перед походом в туалет.",
+      "en": "The last part of the digestive tract: stool collects here before you go to the toilet."
+    },
+    {
+      "level": "easy",
+      "ru": "Через этот орган остатки пищи выходят из организма.",
+      "en": "Leftovers of food leave the body through this organ."
+    },
+    {
+      "level": "easy",
+      "ru": "Что накапливается в прямой кишке?",
+      "en": "What collects in the rectum?",
+      "answer": {
+        "ru": "Каловые массы",
+        "en": "Feces"
+      },
+      "wrong": {
+        "ru": [
+          "Моча",
+          "Жёлчь",
+          "Кровь"
+        ],
+        "en": [
+          "Urine",
+          "Bile",
+          "Blood"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Её нижняя расширенная часть называется ампулой.",
+      "en": "Its wider lower part is called the ampulla."
+    },
+    {
+      "level": "medium",
+      "ru": "Выход закрывают два мышечных кольца — внутренний и наружный сфинктеры.",
+      "en": "The exit is closed by two rings of muscle, the internal and external sphincters."
+    },
+    {
+      "level": "medium",
+      "ru": "Длина около 12–15 см; лежит в малом тазу перед крестцом.",
+      "en": "About 12–15 cm long; lies in the pelvis in front of the sacrum."
+    },
+    {
+      "level": "medium",
+      "ru": "Какой длины прямая кишка?",
+      "en": "How long is the rectum?",
+      "answer": {
+        "ru": "12–15 см",
+        "en": "12–15 cm"
+      },
+      "wrong": {
+        "ru": [
+          "2–3 см",
+          "50–60 см",
+          "1,5 м"
+        ],
+        "en": [
+          "2–3 cm",
+          "50–60 cm",
+          "1.5 m"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Несмотря на название, изогнута по форме крестца.",
+      "en": "Despite its name, it curves along the sacrum."
+    },
+    {
+      "level": "hard",
+      "ru": "Лекарства в свечах быстро всасываются через её стенку в кровь.",
+      "en": "Medicines given as suppositories are quickly absorbed through its wall into the blood."
+    },
+    {
+      "level": "hard",
+      "ru": "Геморрой — расширение вен в нижней части этого органа.",
+      "en": "Hemorrhoids are swollen veins in the lowest part of this organ."
+    }
+  ]
+}
