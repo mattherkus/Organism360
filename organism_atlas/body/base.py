@@ -108,9 +108,9 @@ def over(dst, rgba, alpha=1.0):
     return dst
 
 
-def compose(layers, back, visible=BODY_LAYERS, skin_opacity=1.0):
+def compose(layers, back, visible=BODY_LAYERS, skin_opacity=1.0, fade=True):
     """схема без органов: фон back (HxWx3) + видимые слои тела. layers - из build_layers (float 0..1)
-    или те же массивы в uint8 (тогда делятся на 255)."""
+    или те же массивы в uint8 (тогда делятся на 255). fade=False - без растворения ног у нижнего края."""
     def f(a):
         return a.astype(np.float32) / 255 if a.dtype == np.uint8 else a
 
@@ -122,5 +122,7 @@ def compose(layers, back, visible=BODY_LAYERS, skin_opacity=1.0):
             out += f(layers["skin_hi"]) * skin
         elif name in visible:
             over(out, f(layers[name]))
-    fade = f(layers["fade"])[:, None, None]
-    return out * (1 - fade) + back * fade
+    if not fade:
+        return out
+    a = f(layers["fade"])[:, None, None]
+    return out * (1 - a) + back * a

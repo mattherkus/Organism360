@@ -50,6 +50,7 @@ class Atlas:
         self.visible = BODY_LAYERS       # видимые слои тела
         self._bg = (BG, BG_HI)           # цвета фона (тема)
         self._base = None
+        self._show = {}                  # заготовки для base при текущем фоне: кожа с фоном, растворение
         self._glow = None
         self._cache = {}
         self._layers = {}
@@ -96,14 +97,36 @@ class Atlas:
 
     @property
     def base(self):
-        """готовая картинка Pillow для показа: фон темы, видимые слои тела и нескрытые органы"""
+        """готовая картинка Pillow для показа: фон темы, видимые слои тела и нескрытые органы.
+        Собирается быстро (на каждый щелчок в панели слоёв): кожа с фоном считается в numpy один раз,
+        кости, сосуды, растворение ног и органы кладутся средствами Pillow. От composite() отличается
+        только округлением (на 1-2 уровня из 255)"""
         if self._base is None:
-            self._base = self.composite(*self._bg, visible=self.visible)
+            skin = "skin" in self.visible
+            if skin not in self._show:
+                # свечение и кромка кожи не выражаются прямой альфой, поэтому кожа - вместе с фоном
+                out = compose(self.body, self._back(*self._bg), ("skin",) if skin else (), fade=False)
+                self._show[skin] = Image.fromarray(to_u8(out))
+            if "fade" not in self._show:
+                self._show["fade"] = self.fade_image(*self._bg)
+            out = self._show[skin].copy()
+            for name in BODY_LAYERS[1:]:
+                if name in self.visible:
+                    im, pos = self.layer(name)
+                    out.paste(im, pos, im)
+            out.paste(self._show["fade"], (0, 0), self._show["fade"])
+            for k in ORDER:
+                if k not in self.hidden:
+                    im, pos = self.layer(k)
+                    out.paste(im, pos, im)
+            self._base = out
         return self._base
 
     def set_background(self, bg, hi):
         """подставить фон схемы (цвета #rrggbb из темы); возвращает новую self.base"""
-        self._bg = (bg, hi)
+        if (bg, hi) != self._bg:
+            self._bg = (bg, hi)
+            self._show.clear()
         self._base = None
         return self.base
 

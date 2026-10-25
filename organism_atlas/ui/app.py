@@ -23,7 +23,8 @@ from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import fill_card, fill_layers, fill_question, fill_setup, flat_button, frame, label, set_button_bg
+from .widgets import (fill_card, fill_layers, fill_question, fill_setup, flat_button, frame, label, set_button_bg,
+                      set_toggle, show_all_button)
 
 
 class App:
@@ -289,15 +290,30 @@ class App:
         """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым"""
         return self.hidden if self.mode == "study" else ()
 
+    def something_hidden(self):
+        return bool(self.hidden or len(self.layers) < len(BODY_LAYERS))
+
     def render_layers(self):
-        changed = self.hidden or len(self.layers) < len(BODY_LAYERS)
-        fill_layers(self.panel, t("layers_title"),
-                    [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
-                    t("layers_organs"),
-                    [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in ORGANS],
-                    self.toggle_layer, self.toggle_organ, organs_enabled=self.mode == "study",
-                    note=None if self.mode == "study" else t("layers_quiz_note"),
-                    show_all=(t("layers_show_all"), self.show_all) if changed else None)
+        """построить панель слоёв заново (смена языка или режима)"""
+        self.layers_study = study = self.mode == "study"
+        self.toggles = fill_layers(
+            self.panel, t("layers_title"),
+            [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
+            t("layers_organs"), [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in ORGANS],
+            self.toggle_layer, self.toggle_organ, organs_enabled=study,
+            note=None if study else t("layers_quiz_note"),
+            show_all=(t("layers_show_all"), self.show_all, self.something_hidden()))
+
+    def update_layers(self):
+        """после щелчка: обновить флажки на месте (пересоздавать панель долго), а при смене режима - построить"""
+        if (self.mode == "study") != self.layers_study:
+            self.render_layers()
+            return
+        show_all_button(self.toggles, self.something_hidden())
+        for name in BODY_LAYERS:
+            set_toggle(self.toggles[name], t("layer_" + name), name in self.layers)
+        for k in ORGANS:
+            set_toggle(self.toggles[k], i18n.name(k), k not in self.hidden)
 
     def toggle_layer(self, name):
         self.layers ^= {name}
@@ -313,7 +329,9 @@ class App:
 
     def apply_view(self):
         """применить слои и скрытые органы к схеме и обновить панель"""
+        self.update_layers()
         if self.atlas is not None:
+            self.root.update_idletasks()                # флажок виден сразу, ещё до перерисовки схемы
             self.atlas.set_layers(self.layers)
             hidden = frozenset(self.hidden_now())
             if hidden != self.atlas.hidden:
@@ -321,7 +339,6 @@ class App:
                 self.photos.clear()                     # подсветка зависит от того, кто кого закрывает
                 self.on_leave(None)
             self.show_base()
-        self.render_layers()
 
     # --- наведение и клики
     def photo(self, key, kind):

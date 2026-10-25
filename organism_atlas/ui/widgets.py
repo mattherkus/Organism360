@@ -114,9 +114,9 @@ def toggle(parent, text, on, command, enabled=True, color=None):
     row.pack(fill="x", pady=(0, px(1)))
     if color:
         tk.Frame(row, bg=color, width=px(4)).pack(side="left", fill="y")
-    b = flat_button(row, ("☑  " if on else "☐  ") + text, command, anchor="w")
+    b = flat_button(row, "", command, anchor="w")
     b.config(font=(FONT, 9), padx=px(8), pady=px(1), highlightthickness=0)
-    style(b, fg="text" if on else "muted")
+    set_toggle(b, text, on)
     if not enabled:
         style(b, disabledforeground="muted")
         b.config(state="disabled", cursor="")
@@ -124,12 +124,31 @@ def toggle(parent, text, on, command, enabled=True, color=None):
     return b
 
 
+SHOW_ALL = "_show_all"            # ключ кнопки «Показать всё» в словаре, который отдаёт fill_layers
+
+
+def show_all_button(buttons, visible):
+    """показать или спрятать кнопку «Показать всё», не пересоздавая панель"""
+    b = buttons[SHOW_ALL]
+    if visible and not b.winfo_manager():
+        b.pack(side="right")
+    elif not visible and b.winfo_manager():
+        b.pack_forget()
+
+
+def set_toggle(b, text, on):
+    """обновить переключатель на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
+    b.config(text=("☑  " if on else "☐  ") + text)
+    style(b, fg="text" if on else "muted")
+
+
 def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, organs_enabled=True,
                 note=None, show_all=None):
     """панель слоёв слева от схемы.
     layers - [(ключ, текст, виден)] слоёв тела; organs - [(ключ, название, цвет, виден)];
     organs_enabled - можно ли скрывать органы (в викторине нельзя), note - пояснение под списком;
-    show_all - (текст, функция) кнопки «Показать всё» или None, если всё и так видно."""
+    show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто).
+    Возвращает {ключ слоя или органа: переключатель} для set_toggle и кнопку «Показать всё» под SHOW_ALL."""
     for w in card.winfo_children():
         w.destroy()
     frame(card, "accent", height=3).pack(fill="x")
@@ -140,19 +159,20 @@ def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, o
     head = frame(box)
     head.pack(fill="x", pady=(px(8), px(4)))
     label(head, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w").pack(side="left")
-    if show_all:
-        b = flat_button(head, show_all[0], show_all[1])
-        b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
-        b.pack(side="right")
+    b = flat_button(head, show_all[0], show_all[1])
+    b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
+    buttons = {SHOW_ALL: b}
+    show_all_button(buttons, show_all[2])
     for key, text, on in layers:
-        toggle(box, text, on, lambda k=key: on_layer(k))
+        buttons[key] = toggle(box, text, on, lambda k=key: on_layer(k))
     label(box, organs_title.upper(), fg="muted", font=(FONT, 9, "bold"),
           anchor="w").pack(fill="x", pady=(px(8), px(4)))
     if note:
         label(box, note, fg="muted", font=(FONT, 9), justify="left", anchor="w",
               wraplength=px(170)).pack(fill="x", pady=(0, px(4)))
     for key, text, color, on in organs:
-        toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
+        buttons[key] = toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
+    return buttons
 
 
 def fill_setup(card, title, desc, rows, start_text, on_start, history_title, history):
