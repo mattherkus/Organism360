@@ -1,0 +1,59 @@
+import math
+import unittest
+
+from organism_atlas.atlas import Atlas
+from organism_atlas.geometry import CX, H, W
+from organism_atlas.organs import ORDER, ORGANS, PAINT
+
+Z = 0.7
+# точки, которые однозначно попадают в один орган
+HIT_POINTS = {"brain": (CX, 50), "heart": (CX + 20, 230), "lungs": (CX - 45, 200), "liver": (CX - 40, 280),
+              "stomach": (CX + 35, 275), "kidneys": (CX - 31, 335), "intestines": (CX + 5, 345),
+              "thyroid": (CX + 10, 124), "spleen": (CX + 58, 272), "pancreas": (CX + 20, 314),
+              "bladder": (CX, 385)}
+
+
+class RegistryTests(unittest.TestCase):
+    def test_registry_is_consistent(self):
+        self.assertEqual(set(ORGANS), set(ORDER))
+        self.assertEqual(set(PAINT), set(ORDER))
+        for key, o in ORGANS.items():
+            for field in ("color", "parts"):
+                self.assertIn(field, o, key)
+
+
+class AtlasTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.atlas = Atlas(Z)
+
+    def test_base_image_size(self):
+        self.assertEqual(self.atlas.base.size, (math.ceil(W * Z), math.ceil(H * Z)))
+
+    def test_organ_at(self):
+        for key, (x, y) in HIT_POINTS.items():
+            self.assertEqual(self.atlas.organ_at(x * Z, y * Z), key)
+        self.assertIsNone(self.atlas.organ_at(10, 20))
+
+    def test_background_follows_theme(self):
+        """фон схемы меняется по теме, а сам рисунок органов остаётся прежним"""
+        heart = tuple(int(v * Z) for v in HIT_POINTS["heart"])
+        try:
+            light = self.atlas.set_background("#ffffff", "#ffffff")
+            self.assertEqual(light.getpixel((2, 2)), (255, 255, 255))      # угол - чистый фон
+            organ = light.getpixel(heart)
+            dark = self.atlas.set_background("#000000", "#000000")
+            self.assertEqual(dark.getpixel((2, 2)), (0, 0, 0))
+            self.assertEqual(dark.getpixel(heart), organ)                  # орган фон не просвечивает
+        finally:
+            self.atlas.set_background("#0e1a22", "#1a3547")
+
+    def test_overlays(self):
+        for key in ORGANS:
+            for kind in ("hover", "target", "ok", "bad"):
+                im, (ox, oy) = self.atlas.overlay(key, kind)
+                self.assertEqual(im.mode, "RGBA")
+
+
+if __name__ == "__main__":
+    unittest.main()

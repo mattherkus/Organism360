@@ -1,0 +1,88 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Управляет всем организмом: мышлением, памятью, движением и чувствами.",
+      "en": "Controls the whole body: thinking, memory, movement and the senses."
+    },
+    {
+      "level": "easy",
+      "ru": "Здесь рождаются мысли, воспоминания и решения.",
+      "en": "This is where thoughts, memories and decisions come from."
+    },
+    {
+      "level": "easy",
+      "ru": "Защищён костями черепа.",
+      "en": "Protected by the bones of the skull."
+    },
+    {
+      "level": "medium",
+      "ru": "Весит около 1,4 кг",
+      "en": "Weighs about 1.4 kg"
+    },
+    {
+      "level": "medium",
+      "ru": "Содержит порядка 86 млрд нейронов",
+      "en": "Contains roughly 86 billion neurons"
+    },
+    {
+      "level": "medium",
+      "ru": "Потребляет около 20% всей энергии тела",
+      "en": "Uses about 20% of the body's energy"
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько примерно весит мозг взрослого?",
+      "en": "About how much does an adult brain weigh?",
+      "answer": {
+        "ru": "1,4 кг",
+        "en": "1.4 kg"
+      },
+      "wrong": {
+        "ru": [
+          "400 г",
+          "800 г",
+          "3 кг",
+          "5 кг"
+        ],
+        "en": [
+          "400 g",
+          "800 g",
+          "3 kg",
+          "5 kg"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Левое полушарие управляет правой половиной тела, и наоборот",
+      "en": "The left hemisphere controls the right side of the body, and vice versa"
+    },
+    {
+      "level": "hard",
+      "ru": "Какая часть мозга отвечает за равновесие и координацию движений?",
+      "en": "Which part of the brain is in charge of balance and coordination?",
+      "answer": {
+        "ru": "Мозжечок",
+        "en": "Cerebellum"
+      },
+      "wrong": {
+        "ru": [
+          "Гипофиз",
+          "Гиппокамп",
+          "Продолговатый мозг",
+          "Таламус",
+          "Гипоталамус"
+        ],
+        "en": [
+          "Pituitary gland",
+          "Hippocampus",
+          "Medulla oblongata",
+          "Thalamus",
+          "Hypothalamus"
+        ]
+      }
+    }
+  ]
+}

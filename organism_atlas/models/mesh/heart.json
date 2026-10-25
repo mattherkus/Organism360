@@ -1,0 +1,80 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в heart.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "heart.npz",
+  "groups": [
+    {
+      "group": "artery",
+      "color": "#d24a3c",
+      "texture": "smooth",
+      "gloss": 0.6,
+      "triangles": 13399,
+      "source_parts": [
+        "Circumflex branch of left coronary artery",
+        "Conus branch of anterior interventricular branch of left coronary artery",
+        "Diagonal branch of anterior descending branch of left coronary artery",
+        "First anterior ventricular branch of right coronary artery",
+        "First posterior ventricular branch of right coronary artery",
+        "First right anterior branch of anterior interventricular branch of left coronary artery",
+        "Marginal branch of right coronary artery",
+        "Posterior interventricular branch of right coronary artery",
+        "Right conus artery",
+        "Second right anterior branch of anterior interventricular branch of left coronary artery",
+        "Third right anterior branch of anterior interventricular branch of left coronary artery",
+        "Trunk of anterior interventricular branch of left coronary artery",
+        "Trunk of left coronary artery",
+        "Trunk of right coronary artery"
+      ]
+    },
+    {
+      "group": "myocardium",
+      "color": "#8a2f2b",
+      "texture": "muscle",
+      "gloss": 0.5,
+      "triangles": 65486,
+      "source_parts": [
+        "Anterior papillary muscle of right ventricle",
+        "Anterolateral head of lateral papillary muscle of left ventricle",
+        "Cavity of left atrium",
+        "Cavity of left ventricle",
+        "Cavity of right atrium",
+        "Cavity of right ventricle",
+        "Lateral papillary muscle of left ventricle",
+        "Left anterior cusp of pulmonary valve",
+        "Posterior cusp of pulmonary valve",
+        "Posterior leaflet of mitral valve",
+        "Posterior papillary muscle of right ventricle",
+        "Right anterior cusp of pulmonary valve",
+        "Septal leaflet of tricuspid valve",
+        "Septal papillary muscle of right ventricle",
+        "Wall of left atrium",
+        "Wall of right atrium"
+      ]
+    },
+    {
+      "group": "vein",
+      "color": "#4a3d78",
+      "texture": "smooth",
+      "gloss": 0.55,
+      "triangles": 2725,
+      "source_parts": [
+        "Coronary sinus",
+        "Great cardiac vein",
+        "Right marginal vein",
+        "Small cardiac vein"
+      ]
+    },
+    {
+      "group": "vessel",
+      "color": "#b53a40",
+      "texture": "smooth",
+      "gloss": 0.55,
+      "triangles": 2811,
+      "source_parts": [
+        "Anterior cusp of aortic valve",
+        "Left posterior cusp of aortic valve",
+        "Right posterior cusp of aortic valve"
+      ]
+    }
+  ]
+}

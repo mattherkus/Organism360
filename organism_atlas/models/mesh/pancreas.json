@@ -1,0 +1,38 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в pancreas.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "pancreas.npz",
+  "groups": [
+    {
+      "group": "artery",
+      "color": "#d24a3c",
+      "texture": "smooth",
+      "gloss": 0.6,
+      "triangles": 2371,
+      "source_parts": [
+        "Splenic artery"
+      ]
+    },
+    {
+      "group": "duodenum",
+      "color": "#ee9f8a",
+      "texture": "bowel",
+      "gloss": 0.45,
+      "triangles": 7392,
+      "source_parts": [
+        "Duodenum"
+      ]
+    },
+    {
+      "group": "gland",
+      "color": "#ecb688",
+      "texture": "gland",
+      "gloss": 0.4,
+      "triangles": 8868,
+      "source_parts": [
+        "Pancreas",
+        "Parenchyma of pancreas"
+      ]
+    }
+  ]
+}

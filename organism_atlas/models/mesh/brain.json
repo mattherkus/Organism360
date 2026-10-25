@@ -1,0 +1,79 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в brain.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "brain.npz",
+  "groups": [
+    {
+      "group": "brainstem",
+      "color": "#d8aeb2",
+      "texture": "smooth",
+      "gloss": 0.3,
+      "triangles": 2211,
+      "source_parts": [
+        "Medulla oblongata",
+        "Midbrain",
+        "Pons"
+      ]
+    },
+    {
+      "group": "cerebellum",
+      "color": "#cf8d9c",
+      "texture": "folia",
+      "gloss": 0.28,
+      "triangles": 3823,
+      "source_parts": [
+        "Cerebellum"
+      ]
+    },
+    {
+      "group": "cortex",
+      "color": "#e2a3ae",
+      "texture": "gyri",
+      "gloss": 0.3,
+      "triangles": 58503,
+      "source_parts": [
+        "Fourth ventricle",
+        "Hypothalamus",
+        "Left angular gyrus",
+        "Left cingulate gyrus",
+        "Left fusiform gyrus",
+        "Left hippocampus",
+        "Left inferior frontal gyrus",
+        "Left inferior temporal gyrus",
+        "Left insula",
+        "Left internal capsule",
+        "Left lateral ventricle",
+        "Left middle frontal gyrus",
+        "Left middle temporal gyrus",
+        "Left occipital lobe",
+        "Left parahippocampal gyrus",
+        "Left postcentral gyrus",
+        "Left precentral gyrus",
+        "Left superior frontal gyrus",
+        "Left superior parietal lobule",
+        "Left supramarginal gyrus",
+        "Right angular gyrus",
+        "Right cingulate gyrus",
+        "Right fusiform gyrus",
+        "Right hippocampus",
+        "Right inferior frontal gyrus",
+        "Right inferior temporal gyrus",
+        "Right insula",
+        "Right internal capsule",
+        "Right lateral ventricle",
+        "Right middle frontal gyrus",
+        "Right middle temporal gyrus",
+        "Right occipital lobe",
+        "Right parahippocampal gyrus",
+        "Right postcentral gyrus",
+        "Right precentral gyrus",
+        "Right superior frontal gyrus",
+        "Right superior parietal lobule",
+        "Right supramarginal gyrus",
+        "Third ventricle",
+        "White matter of left cerebral hemisphere",
+        "White matter of right cerebral hemisphere"
+      ]
+    }
+  ]
+}

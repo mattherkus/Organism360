@@ -1,0 +1,20 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [
+        -0.3,
+        -0.55,
+        -0.75
+      ],
+      "radii": [
+        0.26,
+        0.26,
+        0.42
+      ],
+      "color": "#4f8a3c",
+      "texture": "smooth",
+      "gloss": 0.5
+    }
+  ]
+}

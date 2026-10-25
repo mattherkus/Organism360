@@ -1,0 +1,43 @@
+{
+  "_comment": "Только латинские названия органов. Остальные тексты берутся из языка, выбранного перед латынью.",
+  "language": "Latina",
+  "short": "LA",
+  "organs": {
+    "lungs": {
+      "name": "Pulmones"
+    },
+    "liver": {
+      "name": "Hepar"
+    },
+    "gallbladder": {
+      "name": "Vesica biliaris"
+    },
+    "stomach": {
+      "name": "Gaster (Ventriculus)"
+    },
+    "intestines": {
+      "name": "Intestinum"
+    },
+    "kidneys": {
+      "name": "Renes"
+    },
+    "heart": {
+      "name": "Cor"
+    },
+    "brain": {
+      "name": "Encephalon"
+    },
+    "thyroid": {
+      "name": "Glandula thyroidea"
+    },
+    "spleen": {
+      "name": "Lien (Splen)"
+    },
+    "pancreas": {
+      "name": "Pancreas"
+    },
+    "bladder": {
+      "name": "Vesica urinaria"
+    }
+  }
+}

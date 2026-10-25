@@ -1,0 +1,106 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Фильтрует кровь, обезвреживает вредные вещества и вырабатывает желчь.",
+      "en": "Filters the blood, neutralises harmful substances and produces bile."
+    },
+    {
+      "level": "easy",
+      "ru": "Вырабатывает желчь, которая помогает переваривать жиры.",
+      "en": "Makes bile, which helps digest fats."
+    },
+    {
+      "level": "easy",
+      "ru": "Обезвреживает алкоголь и многие лекарства.",
+      "en": "Breaks down alcohol and many medicines."
+    },
+    {
+      "level": "medium",
+      "ru": "Правое подреберье под диафрагмой; левая доля заходит за середину тела",
+      "en": "Upper right abdomen under the diaphragm; the left lobe crosses the midline"
+    },
+    {
+      "level": "medium",
+      "ru": "Самая крупная железа тела",
+      "en": "The largest gland in the body"
+    },
+    {
+      "level": "medium",
+      "ru": "Умеет восстанавливаться после повреждений",
+      "en": "Can regrow after damage"
+    },
+    {
+      "level": "medium",
+      "ru": "Хранит запас энергии в виде гликогена",
+      "en": "Stores energy as glycogen"
+    },
+    {
+      "level": "medium",
+      "ru": "Что вырабатывает печень, чтобы переваривать жиры?",
+      "en": "What does the liver make to help digest fats?",
+      "answer": {
+        "ru": "Желчь",
+        "en": "Bile"
+      },
+      "wrong": {
+        "ru": [
+          "Инсулин",
+          "Слюну",
+          "Соляную кислоту"
+        ],
+        "en": [
+          "Insulin",
+          "Saliva",
+          "Hydrochloric acid"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Весит около 1,5 кг: это самый тяжёлый внутренний орган",
+      "en": "Weighs about 1.5 kg, making it the heaviest internal organ"
+    },
+    {
+      "level": "hard",
+      "ru": "Через неё проходит около 1,5 л крови в минуту",
+      "en": "About 1.5 L of blood passes through it every minute"
+    },
+    {
+      "level": "hard",
+      "ru": "За сутки вырабатывает 0,5–1 л желчи",
+      "en": "It makes 0.5–1 L of bile a day"
+    },
+    {
+      "level": "hard",
+      "ru": "Может восстановиться, даже если удалить до двух третей её массы",
+      "en": "It can grow back even after up to two thirds of it is removed"
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько примерно весит печень взрослого?",
+      "en": "About how much does an adult liver weigh?",
+      "answer": {
+        "ru": "1,5 кг",
+        "en": "1.5 kg"
+      },
+      "wrong": {
+        "ru": [
+          "300 г",
+          "700 г",
+          "3 кг",
+          "5 кг",
+          "100 г"
+        ],
+        "en": [
+          "300 g",
+          "700 g",
+          "3 kg",
+          "5 kg",
+          "100 g"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в lungs.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "lungs.npz",
+  "groups": [
+    {
+      "group": "airway",
+      "color": "#dfe2e0",
+      "texture": "smooth",
+      "gloss": 0.4,
+      "triangles": 1302,
+      "source_parts": [
+        "Trachea"
+      ]
+    },
+    {
+      "group": "lung",
+      "color": "#e08a9a",
+      "texture": "lung",
+      "gloss": 0.22,
+      "triangles": 39805,
+      "source_parts": [
+        "Left lung surface (reconstructed)",
+        "Right lung surface (reconstructed)"
+      ]
+    }
+  ]
+}

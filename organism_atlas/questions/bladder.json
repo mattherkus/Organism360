@@ -1,0 +1,102 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Накапливает мочу, которая приходит из почек, и выводит её из организма.",
+      "en": "Stores urine coming from the kidneys and empties it out of the body."
+    },
+    {
+      "level": "easy",
+      "ru": "Хранит мочу до похода в туалет.",
+      "en": "Stores urine until you go to the toilet."
+    },
+    {
+      "level": "easy",
+      "ru": "Растягивается, когда наполняется, и сжимается, когда опорожняется.",
+      "en": "Stretches as it fills and squeezes as it empties."
+    },
+    {
+      "level": "easy",
+      "ru": "Откуда моча попадает в мочевой пузырь?",
+      "en": "Where does urine come from before the bladder?",
+      "answer": {
+        "ru": "Из почек",
+        "en": "From the kidneys"
+      },
+      "wrong": {
+        "ru": [
+          "Из печени",
+          "Из желудка",
+          "Из лёгких"
+        ],
+        "en": [
+          "From the liver",
+          "From the stomach",
+          "From the lungs"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Малый таз, сразу за лобковым сочленением",
+      "en": "In the pelvis, just behind the pubic symphysis"
+    },
+    {
+      "level": "medium",
+      "ru": "Вмещает около 0,4–0,6 л",
+      "en": "Holds about 0.4–0.6 L"
+    },
+    {
+      "level": "medium",
+      "ru": "Желание помочиться появляется примерно при 200–300 мл",
+      "en": "The urge to pee starts at about 200–300 mL"
+    },
+    {
+      "level": "medium",
+      "ru": "Мышечная стенка растягивается, как воздушный шар",
+      "en": "Its muscular wall stretches like a balloon"
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько мочи примерно вмещает мочевой пузырь?",
+      "en": "About how much urine does the bladder hold?",
+      "answer": {
+        "ru": "0,4–0,6 л",
+        "en": "0.4–0.6 L"
+      },
+      "wrong": {
+        "ru": [
+          "50 мл",
+          "2 л",
+          "5 л"
+        ],
+        "en": [
+          "50 mL",
+          "2 L",
+          "5 L"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Изнутри выстлан особым эпителием, который растягивается без разрывов",
+      "en": "It is lined with a special epithelium that stretches without tearing"
+    },
+    {
+      "level": "hard",
+      "ru": "Мочеточники проталкивают мочу волнами несколько раз в минуту",
+      "en": "The ureters push urine along in waves several times a minute"
+    },
+    {
+      "level": "hard",
+      "ru": "Обычно человек мочится 4–8 раз в сутки",
+      "en": "People usually pee 4–8 times a day"
+    },
+    {
+      "level": "hard",
+      "ru": "Мышцу стенки называют детрузором, от латинского «выталкивать»",
+      "en": "The muscle of its wall is called the detrusor, from Latin for “to push out”"
+    }
+  ]
+}

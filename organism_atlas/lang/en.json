@@ -1,0 +1,369 @@
+{
+  "_comment": "Words in curly braces, like {name}, are filled in by the program: keep them as they are.",
+  "language": "English",
+  "short": "EN",
+  "ui": {
+    "app_title": "Body Atlas",
+    "hint": "Hover over an organ and click it.",
+    "loading": "Drawing the body…",
+    "build_error": "Could not build the diagram:\n{error}",
+    "mode_study": "Explore",
+    "mode_find": "Find the organ",
+    "mode_name": "Name the organ",
+    "pick_title": "Pick an organ",
+    "pick_hint": "Click any organ on the diagram.",
+    "card_location": "Location",
+    "card_facts": "Facts",
+    "card_diseases": "Common diseases",
+    "card_fact_of_day": "Fact of the day",
+    "card_3d": "View in 3D",
+    "quiz_status": "Quiz: {mode}",
+    "quiz_done": "Done! Mistakes: {errors}. Press “{mode}” to play again.",
+    "progress": "Question {n} of {total}  ·  Mistakes: {errors}",
+    "find_title": "Find: {name}",
+    "find_hint": "Click this organ on the diagram.",
+    "name_title": "What is the highlighted organ?",
+    "name_hint": "Pick an answer or press 1–{n}.",
+    "answer_right": "Correct! It's the {name}.",
+    "answer_wrong": "No, that's the {name}. Try again.",
+    "verdict_perfect": "Excellent! Not a single mistake.",
+    "verdict_good": "Good result!",
+    "verdict_ok": "Not bad, but some things are worth revisiting.",
+    "verdict_bad": "Worth going over the material again.",
+    "results_title": "Quiz results",
+    "results_heading": "Quiz complete",
+    "results_score": "{right} of {total}",
+    "results_first_try": "on the first try ({percent}%)",
+    "results_errors": "Total mistakes: {errors}",
+    "results_missed": "Review: {names}",
+    "results_again": "Play again",
+    "results_close": "Close",
+    "viewer_title": "{name} — 3D",
+    "viewer_hint": "Drag to rotate. Scroll to zoom, double-click to reset the view.",
+    "viewer_credit": "Anatomical model: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
+    "settings_button": "Settings",
+    "settings_title": "Settings",
+    "settings_theme": "Theme",
+    "theme_dark": "Dark",
+    "theme_light": "Light",
+    "theme_contrast": "High contrast",
+    "settings_quality": "3D quality",
+    "quality_low": "Low",
+    "quality_medium": "Medium",
+    "quality_high": "High",
+    "settings_quality_hint": "Higher quality gives smoother model edges but takes longer to render the final frame.",
+    "settings_scale": "Interface scale",
+    "settings_scale_hint": "A new scale takes effect after restarting the app.",
+    "settings_scale_pending": "{percent}% selected: restart the app to apply it.",
+    "settings_language": "Language",
+    "settings_close": "Done",
+    "mode_facts": "Guess from a fact",
+    "facts_hint": "Which organ is it? Pick an answer or press 1–{n}.",
+    "time_up": "Time's up! It was the {name}.",
+    "progress_timer": "⏱ {sec} s",
+    "setup_status": "Set up the quiz and press “Start” (or Enter).",
+    "setup_desc_find": "You get an organ's name: find it on the diagram and click it.",
+    "setup_desc_name": "An organ is highlighted on the diagram: pick its name.",
+    "setup_desc_facts": "You get a function, a location or a fact: guess which organ it is about.",
+    "setup_level": "Difficulty",
+    "level_easy": "Easy",
+    "level_medium": "Medium",
+    "level_hard": "Hard",
+    "level_hint_easy": "3 answers, highlight under the cursor, questions about functions.",
+    "level_hint_medium": "4 answers, highlight under the cursor, functions, location and facts.",
+    "level_hint_hard": "6 answers, no highlight under the cursor, little-known facts.",
+    "setup_timer": "Time per question",
+    "timer_off": "No timer",
+    "timer_sec": "{sec} s",
+    "setup_set": "Questions",
+    "set_all": "All organs ({n})",
+    "set_missed": "Last game's mistakes ({n})",
+    "set_due": "Due for review ({n})",
+    "setup_set_hint": "A right answer puts the review off by 1, 2, 4, 8, 16 days; a mistake brings it back today.",
+    "setup_start": "Start",
+    "setup_history": "Recent games",
+    "history_empty": "Your results will appear here.",
+    "history_line": "{date}  ·  {level}  ·  {right} of {total}  ·  {time}",
+    "results_time": "Time: {time}  ·  Difficulty: {level}",
+    "results_timeouts": "Ran out of time: {n}",
+    "results_due": "Organs due for review today: {n}. Choose “Due for review” before your next game.",
+    "results_retry": "Retry mistakes",
+    "custom_hint": "Pick an answer or press 1–{n}.",
+    "time_up_answer": "Time's up! The right answer was: {answer}."
+  },
+  "organs": {
+    "lungs": {
+      "name": "Lungs",
+      "desc": "Handle gas exchange: take in oxygen and release carbon dioxide.",
+      "location": "Chest cavity on both sides of the heart; they rest on the diaphragm",
+      "facts": [
+        "Contain hundreds of millions of alveoli",
+        "The right lung has three lobes, the left has two",
+        "An adult takes 12–20 breaths per minute"
+      ],
+      "diseases": [
+        "Pneumonia",
+        "Asthma",
+        "COPD",
+        "Lung cancer"
+      ],
+      "daily": [
+        "The right lung is larger than the left: the heart takes up room on the left",
+        "The alveoli add up to 50–75 m², about the floor area of a small flat",
+        "At rest, each breath moves about 0.5 L of air",
+        "Lungs have no muscles: the diaphragm and the muscles between the ribs stretch them",
+        "The left lung has a cardiac notch, a hollow that makes room for the heart"
+      ]
+    },
+    "liver": {
+      "name": "Liver",
+      "desc": "Filters the blood, neutralises harmful substances and produces bile.",
+      "location": "Upper right abdomen under the diaphragm; the left lobe crosses the midline",
+      "facts": [
+        "The largest gland in the body",
+        "Can regrow after damage",
+        "Stores energy as glycogen"
+      ],
+      "diseases": [
+        "Viral hepatitis",
+        "Fatty liver disease",
+        "Cirrhosis",
+        "Liver cancer"
+      ],
+      "daily": [
+        "Weighs about 1.5 kg, making it the heaviest internal organ",
+        "About 1.5 L of blood passes through it every minute",
+        "It gets blood from two sources: the hepatic artery and the portal vein",
+        "It makes 0.5–1 L of bile a day",
+        "It can grow back even after up to two thirds of it is removed"
+      ]
+    },
+    "gallbladder": {
+      "name": "Gallbladder",
+      "desc": "Stores bile made by the liver and releases it into the intestine when you eat.",
+      "location": "Under the liver on the right, in a hollow on its lower surface; its tip sticks out below the liver's edge",
+      "facts": [
+        "Shaped like a small pear",
+        "Holds about 30–50 mL of bile",
+        "After a fatty meal it contracts and pushes bile into the duodenum"
+      ],
+      "diseases": [
+        "Gallstones",
+        "Cholecystitis"
+      ],
+      "daily": [
+        "Bile gets thicker inside it as water is absorbed",
+        "Bile breaks fat into tiny droplets, so enzymes can digest it more easily",
+        "You can live without it: bile then flows straight into the intestine"
+      ],
+      "reviewed": false
+    },
+    "stomach": {
+      "name": "Stomach",
+      "desc": "Churns food with gastric juice and starts digesting proteins.",
+      "location": "Upper left abdomen, below the diaphragm and the liver",
+      "facts": [
+        "Holds about 1–1.5 L",
+        "Its hydrochloric acid is strong, and mucus protects the stomach walls",
+        "Food stays in it for 2–4 hours"
+      ],
+      "diseases": [
+        "Gastritis",
+        "Peptic ulcer",
+        "Acid reflux (GERD)",
+        "Stomach cancer"
+      ],
+      "daily": [
+        "The surface layer of its lining renews every 3–5 days",
+        "An empty stomach holds about 50 mL and can stretch dozens of times larger",
+        "Helicobacter pylori, the bacterium behind ulcers, was only discovered in 1982",
+        "A rumbling tummy is gas and fluid moving as the stomach walls contract",
+        "It produces about 2 L of gastric juice a day"
+      ]
+    },
+    "intestines": {
+      "name": "Intestines",
+      "desc": "Finish digestion and absorb nutrients and water.",
+      "location": "Abdominal cavity: the small intestine in the centre, framed by the large intestine",
+      "facts": [
+        "The small intestine is about 6 m long",
+        "The large intestine is about 1.5 m",
+        "Trillions of helpful bacteria live here"
+      ],
+      "diseases": [
+        "Irritable bowel syndrome",
+        "Crohn's disease and ulcerative colitis",
+        "Appendicitis",
+        "Colorectal cancer"
+      ],
+      "daily": [
+        "Villi and folds expand the absorbing surface to about 30 m²",
+        "The gut wall holds about 500 million neurons, which is why it is called the “second brain”",
+        "About 90% of the body's serotonin is made in the gut",
+        "The cells of the lining are fully replaced every 3–5 days",
+        "One hypothesis says the appendix keeps a reserve of helpful bacteria"
+      ]
+    },
+    "kidneys": {
+      "name": "Kidneys",
+      "desc": "Clean waste from the blood and regulate the body's water balance.",
+      "location": "Against the back wall of the abdomen on either side of the spine, at the level of the lower ribs",
+      "facts": [
+        "A pair of organs, each about the size of a fist",
+        "About 1.2 L of blood passes through them every minute",
+        "They make urine, which flows down the ureters into the bladder"
+      ],
+      "diseases": [
+        "Kidney stones",
+        "Pyelonephritis",
+        "Glomerulonephritis",
+        "Chronic kidney disease"
+      ],
+      "daily": [
+        "They filter about 180 L of primary urine a day, yet only about 1.5 L leaves the body",
+        "Each kidney contains about a million nephrons, tiny filters",
+        "The right kidney sits slightly lower than the left: the liver presses on it from above",
+        "They make erythropoietin, a hormone that triggers red blood cell production",
+        "A person can live a full life with one healthy kidney"
+      ]
+    },
+    "heart": {
+      "name": "Heart",
+      "desc": "A muscular pump that drives blood through the vessels.",
+      "location": "Chest cavity between the lungs, about two thirds of it left of the midline",
+      "facts": [
+        "Beats about 100,000 times a day",
+        "Roughly the size of a fist",
+        "Has four chambers: two atria and two ventricles"
+      ],
+      "diseases": [
+        "Coronary heart disease",
+        "High blood pressure",
+        "Arrhythmias",
+        "Heart failure"
+      ],
+      "daily": [
+        "At rest it pumps about 5 L of blood a minute",
+        "Its rhythm comes from a built-in pacemaker, the sinus node",
+        "The “lub-dub” sound is the valves snapping shut",
+        "Adult heart muscle cells renew very slowly, about 1% a year",
+        "In an embryo the heart starts beating around the third to fourth week"
+      ]
+    },
+    "brain": {
+      "name": "Brain",
+      "desc": "Controls the whole body: thinking, memory, movement and the senses.",
+      "location": "Inside the skull; it joins the spinal cord through the foramen magnum",
+      "facts": [
+        "Weighs about 1.4 kg",
+        "Contains roughly 86 billion neurons",
+        "Uses about 20% of the body's energy"
+      ],
+      "diseases": [
+        "Stroke",
+        "Migraine",
+        "Epilepsy",
+        "Alzheimer's disease"
+      ],
+      "daily": [
+        "The brain itself feels no pain: its tissue has no pain receptors",
+        "About 60% of the brain's dry mass is fat",
+        "The brain floats in cerebrospinal fluid, which cushions blows",
+        "The left hemisphere controls the right side of the body, and vice versa",
+        "During sleep the brain clears out waste products more actively"
+      ]
+    },
+    "thyroid": {
+      "name": "Thyroid gland",
+      "desc": "Makes hormones that control metabolism, growth and body heat.",
+      "location": "Front of the neck, below the thyroid cartilage of the larynx",
+      "facts": [
+        "Shaped like a butterfly, it sits on the windpipe below the larynx",
+        "Weighs only 15–30 g",
+        "It needs iodine from food to work"
+      ],
+      "diseases": [
+        "Hypothyroidism",
+        "Hyperthyroidism (Graves' disease)",
+        "Hashimoto's thyroiditis",
+        "Thyroid nodules"
+      ],
+      "daily": [
+        "It is named after the nearby thyroid cartilage, which looks like a shield",
+        "Iodised salt was introduced to fight goitre caused by iodine deficiency",
+        "The hormones T3 and T4 are named after the number of iodine atoms in each molecule",
+        "It makes calcitonin, which lowers calcium levels in the blood",
+        "Thyroid disorders are several times more common in women than in men"
+      ]
+    },
+    "spleen": {
+      "name": "Spleen",
+      "desc": "Filters the blood, removes old red blood cells and supports the immune system.",
+      "location": "Upper left abdomen behind the stomach, level with ribs 9–11",
+      "facts": [
+        "Weighs about 150–200 g",
+        "Keeps a reserve of blood and platelets",
+        "You can live without it: the liver and lymph nodes take over part of its work"
+      ],
+      "diseases": [
+        "Enlarged spleen (splenomegaly)",
+        "Rupture after an abdominal injury",
+        "Splenic infarction",
+        "Hypersplenism"
+      ],
+      "daily": [
+        "About 12 cm long, roughly the size of a fist",
+        "The white pulp works for immunity, the red pulp filters the blood",
+        "Before birth, the spleen makes blood cells",
+        "With mononucleosis, contact sports are off limits: an enlarged spleen can rupture",
+        "About one in ten people has an accessory spleen, a small lobe next to the main one"
+      ]
+    },
+    "pancreas": {
+      "name": "Pancreas",
+      "desc": "Releases digestive enzymes and the hormones insulin and glucagon.",
+      "location": "Behind the stomach, across the abdomen: the head by the duodenum, the tail by the spleen",
+      "facts": [
+        "Releases 1–1.5 L of digestive juice a day",
+        "The islets of Langerhans keep track of blood sugar",
+        "About 15–20 cm long, it lies behind the stomach"
+      ],
+      "diseases": [
+        "Pancreatitis",
+        "Diabetes",
+        "Pancreatic cancer",
+        "Cystic fibrosis"
+      ],
+      "daily": [
+        "The name comes from Greek for “all flesh”",
+        "The islets of Langerhans make up only 1–2% of its mass",
+        "The gland holds 1 to 3 million islets of Langerhans",
+        "Insulin was isolated in 1921, and diabetes stopped being a death sentence",
+        "Its juice is alkaline: it neutralises the acid coming from the stomach"
+      ]
+    },
+    "bladder": {
+      "name": "Urinary bladder",
+      "desc": "Stores urine coming from the kidneys and empties it out of the body.",
+      "location": "In the pelvis, just behind the pubic symphysis",
+      "facts": [
+        "Holds about 0.4–0.6 L",
+        "The urge to urinate starts at about 200–300 mL",
+        "Its muscular wall stretches like a balloon"
+      ],
+      "diseases": [
+        "Cystitis",
+        "Overactive bladder",
+        "Bladder stones",
+        "Urinary incontinence"
+      ],
+      "daily": [
+        "It is lined with a special epithelium that stretches without tearing",
+        "The ureters push urine along in waves several times a minute",
+        "People usually urinate 4–8 times a day",
+        "The muscle of its wall is called the detrusor, from Latin for “to push out”",
+        "A full bladder rises above the pubic bone and can be felt"
+      ]
+    }
+  }
+}

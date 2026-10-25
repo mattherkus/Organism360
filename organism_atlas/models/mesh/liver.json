@@ -1,0 +1,37 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в liver.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "liver.npz",
+  "groups": [
+    {
+      "group": "parenchyma",
+      "color": "#7b2d26",
+      "texture": "liver",
+      "gloss": 0.55,
+      "triangles": 45206,
+      "source_parts": [
+        "Caudate lobe of liver",
+        "Hepatovenous segment II",
+        "Hepatovenous segment III",
+        "Hepatovenous segment IV",
+        "Hepatovenous segment V",
+        "Hepatovenous segment VI",
+        "Hepatovenous segment VII",
+        "Hepatovenous segment VIII"
+      ]
+    },
+    {
+      "group": "vein",
+      "color": "#5a4a8c",
+      "texture": "smooth",
+      "gloss": 0.5,
+      "triangles": 5566,
+      "source_parts": [
+        "Anterior inferior segmental tributary of middle hepatic vein",
+        "Left hepatic vein",
+        "Left portal vein",
+        "Right portal vein"
+      ]
+    }
+  ]
+}

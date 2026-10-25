@@ -1,0 +1,49 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в intestines.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "intestines.npz",
+  "groups": [
+    {
+      "group": "colon",
+      "color": "#d27a50",
+      "texture": "bowel",
+      "gloss": 0.4,
+      "triangles": 14049,
+      "source_parts": [
+        "Ascending colon",
+        "Descending colon",
+        "Ileocecal junction",
+        "Rectum",
+        "Transverse colon"
+      ]
+    },
+    {
+      "group": "small",
+      "color": "#ee9f8a",
+      "texture": "bowel",
+      "gloss": 0.5,
+      "triangles": 19754,
+      "source_parts": [
+        "Distal part of ileum",
+        "Distal part of jejunum",
+        "Duodenum",
+        "Middle part of ileum",
+        "Middle part of jejunum",
+        "Proximal part of ileum",
+        "Proximal part of jejunum"
+      ]
+    },
+    {
+      "group": "taenia",
+      "color": "#c98a5c",
+      "texture": "bowel",
+      "gloss": 0.4,
+      "triangles": 13397,
+      "source_parts": [
+        "Taenia libera",
+        "Taenia mesocolica",
+        "Taenia omentalis"
+      ]
+    }
+  ]
+}

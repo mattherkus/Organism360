@@ -1,0 +1,40 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [-0.72, 0, 0],
+      "radii": [0.82, 1.2, 1.1],
+      "color": "#e8a0b4",
+      "texture": "gyri",
+      "gloss": 0.3
+    },
+    {
+      "type": "ellipsoid",
+      "center": [0.72, 0, 0],
+      "radii": [0.82, 1.2, 1.1],
+      "color": "#e8a0b4",
+      "texture": "gyri",
+      "gloss": 0.3
+    },
+    {
+      "type": "ellipsoid",
+      "center": [0, -0.9, -0.85],
+      "radii": [0.7, 0.6, 0.45],
+      "color": "#c9788f",
+      "texture": "folia",
+      "gloss": 0.25
+    },
+    {
+      "type": "tube",
+      "path": [
+        [0, -0.3, -0.85],
+        [0, -0.3, -1.4],
+        [0, -0.3, -2.0]
+      ],
+      "radius": [0.28, 0.24, 0.2],
+      "color": "#d9b0b8",
+      "texture": "smooth",
+      "gloss": 0.3
+    }
+  ]
+}

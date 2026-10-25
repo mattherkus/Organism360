@@ -1,0 +1,9 @@
+previews/
+references/scratch/
+.cache/
+__pycache__/
+.venv/
+*.pyc
+.idea/workspace.xml
+.idea/claudeCodeTabState.xml
+.idea/shelf/

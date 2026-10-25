@@ -1,0 +1,46 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в kidneys.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "kidneys.npz",
+  "groups": [
+    {
+      "group": "artery",
+      "color": "#d24a3c",
+      "texture": "smooth",
+      "gloss": 0.6,
+      "triangles": 2873,
+      "source_parts": [
+        "Left inferior suprarenal artery",
+        "Left renal artery",
+        "Right inferior suprarenal artery",
+        "Right renal artery",
+        "Trunk of left renal artery",
+        "Trunk of right renal artery",
+        "Ureteric segment of left renal artery",
+        "Ureteric segment of right renal artery"
+      ]
+    },
+    {
+      "group": "kidney",
+      "color": "#a2384a",
+      "texture": "smooth",
+      "gloss": 0.5,
+      "triangles": 5094,
+      "source_parts": [
+        "Left kidney",
+        "Right kidney"
+      ]
+    },
+    {
+      "group": "ureter",
+      "color": "#e6d28a",
+      "texture": "smooth",
+      "gloss": 0.45,
+      "triangles": 3464,
+      "source_parts": [
+        "Left ureter",
+        "Right ureter"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Выделяет ферменты для переваривания пищи и гормоны инсулин и глюкагон.",
+      "en": "Releases digestive enzymes and the hormones insulin and glucagon."
+    },
+    {
+      "level": "easy",
+      "ru": "Вырабатывает инсулин, который снижает сахар в крови.",
+      "en": "Makes insulin, which lowers blood sugar."
+    },
+    {
+      "level": "easy",
+      "ru": "Выделяет сок с ферментами в двенадцатиперстную кишку.",
+      "en": "Releases enzyme-rich juice into the duodenum."
+    },
+    {
+      "level": "easy",
+      "ru": "Какой гормон поджелудочной железы снижает сахар в крови?",
+      "en": "Which pancreatic hormone lowers blood sugar?",
+      "answer": {
+        "ru": "Инсулин",
+        "en": "Insulin"
+      },
+      "wrong": {
+        "ru": [
+          "Адреналин",
+          "Глюкагон",
+          "Мелатонин"
+        ],
+        "en": [
+          "Adrenaline",
+          "Glucagon",
+          "Melatonin"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "За желудком поперёк живота: головка у двенадцатиперстной кишки, хвост у селезёнки",
+      "en": "Behind the stomach, across the abdomen: the head by the duodenum, the tail by the spleen"
+    },
+    {
+      "level": "medium",
+      "ru": "За сутки выделяет 1–1,5 л пищеварительного сока",
+      "en": "Releases 1–1.5 L of digestive juice a day"
+    },
+    {
+      "level": "medium",
+      "ru": "Островки Лангерханса следят за уровнем сахара в крови",
+      "en": "The islets of Langerhans keep track of blood sugar"
+    },
+    {
+      "level": "medium",
+      "ru": "Длина около 15–20 см, лежит за желудком",
+      "en": "About 15–20 cm long, it lies behind the stomach"
+    },
+    {
+      "level": "medium",
+      "ru": "Куда поджелудочная железа выделяет пищеварительный сок?",
+      "en": "Where does the pancreas release its digestive juice?",
+      "answer": {
+        "ru": "В двенадцатиперстную кишку",
+        "en": "Into the duodenum"
+      },
+      "wrong": {
+        "ru": [
+          "В желудок",
+          "В печень",
+          "В кровь"
+        ],
+        "en": [
+          "Into the stomach",
+          "Into the liver",
+          "Into the blood"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Название с греческого: «вся из мяса»",
+      "en": "The name comes from Greek for “all flesh”"
+    },
+    {
+      "level": "hard",
+      "ru": "Островки Лангерханса составляют лишь 1–2% её массы",
+      "en": "The islets of Langerhans make up only 1–2% of its mass"
+    },
+    {
+      "level": "hard",
+      "ru": "Инсулин выделили в 1921 году, и диабет перестал быть смертным приговором",
+      "en": "Insulin was isolated in 1921, and diabetes stopped being a death sentence"
+    },
+    {
+      "level": "hard",
+      "ru": "Её сок щелочной: он нейтрализует кислоту, пришедшую из желудка",
+      "en": "Its juice is alkaline: it neutralises the acid coming from the stomach"
+    }
+  ]
+}

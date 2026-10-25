@@ -1,0 +1,97 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Вырабатывает гормоны, которые управляют обменом веществ, ростом и теплом тела.",
+      "en": "Makes hormones that control metabolism, growth and body heat."
+    },
+    {
+      "level": "easy",
+      "ru": "Ей нужен йод, чтобы вырабатывать гормоны.",
+      "en": "Needs iodine to make its hormones."
+    },
+    {
+      "level": "easy",
+      "ru": "Маленький орган на шее в форме бабочки.",
+      "en": "A small butterfly-shaped organ in the neck."
+    },
+    {
+      "level": "easy",
+      "ru": "Какой элемент нужен щитовидной железе для работы?",
+      "en": "Which element does the thyroid need to work?",
+      "answer": {
+        "ru": "Йод",
+        "en": "Iodine"
+      },
+      "wrong": {
+        "ru": [
+          "Железо",
+          "Кальций",
+          "Фтор"
+        ],
+        "en": [
+          "Iron",
+          "Calcium",
+          "Fluorine"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Похожа на бабочку и лежит на трахее под гортанью",
+      "en": "Shaped like a butterfly, it sits on the windpipe below the larynx"
+    },
+    {
+      "level": "medium",
+      "ru": "Весит всего 15–30 г",
+      "en": "Weighs only 15–30 g"
+    },
+    {
+      "level": "medium",
+      "ru": "Для работы ей нужен йод из пищи",
+      "en": "It needs iodine from food to work"
+    },
+    {
+      "level": "medium",
+      "ru": "На что похожа щитовидная железа по форме?",
+      "en": "What is the thyroid shaped like?",
+      "answer": {
+        "ru": "На бабочку",
+        "en": "A butterfly"
+      },
+      "wrong": {
+        "ru": [
+          "На боб",
+          "На грушу",
+          "На звезду"
+        ],
+        "en": [
+          "A bean",
+          "A pear",
+          "A star"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Йодированную соль ввели, чтобы бороться с зобом из-за нехватки йода",
+      "en": "Iodised salt was introduced to fight goitre caused by iodine deficiency"
+    },
+    {
+      "level": "hard",
+      "ru": "Гормоны Т3 и Т4 названы по числу атомов йода в молекуле",
+      "en": "The hormones T3 and T4 are named after the number of iodine atoms in each molecule"
+    },
+    {
+      "level": "hard",
+      "ru": "Вырабатывает кальцитонин, который снижает уровень кальция в крови",
+      "en": "It makes calcitonin, which lowers calcium levels in the blood"
+    },
+    {
+      "level": "hard",
+      "ru": "У женщин её болезни встречаются в несколько раз чаще, чем у мужчин",
+      "en": "Its disorders are several times more common in women than in men"
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Завершает переваривание и всасывает питательные вещества и воду.",
+      "en": "Finish digestion and absorb nutrients and water."
+    },
+    {
+      "level": "easy",
+      "ru": "Здесь питательные вещества из пищи всасываются в кровь.",
+      "en": "Here nutrients from food are absorbed into the blood."
+    },
+    {
+      "level": "easy",
+      "ru": "Длинная трубка, по которой пища движется от желудка к выходу.",
+      "en": "A long tube that carries food from the stomach to the exit."
+    },
+    {
+      "level": "easy",
+      "ru": "Что в основном всасывается в толстой кишке?",
+      "en": "What is mostly absorbed in the large intestine?",
+      "answer": {
+        "ru": "Вода",
+        "en": "Water"
+      },
+      "wrong": {
+        "ru": [
+          "Белки",
+          "Кислород",
+          "Желчь"
+        ],
+        "en": [
+          "Proteins",
+          "Oxygen",
+          "Bile"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Брюшная полость: тонкая кишка в центре, толстая обрамляет её рамкой",
+      "en": "Abdominal cavity: a long narrow coiled tube in the centre, framed by a wider one"
+    },
+    {
+      "level": "medium",
+      "ru": "Тонкая кишка длиной около 6 м",
+      "en": "Its narrow part is about 6 m long"
+    },
+    {
+      "level": "medium",
+      "ru": "Толстая кишка около 1,5 м",
+      "en": "Its wide part is about 1.5 m long"
+    },
+    {
+      "level": "medium",
+      "ru": "Здесь живут триллионы полезных бактерий",
+      "en": "Trillions of helpful bacteria live here"
+    },
+    {
+      "level": "medium",
+      "ru": "Какой длины примерно тонкая кишка?",
+      "en": "About how long is the small intestine?",
+      "answer": {
+        "ru": "6 м",
+        "en": "6 m"
+      },
+      "wrong": {
+        "ru": [
+          "60 см",
+          "1,5 м",
+          "20 м",
+          "50 м"
+        ],
+        "en": [
+          "60 cm",
+          "1.5 m",
+          "20 m",
+          "50 m"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Ворсинки и складки увеличивают площадь всасывания примерно до 30 м²",
+      "en": "Villi and folds expand the absorbing surface to about 30 m²"
+    },
+    {
+      "level": "hard",
+      "ru": "Клетки слизистой полностью обновляются за 3–5 дней",
+      "en": "The cells of the lining are fully replaced every 3–5 days"
+    },
+    {
+      "level": "hard",
+      "ru": "По одной из гипотез аппендикс хранит запас полезных бактерий",
+      "en": "One hypothesis says the appendix keeps a reserve of helpful bacteria"
+    }
+  ]
+}

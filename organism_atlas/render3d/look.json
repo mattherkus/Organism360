@@ -1,0 +1,34 @@
+{
+  "_comment": "Настройки вида 3D-просмотра. style: realistic (новый рендер) или classic (как было раньше, резерв). Цвета в hex, направления света заданы относительно камеры: [вправо, вверх, к зрителю].",
+  "style": "realistic",
+  "models": "anatomical",
+  "_models": "anatomical - сетки BodyParts3D (models/mesh/), где они есть; procedural - прежние модели из эллипсоидов и трубок",
+  "exposure": 0.55,
+  "lights": {
+    "key":  {"dir": [-0.50, 0.55, 0.85], "color": "#fff3e6", "intensity": 1.9},
+    "fill": {"dir": [0.85, -0.15, 0.55], "color": "#c9dcff", "intensity": 0.45},
+    "rim":  {"dir": [0.40, 0.60, -0.60], "color": "#cfe3ff", "intensity": 0.8},
+    "sky": "#6f8aa8",
+    "ground": "#3a2a26",
+    "ambient": 0.38
+  },
+  "shadows": {"enabled": true, "map_size": 640, "softness": 2.2, "strength": 0.85},
+  "ao": {"strength": 0.75, "radius": 0.035},
+  "seams": {
+    "_comment": "сглаживание стыков между частями из одинаковой ткани (сердце, печень, пузырь); ширина - доля кадра",
+    "width": 0.022,
+    "textures": ["muscle", "liver"]
+  },
+  "specular": {"f0": 0.028, "gain": 3.0, "env": 1.4},
+  "materials": {
+    "_comment": "roughness - шероховатость сухой/влажной поверхности, wetness - доля влажного блеска, sss - просвечивание (0..1), mottle - пятнистость цвета, veins - сеть мелких сосудов",
+    "smooth": {"roughness": [0.42, 0.15], "wetness": 0.55, "sss": 0.25, "mottle": 0.05, "veins": 0.0},
+    "lung":   {"roughness": [0.60, 0.30], "wetness": 0.45, "sss": 0.55, "mottle": 0.16, "veins": 0.0},
+    "gyri":   {"roughness": [0.55, 0.28], "wetness": 0.60, "sss": 0.50, "mottle": 0.08, "veins": 0.22},
+    "folia":  {"roughness": [0.55, 0.28], "wetness": 0.60, "sss": 0.50, "mottle": 0.08, "veins": 0.14},
+    "liver":  {"roughness": [0.34, 0.09], "wetness": 0.80, "sss": 0.30, "mottle": 0.14, "veins": 0.0},
+    "muscle": {"roughness": [0.40, 0.10], "wetness": 0.75, "sss": 0.55, "mottle": 0.12, "veins": 0.18},
+    "gland":  {"roughness": [0.55, 0.26], "wetness": 0.50, "sss": 0.45, "mottle": 0.10, "veins": 0.0},
+    "bowel":  {"roughness": [0.36, 0.10], "wetness": 0.85, "sss": 0.60, "mottle": 0.10, "veins": 0.22}
+  }
+}

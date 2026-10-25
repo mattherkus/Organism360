@@ -1,0 +1,90 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Фильтрует кровь, убирает старые эритроциты и помогает иммунной системе.",
+      "en": "Filters the blood, removes old red blood cells and supports the immune system."
+    },
+    {
+      "level": "easy",
+      "ru": "Убирает из крови старые красные кровяные клетки.",
+      "en": "Removes old red blood cells from the blood."
+    },
+    {
+      "level": "easy",
+      "ru": "Помогает организму бороться с инфекциями.",
+      "en": "Helps the body fight infections."
+    },
+    {
+      "level": "easy",
+      "ru": "С какой стороны тела находится селезёнка?",
+      "en": "On which side of the body is the spleen?",
+      "answer": {
+        "ru": "Слева",
+        "en": "On the left"
+      },
+      "wrong": {
+        "ru": [
+          "Справа",
+          "Посередине"
+        ],
+        "en": [
+          "On the right",
+          "In the middle"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Левое подреберье за желудком, на уровне IX–XI рёбер",
+      "en": "Upper left abdomen behind the stomach, level with ribs 9–11"
+    },
+    {
+      "level": "medium",
+      "ru": "Весит около 150–200 г",
+      "en": "Weighs about 150–200 g"
+    },
+    {
+      "level": "medium",
+      "ru": "Хранит запас крови и тромбоцитов",
+      "en": "Keeps a reserve of blood and platelets"
+    },
+    {
+      "level": "medium",
+      "ru": "Без неё можно жить: часть её работы берут печень и лимфоузлы",
+      "en": "You can live without it: the liver and lymph nodes take over part of its work"
+    },
+    {
+      "level": "medium",
+      "ru": "Какие старые клетки убирает из крови селезёнка?",
+      "en": "Which old cells does the spleen remove from the blood?",
+      "answer": {
+        "ru": "Эритроциты",
+        "en": "Red blood cells"
+      },
+      "wrong": {
+        "ru": [
+          "Нейроны",
+          "Клетки печени",
+          "Клетки кожи"
+        ],
+        "en": [
+          "Neurons",
+          "Liver cells",
+          "Skin cells"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Длина около 12 см, примерно как у кулака",
+      "en": "About 12 cm long, roughly the size of a fist"
+    },
+    {
+      "level": "hard",
+      "ru": "Белая пульпа отвечает за иммунитет, красная фильтрует кровь",
+      "en": "The white pulp works for immunity, the red pulp filters the blood"
+    }
+  ]
+}

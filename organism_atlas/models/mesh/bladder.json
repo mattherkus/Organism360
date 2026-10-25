@@ -1,0 +1,17 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в bladder.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "bladder.npz",
+  "groups": [
+    {
+      "group": "wall",
+      "color": "#dcae72",
+      "texture": "muscle",
+      "gloss": 0.45,
+      "triangles": 14464,
+      "source_parts": [
+        "Urinary bladder"
+      ]
+    }
+  ]
+}

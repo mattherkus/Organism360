@@ -1,0 +1,76 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [
+        -0.5,
+        0.0,
+        0.0
+      ],
+      "radii": [
+        1.55,
+        1.0,
+        0.8
+      ],
+      "color": "#7b2d26",
+      "texture": "liver",
+      "gloss": 0.55
+    },
+    {
+      "type": "ellipsoid",
+      "center": [
+        1.3,
+        0.1,
+        0.1
+      ],
+      "radii": [
+        1.0,
+        0.72,
+        0.5
+      ],
+      "color": "#86352a",
+      "texture": "liver",
+      "gloss": 0.55
+    },
+    {
+      "type": "ellipsoid",
+      "center": [
+        0.2,
+        0.65,
+        0.35
+      ],
+      "radii": [
+        0.45,
+        0.35,
+        0.32
+      ],
+      "color": "#8a3a2c",
+      "texture": "liver",
+      "gloss": 0.55
+    },
+    {
+      "type": "tube",
+      "path": [
+        [
+          -0.3,
+          -0.5,
+          -0.5
+        ],
+        [
+          -0.1,
+          -0.3,
+          -0.1
+        ],
+        [
+          0.1,
+          0.0,
+          0.1
+        ]
+      ],
+      "radius": 0.05,
+      "color": "#6aa04a",
+      "texture": "smooth",
+      "gloss": 0.4
+    }
+  ]
+}

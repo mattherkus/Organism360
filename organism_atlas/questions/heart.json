@@ -1,0 +1,107 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Мышечный насос, который гоняет кровь по сосудам.",
+      "en": "A muscular pump that drives blood through the vessels."
+    },
+    {
+      "level": "easy",
+      "ru": "Работает без остановки всю жизнь, даже во сне.",
+      "en": "Works non-stop for your whole life, even while you sleep."
+    },
+    {
+      "level": "easy",
+      "ru": "Врач слушает его стетоскопом.",
+      "en": "A doctor listens to it with a stethoscope."
+    },
+    {
+      "level": "easy",
+      "ru": "Какую жидкость перекачивает сердце?",
+      "en": "What fluid does the heart pump?",
+      "answer": {
+        "ru": "Кровь",
+        "en": "Blood"
+      },
+      "wrong": {
+        "ru": [
+          "Лимфу",
+          "Воду",
+          "Желчь"
+        ],
+        "en": [
+          "Lymph",
+          "Water",
+          "Bile"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Грудная полость между лёгкими, на две трети левее середины тела",
+      "en": "Chest cavity between the lungs, about two thirds of it left of the midline"
+    },
+    {
+      "level": "medium",
+      "ru": "Сокращается около 100 000 раз в сутки",
+      "en": "Beats about 100,000 times a day"
+    },
+    {
+      "level": "medium",
+      "ru": "По размеру примерно с кулак",
+      "en": "Roughly the size of a fist"
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько камер у сердца?",
+      "en": "How many chambers does the heart have?",
+      "answer": "4",
+      "wrong": [
+        "2",
+        "3",
+        "6"
+      ]
+    },
+    {
+      "level": "hard",
+      "ru": "В покое перекачивает около 5 л крови в минуту",
+      "en": "At rest it pumps about 5 L of blood a minute"
+    },
+    {
+      "level": "hard",
+      "ru": "Ритм задаёт собственный «генератор», синусовый узел",
+      "en": "Its rhythm comes from a built-in pacemaker, the sinus node"
+    },
+    {
+      "level": "hard",
+      "ru": "Звук «тук-тук»: это хлопают закрывающиеся клапаны",
+      "en": "The “lub-dub” sound is the valves snapping shut"
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько примерно раз сердце сокращается за сутки?",
+      "en": "About how many times does the heart beat in a day?",
+      "answer": {
+        "ru": "100 000",
+        "en": "100,000"
+      },
+      "wrong": {
+        "ru": [
+          "1 000",
+          "10 000",
+          "1 000 000",
+          "10 000 000",
+          "500"
+        ],
+        "en": [
+          "1,000",
+          "10,000",
+          "1,000,000",
+          "10,000,000",
+          "500"
+        ]
+      }
+    }
+  ]
+}

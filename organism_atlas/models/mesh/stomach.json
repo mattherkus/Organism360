@@ -1,0 +1,17 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в stomach.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "stomach.npz",
+  "groups": [
+    {
+      "group": "wall",
+      "color": "#d98c6c",
+      "texture": "muscle",
+      "gloss": 0.45,
+      "triangles": 28960,
+      "source_parts": [
+        "Stomach"
+      ]
+    }
+  ]
+}
