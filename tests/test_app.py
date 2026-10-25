@@ -71,6 +71,7 @@ class AppTests(unittest.TestCase):
         self.app.on_leave(None)
         self.hover_heart()
         self.app.show_all()
+        self.root.after_cancel(self.app.flash_job)          # вспышку гасим сами, не дожидаясь таймера
         self.app.unflash()
         self.root.update()
         self.assertEqual(self.errors, [])
@@ -107,12 +108,12 @@ class AppTests(unittest.TestCase):
         for mode in ("find", "name", "facts"):
             self.app.set_mode(mode)
             self.root.update()
-            self.assertFalse(self.app.panel.winfo_ismapped(), mode)
+            self.assertFalse(self.app.panel_box.winfo_ismapped(), mode)
             self.assertEqual(self.app.c.winfo_rootx(), x, mode)
             self.assertTrue(self.app.ready(), mode)
         self.app.set_mode("study")
         self.root.update()
-        self.assertTrue(self.app.panel.winfo_ismapped())
+        self.assertTrue(self.app.panel_box.winfo_ismapped())
         self.assertEqual(self.app.c.winfo_rootx(), x)
         self.assertEqual(self.errors, [])
 
@@ -127,6 +128,28 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.atlas.Z, 0.6)
         self.hover_heart()
         self.assertEqual(self.errors, [])
+
+
+class ColorGroupTests(unittest.TestCase):
+    """органы в панели слоёв идут группами по цвету"""
+
+    def test_families(self):
+        from organism_atlas.ui.widgets import color_family
+        self.assertEqual(color_family("#ea9fb6")[0], 0)          # розовый
+        self.assertEqual(color_family("#c8323a")[0], 1)          # красный
+        self.assertEqual(color_family("#7b2f55")[0], 2)          # тёмно-красный
+        self.assertEqual(color_family("#e8a77f")[0], 3)          # персиковый
+        self.assertEqual(color_family("#5fa13f")[0], 4)          # зелёный
+        self.assertEqual(color_family("#3060c0")[0], 5)          # синий - прочие
+
+    def test_order_keeps_families_together(self):
+        from organism_atlas.ui.widgets import by_color, color_family
+        order = by_color(ORGANS)
+        self.assertEqual(sorted(order), sorted(ORGANS))
+        fams = [color_family(ORGANS[k]["color"])[0] for k in order]
+        self.assertEqual(fams, sorted(fams))
+        self.assertEqual(order[-1], "gallbladder")
+        self.assertLess(abs(order.index("lungs") - order.index("brain")), 2)
 
 
 if __name__ == "__main__":

@@ -121,8 +121,9 @@ class RepaintTests(unittest.TestCase):
             self.assertIn("Settings", a.settings_button.cget("text"))
             a.set_quality("high")
             self.assertEqual(viewer3d._quality, "high")
+            from organism_atlas.ui.widgets import RoundButton
             buttons = [b for row in win.body.winfo_children() for b in row.winfo_children()
-                       if isinstance(b, tk.Button)]
+                       if isinstance(b, RoundButton)]
             next(b for b in buttons if b.cget("text") == "125%").invoke()    # как щелчок в окне
             self.assertEqual(a.ui_scale, 1.0)                 # сам масштаб - после перезапуска
             texts = [w.cget("text") for w in win.body.winfo_children() if isinstance(w, tk.Label)]

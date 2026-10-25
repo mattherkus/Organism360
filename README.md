@@ -119,7 +119,8 @@ igra/
 | Варианты таймера | `settings.py` (`CHOICES["quiz_timer"]`) |
 | Подсветка при наведении, цвета «верно/ошибка» | `atlas.py` (`Atlas._make`) |
 | Масштаб на экранах с DPI, шаг и пределы масштаба схемы | `ui/scaling.py` (`ZOOM_STEP`, `ZOOM_MIN`, `ZOOM_MAX`) |
-| Панель слоёв | `ui/widgets.py` (`fill_layers`), `ui/app.py` (`render_layers`) |
+| Панель слоёв, порядок органов в ней (группы по цвету) | `ui/widgets.py` (`fill_layers`, `color_family`), `ui/app.py` (`render_layers`) |
+| Скругления и вид кнопок, карточек, флажков | `ui/widgets.py` (`RoundButton`, `RoundCard`, `dot_image`) |
 
 ## Вопросы викторины
 

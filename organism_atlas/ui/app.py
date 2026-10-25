@@ -23,8 +23,8 @@ from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import (ORGANS_ALL, fill_card, fill_layers, fill_question, fill_setup, flat_button, frame, label,
-                      set_button_bg, show_all_button)
+from .widgets import (ORGANS_ALL, by_color, fill_card, fill_layers, fill_question, fill_setup, flat_button, frame,
+                      label, rounded_card, set_button_bg, show_all_button)
 
 
 class App:
@@ -93,8 +93,8 @@ class App:
         body.rowconfigure(0, weight=1)
         body.columnconfigure(1, weight=1)                   # лишнее место при растягивании окна - схеме
         body.columnconfigure(2, minsize=px(340))
-        self.panel = style(frame(body, highlightthickness=1), highlightbackground="border")
-        self.panel.grid(row=0, column=0, sticky="nw", padx=(0, 10), pady=(10, 0))
+        self.panel_box, self.panel = rounded_card(body)     # панель слоёв: рамка для grid и место для содержимого
+        self.panel_box.grid(row=0, column=0, sticky="nw", padx=(0, 10), pady=(10, 0))
         self.want_Z = pick_zoom(root)                       # масштаб схемы под текущий размер окна
         self.cw, self.ch = int(math.ceil(W * self.want_Z)), int(math.ceil(H * self.want_Z))
         # схема по центру «сцены», которая растягивается вместе с окном
@@ -103,8 +103,8 @@ class App:
         self.c = style(tk.Canvas(self.stage, width=self.cw, height=self.ch, highlightthickness=0), bg="bg")
         self.c.place(relx=0.5, y=0, anchor="n")
         self.stage.bind("<Configure>", self.on_resize)
-        self.card = style(frame(body, highlightthickness=1), highlightbackground="border")
-        self.card.grid(row=0, column=2, sticky="new", padx=(10, 0), pady=(10, 0))
+        self.card_box, self.card = rounded_card(body)
+        self.card_box.grid(row=0, column=2, sticky="new", padx=(10, 0), pady=(10, 0))
         self.c.create_text(self.cw // 2, self.ch // 2, fill=C["muted"], font=(FONT, 12), tags="loading")
         self.set_status(lambda: t("hint"))
         self.set_card(self.empty_card)
@@ -115,9 +115,16 @@ class App:
         """задать размер окна один раз: иначе Tk растягивает его под каждую новую карточку, а за окном
         менялся бы и масштаб схемы. Высота - с запасом под самую высокую карточку (настройка викторины)"""
         root, mode = self.root, self.mode
-        self.mode = "facts"
-        self.render_setup()
+        # ширина карточки - один раз, по самой широкой (настройка викторины): иначе при смене режима
+        # колонка раздвигалась бы, а схема сдвигалась и меняла масштаб
+        wide = px(340)
+        for self.mode in MODES:
+            self.render_setup()
+            root.update_idletasks()
+            wide = max(wide, self.card.winfo_reqwidth() + 2 * self.card_box.pad)
         self.mode = mode
+        self.card_box.fixed = wide
+        self.card_box.fit()
         root.update_idletasks()
         h = root.winfo_reqheight() + px(40)                 # запас на строки истории игр
         self.card_fn()
@@ -303,7 +310,8 @@ class App:
         self.toggles = fill_layers(
             self.panel, t("layers_title"),
             [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
-            t("layers_organs"), [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in ORGANS],
+            t("layers_organs"),
+            [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in by_color(ORGANS)],
             self.toggle_layer, self.toggle_organ,
             show_all=(t("layers_show_all"), self.show_all, self.something_hidden()),
             organs_all=(self.organs_all_text(), self.toggle_all_organs))
@@ -320,14 +328,15 @@ class App:
     def show_panel(self):
         """панель слоёв - только в режиме «Изучать». В викторине её место остаётся пустым,
         чтобы схема не меняла масштаб (и не перерисовывалась) при каждой смене режима"""
-        body = self.panel.master
+        box = self.panel_box
+        body = box.master
         if self.mode == "study":
-            if not self.panel.winfo_manager():
-                self.panel.grid()
+            if not box.winfo_manager():
+                box.grid()
                 body.columnconfigure(0, minsize=0)
-        elif self.panel.winfo_manager():
+        elif box.winfo_manager():
             body.columnconfigure(0, minsize=body.grid_bbox(0, 0)[2])
-            self.panel.grid_remove()
+            box.grid_remove()
 
     def toggle_all_organs(self):
         self.hidden = set() if self.hidden == set(ORGANS) else set(ORGANS)

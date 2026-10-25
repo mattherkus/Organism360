@@ -7,7 +7,7 @@ from ..config import FONT
 from ..i18n import t
 from ..theme import style
 from .scaling import px
-from .widgets import flat_button, frame, label, set_button_bg
+from .widgets import flat_button, frame, label, rounded_card, set_button_bg
 
 _window = None                  # окно одно: повторное нажатие «Настройки» поднимает его
 
@@ -22,8 +22,8 @@ class SettingsWindow:
         win.transient(app.root)
         win.bind("<Destroy>", self.close)
         win.bind("<Escape>", lambda e: win.destroy())
-        self.body = style(frame(win, highlightthickness=1), highlightbackground="border")
-        self.body.pack(padx=px(16), pady=px(16))
+        box, self.body = rounded_card(win)
+        box.pack(padx=px(16), pady=px(16))
         self.refresh()
         win.update_idletasks()
         root = app.root

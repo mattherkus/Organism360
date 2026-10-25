@@ -15,7 +15,7 @@ from ..organs import ORGANS
 from ..render3d.scene import Scene3D
 from ..theme import C, style
 from .scaling import px
-from .widgets import fill_card, frame, label
+from .widgets import fill_card, label, rounded_card
 
 _viewer = None                  # единственное окно просмотра: новый орган открывается в нём же
 
@@ -48,8 +48,8 @@ class Viewer3D:
         threading.Thread(target=self.work, daemon=True).start()
         self.view = label(win, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")
         self.view.pack(padx=14, pady=(14, 0))
-        self.card = style(frame(win, highlightthickness=1), highlightbackground="border")
-        self.card.pack(fill="x", padx=14, pady=(8, 4))
+        box, self.card = rounded_card(win)
+        box.pack(fill="x", padx=14, pady=(8, 4))
         self.hint = label(win, "", fg="muted", bg="bg", font=(FONT, 9))
         self.hint.pack(pady=(2, 10))
         v = self.view

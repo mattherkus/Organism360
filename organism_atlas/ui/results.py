@@ -8,7 +8,7 @@ from ..i18n import t
 from ..quiz import format_time
 from ..theme import style
 from .scaling import px
-from .widgets import flat_button, frame, label
+from .widgets import flat_button, frame, label, rounded_card
 
 
 def show_results_dialog(root, session, on_again, on_retry=None, due=0):
@@ -19,9 +19,8 @@ def show_results_dialog(root, session, on_again, on_retry=None, due=0):
     win.title(t("results_title"))
     win.resizable(False, False)
     win.transient(root)
-    card = frame(win, highlightthickness=1)
-    style(card, highlightbackground="border")
-    card.pack(padx=20, pady=20)
+    box, card = rounded_card(win)
+    box.pack(padx=20, pady=20)
     label(card, t("results_heading"), font=(FONT, 15, "bold")).pack(padx=40, pady=(20, 4))
     label(card, t("results_score", right=session.first_try, total=total), fg="accent_fg",
           font=(FONT, 36, "bold")).pack()
