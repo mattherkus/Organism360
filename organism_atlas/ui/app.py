@@ -217,8 +217,9 @@ class App:
                 self.c.dtag("loading", "loading")         # чтобы смена языка не затёрла ошибку
             return                                      # под новый размер не вышло: остаётся растянутая
         first = self.atlas is None
+        if not first:
+            self.drop_photos()                          # подсветка прежнего масштаба больше не подходит
         self.atlas = res
-        self.photos.clear()                             # подсветка прежнего масштаба больше не подходит
         self.atlas.set_layers(self.layers)
         self.atlas.set_hidden(self.hidden_now())
         if first:
@@ -336,11 +337,18 @@ class App:
             hidden = frozenset(self.hidden_now())
             if hidden != self.atlas.hidden:
                 self.atlas.set_hidden(hidden)
-                self.photos.clear()                     # подсветка зависит от того, кто кого закрывает
+                self.drop_photos()                      # подсветка зависит от того, кто кого закрывает
                 self.on_leave(None)
             self.show_base()
 
     # --- наведение и клики
+    def drop_photos(self):
+        """забыть картинки подсветки. Сначала отвязать их от элементов холста: иначе удалённая картинка
+        остаётся в элементе, и любая следующая его настройка падает с «image ... does not exist»"""
+        for item in (self.tg, self.hov, self.fl):
+            self.c.itemconfigure(item, image="", state="hidden")
+        self.photos.clear()
+
     def photo(self, key, kind):
         if (key, kind) not in self.photos:
             im, pos = self.atlas.overlay(key, kind)

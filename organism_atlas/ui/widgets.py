@@ -111,6 +111,7 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
 
 
 _dots = {}                      # готовые картинки кружков: {(размер, включён, состояние, цвета): PhotoImage}
+_dots_tk = None                 # интерпретатор Tk, которому принадлежат картинки из _dots
 
 
 def _rgb(c):
@@ -122,12 +123,17 @@ def _mix(a, b, w):
     return tuple(round(x + (y - x) * w) for x, y in zip(_rgb(a), _rgb(b)))
 
 
-def dot_image(size, on, state):
+def dot_image(master, size, on, state):
     """круглый флажок (сглаженный, с прозрачным фоном). state: normal, hover, press, disabled.
     Включён - залитый кружок цвета акцента с галочкой, выключен - кольцо. Наведение и нажатие
-    меняют только кружок: при наведении он светлее (у кольца появляется заливка), при нажатии темнее"""
+    меняют только кружок: при наведении он светлее (у кольца появляется заливка), при нажатии темнее.
+    master - виджет, в котором картинка будет показана (картинки Tk принадлежат своему окну Tk)"""
+    global _dots_tk
     accent, ring, mark = C["accent"], C["muted"], C["on_accent"]
     key = (size, on, state, accent, ring, mark, C["border"])
+    if _dots_tk is not master.tk:                          # новое окно Tk: старые картинки ему не годятся
+        _dots.clear()
+        _dots_tk = master.tk
     if key not in _dots:
         ss = 4
         S = size * ss
@@ -151,7 +157,7 @@ def dot_image(size, on, state):
             pts = [(S * 0.28, S * 0.52), (S * 0.44, S * 0.68), (S * 0.73, S * 0.36)]
             color = _mix(C["card"], ring, 0.6) if state == "disabled" else _rgb(mark)
             d.line(pts, fill=color, width=round(S * 0.12), joint="curve")
-        _dots[key] = ImageTk.PhotoImage(im.resize((size, size), Image.LANCZOS))
+        _dots[key] = ImageTk.PhotoImage(im.resize((size, size), Image.LANCZOS), master=master)
     return _dots[key]
 
 
@@ -199,7 +205,7 @@ class Toggle:
         if not self.dot.winfo_exists():
             return
         self.state = state
-        self.dot.config(image=dot_image(px(16), self.on, state if self.enabled else "disabled"))
+        self.dot.config(image=dot_image(self.dot, px(16), self.on, state if self.enabled else "disabled"))
 
     def set(self, text, on):
         """обновить на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
