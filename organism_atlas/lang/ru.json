@@ -40,6 +40,7 @@
     "results_close": "Закрыть",
     "viewer_title": "{name} — 3D",
     "viewer_hint": "Тяни мышью, чтобы вращать. Колесо мыши меняет масштаб, двойной щелчок сбрасывает вид.",
+    "viewer_error": "Не удалось нарисовать модель: {error}",
     "viewer_credit": "Анатомическая модель: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
     "settings_button": "Настройки",
     "settings_title": "Настройки",

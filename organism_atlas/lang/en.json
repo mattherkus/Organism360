@@ -40,6 +40,7 @@
     "results_close": "Close",
     "viewer_title": "{name} — 3D",
     "viewer_hint": "Drag to rotate. Scroll to zoom, double-click to reset the view.",
+    "viewer_error": "Could not render the model: {error}",
     "viewer_credit": "Anatomical model: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
     "settings_button": "Settings",
     "settings_title": "Settings",

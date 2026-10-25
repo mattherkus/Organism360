@@ -26,7 +26,7 @@ from organism_atlas.organs import ORDER, ORGANS  # noqa: E402
 
 ZOOMS = (1.0, 0.7)
 VIEW_3D = dict(w=200, h=160, az=-62, el=18)
-ORGANS_3D = ("lungs", "liver", "stomach", "intestines", "kidneys", "heart", "brain")
+ORGANS_3D = ("lungs", "liver", "gallbladder", "stomach", "intestines", "kidneys", "heart", "brain")
 
 
 def save(img, path, force):

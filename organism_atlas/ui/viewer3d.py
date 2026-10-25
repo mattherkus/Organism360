@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 import tkinter as tk
+import traceback
 
 from PIL import Image, ImageTk
 
@@ -41,7 +42,8 @@ class Viewer3D:
         self.cv = threading.Condition()
         self.pending, self.alive = None, True
         self.photo = None
-        win = self.win = style(tk.Toplevel(root), bg="bg")
+        self.error = None                # последняя ошибка рендера (показывается в подписи)
+        win =self.win = style(tk.Toplevel(root), bg="bg")
         win.bind("<Destroy>", self.close)
         threading.Thread(target=self.work, daemon=True).start()
         self.view = label(win, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")
@@ -79,7 +81,10 @@ class Viewer3D:
         self.win.title(t("viewer_title", name=i18n.name(self.key)))
         fill_card(self.card, self.key, compact=True, wrap=self.w - px(40))
         credit = "\n" + t("viewer_credit") if self.anatomical else ""   # условие лицензии CC BY 4.0
-        self.hint.config(text=t("viewer_hint") + credit)
+        if self.error is not None:
+            style(self.hint, fg="bad").config(text=t("viewer_error", error=self.error) + credit)
+        else:
+            style(self.hint, fg="muted").config(text=t("viewer_hint") + credit)
 
     # --- отрисовка
     @staticmethod
@@ -90,14 +95,28 @@ class Viewer3D:
     def show(self, im):
         self.photo = ImageTk.PhotoImage(im)
         self.view.configure(image=self.photo)
+        if self.error:
+            self.error = None
+            self.retranslate()
+
+    def show_error(self, ex):
+        """рендер упал: кадр остаётся прежним, причина - в подписи под карточкой"""
+        self.error = ex
+        self.retranslate()
 
     def draft(self):
         """быстрый кадр при вращении; на больших (HiDPI) окнах - в половинном разрешении:
         на ходу разницы не видно, а считается вчетверо меньше пикселей"""
         half = QUALITY[_quality]["half_draft"]
         k = 2 if (self.w * self.h > 400000 if half is None else half) else 1
-        im = self.scene.render(self.w // k, self.h // k, self.az, self.el, self.zoom, ss=1, step=2,
-                               bg=self.colors())
+        try:
+            im = self.scene.render(self.w // k, self.h // k, self.az, self.el, self.zoom, ss=1, step=2,
+                                   bg=self.colors())
+        except Exception as ex:
+            if self.error is None:                       # при вращении не печатаем одно и то же на каждый кадр
+                traceback.print_exc()
+            self.show_error(ex)
+            return
         self.show(im.resize((self.w, self.h), Image.BILINEAR) if k > 1 else im)
 
     def refine(self):
@@ -123,11 +142,15 @@ class Viewer3D:
                 self.pending = None
             if gen != self.gen:                          # пока ждали, вид уже сменился
                 continue
-            if ss > 1:                                   # сначала быстрый чёткий кадр, потом сглаженный
-                self.q.put((gen, scene.render(w, h, az, el, zoom, ss=1, bg=bg)))
-                if gen != self.gen or self.pending is not None:
-                    continue
-            self.q.put((gen, scene.render(w, h, az, el, zoom, ss=ss, bg=bg)))
+            try:
+                if ss > 1:                               # сначала быстрый чёткий кадр, потом сглаженный
+                    self.q.put((gen, scene.render(w, h, az, el, zoom, ss=1, bg=bg)))
+                    if gen != self.gen or self.pending is not None:
+                        continue
+                self.q.put((gen, scene.render(w, h, az, el, zoom, ss=ss, bg=bg)))
+            except Exception as ex:                      # поток не должен умереть: покажем ошибку в окне
+                traceback.print_exc()
+                self.q.put((gen, ex))
 
     def close(self, e):
         if e.widget is not self.win:
@@ -147,7 +170,11 @@ class Viewer3D:
             try:
                 while True:
                     gen, im = self.q.get_nowait()
-                    if gen == self.gen:
+                    if gen != self.gen:
+                        continue
+                    if isinstance(im, Exception):
+                        self.show_error(im)
+                    else:
                         self.show(im)
             except queue.Empty:
                 pass

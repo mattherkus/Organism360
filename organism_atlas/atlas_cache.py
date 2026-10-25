@@ -1,7 +1,7 @@
 """Кэш готовой схемы тела на диске: второй запуск не рисует тело и органы заново.
 
 Схема детерминирована (сиды фиксированы), поэтому её можно сохранить и потом просто прочитать.
-Файл: .cache/atlas-<версия>-z<масштаб>.npz рядом с пакетом; в нём слои тела, слои и маски органов
+Файл: atlas-<версия>-z<масштаб>.npz в папке кэша пользователя (см. _cache_dir); в нём слои тела, слои и маски органов
 (фон в кэш не входит: его цвет зависит от темы и подставляется при показе).
 Один файл, а не PNG + маски отдельно: он пишется атомарно, и половинчатый кэш не получится.
 
@@ -18,7 +18,21 @@ import numpy as np
 import PIL
 
 PKG = Path(__file__).parent
-CACHE_DIR = PKG.parent / ".cache"
+
+
+def _cache_dir():
+    """%LOCALAPPDATA%/organism_atlas/cache (на других системах ~/.cache/organism_atlas): туда можно писать,
+    даже если программа установлена в папку только для чтения. ORGANISM_ATLAS_CACHE задаёт другой путь"""
+    custom = os.environ.get("ORGANISM_ATLAS_CACHE")
+    if custom:
+        return Path(custom)
+    local = os.environ.get("LOCALAPPDATA")
+    if local:
+        return Path(local) / "organism_atlas" / "cache"
+    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "organism_atlas"
+
+
+CACHE_DIR = _cache_dir()
 FORMAT = 3                                        # поднять, если поменяется устройство файла
 
 # что влияет на картинку и маски; ui, викторина, тексты и 3D сюда не входят
