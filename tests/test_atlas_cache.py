@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -62,6 +63,20 @@ class AtlasCacheTests(unittest.TestCase):
         Atlas.cached(0.68, self.dir)
         self.assertEqual(self.build.call_count, 2)
         self.assertEqual(len(self.files()), 2)
+
+    def test_old_zooms_are_pruned(self):
+        """масштабов в кэше не больше KEEP; удаляются те, что дольше всего не читались"""
+        zooms = [0.5 + 0.05 * i for i in range(atlas_cache.KEEP + 2)]
+        for i, z in enumerate(zooms):
+            Atlas.cached(z, self.dir)
+            if i == 0:
+                first = atlas_cache._path(z, self.dir, atlas_cache.version())
+                os.utime(first, (1, 1))                  # давно не читался
+            if i == atlas_cache.KEEP - 1:
+                Atlas.cached(zooms[0], self.dir)         # прочитали снова - он опять свежий
+        self.assertEqual(len(self.files()), atlas_cache.KEEP)
+        self.assertIn(first.name, self.files())
+        self.assertNotIn(atlas_cache._path(zooms[1], self.dir, atlas_cache.version()).name, self.files())
 
     def test_corrupt_file_is_rebuilt(self):
         Atlas.cached(Z, self.dir)

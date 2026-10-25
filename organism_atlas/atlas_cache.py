@@ -34,6 +34,7 @@ def _cache_dir():
 
 CACHE_DIR = _cache_dir()
 FORMAT = 3                                        # поднять, если поменяется устройство файла
+KEEP = 6                                          # сколько масштабов хранить (окно меняет размер)
 
 # что влияет на картинку и маски; ui, викторина, тексты и 3D сюда не входят
 _SOURCES = ["atlas.py", "geometry.py", "colors.py", "config.py", "body", "organs", "render2d"]
@@ -71,6 +72,10 @@ def load(Z, ORDER, cache_dir=CACHE_DIR):
                        "origin": tuple(int(v) for v in z["origin_" + k])} for k in ORDER}
     except (OSError, KeyError, ValueError, EOFError):   # нет файла, другой набор органов, мусор
         return None
+    try:
+        os.utime(p)                                     # свежий по времени: его save() удалит последним
+    except OSError:
+        pass
     shape = body["skin"].shape
     if any(a.dtype != np.uint8 for a in body.values()) or len(shape) != 3 or shape[2] != 4:
         return None
@@ -80,7 +85,7 @@ def load(Z, ORDER, cache_dir=CACHE_DIR):
 
 
 def save(Z, body, org, cache_dir=CACHE_DIR):
-    """сохранить схему; заодно убрать файлы прошлых версий (схемы других масштабов остаются)"""
+    """сохранить схему; заодно убрать файлы прошлых версий и самые давние масштабы сверх KEEP"""
     ver = version()
     p = _path(Z, cache_dir, ver)
     arrays = {"body_" + k: body[k] for k in BODY}
@@ -96,6 +101,10 @@ def save(Z, body, org, cache_dir=CACHE_DIR):
         os.replace(tmp, p)
         for old in p.parent.glob("atlas-*.npz"):
             if not old.name.startswith("atlas-%s-" % ver):
+                old.unlink()
+        mine = sorted(p.parent.glob("atlas-%s-*.npz" % ver), key=lambda f: f.stat().st_mtime, reverse=True)
+        for old in mine[KEEP:]:
+            if old != p:
                 old.unlink()
     except OSError:
         try:

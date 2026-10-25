@@ -1,5 +1,6 @@
-"""Главное окно: схема тела, наведение, карточка органа, режим «Изучать» и три викторины:
-«Найди орган», «Угадай название» и «Угадай по факту» (со сложностью, таймером и повторением ошибок)."""
+"""Главное окно: схема тела, наведение, карточка органа, панель слоёв, режим «Изучать» и три викторины:
+«Найди орган», «Угадай название» и «Угадай по факту» (со сложностью, таймером и повторением ошибок).
+Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя."""
 
 import math
 import queue
@@ -7,10 +8,11 @@ import threading
 import tkinter as tk
 import traceback
 
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
-from .. import atlas_cache, i18n, progress, questions, settings, theme
+from .. import i18n, progress, questions, settings, theme
 from ..atlas import Atlas
+from ..body.base import BODY_LAYERS
 from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
@@ -18,10 +20,10 @@ from ..organs import ORGANS
 from ..quiz import LEVELS, MODES, TIMERS, QuizSession, format_time
 from ..theme import C, style
 from .results import show_results_dialog
-from .scaling import pick_zoom, px, set_scale
+from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import fill_card, fill_question, fill_setup, flat_button, frame, label, set_button_bg
+from .widgets import fill_card, fill_layers, fill_question, fill_setup, flat_button, frame, label, set_button_bg
 
 
 class App:
@@ -53,15 +55,19 @@ class App:
         # что сейчас в карточке и в строке статуса: функции, чтобы перерисовать их на другом языке
         self.card_fn = self.status_fn = None
         self.built = queue.Queue()
+        self.building = False                  # в фоне рисуется схема (при запуске или под новый размер окна)
+        self.resize_job = None
+        self.layers = set(BODY_LAYERS)         # видимые слои тела
+        self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
 
-        top = frame(root, "bg")
+        top = self.top = frame(root, "bg")
         top.pack(fill="x", padx=24, pady=(18, 0))
         left = frame(top, "bg")
-        left.pack(side="left")
         self.title = label(left, "", bg="bg", font=(FONT, 20, "bold"))
         self.title.pack(anchor="w")
-        self.status = label(left, "", bg="bg", font=(FONT, 11, "bold"))
-        self.status.pack(anchor="w", pady=(8, 0))
+        # статус - отдельной строкой: длинный текст не должен теснить кнопки режимов
+        self.status = label(root, "", bg="bg", font=(FONT, 11, "bold"), anchor="w")
+        self.status.pack(fill="x", padx=24, pady=(8, 0))
         self.settings_button = flat_button(top, "", lambda: show_settings(self))
         self.settings_button.pack(side="right", anchor="n", padx=(12, 0))
         langs = frame(top, "bg")                           # переключатель языка, справа от режимов
@@ -78,23 +84,46 @@ class App:
                              for mode in ("study",) + MODES}
         for i, b in enumerate(self.mode_buttons.values()):
             b.pack(side="left", padx=(8 if i else 0, 0))
+        left.pack(side="left")                              # последним: в узком окне теснится заголовок
         root.bind("<Key>", self.on_key)
 
         body = frame(root, "bg")
         body.pack(fill="both", expand=True, padx=24, pady=10)
-        body.columnconfigure(0, weight=1, uniform="s")
-        body.columnconfigure(2, weight=1, uniform="s", minsize=px(340))
-        self.Z = atlas_cache.zoom_key(pick_zoom(root))      # с той же точностью, что ключ кэша
-        self.cw, self.ch = int(math.ceil(W * self.Z)), int(math.ceil(H * self.Z))
-        self.c = style(tk.Canvas(body, width=self.cw, height=self.ch, highlightthickness=0), bg="bg")
-        self.c.grid(row=0, column=1, padx=10)
+        body.rowconfigure(0, weight=1)
+        body.columnconfigure(1, weight=1)                   # лишнее место при растягивании окна - схеме
+        body.columnconfigure(2, minsize=px(340))
+        self.panel = style(frame(body, highlightthickness=1), highlightbackground="border")
+        self.panel.grid(row=0, column=0, sticky="nw", padx=(0, 10), pady=(10, 0))
+        self.want_Z = pick_zoom(root)                       # масштаб схемы под текущий размер окна
+        self.cw, self.ch = int(math.ceil(W * self.want_Z)), int(math.ceil(H * self.want_Z))
+        # схема по центру «сцены», которая растягивается вместе с окном
+        self.stage = frame(body, "bg", width=self.cw, height=self.ch)
+        self.stage.grid(row=0, column=1, sticky="nsew", padx=10)
+        self.c = style(tk.Canvas(self.stage, width=self.cw, height=self.ch, highlightthickness=0), bg="bg")
+        self.c.place(relx=0.5, y=0, anchor="n")
+        self.stage.bind("<Configure>", self.on_resize)
         self.card = style(frame(body, highlightthickness=1), highlightbackground="border")
         self.card.grid(row=0, column=2, sticky="new", padx=(10, 0), pady=(10, 0))
         self.c.create_text(self.cw // 2, self.ch // 2, fill=C["muted"], font=(FONT, 12), tags="loading")
         self.set_status(lambda: t("hint"))
         self.set_card(self.empty_card)
         self.retranslate()
-        self.start_build()
+        self.fix_window_size()           # схема начнёт рисоваться, когда окно покажется (on_resize)
+
+    def fix_window_size(self):
+        """задать размер окна один раз: иначе Tk растягивает его под каждую новую карточку, а за окном
+        менялся бы и масштаб схемы. Высота - с запасом под самую высокую карточку (настройка викторины)"""
+        root, mode = self.root, self.mode
+        self.mode = "facts"
+        self.render_setup()
+        self.mode = mode
+        root.update_idletasks()
+        h = root.winfo_reqheight() + px(40)                 # запас на строки истории игр
+        self.card_fn()
+        root.update_idletasks()
+        h = min(max(h, root.winfo_reqheight()), int(0.92 * root.winfo_screenheight()))
+        root.geometry("%dx%d" % (root.winfo_reqwidth(), h))
+        root.minsize(self.top.winfo_reqwidth() + px(48), px(520))      # уже верхней панели окно не сжать
 
     # --- язык и настройки
     def set_lang(self, code):
@@ -132,7 +161,9 @@ class App:
             b.config(text=t("mode_" + mode))
         self.update_buttons()
         self.c.itemconfigure("loading", text=t("loading"))
+        self.c.itemconfigure("rescale", text=t("rescaling"))
         self.c.delete("tip")
+        self.render_layers()
         self.status.config(text=self.status_fn())
         self.card_fn()
         retranslate_all()
@@ -150,43 +181,147 @@ class App:
         fill_card(self.card, None, empty=(t("pick_title"), t("pick_hint")))
 
     # --- построение схемы (в отдельном потоке: окно не замирает)
+    def ready(self):
+        """схема нарисована в масштабе окна: можно наводить, кликать и подсвечивать"""
+        return self.atlas is not None and self.atlas.Z == self.want_Z
+
     def start_build(self):
+        """нарисовать схему в масштабе want_Z (из кэша, если есть); одновременно строится одна"""
+        self.resize_job = None
+        if self.building or self.ready():
+            return
+        self.building = True
+        Z = self.want_Z
+
         def work():
             try:
-                self.built.put(Atlas.cached(self.Z))
+                self.built.put((Z, Atlas.cached(Z)))
             except Exception as ex:                     # покажем ошибку в основном потоке
-                self.built.put(ex)
+                self.built.put((Z, ex))
 
         threading.Thread(target=work, daemon=True).start()
         self.root.after(50, self.poll_build)
 
     def poll_build(self):
         try:
-            res = self.built.get_nowait()
+            _Z, res = self.built.get_nowait()
         except queue.Empty:
             self.root.after(50, self.poll_build)
             return
+        self.building = False
         if isinstance(res, Exception):
             traceback.print_exception(type(res), res, res.__traceback__)
-            self.c.itemconfigure("loading", text=t("build_error", error=res))
-            self.c.dtag("loading", "loading")             # чтобы смена языка не затёрла ошибку
-            return
+            if self.atlas is None:
+                self.c.itemconfigure("loading", text=t("build_error", error=res))
+                self.c.dtag("loading", "loading")         # чтобы смена языка не затёрла ошибку
+            return                                      # под новый размер не вышло: остаётся растянутая
+        first = self.atlas is None
         self.atlas = res
-        self.c.delete("loading")
-        self.base_img = self.c.create_image(0, 0, anchor="nw")
+        self.photos.clear()                             # подсветка прежнего масштаба больше не подходит
+        self.atlas.set_layers(self.layers)
+        self.atlas.set_hidden(self.hidden_now())
+        if first:
+            self.c.delete("loading")
+            self.base_img = self.c.create_image(0, 0, anchor="nw")
+            self.tg = self.c.create_image(0, 0, anchor="nw", state="hidden")      # орган-вопрос
+            self.hov = self.c.create_image(0, 0, anchor="nw", state="hidden")
+            self.fl = self.c.create_image(0, 0, anchor="nw", state="hidden")
+            self.c.bind("<Motion>", self.on_move)
+            self.c.bind("<Leave>", self.on_leave)
+            self.c.bind("<Button-1>", self.on_click)
         self.paint_base()
-        self.tg = self.c.create_image(0, 0, anchor="nw", state="hidden")      # орган-вопрос
-        self.hov = self.c.create_image(0, 0, anchor="nw", state="hidden")
-        self.fl = self.c.create_image(0, 0, anchor="nw", state="hidden")
-        self.c.bind("<Motion>", self.on_move)
-        self.c.bind("<Leave>", self.on_leave)
-        self.c.bind("<Button-1>", self.on_click)
+        self.c.tag_raise("rescale")
+        if not self.ready():                            # пока рисовали, окно снова поменяло размер
+            self.start_build()
+            return
+        self.c.delete("rescale")
         self.show_target()                              # если режим включили, пока схема строилась
 
     def paint_base(self):
         """схема тела на фоне текущей темы"""
-        self.base_photo = ImageTk.PhotoImage(self.atlas.set_background(C["scene_bg"], C["scene_hi"]))
+        self.atlas.set_background(C["scene_bg"], C["scene_hi"])
+        self.show_base()
+
+    def show_base(self):
+        """показать готовую схему; пока чёткая под новый размер не готова - растянуть имеющуюся"""
+        im = self.atlas.base
+        if not self.ready():
+            im = im.resize((self.cw, self.ch), Image.BILINEAR)
+        self.base_photo = ImageTk.PhotoImage(im)
         self.c.itemconfigure(self.base_img, image=self.base_photo)
+
+    # --- размер окна
+    def set_zoom(self, Z):
+        """новый масштаб схемы: холст под него сразу, сама схема - когда дорисуется"""
+        self.want_Z = Z
+        self.cw, self.ch = int(math.ceil(W * Z)), int(math.ceil(H * Z))
+        self.c.config(width=self.cw, height=self.ch)
+        self.c.coords("loading", self.cw // 2, self.ch // 2)
+
+    def on_resize(self, e):
+        """окно поменяло размер: схема сразу растягивается, а чёткая рисуется, когда размер устоится"""
+        Z = fit_zoom(e.width, e.height)
+        if self.atlas is None and not self.building:    # окно показалось: рисуем первую схему сразу
+            self.set_zoom(Z)
+            self.start_build()
+            return
+        if Z == self.want_Z:
+            return
+        self.set_zoom(Z)
+        if self.resize_job:
+            self.root.after_cancel(self.resize_job)
+        self.resize_job = self.root.after(400, self.start_build)
+        if self.atlas is None:                          # первая схема ещё рисуется
+            return
+        self.on_leave(None)
+        for item in (self.tg, self.fl):
+            self.c.itemconfigure(item, state="hidden")
+        self.c.delete("rescale")
+        if self.ready():                                # вернули прежний размер, пока рисовалась другая
+            self.show_target()
+        else:
+            self.c.create_text(self.cw // 2, self.ch - px(14), text=t("rescaling"), fill=C["muted"],
+                               font=(FONT, 9), tags="rescale")
+        self.show_base()
+
+    # --- слои
+    def hidden_now(self):
+        """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым"""
+        return self.hidden if self.mode == "study" else ()
+
+    def render_layers(self):
+        changed = self.hidden or len(self.layers) < len(BODY_LAYERS)
+        fill_layers(self.panel, t("layers_title"),
+                    [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
+                    t("layers_organs"),
+                    [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in ORGANS],
+                    self.toggle_layer, self.toggle_organ, organs_enabled=self.mode == "study",
+                    note=None if self.mode == "study" else t("layers_quiz_note"),
+                    show_all=(t("layers_show_all"), self.show_all) if changed else None)
+
+    def toggle_layer(self, name):
+        self.layers ^= {name}
+        self.apply_view()
+
+    def toggle_organ(self, key):
+        self.hidden ^= {key}
+        self.apply_view()
+
+    def show_all(self):
+        self.layers, self.hidden = set(BODY_LAYERS), set()
+        self.apply_view()
+
+    def apply_view(self):
+        """применить слои и скрытые органы к схеме и обновить панель"""
+        if self.atlas is not None:
+            self.atlas.set_layers(self.layers)
+            hidden = frozenset(self.hidden_now())
+            if hidden != self.atlas.hidden:
+                self.atlas.set_hidden(hidden)
+                self.photos.clear()                     # подсветка зависит от того, кто кого закрывает
+                self.on_leave(None)
+            self.show_base()
+        self.render_layers()
 
     # --- наведение и клики
     def photo(self, key, kind):
@@ -206,7 +341,7 @@ class App:
         self.c.config(cursor="hand2")
 
     def on_move(self, e):
-        if self.mode in ("name", "facts"):              # отвечают кнопками; в «Угадай название» подсвечен вопрос
+        if not self.ready() or self.mode in ("name", "facts"):              # отвечают кнопками; в «Угадай название» подсвечен вопрос
             return
         if self.mode == "find" and self.session and self.session.level == "hard":
             return                                      # на сложном уровне орган под курсором не подсвечивается
@@ -219,6 +354,8 @@ class App:
             self.tooltip(e.x, e.y, i18n.name(key))
 
     def on_leave(self, _e):
+        if self.atlas is None:
+            return
         self.cur = None
         self.set_hover(None)
         self.c.delete("tip")
@@ -235,6 +372,8 @@ class App:
         self.c.tag_lower(r, t)
 
     def on_click(self, e):
+        if not self.ready():
+            return
         key = self.atlas.organ_at(e.x, e.y)
         if key is None or self.mode in ("name", "facts"):
             return
@@ -257,6 +396,7 @@ class App:
         self.mode = mode
         self.update_buttons()
         self.stop_quiz()
+        self.apply_view()                               # в викторине скрытые органы снова видны
         if mode == "study":
             self.set_status(lambda: t("hint"))
             self.set_card(self.empty_card)
@@ -410,7 +550,7 @@ class App:
 
     def show_target(self):
         """подсветить орган текущего вопроса (режим «Угадай название»)"""
-        if self.atlas is None or self.mode != "name" or self.session is None or self.session.finished:
+        if not self.ready() or self.mode != "name" or self.session is None or self.session.finished:
             return
         ph, (x, y) = self.photo(self.session.current, "target")
         self.c.itemconfigure(self.tg, image=ph, state="normal")
@@ -418,7 +558,7 @@ class App:
 
     def flash(self, key, kind):
         """на полсекунды закрасить орган зелёным (верно) или красным (ошибка)"""
-        if self.atlas is None:
+        if not self.ready():
             return
         ph, (x, y) = self.photo(key, kind)
         self.c.itemconfigure(self.fl, image=ph, state="normal")

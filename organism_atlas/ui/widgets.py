@@ -108,6 +108,53 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
     return prog, buttons
 
 
+def toggle(parent, text, on, command, enabled=True, color=None):
+    """переключатель-строка панели слоёв: ☑/☐ и подпись; color - цветная метка органа слева"""
+    row = frame(parent)
+    row.pack(fill="x", pady=(0, px(1)))
+    if color:
+        tk.Frame(row, bg=color, width=px(4)).pack(side="left", fill="y")
+    b = flat_button(row, ("☑  " if on else "☐  ") + text, command, anchor="w")
+    b.config(font=(FONT, 9), padx=px(8), pady=px(1), highlightthickness=0)
+    style(b, fg="text" if on else "muted")
+    if not enabled:
+        style(b, disabledforeground="muted")
+        b.config(state="disabled", cursor="")
+    b.pack(side="left", fill="x", expand=True)
+    return b
+
+
+def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, organs_enabled=True,
+                note=None, show_all=None):
+    """панель слоёв слева от схемы.
+    layers - [(ключ, текст, виден)] слоёв тела; organs - [(ключ, название, цвет, виден)];
+    organs_enabled - можно ли скрывать органы (в викторине нельзя), note - пояснение под списком;
+    show_all - (текст, функция) кнопки «Показать всё» или None, если всё и так видно."""
+    for w in card.winfo_children():
+        w.destroy()
+    frame(card, "accent", height=3).pack(fill="x")
+    box = frame(card)
+    box.pack(fill="x", padx=px(12), pady=(0, px(10)))
+    # «Показать всё» - в строке заголовка, а пояснение - над списком органов: низ панели может
+    # не поместиться в невысокое окно, а они должны быть видны всегда
+    head = frame(box)
+    head.pack(fill="x", pady=(px(8), px(4)))
+    label(head, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w").pack(side="left")
+    if show_all:
+        b = flat_button(head, show_all[0], show_all[1])
+        b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
+        b.pack(side="right")
+    for key, text, on in layers:
+        toggle(box, text, on, lambda k=key: on_layer(k))
+    label(box, organs_title.upper(), fg="muted", font=(FONT, 9, "bold"),
+          anchor="w").pack(fill="x", pady=(px(8), px(4)))
+    if note:
+        label(box, note, fg="muted", font=(FONT, 9), justify="left", anchor="w",
+              wraplength=px(170)).pack(fill="x", pady=(0, px(4)))
+    for key, text, color, on in organs:
+        toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
+
+
 def fill_setup(card, title, desc, rows, start_text, on_start, history_title, history):
     """карточка настройки викторины перед стартом.
     rows - [(заголовок, [(текст, значение, доступен)], выбранное, on_pick(значение), подсказка, столбиком)];

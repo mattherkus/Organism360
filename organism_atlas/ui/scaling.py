@@ -1,5 +1,6 @@
 """Масштаб интерфейса (DPI Windows) и выбор размера схемы под экран."""
 
+import math
 import sys
 
 from ..geometry import H, W
@@ -35,8 +36,20 @@ def enable_dpi_awareness():
         pass
 
 
+ZOOM_STEP = 0.05                  # масштаб схемы меняется ступеньками: меньше перерисовок и файлов кэша
+ZOOM_MIN, ZOOM_MAX = 0.5, 3.0
+SIDE_W = 340 + 190 + 2 * 24 + 80  # карточка справа, панель слоёв слева и отступы (в пикселях при масштабе 1)
+
+
+def fit_zoom(w, h):
+    """наибольший масштаб схемы (с шагом ZOOM_STEP), при котором она влезает в w x h пикселей"""
+    z = min(w / W, h / H)
+    z = math.floor(z / ZOOM_STEP + 1e-6) * ZOOM_STEP
+    return round(max(ZOOM_MIN, min(z, ZOOM_MAX)), 4)
+
+
 def pick_zoom(root):
-    """Сколько пикселей экрана приходится на единицу схемы: как можно крупнее, но чтобы окно влезло."""
+    """Масштаб схемы при запуске: как можно крупнее, но чтобы окно влезло в экран."""
     avail_h = 0.88 * root.winfo_screenheight() - 150 * _scale
-    avail_w = 0.94 * root.winfo_screenwidth() - (340 + 2 * 24 + 60) * _scale    # минус карточка и отступы
-    return max(0.68, min(avail_h / H, avail_w / W, 3.0))
+    avail_w = 0.94 * root.winfo_screenwidth() - SIDE_W * _scale
+    return fit_zoom(avail_w, avail_h)

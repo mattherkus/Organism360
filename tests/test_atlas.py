@@ -1,7 +1,10 @@
 import math
 import unittest
 
+import numpy as np
+
 from organism_atlas.atlas import Atlas
+from organism_atlas.body.base import BODY_LAYERS
 from organism_atlas.geometry import CX, H, W
 from organism_atlas.organs import ORDER, ORGANS, PAINT
 
@@ -47,6 +50,23 @@ class AtlasTests(unittest.TestCase):
             self.assertEqual(dark.getpixel(heart), organ)                  # орган фон не просвечивает
         finally:
             self.atlas.set_background("#0e1a22", "#1a3547")
+
+    def test_layers_and_hidden_organs(self):
+        """скрытый слой или орган пропадает с картинки, а скрытый орган ещё и не ловит клик"""
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        full = np.asarray(a.base).copy()
+        x, y = (int(v * Z) for v in HIT_POINTS["heart"])
+        a.set_hidden({"heart"})
+        self.assertNotEqual(a.organ_at(x, y), "heart")
+        self.assertFalse(np.array_equal(np.asarray(a.base)[y, x], full[y, x]))
+        a.set_hidden(())
+        self.assertTrue(np.array_equal(np.asarray(a.base), full))
+        a.set_layers(("skin", "veins", "arteries"))
+        no_bones = np.asarray(a.base)
+        self.assertFalse(np.array_equal(no_bones, full))
+        self.assertEqual(a.visible, ("skin", "veins", "arteries"))
+        a.set_layers(BODY_LAYERS)
+        self.assertTrue(np.array_equal(np.asarray(a.base), full))
 
     def test_overlays(self):
         for key in ORGANS:

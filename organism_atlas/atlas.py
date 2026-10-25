@@ -47,10 +47,12 @@ class Atlas:
         self.body, self.org = data
         self.size = self.body["skin"].shape[1], self.body["skin"].shape[0]
         self.hidden = frozenset()        # скрытые органы: не ловят клик и не закрывают нижние
+        self.visible = BODY_LAYERS       # видимые слои тела
+        self._bg = (BG, BG_HI)           # цвета фона (тема)
+        self._base = None
         self._glow = None
         self._cache = {}
         self._layers = {}
-        self.set_background(BG, BG_HI)
 
     # --- слои
     def layer(self, name):
@@ -92,10 +94,25 @@ class Atlas:
                 over(out[oy:oy + h, ox:ox + w], d["rgba"].astype(np.float32) / 255)
         return Image.fromarray(to_u8(out))
 
+    @property
+    def base(self):
+        """готовая картинка Pillow для показа: фон темы, видимые слои тела и нескрытые органы"""
+        if self._base is None:
+            self._base = self.composite(*self._bg, visible=self.visible)
+        return self._base
+
     def set_background(self, bg, hi):
-        """подставить фон схемы (цвета #rrggbb из темы); self.base - готовая картинка Pillow"""
-        self.base = self.composite(bg, hi)
+        """подставить фон схемы (цвета #rrggbb из темы); возвращает новую self.base"""
+        self._bg = (bg, hi)
+        self._base = None
         return self.base
+
+    def set_layers(self, visible):
+        """какие слои тела видны (из BODY_LAYERS); картинка self.base пересоберётся при обращении"""
+        visible = tuple(name for name in BODY_LAYERS if name in visible)
+        if visible != self.visible:
+            self.visible = visible
+            self._base = None
 
     @classmethod
     def cached(cls, Z, cache_dir=atlas_cache.CACHE_DIR):
@@ -110,11 +127,13 @@ class Atlas:
 
     # --- видимость органов
     def set_hidden(self, organs):
-        """какие органы скрыты; подсветка зависит от того, кто кого закрывает, поэтому её кэш сбрасывается"""
+        """какие органы скрыты (не рисуются и не ловят клик); подсветка зависит от того, кто кого закрывает,
+        поэтому её кэш сбрасывается"""
         organs = frozenset(organs)
         if organs != self.hidden:
             self.hidden = organs
             self._cache.clear()
+            self._base = None
 
     def organ_at(self, x, y):
         """какой видимый орган под точкой (x, y) в пикселях картинки; верхний слой имеет приоритет"""
