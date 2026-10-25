@@ -209,5 +209,20 @@ class ColorGroupTests(unittest.TestCase):
         self.assertLess(abs(order.index("lungs") - order.index("brain")), 2)
 
 
+
+class SystemGroupTests(unittest.TestCase):
+    """органы в панели слоёв разбиты на группы по главной системе"""
+
+    def test_groups(self):
+        from organism_atlas.organs import PANEL_SYSTEMS, by_system
+        groups = dict(by_system(list(ORGANS)))
+        self.assertEqual(sorted(k for ks in groups.values() for k in ks), sorted(ORGANS))
+        self.assertEqual(list(groups), [s for s in PANEL_SYSTEMS if s in groups])
+        self.assertEqual(groups["respiratory"], ["lungs", "trachea"])
+        self.assertIn("pancreas", groups["digestive"])                   # главная система - первая
+        self.assertEqual(groups["immune"], ["spleen"])
+        self.assertEqual(groups["urinary"], ["kidneys", "bladder"])
+
+
 if __name__ == "__main__":
     unittest.main()

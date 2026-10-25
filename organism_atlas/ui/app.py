@@ -17,7 +17,7 @@ from ..body.base import BODY_LAYERS
 from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
-from ..organs import ORGANS, SYSTEMS, for_body, in_system, other_sex
+from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from ..theme import C, style
 from .results import show_results_dialog
@@ -332,7 +332,8 @@ class App:
             self.panel, t("layers_title"),
             [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
             t("layers_organs"),
-            [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in by_color(self.organs())],
+            [(t("system_" + system), [(k, i18n.name(k), ORGANS[k]["color"], k not in self.hidden) for k in keys])
+             for system, keys in by_system(by_color(self.organs()))],
             self.toggle_layer, self.toggle_organ,
             show_all=(t("layers_show_all"), self.show_all, self.something_hidden()),
             organs_all=(self.organs_all_text(), self.toggle_all_organs))

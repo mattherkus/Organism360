@@ -487,10 +487,10 @@ def header(box, title, button, top):
     return b
 
 
-def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, show_all, organs_all):
+def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all):
     """панель слоёв слева от схемы (только в режиме «Изучать»).
-    layers - [(ключ, текст, виден)] слоёв тела; organs - [(ключ, название, цвет, виден)] в порядке by_color:
-    между семействами цветов - небольшой промежуток;
+    layers - [(ключ, текст, виден)] слоёв тела; groups - [(название системы, [(ключ, название, цвет, виден)])]:
+    органы по системам, у каждой группы - свой маленький подзаголовок;
     show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто);
     organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов.
     Кнопки - в строках заголовков: низ панели может не поместиться в невысокое окно.
@@ -507,13 +507,11 @@ def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, s
         buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
     buttons[ORGANS_ALL] = header(box, organs_title, organs_all, px(8))
     buttons[ORGANS_ALL].pack(side="right")
-    family = None
-    for key, text, color, on in organs:
-        fam = color_family(color)[0]
-        if family is not None and fam != family:                  # промежуток между группами цветов
-            frame(box, height=px(7)).pack(fill="x")
-        family = fam
-        buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), color=color)
+    for i, (system, organs) in enumerate(groups):
+        label(box, system, fg="muted", font=(FONT, 8), anchor="w").pack(
+            fill="x", padx=(px(2), 0), pady=(px(5) if i else 0, px(1)))
+        for key, text, color, on in organs:
+            buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), color=color)
     return buttons
 
 

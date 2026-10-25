@@ -26,6 +26,10 @@ ORDER = ["intestines", "rectum", "appendix", "kidneys", "uterus", "ovaries", "bl
 # системы органов (тема викторины и вопрос «к какой системе относится»); названия - в lang/*.json: system_<ключ>
 SYSTEMS = ("digestive", "respiratory", "circulatory", "nervous", "endocrine", "urinary", "reproductive", "immune")
 
+# порядок групп органов в панели слоёв (орган попадает в группу своей главной системы)
+PANEL_SYSTEMS = ("respiratory", "digestive", "endocrine", "immune", "urinary", "circulatory", "nervous",
+                 "reproductive")
+
 # схема тела: женская или мужская (органы малого таза); выбирается в настройках
 SEXES = settings.CHOICES["body"]
 
@@ -51,6 +55,13 @@ def other_sex(sex):
 def in_system(keys, system):
     """органы из keys, которые относятся к системе (system=None - все)"""
     return [k for k in keys if system is None or system in ORGANS[k]["systems"]]
+
+
+def by_system(keys):
+    """[(система, [органы])] в порядке PANEL_SYSTEMS по главной системе органа, без пустых групп;
+    порядок органов внутри группы - как в keys"""
+    groups = [(name, [k for k in keys if ORGANS[k]["systems"][0] == name]) for name in PANEL_SYSTEMS]
+    return [(name, ks) for name, ks in groups if ks]
 
 
 def fact_of_day(key, day=None):
