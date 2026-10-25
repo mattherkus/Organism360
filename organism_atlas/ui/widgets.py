@@ -238,6 +238,95 @@ class Bar(tk.Canvas):
         self.create_image(0, 0, image=self.photo, anchor="nw")
 
 
+class ScrollArea(tk.Canvas):
+    """прокручиваемая область карточки: содержимое кладётся в self.inner, высота растёт за ним до limit
+    (set_limit), а дальше область листается колесом мыши, тачпадом или тонким ползунком справа.
+    Листается, когда указатель над scope (по умолчанию - над самой областью), например над всей панелью.
+    Место под ползунок занято всегда: иначе при его появлении менялась бы ширина панели, а за ней масштаб схемы"""
+
+    STEP = 3                    # строк (yscrollincrement) за щелчок колеса
+
+    def __init__(self, parent, scope=None):
+        self.outer = frame(parent)
+        self.scope = scope or self.outer
+        super().__init__(self.outer, highlightthickness=0, bd=0, width=1, height=1, yscrollincrement=px(8))
+        self.thumb = style(tk.Canvas(self.outer, highlightthickness=0, bd=0, width=px(4), height=1), bg="card")
+        self.limit, self.view, self.rest = None, (0.0, 1.0), 0.0
+        style(self, bg="card")
+        self.pack(side="left", fill="both", expand=True)
+        self.thumb.pack(side="right", fill="y", padx=(px(4), 0))
+        self.inner = frame(self)
+        self.win = self.create_window(0, 0, window=self.inner, anchor="nw")
+        self.config(yscrollcommand=self.on_scroll)
+        self.inner.bind("<Configure>", lambda e: self.fit())
+        self.bind("<Configure>", lambda e: self.itemconfigure(self.win, width=e.width))
+        self.thumb.bind("<Configure>", lambda e: self.draw_thumb())
+        self.thumb.bind("<B1-Motion>", self.drag)
+        self.thumb.bind("<ButtonPress-1>", self.drag)
+        # колесо и тачпад - одни на всё окно (bind_all), но листают, только когда указатель над scope.
+        # Тачпад в Tk 9 шлёт не MouseWheel, а TouchpadScroll: в delta упакованы сдвиги по x и по y
+        self.bind_all("<MouseWheel>", lambda e: self.wheel(e, e.delta))
+        try:
+            self.bind_all("<TouchpadScroll>", lambda e: self.wheel(e, (e.delta & 0xFFFF ^ 0x8000) - 0x8000))
+        except tk.TclError:                                         # Tk 8.6: такого события нет
+            pass
+
+    def configure(self, cnf=None, **kw):
+        super().configure(cnf, **kw)
+        if "bg" in kw or "background" in kw:                        # смена темы: перерисовать ползунок
+            self.draw_thumb()
+
+    config = configure
+
+    def set_limit(self, h):
+        """наибольшая высота области (сколько осталось места в окне)"""
+        self.limit = max(px(60), h)
+        self.fit()
+
+    def fit(self):
+        w, h = self.inner.winfo_reqwidth(), self.inner.winfo_reqheight()
+        vis = min(h, self.limit) if self.limit else h
+        super().configure(width=w, height=vis, scrollregion=(0, 0, w, h))
+        if h <= vis:
+            self.yview_moveto(0)
+
+    def scrollable(self):
+        return self.view != (0.0, 1.0)
+
+    def on_scroll(self, first, last):
+        self.view = (float(first), float(last))
+        self.draw_thumb()
+
+    def draw_thumb(self):
+        if not self.thumb.winfo_exists():
+            return
+        self.thumb.delete("all")
+        h, w = self.thumb.winfo_height(), int(self.thumb["width"])
+        if not self.scrollable() or h < 2:
+            return
+        y0, y1 = self.view[0] * h, max(self.view[1] * h, self.view[0] * h + px(16))
+        color = C["muted"]
+        self.thumb.create_line(w / 2, y0 + w / 2, w / 2, y1 - w / 2, width=w, capstyle="round", fill=color)
+
+    def drag(self, e):
+        """щелчок или протяжка по полосе ползунка: середина ползунка - под указатель"""
+        span = self.view[1] - self.view[0]
+        self.yview_moveto(e.y / max(1, self.thumb.winfo_height()) - span / 2)
+
+    def wheel(self, e, delta):
+        """delta - как у колеса: 120 на щелчок, больше нуля - вверх (тачпад даёт доли щелчка)"""
+        if not self.winfo_exists() or not self.scrollable():
+            return
+        w = self.winfo_containing(e.x_root, e.y_root)
+        if w is None or not (str(w) + ".").startswith(str(self.scope) + "."):
+            return
+        self.rest -= delta / 120 * self.STEP                       # доли строки копятся до целой
+        lines = int(self.rest)
+        if lines:
+            self.rest -= lines
+            self.yview_scroll(lines, "units")
+
+
 def bar(card, color):
     Bar(card, color).pack(fill="x", padx=px(8), pady=(px(1), 0))
 
@@ -466,6 +555,7 @@ def by_color(keys):
 
 SHOW_ALL = "_show_all"            # ключи кнопок в заголовках в словаре, который отдаёт fill_layers
 ORGANS_ALL = "_organs_all"
+ORGANS_LIST = "_organs_list"      # прокручиваемый список органов (ScrollArea)
 
 
 def show_all_button(buttons, visible):
@@ -493,8 +583,9 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     органы по системам, у каждой группы - свой маленький подзаголовок;
     show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто);
     organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов.
-    Кнопки - в строках заголовков: низ панели может не поместиться в невысокое окно.
-    Возвращает {ключ слоя или органа: Toggle} и кнопки заголовков под SHOW_ALL и ORGANS_ALL."""
+    Кнопки - в строках заголовков, а список органов листается: низ панели может не поместиться в окно.
+    Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL
+    и ScrollArea списка органов под ORGANS_LIST (её высоту ограничивает окно: set_limit)."""
     for w in card.winfo_children():
         w.destroy()
     refit(card)
@@ -507,11 +598,13 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
         buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
     buttons[ORGANS_ALL] = header(box, organs_title, organs_all, px(8))
     buttons[ORGANS_ALL].pack(side="right")
+    area = buttons[ORGANS_LIST] = ScrollArea(box, scope=card)            # листается над всей панелью
+    area.outer.pack(fill="x")
     for i, (system, organs) in enumerate(groups):
-        label(box, system, fg="muted", font=(FONT, 8), anchor="w").pack(
+        label(area.inner, system, fg="muted", font=(FONT, 8), anchor="w").pack(
             fill="x", padx=(px(2), 0), pady=(px(5) if i else 0, px(1)))
         for key, text, color, on in organs:
-            buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), color=color)
+            buttons[key] = Toggle(area.inner, text, on, lambda k=key: on_organ(k), color=color)
     return buttons
 
 

@@ -24,8 +24,8 @@ from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import (ORGANS_ALL, by_color, fill_card, fill_layers, fill_question, fill_setup, flat_button, frame,
-                      label, rounded_card, set_button_bg, show_all_button)
+from .widgets import (ORGANS_ALL, ORGANS_LIST, by_color, fill_card, fill_layers, fill_question, fill_setup,
+                      flat_button, frame, label, rounded_card, set_button_bg, show_all_button)
 
 
 class App:
@@ -97,6 +97,7 @@ class App:
         body.columnconfigure(2, minsize=px(340))
         self.panel_box, self.panel = rounded_card(body)     # панель слоёв: рамка для grid и место для содержимого
         self.panel_box.grid(row=0, column=0, sticky="nw", padx=(0, 10), pady=(10, 0))
+        body.bind("<Configure>", lambda e: self.fit_panel())
         self.want_Z = pick_zoom(root)                       # масштаб схемы под текущий размер окна
         self.cw, self.ch = int(math.ceil(W * self.want_Z)), int(math.ceil(H * self.want_Z))
         # схема по центру «сцены», которая растягивается вместе с окном
@@ -337,6 +338,19 @@ class App:
             self.toggle_layer, self.toggle_organ,
             show_all=(t("layers_show_all"), self.show_all, self.something_hidden()),
             organs_all=(self.organs_all_text(), self.toggle_all_organs))
+        self.root.after_idle(self.fit_panel)
+
+    def fit_panel(self):
+        """список органов в панели - не выше, чем осталось места в окне (остальное листается)"""
+        area = getattr(self, "toggles", {}).get(ORGANS_LIST)
+        if area is None or not area.winfo_exists():
+            return
+        body = self.panel_box.master
+        if not body.winfo_ismapped():            # окно ещё не показано: его высоты пока нет
+            return
+        self.root.update_idletasks()
+        rest = self.panel_box.winfo_reqheight() - area.winfo_reqheight()       # панель без списка органов
+        area.set_limit(body.winfo_height() - px(10) - rest)
 
     def update_layers(self):
         """после щелчка: обновить флажки и кнопки на месте (пересоздавать панель долго)"""
