@@ -38,6 +38,30 @@
     },
     "bladder": {
       "name": "Vesica urinaria"
+    },
+    "esophagus": {
+      "name": "Oesophagus"
+    },
+    "trachea": {
+      "name": "Trachea"
+    },
+    "adrenals": {
+      "name": "Glandulae suprarenales"
+    },
+    "appendix": {
+      "name": "Appendix vermiformis"
+    },
+    "rectum": {
+      "name": "Rectum"
+    },
+    "uterus": {
+      "name": "Uterus"
+    },
+    "ovaries": {
+      "name": "Ovaria"
+    },
+    "prostate": {
+      "name": "Prostata"
     }
   }
 }

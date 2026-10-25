@@ -6,14 +6,16 @@ import numpy as np
 from organism_atlas.atlas import Atlas
 from organism_atlas.body.base import BODY_LAYERS
 from organism_atlas.geometry import CX, H, W
-from organism_atlas.organs import ORDER, ORGANS, PAINT
+from organism_atlas.organs import ORDER, ORGANS, PAINT, SYSTEMS, for_body, other_sex
 
 Z = 0.7
 # точки, которые однозначно попадают в один орган
 HIT_POINTS = {"brain": (CX, 50), "heart": (CX + 20, 230), "lungs": (CX - 45, 200), "liver": (CX - 40, 280),
-              "stomach": (CX + 35, 275), "kidneys": (CX - 31, 335), "intestines": (CX + 5, 345),
+              "stomach": (CX + 35, 275), "kidneys": (CX - 31, 335), "intestines": (CX + 5, 330),
               "thyroid": (CX + 10, 124), "spleen": (CX + 58, 272), "pancreas": (CX + 20, 314),
-              "bladder": (CX, 385)}
+              "bladder": (CX, 385), "esophagus": (CX + 13, 100), "trachea": (CX, 116), "adrenals": (CX + 28, 292),
+              "appendix": (CX - 33, 399), "rectum": (CX, 422), "uterus": (CX, 348), "ovaries": (CX + 29, 355),
+              "prostate": (CX, 405)}
 
 
 class RegistryTests(unittest.TestCase):
@@ -21,8 +23,10 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(set(ORGANS), set(ORDER))
         self.assertEqual(set(PAINT), set(ORDER))
         for key, o in ORGANS.items():
-            for field in ("color", "parts"):
+            for field in ("color", "parts", "systems", "sex"):
                 self.assertIn(field, o, key)
+            self.assertTrue(o["systems"] and set(o["systems"]) <= set(SYSTEMS), key)
+            self.assertIn(o["sex"], (None, "female", "male"), key)
 
 
 class AtlasTests(unittest.TestCase):
@@ -67,6 +71,16 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual(a.visible, ("skin", "veins", "arteries"))
         a.set_layers(BODY_LAYERS)
         self.assertTrue(np.array_equal(np.asarray(a.base), full))
+
+    def test_other_sex_organs_hidden(self):
+        """на мужской схеме нет матки и яичников, на женской - предстательной железы"""
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        for sex, gone, present in (("male", "uterus", "prostate"), ("female", "prostate", "uterus")):
+            a.set_hidden(other_sex(sex))
+            self.assertNotIn(gone, for_body(sex))
+            self.assertIn(present, for_body(sex))
+            self.assertEqual(a.organ_at(*(v * Z for v in HIT_POINTS[present])), present)
+            self.assertNotEqual(a.organ_at(*(v * Z for v in HIT_POINTS[gone])), gone)
 
     def test_overlays(self):
         for key in ORGANS:

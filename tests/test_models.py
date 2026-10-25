@@ -79,18 +79,20 @@ class ModelFilesTests(unittest.TestCase):
 
 
 class SameAsBeforeTests(unittest.TestCase):
-    """перенос процедурных моделей в JSON их не изменил (они остаются резервом к анатомическим)"""
+    """перенос процедурных моделей в JSON их не изменил (они остаются резервом к анатомическим).
+    Органы, добавленные позже, в фикстуре не записаны"""
 
     def test_same_number_of_parts(self):
-        for key in ORGANS:
+        self.assertLessEqual(set(BEFORE), set(ORGANS))
+        for key in BEFORE:
             self.assertEqual(len(load_procedural(key)), len(BEFORE[key]), key)
 
     def test_same_primitives(self):
-        for key in ORGANS:
+        for key in BEFORE:
             self.assertEqual(load_procedural(key), BEFORE[key], key)
 
     def test_pixel_identical_render(self):
-        for key in ORGANS:
+        for key in BEFORE:
             for az, el, zoom, ss, step in VIEWS:
                 old = Scene3D(BEFORE[key]).render(160, 120, az, el, zoom=zoom, ss=ss, step=step)
                 new = Scene3D(load_procedural(key)).render(160, 120, az, el, zoom=zoom, ss=ss, step=step)

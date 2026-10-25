@@ -1,4 +1,4 @@
-"""Окно настроек: тема, качество 3D, масштаб интерфейса и язык."""
+"""Окно настроек: тема, качество 3D, масштаб интерфейса, схема тела и язык."""
 
 import tkinter as tk
 
@@ -60,6 +60,8 @@ class SettingsWindow:
             hint, fg = t("settings_scale_hint"), "muted"
         self.row(t("settings_scale"), [("%d%%" % round(v * 100), v) for v in settings.CHOICES["ui_scale"]],
                  app.pending_scale, app.set_ui_scale, hint, fg)
+        self.row(t("settings_body"), [(t("body_" + v), v) for v in settings.CHOICES["body"]],
+                 app.body, app.set_body, t("settings_body_hint"))
         self.row(t("settings_language"), [(i18n.language_name(c), c) for c in i18n.available()],
                  i18n.current(), app.set_lang)
 

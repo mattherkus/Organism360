@@ -1,0 +1,42 @@
+"""Пищевод: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра.
+
+Лежит позади трахеи и сердца, поэтому на схеме виден в основном на шее, левее трахеи."""
+
+import numpy as np
+
+from ..colors import hex2rgb
+from ..geometry import CX, P
+from ..models import load_parts
+from ..render2d.organ import Org, finish, shade
+
+
+# --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
+COLOR = "#cf7f74"                      # цвет органа на схеме и полоски в карточке
+SYSTEMS = ("digestive",)               # системы органов (первая - главная): тема и вопросы викторины
+
+
+# --------------------------------------------------------------- 2D: рисунок на схеме тела
+
+# осевая линия: от глотки вниз, чуть левее трахеи, к входу в желудок (его кардии)
+PATH = [(10, 101), (10.5, 130), (9, 165), (6, 205), (5, 235), (5, 250)]
+WIDTHS = [9, 9.5, 10, 10, 9, 8]
+
+
+def paint(Z, ss, seed=43):
+    o = Org((CX - 4, 94, CX + 20, 258), Z, ss, seed)
+    o.L("mask").tube(P(PATH), WIDTHS)
+    mask = o.m("mask")
+    fib = o.noise(2.4, 3, 1, stretch=(0.4, 2.2))                 # продольные мышечные волокна
+    big = o.noise(10, 2, 2)
+    alb = np.broadcast_to(hex2rgb("#cc7a70"), o.shape + (3,)).copy()
+    alb = alb * (1 + 0.05 * fib + 0.05 * big)[..., None]
+    bump = 0.12 * fib + 0.06 * big
+    rgba = shade(o, alb, bump, mask, soft=(2.0, 4.0), spec=0.45, shin=16, amp=(3.0, 3.5), ambient=0.48)
+    return finish(o, rgba)
+
+
+# --------------------------------------------------------------- 3D: модель (данные в models/esophagus.json)
+
+def parts():
+    """3D-модель: примитивы из models/esophagus.json"""
+    return load_parts("esophagus")

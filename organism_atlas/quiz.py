@@ -1,4 +1,5 @@
-"""Логика викторины без привязки к интерфейсу: порядок вопросов, варианты ответа, таймер, вопросы по фактам."""
+"""Логика викторины без привязки к интерфейсу: порядок и число вопросов, варианты ответа, таймер,
+вопросы по фактам, по расположению и о системе органов."""
 
 import random
 import re
@@ -7,9 +8,13 @@ import time
 from . import i18n, questions, settings
 from .i18n import t
 
-MODES = ("find", "name", "facts")                # найди орган / угадай название / угадай по факту
+MODES = ("find", "name", "facts", "mix")         # найди орган / угадай название / угадай по факту / вперемешку
+# типы вопросов: три режима и ещё два, которые есть только во «Вперемешку»:
+# where - угадай орган по расположению, system - к какой системе органов относится орган
+KINDS = ("find", "name", "facts", "where", "system")
 LEVELS = settings.CHOICES["quiz_level"]
 TIMERS = settings.CHOICES["quiz_timer"]
+LENGTHS = settings.CHOICES["quiz_length"]        # сколько вопросов в игре; 0 - про все органы
 OPTIONS = {"easy": 3, "medium": 4, "hard": 6}    # сколько вариантов ответа на кнопках
 
 
@@ -49,6 +54,27 @@ def fact_prompts(keys, level, rng=random):
     return out
 
 
+def location_leaks(key):
+    """выдаёт ли расположение органа (поле location карточки) ответ хотя бы на одном языке"""
+    return any(leaks(i18n.organ_in(code, key, "location"), key) for code in i18n.available())
+
+
+def kinds_for(key):
+    """какие типы вопросов можно задать про орган во «Вперемешку»"""
+    from .organs import ORGANS
+    out = ["find", "name", "facts"]
+    if not location_leaks(key):
+        out.append("where")
+    if key in ORGANS:
+        out.append("system")
+    return out
+
+
+def game_length(length, available):
+    """сколько вопросов будет в игре: length (0 - все), но не больше, чем есть органов"""
+    return available if not length or length > available else length
+
+
 def prompt_text(key, idx):
     """текст вопроса по факту на текущем языке"""
     if idx is None or idx >= len(questions.for_organ(key)):
@@ -59,13 +85,19 @@ def prompt_text(key, idx):
 class QuizSession:
     """Один проход викторины: вопросы в случайном порядке, подсчёт ошибок, таймер и результат.
 
-    keys - органы, о которых спрашиваем; pool - из каких органов брать неверные варианты (по умолчанию keys);
+    keys - органы, о которых можно спросить; count - сколько вопросов (None или 0 - про все), органы
+    берутся случайно и не повторяются; pool - из каких органов брать неверные варианты (по умолчанию keys);
+    mode - режим из MODES («mix» - у каждого вопроса свой случайный тип из KINDS);
     timer - секунд на вопрос (0 - без таймера); clock - источник времени (подменяется в тестах)."""
 
-    def __init__(self, keys, rng=random, pool=None, mode="find", level="medium", timer=0, clock=time.monotonic):
+    def __init__(self, keys, rng=random, pool=None, mode="find", level="medium", timer=0, clock=time.monotonic,
+                 count=None):
         self.rng, self.mode, self.level, self.timer, self.clock = rng, mode, level, timer, clock
-        self.q = rng.sample(list(keys), len(keys))   # порядок вопросов
+        keys = list(keys)
+        self.q = rng.sample(keys, game_length(count, len(keys)))     # какие органы и в каком порядке
         self.pool = list(pool) if pool is not None else list(self.q)
+        # тип каждого вопроса
+        self.kinds = [rng.choice(kinds_for(k)) for k in self.q] if mode == "mix" else [mode] * len(self.q)
         self.i = 0                                   # номер текущего вопроса
         self.errors = 0                              # всего ошибок (включая вышедшее время)
         self.first_try = 0                           # верных с первой попытки
@@ -74,7 +106,8 @@ class QuizSession:
         self.missed = []                             # ключи органов, на которых ошибались
         self.results = {}                            # {орган: True - с первой попытки, False - нет}
         self._options = {}                           # {номер вопроса: варианты ответа}
-        self.prompts = fact_prompts(self.q, level, rng) if mode == "facts" else {}
+        facts = [k for k, kind in zip(self.q, self.kinds) if kind == "facts"]
+        self.prompts = fact_prompts(facts, level, rng) if facts else {}
         self.deadline = None                         # когда кончится время на текущий вопрос
         self.started, self.ended = clock(), None
 
@@ -90,6 +123,11 @@ class QuizSession:
     def current(self):
         """ключ органа, о котором текущий вопрос (None, когда вопросы закончились)"""
         return None if self.finished else self.q[self.i]
+
+    @property
+    def kind(self):
+        """тип текущего вопроса из KINDS (None, когда вопросы закончились)"""
+        return None if self.finished else self.kinds[self.i]
 
     @property
     def elapsed(self):
@@ -145,32 +183,59 @@ class QuizSession:
         self._next(False)
         return key
 
-    # --- вопросы со своими вариантами ответа: варианты - «#0» (верный) и «#1», «#2»... (неверные)
+    # --- варианты ответа - органы (ключи), кроме двух случаев:
+    # вопрос по факту со своими вариантами - «#0» (верный) и «#1», «#2»... (неверные);
+    # вопрос о системе органов - «@система» (ключ из organs.SYSTEMS)
     def custom(self):
         """у текущего вопроса свои варианты ответа (а не «какой это орган»)"""
-        idx = self.prompts.get(self.current)
+        idx = self.prompts.get(self.current) if self.kind == "facts" else None
         return idx is not None and questions.has_answers(self.current, idx)
 
     def correct(self):
-        """что считается верным ответом: ключ органа или «#0»"""
-        return "#0" if self.custom() else self.current
+        """что считается верным ответом: ключ органа, «#0» или «@система»"""
+        return self._correct(self.i)
+
+    def _correct(self, i):
+        key, kind = self.q[i], self.kinds[i]
+        if kind == "system":
+            from .organs import ORGANS
+            return "@" + ORGANS[key]["systems"][0]
+        idx = self.prompts.get(key) if kind == "facts" else None
+        if idx is not None and questions.has_answers(key, idx):
+            return "#0"
+        return key
+
+    def answer_text(self, i):
+        """верный ответ вопроса номер i словами, если ответ - не орган (для «Время вышло! Правильный ответ: …»);
+        None - ответ на вопрос и есть орган"""
+        right = self._correct(i)
+        if right.startswith("@"):
+            return t("system_" + right[1:])
+        if right.startswith("#"):
+            return questions.answer_text(self.q[i], self.prompts[self.q[i]], 0)
+        return None
 
     def option_label(self, opt):
         """текст на кнопке варианта на текущем языке"""
         if opt.startswith("#"):
             return questions.answer_text(self.current, self.prompts[self.current], int(opt[1:]))
+        if opt.startswith("@"):
+            return t("system_" + opt[1:])
         return i18n.name(opt)
 
     def options(self, n=None):
         """варианты ответа: верный и n-1 случайных неверных, в случайном порядке. Неверные - другие органы
-        из pool или неверные ответы вопроса. n по умолчанию зависит от сложности. Для одного вопроса
-        список не меняется."""
+        из pool, неверные ответы вопроса или другие системы органов. n по умолчанию зависит от сложности.
+        Для одного вопроса список не меняется."""
         if self.finished:
             return []
         if self.i not in self._options:
             n = n or OPTIONS[self.level]
             if self.custom():
                 others = ["#%d" % j for j in range(1, questions.n_wrong(self.current, self.prompts[self.current]) + 1)]
+            elif self.kind == "system":
+                from .organs import ORGANS, SYSTEMS
+                others = ["@" + x for x in SYSTEMS if x not in ORGANS[self.current]["systems"]]
             else:
                 others = [k for k in self.pool if k != self.current]
             opts = self.rng.sample(others, min(n - 1, len(others))) + [self.correct()]
@@ -179,8 +244,14 @@ class QuizSession:
         return self._options[self.i]
 
     def prompt(self):
-        """текст вопроса в режиме «по факту»"""
-        return prompt_text(self.current, self.prompts[self.current]) if self.prompts and not self.finished else ""
+        """текст вопроса: факт («Угадай по факту») или расположение органа (вопрос «где находится»)"""
+        if self.finished:
+            return ""
+        if self.kind == "facts":
+            return prompt_text(self.current, self.prompts[self.current])
+        if self.kind == "where":
+            return i18n.organ(self.current, "location")
+        return ""
 
     @property
     def percent(self):

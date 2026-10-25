@@ -2,9 +2,9 @@ import random
 import unittest
 
 from organism_atlas import i18n, questions
-from organism_atlas.organs import ORGANS
-from organism_atlas.quiz import (LEVELS, OPTIONS, QuizSession, fact_prompts, format_time, leaks,
-                                 prompt_text)
+from organism_atlas.organs import ORGANS, SYSTEMS, for_body
+from organism_atlas.quiz import (KINDS, LENGTHS, LEVELS, OPTIONS, QuizSession, fact_prompts, format_time,
+                                 game_length, kinds_for, leaks, location_leaks, prompt_text)
 
 NAMES = {"a": "Аа", "b": "Бб", "c": "Вв", "d": "Гг"}
 
@@ -180,6 +180,97 @@ class FactQuestionTests(unittest.TestCase):
             s.answer(s.correct())
         self.assertEqual(s.prompt(), "")
 
+
+
+class LengthTests(unittest.TestCase):
+    """длина игры: случайные органы из всего набора, без повторов"""
+
+    def test_game_length(self):
+        self.assertEqual(game_length(10, 19), 10)
+        self.assertEqual(game_length(20, 19), 19)          # органов меньше - спросим про все
+        self.assertEqual(game_length(0, 19), 19)           # 0 - «все»
+        self.assertEqual(game_length(None, 4), 4)
+        self.assertIn(0, LENGTHS)
+
+    def test_count_picks_distinct_organs(self):
+        keys = for_body("female")
+        for count in (5, 10):
+            s = QuizSession(keys, rng=random.Random(count), count=count)
+            self.assertEqual(s.total, count)
+            self.assertEqual(len(set(s.q)), count)         # органы не повторяются
+            self.assertTrue(set(s.q) <= set(keys))
+            while not s.finished:
+                self.assertTrue(s.answer(s.current))
+            self.assertEqual(len(s.results), count)
+
+    def test_games_differ(self):
+        keys = for_body("male")
+        games = {tuple(QuizSession(keys, rng=random.Random(seed), count=10).q) for seed in range(10)}
+        self.assertGreater(len(games), 8)
+        picked = set().union(*games)
+        self.assertGreater(len(picked), 15)                # в разных играх попадаются разные органы
+
+    def test_all_by_default(self):
+        self.assertCountEqual(QuizSession(list(ORGANS), rng=random.Random(0)).q, ORGANS)
+
+
+class MixedTests(unittest.TestCase):
+    """режим «Вперемешку»: у каждого вопроса свой тип"""
+
+    def tearDown(self):
+        i18n._current = i18n._previous = i18n.BASE
+
+    def test_kinds_are_mixed(self):
+        s = QuizSession(list(ORGANS), rng=random.Random(4), mode="mix")
+        self.assertEqual(len(s.kinds), s.total)
+        self.assertTrue(set(s.kinds) <= set(KINDS))
+        self.assertGreaterEqual(len(set(s.kinds)), 4)
+        self.assertEqual(QuizSession(list(NAMES), rng=random.Random(0), mode="name").kinds, ["name"] * 4)
+
+    def test_mixed_game_can_be_finished(self):
+        for seed in range(5):
+            for level in LEVELS:
+                s = QuizSession(for_body("female"), rng=random.Random(seed), mode="mix", level=level, count=10)
+                while not s.finished:
+                    if s.kind != "find":
+                        opts = s.options()
+                        self.assertIn(s.correct(), opts)
+                        self.assertTrue(all(s.option_label(o) for o in opts))
+                    if s.kind in ("facts", "where"):
+                        self.assertTrue(s.prompt())
+                    self.assertTrue(s.answer(s.correct()))
+                self.assertEqual(s.first_try, 10)
+
+    def test_system_question(self):
+        s = QuizSession(["pancreas"], rng=random.Random(0), pool=list(ORGANS), mode="system", level="hard")
+        self.assertEqual(s.correct(), "@digestive")
+        opts = s.options()
+        self.assertEqual(len(opts), 6)
+        self.assertNotIn("@endocrine", opts)               # вторая система органа - не неверный вариант
+        self.assertTrue({o[1:] for o in opts} <= set(SYSTEMS))
+        self.assertEqual(s.option_label("@digestive"), "Пищеварительная")
+        self.assertEqual(s.answer_text(0), "Пищеварительная")
+        i18n.set_lang("en")
+        self.assertEqual(s.option_label("@digestive"), "Digestive")
+        self.assertFalse(s.answer("pancreas"))
+        self.assertTrue(s.answer("@digestive"))
+
+    def test_where_question(self):
+        s = QuizSession(["bladder"], rng=random.Random(0), pool=list(ORGANS), mode="where")
+        self.assertEqual(s.prompt(), i18n.organ("bladder", "location"))
+        self.assertIn("bladder", s.options())
+        self.assertIsNone(s.answer_text(0))                # ответ - сам орган
+        self.assertTrue(s.answer("bladder"))
+
+    def test_location_that_names_organ_is_not_asked(self):
+        for key in ORGANS:
+            self.assertEqual("where" in kinds_for(key), not location_leaks(key), key)
+            if "where" in kinds_for(key):
+                for lang in ("ru", "en"):
+                    i18n.set_lang(lang)
+                    self.assertFalse(leaks(i18n.organ(key, "location"), key), (lang, key))
+        self.assertIn("system", kinds_for("heart"))
+        self.assertNotIn("system", kinds_for("a"))         # у выдуманного органа системы нет
 
 
 class CustomAnswerTests(unittest.TestCase):

@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Мышечная трубка, по которой проглоченная пища идёт из глотки в желудок.",
+      "en": "A muscular tube that carries swallowed food from the throat to the stomach."
+    },
+    {
+      "level": "easy",
+      "ru": "По этому органу каждый глоток воды попадает в желудок.",
+      "en": "Every sip of water reaches the stomach through this organ."
+    },
+    {
+      "level": "easy",
+      "ru": "Куда ведёт пищевод?",
+      "en": "Where does the esophagus lead?",
+      "answer": {
+        "ru": "В желудок",
+        "en": "To the stomach"
+      },
+      "wrong": {
+        "ru": [
+          "В лёгкие",
+          "В печень",
+          "В почки"
+        ],
+        "en": [
+          "To the lungs",
+          "To the liver",
+          "To the kidneys"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Длина около 25 см; лежит позади трахеи и сердца.",
+      "en": "About 25 cm long; lies behind the trachea and heart."
+    },
+    {
+      "level": "medium",
+      "ru": "Проходит через отверстие в диафрагме из грудной клетки в живот.",
+      "en": "Passes through an opening in the diaphragm from the chest into the abdomen."
+    },
+    {
+      "level": "medium",
+      "ru": "Изжога — это заброс кислоты из желудка в этот орган.",
+      "en": "Heartburn is acid flowing back from the stomach into this organ."
+    },
+    {
+      "level": "medium",
+      "ru": "Как называются волны сокращений, которые проталкивают пищу по пищеводу?",
+      "en": "What are the waves of contraction that push food down the esophagus called?",
+      "answer": {
+        "ru": "Перистальтика",
+        "en": "Peristalsis"
+      },
+      "wrong": {
+        "ru": [
+          "Диффузия",
+          "Фильтрация",
+          "Осмос"
+        ],
+        "en": [
+          "Diffusion",
+          "Filtration",
+          "Osmosis"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Вверху стенка из скелетных мышц, внизу — из гладких.",
+      "en": "The upper part of its wall is skeletal muscle and the lower part is smooth muscle."
+    },
+    {
+      "level": "hard",
+      "ru": "Имеет три естественных сужения, где чаще всего застревают инородные тела.",
+      "en": "Has three natural narrowings where swallowed objects most often get stuck."
+    },
+    {
+      "level": "hard",
+      "ru": "При болезни Барретта меняется слизистая нижней части этого органа.",
+      "en": "In Barrett’s disease the lining of the lower part of this organ changes."
+    }
+  ]
+}

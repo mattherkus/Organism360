@@ -309,6 +309,7 @@ def fill_card(card, key, on_3d=None, empty=None, compact=False, wrap=None):
     label(card, i18n.organ(key, "desc"), font=(FONT, 11), justify="left",
           anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(8)))
     section(card, t("card_location"), i18n.organ(key, "location"), wrap)
+    section(card, t("card_system"), ", ".join(t("system_" + x) for x in ORGANS[key]["systems"]), wrap)
     heading(card, t("card_facts"))
     for f in i18n.organ(key, "facts"):
         label(card, "•  " + f, font=(FONT, 11), justify="left",
@@ -518,7 +519,8 @@ def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, s
 
 def fill_setup(card, title, desc, rows, start_text, on_start, history_title, history):
     """карточка настройки викторины перед стартом.
-    rows - [(заголовок, [(текст, значение, доступен)], выбранное, on_pick(значение), подсказка, столбиком)];
+    rows - [(заголовок, [(текст, значение, доступен)], выбранное, on_pick(значение), подсказка, раскладка)];
+    раскладка: False - в строку, True - столбиком, число - сеткой в столько столбцов;
     history - строки списка «последние игры» (если игр не было - одна строка-заглушка)."""
     for w in card.winfo_children():
         w.destroy()
@@ -532,13 +534,21 @@ def fill_setup(card, title, desc, rows, start_text, on_start, history_title, his
         heading(card, head)
         line = frame(card)
         line.pack(fill="x", padx=px(16))
+        cols = vertical if isinstance(vertical, int) and vertical > 1 else 0          # True - тоже int (1)
+        for c in range(cols):
+            line.columnconfigure(c, weight=1, uniform="col")
         for i, (text, value, enabled) in enumerate(options):
             b = flat_button(line, text, lambda v=value: on_pick(v), anchor="w" if vertical else "center")
             set_button_bg(b, "accent" if value == selected else "card")
             if not enabled:
                 style(b, disabledforeground="muted")
                 b.config(state="disabled", cursor="")
-            if vertical:
+            if cols:
+                b.config(pady=px(4))
+                b.grid(row=i // cols, column=i % cols, sticky="ew",
+                       padx=(px(3) if i % cols else 0, 0 if i % cols == cols - 1 else px(3)),
+                       pady=(px(3) if i >= cols else 0, 0))
+            elif vertical:
                 b.config(pady=px(4))
                 b.pack(fill="x", pady=(px(3) if i else 0, 0))
             else:

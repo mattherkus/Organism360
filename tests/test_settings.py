@@ -37,6 +37,13 @@ class SettingsTests(unittest.TestCase):
         settings.save(lang="en")                     # и поверх испорченного файла можно записать
         self.assertEqual(settings.load(), {"lang": "en"})
 
+    def test_quiz_length_and_body(self):
+        self.assertEqual((settings.get({}, "quiz_length"), settings.get({}, "body")), (10, "male"))
+        self.assertEqual(settings.get({"quiz_length": 0, "body": "female"}, "quiz_length"), 0)
+        self.assertEqual(settings.get({"quiz_length": 7, "body": "x"}, "quiz_length"), 10)
+        self.assertEqual(settings.get({"body": "x"}, "body"), "male")
+        self.assertEqual(settings.get({"quiz_length": True}, "quiz_length"), 10)
+
     def test_restore_latin_keeps_previous_language(self):
         i18n.set_lang("en")
         i18n.set_lang("la")

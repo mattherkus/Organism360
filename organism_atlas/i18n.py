@@ -112,6 +112,11 @@ def name(key):
     return organ(key, "name")
 
 
+def organ_in(code, key, field):
+    """поле карточки органа на языке code как есть, без отката на другие языки ("" - поля нет)"""
+    return _load(code)["organs"].get(key, {}).get(field) or ""
+
+
 def all_names(key):
     """название органа на всех языках (чтобы факт не выдавал ответ ни на одном из них)"""
     out = []

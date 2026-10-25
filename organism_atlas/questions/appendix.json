@@ -1,0 +1,82 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Его воспаление обычно лечат операцией по удалению.",
+      "en": "When it gets inflamed, it is usually removed by surgery."
+    },
+    {
+      "level": "easy",
+      "ru": "Узкий отросток с закрытым концом внизу живота справа.",
+      "en": "A narrow pouch with a closed end in the lower right abdomen."
+    },
+    {
+      "level": "easy",
+      "ru": "Как называется воспаление аппендикса?",
+      "en": "What is inflammation of the appendix called?",
+      "answer": {
+        "ru": "Аппендицит",
+        "en": "Appendicitis"
+      },
+      "wrong": {
+        "ru": [
+          "Гастрит",
+          "Цистит",
+          "Бронхит"
+        ],
+        "en": [
+          "Gastritis",
+          "Cystitis",
+          "Bronchitis"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Червеобразный отросток слепой кишки длиной 7–10 см.",
+      "en": "A worm-shaped pouch of the cecum, 7–10 cm long."
+    },
+    {
+      "level": "medium",
+      "ru": "Боль при его воспалении часто начинается у пупка и смещается вправо вниз.",
+      "en": "Pain when it is inflamed often starts near the navel and moves to the lower right."
+    },
+    {
+      "level": "medium",
+      "ru": "От какой кишки отходит аппендикс?",
+      "en": "Which part of the gut does the appendix branch off?",
+      "answer": {
+        "ru": "От слепой",
+        "en": "The cecum"
+      },
+      "wrong": {
+        "ru": [
+          "От прямой",
+          "От двенадцатиперстной",
+          "От сигмовидной"
+        ],
+        "en": [
+          "The rectum",
+          "The duodenum",
+          "The sigmoid colon"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "В стенке много лимфоидной ткани, которая участвует в иммунной защите кишечника.",
+      "en": "Its wall has a lot of lymphoid tissue that helps protect the gut from infection."
+    },
+    {
+      "level": "hard",
+      "ru": "По одной из гипотез, служит «запасником» полезных кишечных бактерий.",
+      "en": "One hypothesis says it is a reserve of helpful gut bacteria."
+    },
+    {
+      "level": "hard",
+      "ru": "Может лежать за слепой кишкой или свисать в малый таз — у всех по-разному.",
+      "en": "It may lie behind the cecum or hang down into the pelvis, depending on the person."
+    }
+  ]
+}

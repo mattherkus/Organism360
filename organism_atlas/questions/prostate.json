@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Мужской орган размером с каштан под мочевым пузырём.",
+      "en": "A male organ the size of a chestnut just below the bladder."
+    },
+    {
+      "level": "easy",
+      "ru": "Есть только у мужчин и вырабатывает часть семенной жидкости.",
+      "en": "Only men have it; it makes part of the seminal fluid."
+    },
+    {
+      "level": "easy",
+      "ru": "У кого есть предстательная железа?",
+      "en": "Who has a prostate?",
+      "answer": {
+        "ru": "Только у мужчин",
+        "en": "Only men"
+      },
+      "wrong": {
+        "ru": [
+          "Только у женщин",
+          "У всех людей",
+          "Только у детей"
+        ],
+        "en": [
+          "Only women",
+          "Everyone",
+          "Only children"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Охватывает начало мочеиспускательного канала.",
+      "en": "It surrounds the beginning of the urethra."
+    },
+    {
+      "level": "medium",
+      "ru": "С возрастом часто увеличивается и мешает мочеиспусканию.",
+      "en": "It often grows with age and makes urination harder."
+    },
+    {
+      "level": "medium",
+      "ru": "Её секрет составляет примерно треть объёма семенной жидкости.",
+      "en": "Its secretion makes up about a third of the seminal fluid."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько весит предстательная железа взрослого мужчины?",
+      "en": "How much does an adult man’s prostate weigh?",
+      "answer": {
+        "ru": "Около 20 г",
+        "en": "About 20 g"
+      },
+      "wrong": {
+        "ru": [
+          "Около 2 г",
+          "Около 200 г",
+          "Около 1 кг"
+        ],
+        "en": [
+          "About 2 g",
+          "About 200 g",
+          "About 1 kg"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Анализ крови на ПСА помогает выявлять болезни этого органа.",
+      "en": "A PSA blood test helps detect diseases of this organ."
+    },
+    {
+      "level": "hard",
+      "ru": "Врач может прощупать этот орган через стенку прямой кишки.",
+      "en": "A doctor can feel this organ through the wall of the rectum."
+    },
+    {
+      "level": "hard",
+      "ru": "Ферменты его секрета разжижают семенную жидкость.",
+      "en": "Enzymes in its secretion make seminal fluid more liquid."
+    }
+  ]
+}

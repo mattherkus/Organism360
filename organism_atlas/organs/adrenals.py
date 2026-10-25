@@ -1,0 +1,43 @@
+"""Надпочечники: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
+
+import numpy as np
+
+from ..colors import hex2rgb
+from ..geometry import CX, P
+from ..models import load_parts
+from ..render2d.organ import Org, finish, shade
+
+
+# --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
+COLOR = "#e2a63c"                      # цвет органа на схеме и полоски в карточке
+SYSTEMS = ("endocrine",)               # системы органов (первая - главная): тема и вопросы викторины
+
+
+# --------------------------------------------------------------- 2D: рисунок на схеме тела
+
+# правый - треугольная «шапочка» на верхнем полюсе почки, левый - полумесяц вдоль её внутреннего края
+RIGHT = [(-38, 305), (-34, 296), (-27.5, 290), (-21, 292.5), (-18, 299), (-20.5, 305), (-29, 306.5)]
+LEFT = [(21.5, 290.5), (27, 287), (32.5, 290), (30, 295), (26, 300.5), (23.5, 307), (19.5, 306), (19, 298)]
+
+
+def paint(Z, ss, seed=47):
+    o = Org((CX - 42, 280, CX + 42, 316), Z, ss, seed)
+    m = o.L("mask")
+    m.poly(P(RIGHT))
+    m.poly(P(LEFT))
+    mask = o.m("mask")
+    edge, dome = o.cells(2.2, 1, border=0.2)                      # зернистая корковая ткань
+    fine = o.noise(1.6, 2, 2)
+    alb = np.broadcast_to(hex2rgb("#dda03a"), o.shape + (3,)).copy()
+    alb = alb * (1 + 0.05 * fine + 0.06 * o.noise(7, 2, 3))[..., None]
+    alb = alb * (1 - 0.1 * edge[..., None])
+    bump = 0.08 * dome - 0.12 * edge + 0.03 * fine
+    rgba = shade(o, alb, bump, mask, soft=(2.5, 5.0), spec=0.45, shin=16, amp=(2.4, 3.0), ambient=0.5)
+    return finish(o, rgba)
+
+
+# --------------------------------------------------------------- 3D: модель (данные в models/adrenals.json)
+
+def parts():
+    """3D-модель: примитивы из models/adrenals.json"""
+    return load_parts("adrenals")

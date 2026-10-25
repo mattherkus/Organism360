@@ -1,0 +1,68 @@
+{
+  "parts": [
+    {
+      "type": "ellipsoid",
+      "center": [1.15, 0, 0],
+      "radii": [0.55, 0.32, 0.36],
+      "color": "#ebbcae",
+      "texture": "gland",
+      "gloss": 0.45
+    },
+    {
+      "type": "ellipsoid",
+      "center": [-1.15, 0, 0],
+      "radii": [0.55, 0.32, 0.36],
+      "color": "#ebbcae",
+      "texture": "gland",
+      "gloss": 0.45
+    },
+    {
+      "type": "tube",
+      "path": [
+        [0.6, 0, 0],
+        [0.35, 0, 0.05],
+        [0.05, 0, 0.15]
+      ],
+      "radius": 0.06,
+      "color": "#e6b3a4",
+      "texture": "smooth",
+      "gloss": 0.35
+    },
+    {
+      "type": "tube",
+      "path": [
+        [-0.6, 0, 0],
+        [-0.35, 0, 0.05],
+        [-0.05, 0, 0.15]
+      ],
+      "radius": 0.06,
+      "color": "#e6b3a4",
+      "texture": "smooth",
+      "gloss": 0.35
+    },
+    {
+      "type": "tube",
+      "path": [
+        [1.5, 0.1, 0.35],
+        [1.0, 0.05, 0.6],
+        [0.3, 0, 0.55]
+      ],
+      "radius": [0.14, 0.09, 0.08],
+      "color": "#e0899b",
+      "texture": "smooth",
+      "gloss": 0.35
+    },
+    {
+      "type": "tube",
+      "path": [
+        [-1.5, 0.1, 0.35],
+        [-1.0, 0.05, 0.6],
+        [-0.3, 0, 0.55]
+      ],
+      "radius": [0.14, 0.09, 0.08],
+      "color": "#e0899b",
+      "texture": "smooth",
+      "gloss": 0.35
+    }
+  ]
+}
