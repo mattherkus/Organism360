@@ -45,6 +45,9 @@ class AppTests(unittest.TestCase):
         self.wait()
 
     def tearDown(self):
+        for job in ("flash_job", "next_job", "timer_job", "resize_job"):      # отложенные вызовы окна
+            if getattr(self.app, job, None):
+                self.root.after_cancel(getattr(self.app, job))
         self.root.destroy()
 
     def wait(self):
@@ -80,6 +83,37 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.atlas.hidden, frozenset())
         self.app.set_mode("study")
         self.assertEqual(self.app.atlas.hidden, {"heart"})
+        self.assertEqual(self.errors, [])
+
+    def test_hide_all_organs(self):
+        """кнопка в заголовке органов скрывает все органы, повторно - возвращает"""
+        from organism_atlas.ui.widgets import ORGANS_ALL
+        button = self.app.toggles[ORGANS_ALL]
+        self.app.toggle_organ("heart")
+        button.invoke()
+        self.assertEqual(self.app.atlas.hidden, set(ORGANS))
+        self.assertIsNone(self.app.atlas.organ_at(int(210 * Z), int(230 * Z)))
+        self.assertEqual(button.cget("text"), i18n.t("layers_show_organs"))
+        self.assertFalse(any(self.app.toggles[k].on for k in ORGANS))
+        button.invoke()
+        self.assertEqual(self.app.atlas.hidden, frozenset())
+        self.assertEqual(button.cget("text"), i18n.t("layers_hide_organs"))
+        self.assertEqual(self.errors, [])
+
+    def test_panel_only_in_study(self):
+        """в викторине панели слоёв нет, а схема стоит на месте и не перерисовывается"""
+        self.root.update()
+        x = self.app.c.winfo_rootx()
+        for mode in ("find", "name", "facts"):
+            self.app.set_mode(mode)
+            self.root.update()
+            self.assertFalse(self.app.panel.winfo_ismapped(), mode)
+            self.assertEqual(self.app.c.winfo_rootx(), x, mode)
+            self.assertTrue(self.app.ready(), mode)
+        self.app.set_mode("study")
+        self.root.update()
+        self.assertTrue(self.app.panel.winfo_ismapped())
+        self.assertEqual(self.app.c.winfo_rootx(), x)
         self.assertEqual(self.errors, [])
 
     def test_resize_after_hover(self):

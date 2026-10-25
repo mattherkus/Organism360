@@ -124,13 +124,13 @@ def _mix(a, b, w):
 
 
 def dot_image(master, size, on, state):
-    """круглый флажок (сглаженный, с прозрачным фоном). state: normal, hover, press, disabled.
+    """круглый флажок (сглаженный, с прозрачным фоном). state: normal, hover, press.
     Включён - залитый кружок цвета акцента с галочкой, выключен - кольцо. Наведение и нажатие
     меняют только кружок: при наведении он светлее (у кольца появляется заливка), при нажатии темнее.
     master - виджет, в котором картинка будет показана (картинки Tk принадлежат своему окну Tk)"""
     global _dots_tk
     accent, ring, mark = C["accent"], C["muted"], C["on_accent"]
-    key = (size, on, state, accent, ring, mark, C["border"])
+    key = (size, on, state, accent, ring, mark)
     if _dots_tk is not master.tk:                          # новое окно Tk: старые картинки ему не годятся
         _dots.clear()
         _dots_tk = master.tk
@@ -141,10 +141,7 @@ def dot_image(master, size, on, state):
         d = ImageDraw.Draw(im)
         w = max(ss, round(S * 0.11))                       # толщина кольца
         box = (w // 2, w // 2, S - 1 - w // 2, S - 1 - w // 2)
-        if state == "disabled":
-            fill = _mix(C["border"], ring, 0.35) if on else None
-            d.ellipse(box, fill=fill, outline=_mix(C["border"], ring, 0.35), width=w)
-        elif on:
+        if on:
             fill = {"normal": _rgb(accent), "hover": _mix(accent, "#ffffff", 0.22),
                     "press": _mix(accent, "#000000", 0.25)}[state]
             d.ellipse(box, fill=fill)
@@ -155,8 +152,7 @@ def dot_image(master, size, on, state):
             d.ellipse(box, fill=fill, outline=outline, width=w)
         if on:                                             # галочка
             pts = [(S * 0.28, S * 0.52), (S * 0.44, S * 0.68), (S * 0.73, S * 0.36)]
-            color = _mix(C["card"], ring, 0.6) if state == "disabled" else _rgb(mark)
-            d.line(pts, fill=color, width=round(S * 0.12), joint="curve")
+            d.line(pts, fill=_rgb(mark), width=round(S * 0.12), joint="curve")
         _dots[key] = ImageTk.PhotoImage(im.resize((size, size), Image.LANCZOS), master=master)
     return _dots[key]
 
@@ -165,8 +161,8 @@ class Toggle:
     """строка панели слоёв: круглый флажок и подпись; color - цветная метка органа слева.
     Щелчок по любому месту строки переключает, а подсвечивается при наведении и нажатии только кружок"""
 
-    def __init__(self, parent, text, on, command, enabled=True, color=None):
-        self.command, self.enabled, self.on = command, enabled, on
+    def __init__(self, parent, text, on, command, color=None):
+        self.command, self.on = command, on
         self.state = "normal"
         self.row = frame(parent)
         self.row.pack(fill="x", pady=(0, px(1)))
@@ -177,13 +173,12 @@ class Toggle:
         self.text = label(self.row, "", font=(FONT, 9), anchor="w")
         self.text.pack(side="left", fill="x", expand=True)
         self.parts = (self.row, self.dot, self.text) + tuple(self.row.winfo_children())
-        if enabled:
-            for w in self.parts:
-                w.config(cursor="hand2")
-                w.bind("<Enter>", lambda e: self.show("hover"))
-                w.bind("<Leave>", self.leave)
-                w.bind("<ButtonPress-1>", lambda e: self.show("press"))
-                w.bind("<ButtonRelease-1>", self.release)
+        for w in self.parts:
+            w.config(cursor="hand2")
+            w.bind("<Enter>", lambda e: self.show("hover"))
+            w.bind("<Leave>", self.leave)
+            w.bind("<ButtonPress-1>", lambda e: self.show("press"))
+            w.bind("<ButtonRelease-1>", self.release)
         self.set(text, on)
 
     def inside(self, e):
@@ -205,17 +200,18 @@ class Toggle:
         if not self.dot.winfo_exists():
             return
         self.state = state
-        self.dot.config(image=dot_image(self.dot, px(16), self.on, state if self.enabled else "disabled"))
+        self.dot.config(image=dot_image(self.dot, px(16), self.on, state))
 
     def set(self, text, on):
         """обновить на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
         self.on = on
-        style(self.text, fg="text" if on and self.enabled else "muted")
+        style(self.text, fg="text" if on else "muted")
         self.text.config(text=text)
         self.show(self.state)
 
 
-SHOW_ALL = "_show_all"            # ключ кнопки «Показать всё» в словаре, который отдаёт fill_layers
+SHOW_ALL = "_show_all"            # ключи кнопок в заголовках в словаре, который отдаёт fill_layers
+ORGANS_ALL = "_organs_all"
 
 
 def show_all_button(buttons, visible):
@@ -227,36 +223,36 @@ def show_all_button(buttons, visible):
         b.pack_forget()
 
 
-def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, organs_enabled=True,
-                note=None, show_all=None):
-    """панель слоёв слева от схемы.
+def header(box, title, button, top):
+    """заголовок раздела панели с маленькой кнопкой справа; button - (текст, функция)"""
+    head = frame(box)
+    head.pack(fill="x", pady=(top, px(4)))
+    label(head, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w").pack(side="left")
+    b = flat_button(head, button[0], button[1])
+    b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
+    return b
+
+
+def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, show_all, organs_all):
+    """панель слоёв слева от схемы (только в режиме «Изучать»).
     layers - [(ключ, текст, виден)] слоёв тела; organs - [(ключ, название, цвет, виден)];
-    organs_enabled - можно ли скрывать органы (в викторине нельзя), note - пояснение под списком;
-    show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто).
-    Возвращает {ключ слоя или органа: Toggle} и кнопку «Показать всё» под SHOW_ALL."""
+    show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто);
+    organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов.
+    Кнопки - в строках заголовков: низ панели может не поместиться в невысокое окно.
+    Возвращает {ключ слоя или органа: Toggle} и кнопки заголовков под SHOW_ALL и ORGANS_ALL."""
     for w in card.winfo_children():
         w.destroy()
     frame(card, "accent", height=3).pack(fill="x")
     box = frame(card)
     box.pack(fill="x", padx=px(12), pady=(0, px(10)))
-    # «Показать всё» - в строке заголовка, а пояснение - над списком органов: низ панели может
-    # не поместиться в невысокое окно, а они должны быть видны всегда
-    head = frame(box)
-    head.pack(fill="x", pady=(px(8), px(4)))
-    label(head, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w").pack(side="left")
-    b = flat_button(head, show_all[0], show_all[1])
-    b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
-    buttons = {SHOW_ALL: b}
+    buttons = {SHOW_ALL: header(box, title, show_all, px(8))}
     show_all_button(buttons, show_all[2])
     for key, text, on in layers:
         buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
-    label(box, organs_title.upper(), fg="muted", font=(FONT, 9, "bold"),
-          anchor="w").pack(fill="x", pady=(px(8), px(4)))
-    if note:
-        label(box, note, fg="muted", font=(FONT, 9), justify="left", anchor="w",
-              wraplength=px(170)).pack(fill="x", pady=(0, px(4)))
+    buttons[ORGANS_ALL] = header(box, organs_title, organs_all, px(8))
+    buttons[ORGANS_ALL].pack(side="right")
     for key, text, color, on in organs:
-        buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
+        buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), color=color)
     return buttons
 
 
