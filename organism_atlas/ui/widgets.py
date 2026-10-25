@@ -1,12 +1,14 @@
-"""Общие виджеты: плоская кнопка и карточка органа. Цвета - роли текущей темы (theme.py)."""
+"""Общие виджеты: плоская кнопка, круглый флажок, карточка органа. Цвета - роли текущей темы (theme.py)."""
 
 import tkinter as tk
+
+from PIL import Image, ImageDraw, ImageTk
 
 from .. import i18n
 from ..config import FONT
 from ..i18n import t
 from ..organs import ORGANS, fact_of_day
-from ..theme import style
+from ..theme import C, style
 from .scaling import px
 
 
@@ -108,20 +110,103 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
     return prog, buttons
 
 
-def toggle(parent, text, on, command, enabled=True, color=None):
-    """переключатель-строка панели слоёв: ☑/☐ и подпись; color - цветная метка органа слева"""
-    row = frame(parent)
-    row.pack(fill="x", pady=(0, px(1)))
-    if color:
-        tk.Frame(row, bg=color, width=px(4)).pack(side="left", fill="y")
-    b = flat_button(row, "", command, anchor="w")
-    b.config(font=(FONT, 9), padx=px(8), pady=px(1), highlightthickness=0)
-    set_toggle(b, text, on)
-    if not enabled:
-        style(b, disabledforeground="muted")
-        b.config(state="disabled", cursor="")
-    b.pack(side="left", fill="x", expand=True)
-    return b
+_dots = {}                      # готовые картинки кружков: {(размер, включён, состояние, цвета): PhotoImage}
+
+
+def _rgb(c):
+    return tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def _mix(a, b, w):
+    """смешать цвета #rrggbb: w = 0 - a, 1 - b; результат - (r, g, b) 0..255"""
+    return tuple(round(x + (y - x) * w) for x, y in zip(_rgb(a), _rgb(b)))
+
+
+def dot_image(size, on, state):
+    """круглый флажок (сглаженный, с прозрачным фоном). state: normal, hover, press, disabled.
+    Включён - залитый кружок цвета акцента с галочкой, выключен - кольцо. Наведение и нажатие
+    меняют только кружок: при наведении он светлее (у кольца появляется заливка), при нажатии темнее"""
+    accent, ring, mark = C["accent"], C["muted"], C["on_accent"]
+    key = (size, on, state, accent, ring, mark, C["border"])
+    if key not in _dots:
+        ss = 4
+        S = size * ss
+        im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        w = max(ss, round(S * 0.11))                       # толщина кольца
+        box = (w // 2, w // 2, S - 1 - w // 2, S - 1 - w // 2)
+        if state == "disabled":
+            fill = _mix(C["border"], ring, 0.35) if on else None
+            d.ellipse(box, fill=fill, outline=_mix(C["border"], ring, 0.35), width=w)
+        elif on:
+            fill = {"normal": _rgb(accent), "hover": _mix(accent, "#ffffff", 0.22),
+                    "press": _mix(accent, "#000000", 0.25)}[state]
+            d.ellipse(box, fill=fill)
+        else:
+            outline = ring if state == "normal" else _mix(accent, "#ffffff", 0.22)
+            fill = {"normal": None, "hover": _mix(accent, "#000000", 0.45) + (110,),
+                    "press": _mix(accent, "#000000", 0.2) + (200,)}[state]
+            d.ellipse(box, fill=fill, outline=outline, width=w)
+        if on:                                             # галочка
+            pts = [(S * 0.28, S * 0.52), (S * 0.44, S * 0.68), (S * 0.73, S * 0.36)]
+            color = _mix(C["card"], ring, 0.6) if state == "disabled" else _rgb(mark)
+            d.line(pts, fill=color, width=round(S * 0.12), joint="curve")
+        _dots[key] = ImageTk.PhotoImage(im.resize((size, size), Image.LANCZOS))
+    return _dots[key]
+
+
+class Toggle:
+    """строка панели слоёв: круглый флажок и подпись; color - цветная метка органа слева.
+    Щелчок по любому месту строки переключает, а подсвечивается при наведении и нажатии только кружок"""
+
+    def __init__(self, parent, text, on, command, enabled=True, color=None):
+        self.command, self.enabled, self.on = command, enabled, on
+        self.state = "normal"
+        self.row = frame(parent)
+        self.row.pack(fill="x", pady=(0, px(1)))
+        if color:
+            tk.Frame(self.row, bg=color, width=px(4)).pack(side="left", fill="y")
+        self.dot = label(self.row, None, bd=0)
+        self.dot.pack(side="left", padx=(px(8), px(7)), pady=px(3))
+        self.text = label(self.row, "", font=(FONT, 9), anchor="w")
+        self.text.pack(side="left", fill="x", expand=True)
+        self.parts = (self.row, self.dot, self.text) + tuple(self.row.winfo_children())
+        if enabled:
+            for w in self.parts:
+                w.config(cursor="hand2")
+                w.bind("<Enter>", lambda e: self.show("hover"))
+                w.bind("<Leave>", self.leave)
+                w.bind("<ButtonPress-1>", lambda e: self.show("press"))
+                w.bind("<ButtonRelease-1>", self.release)
+        self.set(text, on)
+
+    def inside(self, e):
+        """указатель над строкой (над ней или над её частями)"""
+        return self.row.winfo_containing(e.x_root, e.y_root) in self.parts
+
+    def leave(self, e):
+        if not self.inside(e):
+            self.show("normal")
+
+    def release(self, e):
+        if self.inside(e):
+            self.show("hover")
+            self.command()
+        else:
+            self.show("normal")
+
+    def show(self, state):
+        if not self.dot.winfo_exists():
+            return
+        self.state = state
+        self.dot.config(image=dot_image(px(16), self.on, state if self.enabled else "disabled"))
+
+    def set(self, text, on):
+        """обновить на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
+        self.on = on
+        style(self.text, fg="text" if on and self.enabled else "muted")
+        self.text.config(text=text)
+        self.show(self.state)
 
 
 SHOW_ALL = "_show_all"            # ключ кнопки «Показать всё» в словаре, который отдаёт fill_layers
@@ -136,19 +221,13 @@ def show_all_button(buttons, visible):
         b.pack_forget()
 
 
-def set_toggle(b, text, on):
-    """обновить переключатель на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
-    b.config(text=("☑  " if on else "☐  ") + text)
-    style(b, fg="text" if on else "muted")
-
-
 def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, organs_enabled=True,
                 note=None, show_all=None):
     """панель слоёв слева от схемы.
     layers - [(ключ, текст, виден)] слоёв тела; organs - [(ключ, название, цвет, виден)];
     organs_enabled - можно ли скрывать органы (в викторине нельзя), note - пояснение под списком;
     show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто).
-    Возвращает {ключ слоя или органа: переключатель} для set_toggle и кнопку «Показать всё» под SHOW_ALL."""
+    Возвращает {ключ слоя или органа: Toggle} и кнопку «Показать всё» под SHOW_ALL."""
     for w in card.winfo_children():
         w.destroy()
     frame(card, "accent", height=3).pack(fill="x")
@@ -164,14 +243,14 @@ def fill_layers(card, title, layers, organs_title, organs, on_layer, on_organ, o
     buttons = {SHOW_ALL: b}
     show_all_button(buttons, show_all[2])
     for key, text, on in layers:
-        buttons[key] = toggle(box, text, on, lambda k=key: on_layer(k))
+        buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
     label(box, organs_title.upper(), fg="muted", font=(FONT, 9, "bold"),
           anchor="w").pack(fill="x", pady=(px(8), px(4)))
     if note:
         label(box, note, fg="muted", font=(FONT, 9), justify="left", anchor="w",
               wraplength=px(170)).pack(fill="x", pady=(0, px(4)))
     for key, text, color, on in organs:
-        buttons[key] = toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
+        buttons[key] = Toggle(box, text, on, lambda k=key: on_organ(k), enabled=organs_enabled, color=color)
     return buttons
 
 

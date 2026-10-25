@@ -24,7 +24,7 @@ from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .widgets import (fill_card, fill_layers, fill_question, fill_setup, flat_button, frame, label, set_button_bg,
-                      set_toggle, show_all_button)
+                      show_all_button)
 
 
 class App:
@@ -311,9 +311,9 @@ class App:
             return
         show_all_button(self.toggles, self.something_hidden())
         for name in BODY_LAYERS:
-            set_toggle(self.toggles[name], t("layer_" + name), name in self.layers)
+            self.toggles[name].set(t("layer_" + name), name in self.layers)
         for k in ORGANS:
-            set_toggle(self.toggles[k], i18n.name(k), k not in self.hidden)
+            self.toggles[k].set(i18n.name(k), k not in self.hidden)
 
     def toggle_layer(self, name):
         self.layers ^= {name}
