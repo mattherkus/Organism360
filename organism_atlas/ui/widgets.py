@@ -4,6 +4,7 @@
 
 import colorsys
 import math
+import time
 import tkinter as tk
 import tkinter.font as tkfont
 
@@ -58,12 +59,14 @@ class RoundButton(tk.Canvas):
     """плоская кнопка со скруглёнными углами. Понимает те же настройки, что tk.Button, которыми пользуется
     интерфейс: text, command, font, padx, pady, anchor, state, bg/fg, activebackground/activeforeground
     (при нажатии), disabledforeground, highlightbackground (цвет рамки у кнопок цвета карточки) и invoke().
-    Под курсором кнопка чуть подсвечивается, при нажатии - цвет activebackground"""
+    Под курсором кнопка чуть подсвечивается, при нажатии - цвет activebackground; цвета меняются плавно"""
 
     OWN = ("text", "command", "font", "padx", "pady", "anchor", "state", "bg", "fg", "activebackground",
            "activeforeground", "disabledforeground", "highlightbackground")
     ALIASES = {"background": "bg", "foreground": "fg"}
     IGNORED = ("bd", "borderwidth", "relief", "highlightthickness")
+    FADE_MS, PRESS_MS = 150, 70     # длительность смены цвета: наведение и отпускание, нажатие
+    STEPS = 8                       # промежуточных цветов (подложки кэшируются, поэтому их немного)
 
     def __init__(self, parent, text="", command=None, **kw):
         self.o = {"text": text, "command": command, "font": (FONT, 10, "bold"), "padx": px(14), "pady": px(6),
@@ -72,6 +75,8 @@ class RoundButton(tk.Canvas):
                   "disabledforeground": C["muted"], "highlightbackground": C["border"]}
         self.hover = self.pressed = False
         self.photo = None
+        self.anim = None            # after-задача плавной смены цвета
+        self.shown = None           # (заливка, рамка, текст), которые сейчас на экране
         super().__init__(parent, highlightthickness=0, bd=0, cursor="hand2")
         self.img = self.create_image(0, 0, anchor="nw")
         self.txt = self.create_text(0, 0)
@@ -89,6 +94,9 @@ class RoundButton(tk.Canvas):
             super().configure(**kw)
         if own:
             self.o.update(own)
+            if self.anim:                                   # новые цвета - сразу, без перехода
+                self.after_cancel(self.anim)
+                self.anim = None
             self.measure()
             self.render()
 
@@ -111,9 +119,31 @@ class RoundButton(tk.Canvas):
     def set_mouse(self, hover=None, pressed=None):
         if self.o["state"] == "disabled":
             return
+        was = self.pressed
         self.hover = self.hover if hover is None else hover
         self.pressed = self.pressed if pressed is None else pressed
-        self.render()
+        self.fade(self.PRESS_MS if self.pressed and not was else self.FADE_MS)
+
+    def fade(self, ms):
+        """плавно перейти от показанных сейчас цветов к цветам состояния за ms миллисекунд"""
+        if self.anim:
+            self.after_cancel(self.anim)
+            self.anim = None
+        if self.shown is None:
+            self.render()
+            return
+        start, end, t0 = self.shown, self.colors(), time.perf_counter()
+
+        def step():
+            self.anim = None
+            if not self.winfo_exists():
+                return
+            k = min(1.0, (time.perf_counter() - t0) * 1000 / ms)
+            k = round((1 - (1 - k) ** 2) * self.STEPS) / self.STEPS       # плавное замедление; шаги - для кэша
+            self.render(colors=tuple(_hex(_mix(a, b, k)) for a, b in zip(start, end)))
+            if k < 1:
+                self.anim = self.after(15, step)
+        step()
 
     def release(self, e):
         inside = 0 <= e.x < self.winfo_width() and 0 <= e.y < self.winfo_height()
@@ -123,24 +153,25 @@ class RoundButton(tk.Canvas):
             self.invoke()
 
     def colors(self):
-        """(заливка, рамка или None, цвет текста) по состоянию кнопки"""
+        """(заливка, рамка, цвет текста) по состоянию кнопки; рамки нет - она цвета заливки"""
         o = self.o
         bg, active = o["bg"], o["activebackground"]
         plain = getattr(self, "_theme_roles", {}).get("bg") in ("card", "bg")    # кнопка цвета фона
-        outline = o["highlightbackground"] if plain else None
         if o["state"] == "disabled":
-            return bg, outline, o["disabledforeground"]
+            return bg, o["highlightbackground"] if plain else bg, o["disabledforeground"]
         if self.pressed:
-            return active, None, o["activeforeground"]
-        if self.hover:
-            return _hex(_mix(bg, active, 0.22) if bg != active else _mix(bg, "#ffffff", 0.16)), outline, o["fg"]
-        return bg, outline, o["fg"]
+            return active, active, o["activeforeground"]
+        fill = _hex(_mix(bg, active, 0.22) if bg != active else _mix(bg, "#ffffff", 0.16)) if self.hover else bg
+        return fill, o["highlightbackground"] if plain else fill, o["fg"]
 
-    def render(self, w=None, h=None):
-        """нарисовать в размере w x h (по умолчанию - текущем; до первой раскладки - запрошенном)"""
+    def render(self, w=None, h=None, colors=None):
+        """нарисовать в размере w x h (по умолчанию - текущем; до первой раскладки - запрошенном).
+        colors - промежуточные цвета плавного перехода; без них - сразу цвета состояния"""
         w = w or (self.winfo_width() if self.winfo_width() > 1 else self.winfo_reqwidth())
         h = h or (self.winfo_height() if self.winfo_height() > 1 else self.winfo_reqheight())
-        fill, outline, fg = self.colors()
+        if colors is None and self.anim:                    # размер сменился посреди перехода
+            colors = self.shown
+        self.shown = fill, outline, fg = colors or self.colors()
         r = min(px(8), h // 2)
         bw = max(1, px(1))
         self.photo = cached_image(self, ("btn", w, h, r, fill, outline, bw),
@@ -352,9 +383,15 @@ def flat_button(parent, text, command, bg="card", **kw):
 
 
 def set_button_bg(b, bg):
-    """сменить роль фона кнопки (выбранный режим, язык, тема); текст подбирается к фону"""
-    return style(b, bg=bg, fg="on_accent" if bg == "accent" else "text", activebackground="accent",
-                 activeforeground="on_accent", highlightbackground="border")
+    """сменить роль фона кнопки (выбранный режим, язык, тема); текст подбирается к фону.
+    У кнопки, которая уже на экране, цвет меняется плавно"""
+    shown = b.shown if b.winfo_ismapped() else None
+    style(b, bg=bg, fg="on_accent" if bg == "accent" else "text", activebackground="accent",
+          activeforeground="on_accent", highlightbackground="border")
+    if shown and shown != b.shown:
+        b.shown = shown
+        b.fade(b.FADE_MS)
+    return b
 
 
 def label(parent, text, fg="text", bg="card", **kw):
@@ -366,8 +403,9 @@ def frame(parent, bg="card", **kw):
 
 
 def heading(card, text):
-    label(card, text.upper(), fg="muted", font=(FONT, 9, "bold"),
-          anchor="w").pack(fill="x", padx=px(16), pady=(px(8), px(2)))
+    w = label(card, text.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w")
+    w.pack(fill="x", padx=px(16), pady=(px(8), px(2)))
+    return w
 
 
 def section(card, title, text, wrap):
@@ -608,32 +646,60 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     return buttons
 
 
+def setup_button(b, text, command, selected, enabled):
+    """кнопка варианта на карточке настройки: текст, действие, выбрана ли, доступна ли"""
+    style(b, disabledforeground="muted")
+    b.config(text=text, command=command, state="normal" if enabled else "disabled", cursor="hand2" if enabled else "")
+    set_button_bg(b, "accent" if selected else "card")
+
+
 def fill_setup(card, title, desc, rows, start_text, on_start, history_title, history):
     """карточка настройки викторины перед стартом.
     rows - [(заголовок, [(текст, значение, доступен)], выбранное, on_pick(значение), подсказка, раскладка)];
     раскладка: False - в строку, True - столбиком, число - сеткой в столько столбцов;
-    history - строки списка «последние игры» (если игр не было - одна строка-заглушка)."""
+    history - строки списка «последние игры» (если игр не было - одна строка-заглушка).
+    Если в карточке уже такая же настройка (те же строки и столько же вариантов), она обновляется на месте:
+    после щелчка по варианту карточка не пересоздаётся и не мигает."""
+    texts = [title, desc]                                   # все надписи карточки по порядку
+    for head, _options, _selected, _on_pick, hint, _vertical in rows:
+        texts += [head.upper()] + ([hint] if hint else [])
+    texts += [history_title.upper()] + list(history)
+    choices = [(text, lambda v=value, f=on_pick: f(v), value == selected, enabled)
+               for _head, options, selected, on_pick, _hint, _vertical in rows
+               for text, value, enabled in options] + [(start_text, on_start, None, True)]
+    shape = [(len(options), bool(hint), vertical) for _h, options, _s, _p, hint, vertical in rows] + [len(history)]
+    old = getattr(card, "setup", None)
+    if old and old[0] == shape and all(w.winfo_exists() for w in old[1] + old[2]):
+        for w, text in zip(old[1], texts):
+            w.config(text=text)
+        for b, (text, command, selected, enabled) in zip(old[2], choices):
+            if selected is None:                                        # «Начать»
+                b.config(text=text, command=command)
+            else:
+                setup_button(b, text, command, selected, enabled)
+        return
     for w in card.winfo_children():
         w.destroy()
     refit(card)
+    labels, buttons = [], []
     wrap = px(300)
     bar(card, "accent")
-    label(card, title, font=(FONT, 15, "bold"), anchor="w").pack(fill="x", padx=px(16), pady=(px(10), 0))
-    label(card, desc, fg="muted", font=(FONT, 11), justify="left", anchor="w",
-          wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(4)))
-    for head, options, selected, on_pick, hint, vertical in rows:
-        heading(card, head)
+    labels.append(label(card, title, font=(FONT, 15, "bold"), anchor="w"))
+    labels[-1].pack(fill="x", padx=px(16), pady=(px(10), 0))
+    labels.append(label(card, desc, fg="muted", font=(FONT, 11), justify="left", anchor="w", wraplength=wrap))
+    labels[-1].pack(fill="x", padx=px(16), pady=(0, px(4)))
+    for head, options, _selected, _on_pick, hint, vertical in rows:
+        labels.append(heading(card, head))
         line = frame(card)
         line.pack(fill="x", padx=px(16))
         cols = vertical if isinstance(vertical, int) and vertical > 1 else 0          # True - тоже int (1)
         for c in range(cols):
             line.columnconfigure(c, weight=1, uniform="col")
-        for i, (text, value, enabled) in enumerate(options):
-            b = flat_button(line, text, lambda v=value, f=on_pick: f(v), anchor="w" if vertical else "center")
-            set_button_bg(b, "accent" if value == selected else "card")
-            if not enabled:
-                style(b, disabledforeground="muted")
-                b.config(state="disabled", cursor="")
+        for i in range(len(options)):
+            text, command, selected, enabled = choices[len(buttons)]
+            b = flat_button(line, text, command, anchor="w" if vertical else "center")
+            setup_button(b, text, command, selected, enabled)
+            buttons.append(b)
             if cols:
                 b.config(pady=px(4))
                 b.grid(row=i // cols, column=i % cols, sticky="ew",
@@ -646,11 +712,13 @@ def fill_setup(card, title, desc, rows, start_text, on_start, history_title, his
                 b.config(padx=px(10))
                 b.pack(side="left", padx=(px(6) if i else 0, 0))
         if hint:
-            label(card, hint, fg="muted", font=(FONT, 9), justify="left", anchor="w",
-                  wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(4), 0))
-    flat_button(card, start_text, on_start, bg="accent").pack(fill="x", padx=px(16), pady=(px(12), px(2)))
-    heading(card, history_title)
+            labels.append(label(card, hint, fg="muted", font=(FONT, 9), justify="left", anchor="w", wraplength=wrap))
+            labels[-1].pack(fill="x", padx=px(16), pady=(px(4), 0))
+    buttons.append(flat_button(card, start_text, on_start, bg="accent"))
+    buttons[-1].pack(fill="x", padx=px(16), pady=(px(12), px(2)))
+    labels.append(heading(card, history_title))
     for line in history:
-        label(card, line, fg="muted", font=(FONT, 10), justify="left", anchor="w",
-              wraplength=wrap).pack(fill="x", padx=px(16))
+        labels.append(label(card, line, fg="muted", font=(FONT, 10), justify="left", anchor="w", wraplength=wrap))
+        labels[-1].pack(fill="x", padx=px(16))
     frame(card, height=px(10)).pack()
+    card.setup = (shape, labels, buttons)

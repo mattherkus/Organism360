@@ -187,11 +187,35 @@ class AppTests(unittest.TestCase):
                 todo += w.winfo_children()
             self.fail(text)
         self.app.set_mode("name")
+        self.root.update()
+        before = self.app.card.winfo_children()
         press(i18n.t("level_hard"))
         press(i18n.t("timer_sec", sec=10))
         press("5")
         self.assertEqual((self.app.cfg["level"], self.app.cfg["timer"], self.app.cfg["length"]), ("hard", 10, 5))
         self.assertEqual(self.app.cfg["set"], "all")
+        self.assertEqual(self.app.card.winfo_children(), before)          # обновлена на месте: не мигает
+        self.app.set_mode("facts")                                         # другой режим - та же раскладка
+        self.assertEqual(self.app.card.winfo_children(), before)
+        self.assertEqual(self.errors, [])
+
+    def test_button_fade(self):
+        """наведение меняет цвет кнопки плавно и доходит до цвета состояния"""
+        b = self.app.mode_buttons["find"]
+        self.root.update()
+        start = b.shown
+        b.set_mouse(hover=True)
+        self.assertIsNotNone(b.anim)
+        t = time.time()
+        while b.anim and time.time() - t < 2:
+            self.root.update()
+            time.sleep(0.005)
+        self.assertEqual(b.shown, b.colors())
+        self.assertNotEqual(b.shown, start)
+        b.set_mouse(hover=False)
+        b.config(text="x")                                                 # смена настройки - сразу, без перехода
+        self.assertIsNone(b.anim)
+        self.assertEqual(b.shown, b.colors())
         self.assertEqual(self.errors, [])
 
     def test_resize_after_hover(self):

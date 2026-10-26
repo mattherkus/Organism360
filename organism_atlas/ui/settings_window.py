@@ -42,46 +42,73 @@ class SettingsWindow:
         self.win.focus_force()
 
     def refresh(self):
-        """перестроить содержимое: после смены языка или любого выбора"""
-        app, body = self.app, self.body
+        """обновить содержимое после смены языка или любого выбора: на месте, без пересоздания (не мигает)"""
+        app = self.app
+        self.win.title(t("settings_title"))
+        if app.pending_scale != app.ui_scale:
+            scale_hint = t("settings_scale_pending", percent=round(app.pending_scale * 100)), "accent_fg"
+        else:
+            scale_hint = t("settings_scale_hint"), "muted"
+        rows = [
+            (t("settings_theme"), [(t("theme_" + n), n) for n in settings.CHOICES["theme"]],
+             theme.current(), app.set_theme, None),
+            (t("settings_quality"), [(t("quality_" + q), q) for q in settings.CHOICES["quality"]],
+             app.quality, app.set_quality, (t("settings_quality_hint"), "muted")),
+            (t("settings_scale"), [("%d%%" % round(v * 100), v) for v in settings.CHOICES["ui_scale"]],
+             app.pending_scale, app.set_ui_scale, scale_hint),
+            (t("settings_body"), [(t("body_" + v), v) for v in settings.CHOICES["body"]],
+             app.body, app.set_body, (t("settings_body_hint"), "muted")),
+            (t("settings_language"), [(i18n.language_name(c), c) for c in i18n.available()],
+             i18n.current(), app.set_lang, None),
+        ]
+        shape = [(len(options), bool(hint)) for _title, options, _selected, _on_pick, hint in rows]
+        parts = getattr(self, "parts", None)
+        if not (parts and parts[0] == shape and all(w.winfo_exists() for w in parts[1])):
+            self.build(rows)
+            return
+        _shape, _all, title, close, lines = parts
+        title.config(text=t("settings_title"))
+        close.config(text=t("settings_close"))
+        for (head, options, selected, on_pick, hint), (head_w, buttons, hint_w) in zip(rows, lines):
+            head_w.config(text=head.upper())
+            for b, (text, value) in zip(buttons, options):
+                b.config(text=text, command=lambda v=value, f=on_pick: self.pick(f, v))
+                set_button_bg(b, "accent" if value == selected else "card")
+            if hint:
+                style(hint_w, fg=hint[1]).config(text=hint[0])
+
+    def build(self, rows):
+        body = self.body
         for w in body.winfo_children():
             w.destroy()
-        self.win.title(t("settings_title"))
-        label(body, t("settings_title"), font=(FONT, 15, "bold"),
-              anchor="w").pack(fill="x", padx=px(20), pady=(px(16), px(4)))
+        title = label(body, t("settings_title"), font=(FONT, 15, "bold"), anchor="w")
+        title.pack(fill="x", padx=px(20), pady=(px(16), px(4)))
+        lines = [self.row(*r) for r in rows]
+        close = flat_button(body, t("settings_close"), self.win.destroy, bg="accent")
+        close.pack(anchor="e", padx=px(20), pady=(px(14), px(16)))
+        widgets = [title, close] + [w for head, buttons, hint in lines for w in (head, *buttons, hint) if w]
+        self.parts = ([(len(b), h is not None) for _w, b, h in lines], widgets, title, close, lines)
 
-        self.row(t("settings_theme"), [(t("theme_" + n), n) for n in settings.CHOICES["theme"]],
-                 theme.current(), app.set_theme)
-        self.row(t("settings_quality"), [(t("quality_" + q), q) for q in settings.CHOICES["quality"]],
-                 app.quality, app.set_quality, t("settings_quality_hint"))
-        if app.pending_scale != app.ui_scale:
-            hint, fg = t("settings_scale_pending", percent=round(app.pending_scale * 100)), "accent_fg"
-        else:
-            hint, fg = t("settings_scale_hint"), "muted"
-        self.row(t("settings_scale"), [("%d%%" % round(v * 100), v) for v in settings.CHOICES["ui_scale"]],
-                 app.pending_scale, app.set_ui_scale, hint, fg)
-        self.row(t("settings_body"), [(t("body_" + v), v) for v in settings.CHOICES["body"]],
-                 app.body, app.set_body, t("settings_body_hint"))
-        self.row(t("settings_language"), [(i18n.language_name(c), c) for c in i18n.available()],
-                 i18n.current(), app.set_lang)
-
-        flat_button(body, t("settings_close"), self.win.destroy, bg="accent").pack(
-            anchor="e", padx=px(20), pady=(px(14), px(16)))
-
-    def row(self, title, options, selected, on_pick, hint=None, hint_fg="muted"):
-        """заголовок и ряд кнопок-вариантов; выбранный вариант подсвечен акцентом"""
-        label(self.body, title.upper(), fg="muted", font=(FONT, 9, "bold"),
-              anchor="w").pack(fill="x", padx=px(20), pady=(px(12), px(4)))
+    def row(self, title, options, selected, on_pick, hint=None):
+        """заголовок и ряд кнопок-вариантов; выбранный вариант подсвечен акцентом;
+        hint - (текст, роль цвета) подсказки под рядом. Возвращает (заголовок, [кнопки], подсказка или None)"""
+        head = label(self.body, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w")
+        head.pack(fill="x", padx=px(20), pady=(px(12), px(4)))
         line = frame(self.body)
         line.pack(fill="x", padx=px(20))
+        buttons = []
         for i, (text, value) in enumerate(options):
-            b = flat_button(line, text, lambda v=value: self.pick(on_pick, v))
+            b = flat_button(line, text, lambda v=value, f=on_pick: self.pick(f, v))
             set_button_bg(b, "accent" if value == selected else "card")
             b.config(padx=px(10))
             b.pack(side="left", padx=(px(6) if i else 0, 0))
+            buttons.append(b)
+        hint_w = None
         if hint:
-            label(self.body, hint, fg=hint_fg, font=(FONT, 9), justify="left", anchor="w",
-                  wraplength=px(420)).pack(fill="x", padx=px(20), pady=(px(4), 0))
+            hint_w = label(self.body, hint[0], fg=hint[1], font=(FONT, 9), justify="left", anchor="w",
+                           wraplength=px(420))
+            hint_w.pack(fill="x", padx=px(20), pady=(px(4), 0))
+        return head, buttons, hint_w
 
     def pick(self, on_pick, value):
         on_pick(value)

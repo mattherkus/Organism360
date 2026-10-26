@@ -124,7 +124,9 @@ class RepaintTests(unittest.TestCase):
             from organism_atlas.ui.widgets import RoundButton
             buttons = [b for row in win.body.winfo_children() for b in row.winfo_children()
                        if isinstance(b, RoundButton)]
+            before = win.body.winfo_children()
             next(b for b in buttons if b.cget("text") == "125%").invoke()    # как щелчок в окне
+            self.assertEqual(win.body.winfo_children(), before)            # обновлено на месте: не мигает
             self.assertEqual(a.ui_scale, 1.0)                 # сам масштаб - после перезапуска
             texts = [w.cget("text") for w in win.body.winfo_children() if isinstance(w, tk.Label)]
             self.assertIn("125% selected: restart the app to apply it.", texts)
