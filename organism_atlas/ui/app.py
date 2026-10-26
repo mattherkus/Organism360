@@ -20,7 +20,7 @@ from ..i18n import t
 from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from ..theme import C, style
-from . import titlebar
+from . import overlay, titlebar
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
@@ -751,8 +751,9 @@ class App:
         self.root.after(600, self.show_results)
 
     def on_key(self, e):
-        """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру"""
-        if self.mode == "study":
+        """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру
+        (но не тогда, когда поверх открыта панель: настройки, итоги или 3D)"""
+        if self.mode == "study" or overlay.top(self.root) is not None:
             return
         if self.session is None:
             if e.keysym in ("Return", "KP_Enter"):

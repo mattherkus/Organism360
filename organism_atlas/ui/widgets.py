@@ -376,26 +376,6 @@ def rounded_card(parent, **kw):
     return card, card.inner
 
 
-def center_on(win, parent):
-    """поставить окно win по центру окна parent (но целиком на экране). Окно лучше держать скрытым
-    (withdraw) до этого вызова: тогда оно сразу появится на месте, а не в углу с прыжком в центр"""
-    def fit(w):                                  # скрытым карточкам <Configure> не приходит: подогнать самим
-        for child in w.winfo_children():
-            fit(child)
-        if isinstance(w, RoundCard):
-            w.fit()
-
-    win.update_idletasks()
-    fit(win)
-    win.update_idletasks()
-    w, h = win.winfo_reqwidth(), win.winfo_reqheight()
-    x = parent.winfo_rootx() + (parent.winfo_width() - w) // 2
-    y = parent.winfo_rooty() + (parent.winfo_height() - h) // 2
-    x = max(0, min(x, win.winfo_screenwidth() - w))
-    y = max(0, min(y, win.winfo_screenheight() - h - px(80)))      # заголовок и панель задач
-    win.geometry("+%d+%d" % (x, y))
-
-
 def flat_button(parent, text, command, bg="card", **kw):
     """bg - роль фона: card для обычной кнопки, accent для главной"""
     b = RoundButton(parent, text, command, **kw)

@@ -14,9 +14,9 @@ from ..i18n import t
 from ..organs import ORGANS
 from ..render3d.scene import Scene3D
 from ..theme import C, style
-from . import titlebar
+from .overlay import Panel
 from .scaling import px
-from .widgets import center_on, fill_card, label, rounded_card
+from .widgets import fill_card, frame, label, rounded_card
 
 _viewer = None                  # единственное окно просмотра: новый орган открывается в нём же
 
@@ -36,7 +36,8 @@ class Viewer3D:
 
     def __init__(self, root, key):
         self.key = None
-        self.w, self.h = px(600), px(450)
+        self.card_w = px(330)                    # ширина карточки органа справа от кадра
+        self.w, self.h = self.view_size(root)
         self.gen, self.last, self.job = 0, 0.0, None
         self.lx = self.ly = 0
         self.q = queue.Queue()
@@ -44,17 +45,19 @@ class Viewer3D:
         self.pending, self.alive = None, True
         self.photo = None
         self.error = None                # последняя ошибка рендера (показывается в подписи)
-        win = self.win = style(tk.Toplevel(root), bg="bg")
-        win.withdraw()                           # показать сразу по центру, а не в углу с прыжком
-        titlebar.paint(win)
+        win = self.win = Panel(root)
         win.bind("<Destroy>", self.close)
         threading.Thread(target=self.work, daemon=True).start()
-        self.view = label(win, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")
-        self.view.pack(padx=14, pady=(14, 0))
-        box, self.card = rounded_card(win)
-        box.pack(fill="x", padx=14, pady=(8, 4))
-        self.hint = label(win, "", fg="muted", bg="bg", font=(FONT, 9))
-        self.hint.pack(pady=(2, 10))
+        # кадр слева, карточка органа справа: так панель ниже и помещается в главное окно
+        self.view = label(win.body, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")
+        self.view.pack(side="left", anchor="n", padx=(px(16), px(12)), pady=(px(10), px(16)))
+        side = frame(win.body, "bg")
+        side.pack(side="left", anchor="n", fill="y", padx=(0, px(16)), pady=(px(10), px(16)))
+        box, self.card = rounded_card(side, width=self.card_w)
+        box.pack(fill="x")
+        self.hint = label(side, "", fg="muted", bg="bg", font=(FONT, 9), justify="left", anchor="w",
+                          wraplength=self.card_w)
+        self.hint.pack(fill="x", pady=(px(8), 0))
         v = self.view
         v.bind("<ButtonPress-1>", self.press)
         v.bind("<B1-Motion>", self.drag)
@@ -64,9 +67,15 @@ class Viewer3D:
         v.bind("<Button-5>", lambda e: self.zoom_by(1 / 1.12))
         v.bind("<Double-Button-1>", self.reset)
         self.load(key)
-        center_on(win, root)
-        win.deiconify()
         self.poll()
+
+    def view_size(self, root):
+        """размер кадра: 600 x 450 (с учётом масштаба), а в небольшом окне - меньше, чтобы панель влезла"""
+        root.update_idletasks()
+        w = min(px(600), root.winfo_width() - self.card_w - px(110))
+        h = min(px(450), root.winfo_height() - px(120), round(w * 3 / 4))
+        h = max(px(180), h)
+        return round(h * 4 / 3), h
 
     def load(self, key):
         """показать в окне другой орган: новая сцена, вид по умолчанию"""
@@ -78,13 +87,11 @@ class Viewer3D:
         self.reset()                                     # gen растёт: кадры прежнего органа отбросятся
 
     def raise_(self):
-        self.win.deiconify()
-        self.win.lift()
-        self.win.focus_force()
+        self.win.raise_()
 
     def retranslate(self):
         self.win.title(t("viewer_title", name=i18n.name(self.key)))
-        fill_card(self.card, self.key, compact=True, wrap=self.w - px(40))
+        fill_card(self.card, self.key, compact=True, wrap=self.card_w - px(40))
         credit = "\n" + t("viewer_credit") if self.anatomical else ""   # условие лицензии CC BY 4.0
         if self.error is not None:
             style(self.hint, fg="bad").config(text=t("viewer_error", error=self.error) + credit)

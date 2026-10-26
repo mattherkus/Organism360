@@ -199,6 +199,32 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.card.winfo_children(), before)
         self.assertEqual(self.errors, [])
 
+    def test_panels_inside_window(self):
+        """настройки, итоги и 3D - панели внутри главного окна, а не отдельные окна; Esc закрывает верхнюю"""
+        from organism_atlas.ui import overlay, settings_window, viewer3d
+        from organism_atlas.ui.results import show_results_dialog
+        settings_window.show_settings(self.app)
+        viewer3d.show_3d(self.root, "heart")
+        s = SimpleNamespace(total=10, percent=80, first_try=8, verdict="", errors=2, elapsed=95, level="medium",
+                            timeouts=0, missed=["heart"])
+        results = show_results_dialog(self.root, s, on_again=lambda: None, on_retry=lambda: None)
+        self.root.update()
+        self.assertFalse([w for w in self.root.winfo_children() if isinstance(w, tk.Toplevel)])
+        for panel in (settings_window._window.win, viewer3d._viewer.win, results):
+            self.assertIsInstance(panel, overlay.Panel)
+            self.assertIs(panel.master, self.root)
+            self.assertTrue(panel.winfo_ismapped())
+        self.app.on_key(SimpleNamespace(keysym="1", char="1"))           # цифры не уходят викторине за панелью
+        self.root.focus_force()                                            # клавиши идут окну с фокусом
+        self.root.update()
+        for left in (2, 1, 0):
+            self.root.event_generate("<Escape>")
+            self.root.update()
+            self.assertEqual(len(overlay.stack(self.root)), left)
+        self.assertIsNone(settings_window._window)
+        self.assertIsNone(viewer3d._viewer)
+        self.assertEqual(self.errors, [])
+
     def test_button_fade(self):
         """наведение меняет цвет кнопки плавно и доходит до цвета состояния"""
         b = self.app.mode_buttons["find"]
