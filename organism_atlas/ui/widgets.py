@@ -414,9 +414,10 @@ def section(card, title, text, wrap):
           anchor="w", wraplength=wrap).pack(fill="x", padx=px(16))
 
 
-def fill_card(card, key, on_3d=None, empty=None, compact=False, wrap=None):
+def fill_card(card, key, on_3d=None, empty=None, compact=False, wrap=None, back=None):
     """карточка органа; compact - без заболеваний и факта дня (для окна 3D, где мало места по высоте);
-    wrap - ширина переноса текста (по умолчанию под правую колонку главного окна)"""
+    wrap - ширина переноса текста (по умолчанию под правую колонку главного окна);
+    back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям"""
     for w in card.winfo_children():
         w.destroy()
     refit(card)
@@ -450,9 +451,65 @@ def fill_card(card, key, on_3d=None, empty=None, compact=False, wrap=None):
         label(day, fact_of_day(key), bg="day_bg", font=(FONT, 11), justify="left",
               anchor="w", wraplength=wrap - px(22) - 2 * box.pad).pack(fill="x", padx=px(10), pady=(0, px(8)))
     if on_3d:
-        flat_button(card, t("card_3d"), on_3d, bg="accent").pack(anchor="w", padx=px(16), pady=(px(12), px(14)))
-    else:
+        flat_button(card, t("card_3d"), on_3d, bg="accent").pack(anchor="w", padx=px(16),
+                                                                 pady=(px(12), 0 if back else px(14)))
+    if back:
+        flat_button(card, back[0], back[1], anchor="w").pack(anchor="w", padx=px(16),
+                                                            pady=(px(8) if on_3d else px(12), px(14)))
+    if not on_3d and not back:
         frame(card, height=px(10)).pack()
+
+
+def fill_start(card, title, hint, tours_title, tours):
+    """карточка режима «Изучать», пока орган не выбран: подсказка и кнопки экскурсий.
+    tours - [(текст кнопки, функция)]"""
+    for w in card.winfo_children():
+        w.destroy()
+    refit(card)
+    wrap = px(300)
+    label(card, title, font=(FONT, 15, "bold"), anchor="w").pack(fill="x", padx=px(16), pady=(px(14), px(4)))
+    label(card, hint, fg="muted", font=(FONT, 11), justify="left",
+          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(6)))
+    if tours:
+        heading(card, tours_title)
+        for text, command in tours:
+            b = flat_button(card, text, command, anchor="w")
+            b.config(pady=px(4))
+            b.pack(fill="x", padx=px(16), pady=(px(3), 0))
+    frame(card, height=px(14)).pack()
+
+
+def fill_tour(card, progress, title, subtitle, text, color, buttons, extra=(), hint=None):
+    """карточка шага экскурсии. progress - «Путь пищи · шаг 2 из 8»; color - цвет полоски (орган или роль);
+    buttons - [(текст, функция, роль фона, доступна)] в строку (назад / дальше);
+    extra - [(текст, функция)] кнопки столбиком под ними; hint - мелкая подсказка внизу"""
+    for w in card.winfo_children():
+        w.destroy()
+    refit(card)
+    wrap = px(300)
+    bar(card, color)
+    label(card, progress, fg="muted", font=(FONT, 10, "bold"), anchor="w").pack(fill="x", padx=px(16), pady=(px(12), 0))
+    label(card, title, font=(FONT, 15, "bold"), justify="left", anchor="w",
+          wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(4), 0))
+    if subtitle:
+        label(card, subtitle, fg="muted", font=(FONT, 11, "italic"), anchor="w").pack(fill="x", padx=px(16))
+    label(card, text, font=(FONT, 11), justify="left", anchor="w",
+          wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(8), px(12)))
+    row = frame(card)
+    row.pack(fill="x", padx=px(16))
+    row.columnconfigure(tuple(range(len(buttons))), weight=1, uniform="col")
+    for i, (txt, command, bg, enabled) in enumerate(buttons):
+        b = flat_button(row, txt, command, bg=bg)
+        if not enabled:
+            style(b, disabledforeground="muted")
+            b.config(state="disabled", cursor="")
+        b.grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else px(3), 0 if i == len(buttons) - 1 else px(3)))
+    for txt, command in extra:
+        flat_button(card, txt, command, anchor="w").pack(fill="x", padx=px(16), pady=(px(6), 0))
+    if hint:
+        label(card, hint, fg="muted", font=(FONT, 9), justify="left", anchor="w",
+              wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(8), 0))
+    frame(card, height=px(14)).pack()
 
 
 def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None):
@@ -594,6 +651,67 @@ def by_color(keys):
 SHOW_ALL = "_show_all"            # ключи кнопок в заголовках в словаре, который отдаёт fill_layers
 ORGANS_ALL = "_organs_all"
 ORGANS_LIST = "_organs_list"      # прокручиваемый список органов (ScrollArea)
+SEARCH = "_search"                # строка поиска органа (SearchBox)
+GROUPS = "_groups"                # [(подзаголовок системы, [органы группы])] - для фильтра поиска
+NOTHING = "_nothing"              # надпись «ничего не найдено»
+
+
+class SearchBox:
+    """строка поиска с подсказкой внутри (видна, пока поле пустое).
+    on_change(текст) - при каждом изменении, on_enter(текст) - по Enter; Esc очищает поле"""
+
+    def __init__(self, parent, placeholder, text, on_change, on_enter):
+        self.var = tk.StringVar(value=text)
+        # плоская рамка цвета поля - внутренний отступ: и подсказка, и набранный текст не у самого края
+        self.entry = style(tk.Entry(parent, textvariable=self.var, relief="flat", bd=px(4), font=(FONT, 9), width=12,
+                                    highlightthickness=max(1, px(1))),
+                           bg="bg", fg="text", insertbackground="text", highlightbackground="border",
+                           highlightcolor="accent")
+        self.entry.pack(fill="x", ipady=px(1), pady=(0, px(6)))
+        self.hint = label(parent, placeholder, fg="muted", bg="bg", font=(FONT, 9), cursor="xterm")
+        self.hint.bind("<Button-1>", lambda e: self.entry.focus_set())
+        self.var.trace_add("write", lambda *a: self.changed(on_change))
+        self.entry.bind("<Return>", lambda e: on_enter(self.var.get()))
+        self.entry.bind("<Escape>", self.clear)
+        self.show_hint()
+
+    def show_hint(self):
+        if self.var.get():
+            self.hint.place_forget()
+        else:
+            self.hint.place(in_=self.entry, x=px(5), rely=0.5, anchor="w")
+
+    def changed(self, on_change):
+        self.show_hint()
+        on_change(self.var.get())
+
+    def clear(self, _e=None):
+        """очистить поле (Esc); "break" - чтобы Esc не закрыл заодно панель поверх окна"""
+        if self.var.get():
+            self.var.set("")
+            return "break"
+
+
+def filter_organs(buttons, visible):
+    """оставить в списке органов панели слоёв только visible (и подзаголовки систем, где они есть);
+    если не осталось ничего - надпись «ничего не найдено». Порядок прежний"""
+    for head, keys in buttons[GROUPS]:
+        head.pack_forget()
+        for k in keys:
+            buttons[k].row.pack_forget()
+    buttons[NOTHING].pack_forget()
+    first = True
+    for head, keys in buttons[GROUPS]:
+        shown = [k for k in keys if k in visible]
+        if not shown:
+            continue
+        head.pack(fill="x", padx=(px(2), 0), pady=(0 if first else px(5), px(1)))
+        first = False
+        for k in shown:
+            buttons[k].row.pack(fill="x", pady=(0, px(1)))
+    if first:
+        buttons[NOTHING].pack(fill="x", padx=(px(2), 0))
+    buttons[ORGANS_LIST].yview_moveto(0)
 
 
 def show_all_button(buttons, visible):
@@ -615,15 +733,17 @@ def header(box, title, button, top):
     return b
 
 
-def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all):
+def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all, search=None):
     """панель слоёв слева от схемы (только в режиме «Изучать»).
     layers - [(ключ, текст, виден)] слоёв тела; groups - [(название системы, [(ключ, название, цвет, виден)])]:
     органы по системам, у каждой группы - свой маленький подзаголовок;
     show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто);
-    organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов.
+    organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов;
+    search - (подсказка, текст, on_change, on_enter, «ничего не найдено») строки поиска над списком органов.
     Кнопки - в строках заголовков, а список органов листается: низ панели может не поместиться в окно.
-    Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL
-    и ScrollArea списка органов под ORGANS_LIST (её высоту ограничивает окно: set_limit)."""
+    Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL,
+    ScrollArea списка органов под ORGANS_LIST (её высоту ограничивает окно: set_limit), строку поиска
+    под SEARCH и всё нужное для filter_organs."""
     for w in card.winfo_children():
         w.destroy()
     refit(card)
@@ -636,13 +756,18 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
         buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
     buttons[ORGANS_ALL] = header(box, organs_title, organs_all, px(8))
     buttons[ORGANS_ALL].pack(side="right")
+    if search:
+        buttons[SEARCH] = SearchBox(box, *search[:4])
     area = buttons[ORGANS_LIST] = ScrollArea(box, scope=card)            # листается над всей панелью
     area.outer.pack(fill="x")
+    buttons[GROUPS] = []
     for i, (system, organs) in enumerate(groups):
-        label(area.inner, system, fg="muted", font=(FONT, 8), anchor="w").pack(
-            fill="x", padx=(px(2), 0), pady=(px(5) if i else 0, px(1)))
+        head = label(area.inner, system, fg="muted", font=(FONT, 8), anchor="w")
+        head.pack(fill="x", padx=(px(2), 0), pady=(px(5) if i else 0, px(1)))
         for key, text, color, on in organs:
             buttons[key] = Toggle(area.inner, text, on, lambda k=key: on_organ(k), color=color)
+        buttons[GROUPS].append((head, [k for k, *_ in organs]))
+    buttons[NOTHING] = label(area.inner, search[4] if search else "", fg="muted", font=(FONT, 9), anchor="w")
     return buttons
 
 

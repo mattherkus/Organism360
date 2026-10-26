@@ -244,6 +244,145 @@ class AppTests(unittest.TestCase):
         self.assertEqual(b.shown, b.colors())
         self.assertEqual(self.errors, [])
 
+    def visible_toggles(self):
+        """органы, строки которых сейчас в списке панели слоёв"""
+        return {k for k in self.app.organs() if self.app.toggles[k].row.winfo_manager()}
+
+    def test_search(self):
+        """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
+        from organism_atlas.ui.widgets import NOTHING, SEARCH
+        box = self.app.toggles[SEARCH]
+        self.app.toggle_organ("heart")
+        box.var.set("серд")
+        self.assertEqual(self.visible_toggles(), {"heart"})
+        self.assertEqual(self.app.spot, "heart")
+        self.assertNotIn("heart", self.app.hidden)          # найденный скрытый орган снова виден
+        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "normal")
+        box.var.set("почеч")                                # системы «мочевыделительная» нет - ничего
+        box.var.set("ж")
+        self.assertGreater(len(self.visible_toggles()), 1)
+        self.assertIsNone(self.app.spot)
+        box.var.set("zzz")
+        self.assertEqual(self.visible_toggles(), set())
+        self.assertTrue(self.app.toggles[NOTHING].winfo_manager())
+        box.var.set("Hepar")
+        self.app.on_search_enter("Hepar")
+        self.assertEqual(self.app.spot, "liver")
+        self.app.set_lang("en")                             # панель пересобрана, поиск остался
+        self.assertEqual(self.app.toggles[SEARCH].var.get(), "Hepar")
+        self.assertEqual(self.visible_toggles(), {"liver"})
+        self.app.set_lang("ru")
+        self.app.set_mode("find")                            # в викторине подсветки поиска нет
+        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "hidden")
+        self.app.set_mode("study")
+        self.assertEqual(self.app.query, "")
+        self.assertEqual(self.visible_toggles(), set(self.app.organs()))
+        self.assertEqual(self.errors, [])
+
+    def test_tour(self):
+        """экскурсия: вступление, шаги с подсветкой органа, стрелки, конец и викторина по теме"""
+        from organism_atlas import tours
+        keys = tours.steps("food", self.app.body)
+        self.app.start_tour("food")
+        self.assertIsNone(self.app.spot)
+        self.app.on_key(SimpleNamespace(keysym="Right", char="", widget=self.root))
+        self.assertEqual(self.app.spot, keys[0])
+        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "normal")
+        self.app.on_key(SimpleNamespace(keysym="Left", char="", widget=self.root))
+        self.assertEqual(self.app.tour, ("food", 0))
+        for _ in range(len(keys) + 3):                      # дальше конца не уходит
+            self.app.tour_go(1)
+        self.assertEqual(self.app.tour, ("food", len(keys) + 1))
+        self.assertIsNone(self.app.spot)
+        self.app.set_lang("en")                              # карточка шага перерисовалась на другом языке
+        self.app.set_lang("ru")
+        self.app.tour_quiz("digestive")
+        self.assertEqual((self.app.mode, self.app.cfg["topic"]), ("mix", "digestive"))
+        self.assertIsNone(self.app.tour)
+        self.app.set_mode("study")
+        self.app.start_tour("air")
+        self.app.tour_go(2)
+        self.app.on_click(SimpleNamespace(x=int(210 * Z), y=int(230 * Z)))      # щелчок по органу - пауза
+        self.assertIsNone(self.app.tour)
+        self.assertEqual(self.app.paused, ("air", 2))
+        self.assertIn(i18n.t("tour_resume", title=tours.title("air")), self.button_texts())
+        self.app.resume_tour()                               # вернулись на тот же шаг
+        self.assertEqual(self.app.tour, ("air", 2))
+        self.assertEqual(self.app.spot, tours.steps("air", self.app.body)[1])
+        self.app.end_tour()
+        self.app.on_click(SimpleNamespace(x=int(210 * Z), y=int(230 * Z)))      # без экскурсии - к списку
+        self.assertIn(i18n.t("tours_back"), self.button_texts())
+        self.assertEqual(self.errors, [])
+
+    def button_texts(self):
+        """надписи кнопок в карточке справа"""
+        from organism_atlas.ui.widgets import RoundButton
+        out, todo = [], [self.app.card]
+        while todo:
+            w = todo.pop()
+            if isinstance(w, RoundButton):
+                out.append(w.cget("text"))
+            todo += w.winfo_children()
+        return out
+
+    def test_achievements_after_game(self):
+        from organism_atlas.ui import achievements as panel
+        self.app.set_mode("find")
+        self.app.set_cfg("length", 5)
+        self.app.start_quiz()
+        self.play()
+        self.assertEqual(self.app.new_achievements, ["first", "perfect"])
+        self.assertEqual(self.app.streak, 1)
+        self.assertEqual(self.app.ach_button.cget("text"), i18n.t("ach_button", got=2, total=12))
+        p = panel.show_achievements(self.root)
+        self.assertIs(panel.show_achievements(self.root), p)            # вторая не открывается
+        self.root.update()
+        self.assertTrue(p.winfo_ismapped())
+        p.destroy()
+        self.assertEqual(self.errors, [])
+
+    def test_3d_parts(self):
+        """у мозга три части: список под кадром, подпись под курсором, скрытие и «Найди часть»"""
+        from organism_atlas.ui import viewer3d
+        viewer3d.show_3d(self.root, "brain")
+        v = viewer3d._viewer
+        t = time.time()
+        while v.ids is None and time.time() - t < 30:
+            self.root.update()
+            time.sleep(0.01)
+        self.assertEqual([n for _, n, _ in v.names], ["Ствол мозга", "Мозжечок", "Большие полушария"])
+        self.assertTrue(v.parts_box.winfo_manager())
+        cortex = 2
+        ys, xs = (v.ids == cortex).nonzero()
+        ih, iw = v.ids.shape
+        x, y = int((xs[len(xs) // 2] + 0.5) * v.w / iw), int((ys[len(ys) // 2] + 0.5) * v.h / ih)
+        self.assertEqual(v.part_at(x, y), cortex)
+        v.hover(SimpleNamespace(x=x, y=y))
+        self.assertEqual(v.tip.cget("text"), "Большие полушария")
+        widgets = v.parts.winfo_children()
+        v.toggle_part(cortex)
+        self.assertEqual(v.hidden, {cortex})
+        self.assertFalse(v.part_toggles[cortex].on)
+        self.assertEqual(v.parts.winfo_children(), widgets)          # обновлено на месте, панель не мигает
+        v.toggle_quiz()                                      # викторина: все части снова видны
+        self.assertEqual(v.hidden, frozenset())
+        target = v.quiz["order"][0]
+        v.ids = v.ids.copy()
+        v.ids[:] = target                                     # щелчок куда угодно попадает в нужную часть
+        v.quiz_click(1, 1)
+        self.assertEqual((v.quiz["i"], v.quiz["right"]), (1, 1))
+        v.ids[:] = v.quiz["order"][2]                         # не та часть - ошибка
+        v.quiz_click(1, 1)
+        self.assertTrue(v.quiz["slipped"])
+        self.assertIn("Попробуй ещё", v.note.cget("text"))
+        self.assertEqual(v.parts.winfo_children(), widgets)
+        viewer3d.show_3d(self.root, "bladder")                # одна часть - списка нет
+        self.assertFalse(v.parts_box.winfo_manager())
+        self.assertIsNone(v.quiz)
+        v.win.destroy()
+        self.assertIsNone(viewer3d._viewer)
+        self.assertEqual(self.errors, [])
+
     def test_resize_after_hover(self):
         """после наведения окно поменяло размер: схема перерисовалась, подсветка работает"""
         self.hover_heart()

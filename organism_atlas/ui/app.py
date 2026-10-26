@@ -1,6 +1,6 @@
-"""Главное окно: схема тела, наведение, карточка органа, панель слоёв, режим «Изучать» и четыре викторины:
-«Найди орган», «Угадай название», «Угадай по факту» и «Вперемешку» (со сложностью, таймером, длиной игры,
-темой и повторением ошибок).
+"""Главное окно: схема тела, наведение, карточка органа, панель слоёв с поиском органа, режим «Изучать»
+с экскурсиями по системам органов и четыре викторины: «Найди орган», «Угадай название», «Угадай по факту»
+и «Вперемешку» (со сложностью, таймером, длиной игры, темой и повторением ошибок).
 Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя."""
 
 import math
@@ -11,22 +11,24 @@ import traceback
 
 from PIL import Image, ImageTk
 
-from .. import i18n, progress, settings, theme
+from .. import achievements, i18n, progress, settings, theme, tours
 from ..atlas import Atlas
 from ..body.base import BODY_LAYERS
 from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
-from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex
+from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex, search
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from ..theme import C, style
 from . import overlay, titlebar
+from .achievements import button_text as achievements_text, show_achievements
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import (ORGANS_ALL, ORGANS_LIST, by_color, fill_card, fill_layers, fill_question, fill_setup,
-                      flat_button, frame, label, rounded_card, set_button_bg, show_all_button)
+from .widgets import (ORGANS_ALL, ORGANS_LIST, SEARCH, by_color, fill_card, fill_layers, fill_question, fill_setup,
+                      fill_start, fill_tour, filter_organs, flat_button, frame, label, rounded_card, set_button_bg,
+                      show_all_button)
 
 
 class App:
@@ -65,6 +67,11 @@ class App:
         self.resize_job = None
         self.layers = set(BODY_LAYERS)         # видимые слои тела
         self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
+        self.query = ""                        # строка поиска органа в панели слоёв
+        self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
+        self.tour = None                       # (экскурсия, шаг): 0 - вступление, 1..n - органы, n + 1 - конец
+        self.paused = None                     # экскурсия, прерванная щелчком по органу: к ней можно вернуться
+        self.new_achievements, self.streak = [], 0        # для итогов игры: новые достижения и серия дней
 
         top = self.top = frame(root, "bg")
         top.pack(fill="x", padx=24, pady=(18, 0))
@@ -76,6 +83,8 @@ class App:
         self.status.pack(fill="x", padx=24, pady=(8, 0))
         self.settings_button = flat_button(top, "", lambda: show_settings(self))
         self.settings_button.pack(side="right", anchor="n", padx=(12, 0))
+        self.ach_button = flat_button(top, "", lambda: show_achievements(root))
+        self.ach_button.pack(side="right", anchor="n", padx=(12, 0))
         langs = frame(top, "bg")                           # переключатель языка, справа от режимов
         langs.pack(side="right", anchor="n", padx=(20, 0))
         self.lang_buttons = {}
@@ -174,6 +183,8 @@ class App:
         self.body = value
         settings.save(body=value)
         self.hidden -= other_sex(value)
+        self.tour = self.paused = None                  # маршрут экскурсии зависит от схемы тела
+        self.set_spot(None)
         self.render_layers()
         self.apply_view()
         if self.mode != "study":
@@ -191,6 +202,7 @@ class App:
         self.root.title(t("app_title"))
         self.title.config(text=t("app_title"))
         self.settings_button.config(text="⚙  " + t("settings_button"))
+        self.ach_button.config(text=achievements_text())
         for mode, b in self.mode_buttons.items():
             b.config(text=t("mode_" + mode))
         self.update_buttons()
@@ -212,7 +224,8 @@ class App:
         fn()
 
     def empty_card(self):
-        fill_card(self.card, None, empty=(t("pick_title"), t("pick_hint")))
+        fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
+                   [("➜  " + tours.title(name), lambda n=name: self.start_tour(n)) for name in tours.available(self.body)])
 
     # --- построение схемы (в отдельном потоке: окно не замирает)
     def ready(self):
@@ -342,8 +355,39 @@ class App:
              for system, keys in by_system(by_color(self.organs()))],
             self.toggle_layer, self.toggle_organ,
             show_all=(t("layers_show_all"), self.show_all, self.something_hidden()),
-            organs_all=(self.organs_all_text(), self.toggle_all_organs))
+            organs_all=(self.organs_all_text(), self.toggle_all_organs),
+            search=(t("search_hint"), self.query, self.on_search, self.on_search_enter, t("search_nothing")))
+        if self.query:
+            filter_organs(self.toggles, set(search(self.organs(), self.query)))
         self.root.after_idle(self.fit_panel)
+
+    # --- поиск органа
+    def on_search(self, text):
+        """строка поиска изменилась: в панели остаются подходящие органы; если подходит ровно один,
+        он подсвечивается на схеме"""
+        self.query = text
+        found = search(self.organs(), text)
+        filter_organs(self.toggles, set(found))
+        self.root.after_idle(self.fit_panel)
+        if self.tour is None:
+            self.set_spot(found[0] if text.strip() and len(found) == 1 else None)
+
+    def on_search_enter(self, text):
+        """Enter в поиске: открыть карточку первого найденного органа и подсветить его (скрытый - показать)"""
+        found = search(self.organs(), text)
+        if not text.strip() or not found:
+            return
+        self.pause_tour()
+        self.show_info(found[0])
+        self.set_spot(found[0])
+
+    def set_spot(self, key):
+        """подсветить орган в режиме «Изучать» (None - снять подсветку); скрытый орган сначала показать"""
+        self.spot = key
+        if key is not None and key in self.hidden:
+            self.hidden.discard(key)
+            self.apply_view()
+        self.show_target()
 
     def fit_panel(self):
         """список органов в панели - не выше, чем осталось места в окне (остальное листается)"""
@@ -407,6 +451,7 @@ class App:
                 self.drop_photos()                      # подсветка зависит от того, кто кого закрывает
                 self.on_leave(None)
             self.show_base()
+            self.show_target()                          # подсветка органа поиска или экскурсии - заново
 
     # --- наведение и клики
     def drop_photos(self):
@@ -477,10 +522,17 @@ class App:
         if self.mode != "study":
             self.answer(key)
             return
+        self.pause_tour()                               # щелчок по органу прерывает экскурсию (к ней можно вернуться)
+        self.set_spot(None)
         self.show_info(key)
 
     def show_info(self, key):
-        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self.root, key)))
+        """карточка органа; под ней - возврат к прерванной экскурсии или к списку экскурсий"""
+        def back():
+            if self.paused is not None:
+                return t("tour_resume", title=tours.title(self.paused[0])), self.resume_tour
+            return t("tours_back"), self.end_tour
+        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self.root, key), back=back()))
 
     def update_buttons(self):
         for mode, b in self.mode_buttons.items():
@@ -491,6 +543,10 @@ class App:
     def set_mode(self, mode):
         """study - изучение; режим викторины сначала показывает карточку настройки"""
         self.mode = mode
+        self.tour = self.paused = None
+        if SEARCH in getattr(self, "toggles", {}):
+            self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
+        self.spot = None
         self.update_buttons()
         self.stop_quiz()
         self.show_panel()
@@ -632,6 +688,12 @@ class App:
             title, hint = "«%s»" % s.prompt(), t("where_hint", n=len(opts))
         elif s.kind == "system":
             title, hint = t("system_title", name=i18n.name(s.current)), t("custom_hint", n=len(opts))
+        elif s.kind == "disease":
+            title, hint = "«%s»" % s.prompt(), t("disease_hint", n=len(opts))
+        elif s.kind == "latin":
+            title, hint = s.prompt(), t("latin_hint", n=len(opts))
+        elif s.kind == "truth":
+            title, hint = "«%s»" % s.prompt(), t("truth_hint", name=i18n.name(s.current))
         else:
             title, hint = t("name_title"), t("name_hint", n=len(opts))
         self.progress, self.choices = fill_question(
@@ -672,13 +734,16 @@ class App:
         btn.config(state="disabled", cursor="")
 
     def show_target(self):
-        """подсветить орган текущего вопроса «Угадай название»; у вопроса другого типа подсветки нет"""
+        """подсветить орган текущего вопроса «Угадай название», а в «Изучать» - орган поиска или экскурсии;
+        у вопроса другого типа подсветки нет"""
         if not self.ready():
             return
-        if self.session is None or self.session.kind != "name":
+        s = self.session
+        key = s.current if s is not None and s.kind == "name" else self.spot if self.mode == "study" else None
+        if key is None or key in self.hidden_now():
             self.c.itemconfigure(self.tg, state="hidden")
             return
-        ph, (x, y) = self.photo(self.session.current, "target")
+        ph, (x, y) = self.photo(key, "target")
         self.c.itemconfigure(self.tg, image=ph, state="normal")
         self.c.coords(self.tg, x, y)
 
@@ -742,8 +807,13 @@ class App:
         s = self.session
         self.choices = {}
         self.c.itemconfigure(self.tg, state="hidden")
+        self.new_achievements, self.streak = [], 0
         try:
-            progress.record(s, self.qset)
+            before = progress.load()
+            after = progress.record(s, self.qset)
+            self.new_achievements = achievements.new_ones(before, after)
+            self.streak = achievements.streak(after)
+            self.ach_button.config(text=achievements_text(after))
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
         self.set_card(lambda: fill_card(self.card, last))
@@ -751,9 +821,13 @@ class App:
         self.root.after(600, self.show_results)
 
     def on_key(self, e):
-        """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру
-        (но не тогда, когда поверх открыта панель: настройки, итоги или 3D)"""
-        if self.mode == "study" or overlay.top(self.root) is not None:
+        """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру, стрелки листают экскурсию
+        (но не тогда, когда поверх открыта панель: настройки, итоги или 3D, и не при наборе в поиске)"""
+        if overlay.top(self.root) is not None or isinstance(e.widget, tk.Entry):
+            return
+        if self.mode == "study":
+            if self.tour is not None and e.keysym in ("Right", "Left", "Return", "KP_Enter"):
+                self.tour_go(-1 if e.keysym == "Left" else 1)
             return
         if self.session is None:
             if e.keysym in ("Return", "KP_Enter"):
@@ -765,6 +839,75 @@ class App:
             if 0 <= i < len(keys):
                 self.pick(keys[i])
 
+    # --- экскурсии
+    def start_tour(self, name):
+        self.tour, self.paused = (name, 0), None
+        self.set_spot(None)
+        self.set_card(self.tour_card)
+
+    def tour_go(self, step):
+        """на step шагов вперёд или назад; после последнего органа - карточка «экскурсия пройдена»"""
+        name, i = self.tour
+        keys = tours.steps(name, self.body)
+        i = max(0, min(len(keys) + 1, i + step))
+        if i == self.tour[1]:
+            return
+        self.tour = (name, i)
+        self.set_spot(keys[i - 1] if 1 <= i <= len(keys) else None)
+        self.set_card(self.tour_card)
+
+    def end_tour(self):
+        """закончить экскурсию и показать список экскурсий"""
+        self.tour = self.paused = None
+        self.set_spot(None)
+        self.set_card(self.empty_card)
+
+    def pause_tour(self):
+        """прервать экскурсию (щелчок по органу, поиск): запомнить шаг, чтобы к нему вернуться"""
+        if self.tour is not None:
+            self.paused, self.tour = self.tour, None
+
+    def resume_tour(self):
+        """вернуться к прерванной экскурсии на тот же шаг"""
+        if self.paused is None:
+            return
+        name, i = self.tour = self.paused
+        self.paused = None
+        keys = tours.steps(name, self.body)
+        self.set_spot(keys[i - 1] if 1 <= i <= len(keys) else None)
+        self.set_card(self.tour_card)
+
+    def tour_quiz(self, topic):
+        """викторина «Вперемешку» по системе органов экскурсии: карточка настройки с выбранной темой"""
+        self.set_mode("mix")
+        self.set_cfg("topic", topic)
+
+    def tour_card(self):
+        if self.tour is None:                           # экскурсию закончили, пока карточка перерисовывалась
+            self.empty_card()
+            return
+        name, i = self.tour
+        keys = tours.steps(name, self.body)
+        n = len(keys)
+        back = (t("tour_back"), lambda: self.tour_go(-1), "card", i > 0)
+        if i == 0:
+            route = " → ".join(i18n.name(k) for k in keys)
+            fill_tour(self.card, t("tour_label"), tours.title(name), None,
+                      tours.intro(name) + "\n\n" + t("tour_route", route=route), "accent",
+                      [(t("tour_start"), lambda: self.tour_go(1), "accent", True)],
+                      [(t("tour_exit"), self.end_tour)], t("tour_keys"))
+        elif i > n:
+            topic = tours.TOPICS.get(name)
+            extra = [(t("tour_quiz"), lambda: self.tour_quiz(topic))] if topic in dict(self.topics()) else []
+            fill_tour(self.card, tours.title(name), t("tour_done"), None, t("tour_done_text", n=n), "accent",
+                      [back, (t("tour_finish"), self.end_tour, "accent", True)], extra)
+        else:
+            key = keys[i - 1]
+            fill_tour(self.card, t("tour_progress", title=tours.title(name), n=i, total=n), i18n.name(key),
+                      i18n.subtitle(key), tours.story(name, key), ORGANS[key]["color"],
+                      [back, (t("tour_next") if i < n else t("tour_last"), lambda: self.tour_go(1), "accent", True)],
+                      [(t("card_3d"), lambda: show_3d(self.root, key)), (t("tour_exit"), self.end_tour)])
+
     def show_results(self):
         s, mode = self.session, self.mode
         if s is None or self.mode != s.mode:            # пока ждали, пользователь ушёл в другой режим
@@ -775,4 +918,5 @@ class App:
                 self.start_quiz(qset)
 
         show_results_dialog(self.root, s, on_again=again, on_retry=lambda: again("missed"),
-                            due=len(progress.due(mode, self.organs())))
+                            due=len(progress.due(mode, self.organs())), streak=self.streak,
+                            new=self.new_achievements, on_achievements=lambda: show_achievements(self.root))

@@ -18,6 +18,8 @@ BG = ("#0e1a22", "#1b3a50")       # фон кадра по умолчанию (�
 
 class Scene3D:
     def __init__(self, parts):
+        """parts - примитивы и сетки (models.load_parts); номер части в списке - её номер в render(hidden=...)
+        и в карте частей render(ids=True)"""
         self.mats, self.ell, self.meshes = [], [], []
         C, R, S, M, TG, SL, CW = [], [], [], [], [], [], []
         for p in parts:
@@ -92,9 +94,10 @@ class Scene3D:
         return self._bg[(w, h, colors)]
 
     # --- рендер
-    def _raster(self, W_, H_, cam, right, up, scale, cx, cy, step):
+    def _raster(self, W_, H_, cam, right, up, scale, cx, cy, step, hidden=()):
         """z-буфер в ортографической проекции по осям cam/right/up: для каждого пикселя глубина
-        (больше - ближе к камере), нормаль, номер части и номер узла трубки (-1 у эллипсоидов и сеток)"""
+        (больше - ближе к камере), нормаль, номер части и номер узла трубки (-1 у эллипсоидов и сеток).
+        hidden - номера частей, которых не рисуем"""
         ctr = self.center
         z = np.full((H_, W_), -1e9, np.float32)
         nrm = np.zeros((3, H_, W_), np.float32)
@@ -111,10 +114,14 @@ class Scene3D:
             return x0, x1, y0, y1
 
         for V, F, VN, mid, cull, FN in self.meshes:
+            if mid in hidden:
+                continue
             raster_mesh(V, F, VN, mid, (z, nrm, mat, sid), cam, right, up, scale, cx, cy, ctr, cull, FN,
                         exact=step == 1)                # черновик (step > 1) - быстрым способом
 
         for c, r, mid in self.ell:
+            if mid in hidden:
+                continue
             rel = c - ctr
             uc, vc = float(rel @ right), float(rel @ up)
             x0, x1, y0, y1 = box(uc, vc, float(r.max()))
@@ -143,6 +150,8 @@ class Scene3D:
             sid[y0:y1, x0:x1][upd] = -1
 
         for i in range(0, len(self.C), step):
+            if hidden and int(self.M[i]) in hidden:
+                continue
             rel = self.C[i] - ctr
             r = float(self.R[i])
             uc, vc, zc = float(rel @ right), float(rel @ up), float(rel @ cam)
@@ -200,7 +209,7 @@ class Scene3D:
             part[k] = part[k] * (1 - w) + nb[k] * w
         part /= np.sqrt(part[0] ** 2 + part[1] ** 2 + part[2] ** 2)[None] + 1e-9
 
-    def _shadow(self, lk, P, L):
+    def _shadow(self, lk, P, L, hidden=()):
         """освещённость точек P ключевым светом с направления L: карта глубины из точки зрения
         света и мягкий край тени (выборка по кольцу, PCF). 1 - светло, 1 - strength - тень"""
         cfg = lk["shadows"]
@@ -209,7 +218,7 @@ class Scene3D:
         rl = unit(np.cross(ref, L))
         ul = unit(np.cross(L, rl))
         scale = 0.5 * S / (1.1 * self.radius)
-        zl, _, _, _, _, _ = self._raster(S, S, L, rl, ul, scale, S / 2.0, S / 2.0, 1)
+        zl, _, _, _, _, _ = self._raster(S, S, L, rl, ul, scale, S / 2.0, S / 2.0, 1, hidden)
         rel = (P - self.center[None, :]).astype(np.float64)
         x = S / 2.0 + (rel @ rl) * scale - 0.5
         y = S / 2.0 - (rel @ ul) * scale - 0.5
@@ -225,9 +234,12 @@ class Scene3D:
             dark += zl[yi, xi] > d + bias
         return 1.0 - cfg["strength"] * dark / len(taps)
 
-    def render(self, w, h, az, el, zoom=1.0, ss=1, ao=0.55, step=1, style=None, shadows=None, bg=BG):
+    def render(self, w, h, az, el, zoom=1.0, ss=1, ao=0.55, step=1, style=None, shadows=None, bg=BG, hidden=(),
+               ids=False):
         """кадр w x h; ss - суперсэмплинг, step - прореживание узлов трубок (черновик).
         bg - цвета фона (фон, пятно в центре), см. background.
+        hidden - номера частей, которые не рисуются (и не отбрасывают тени); камера от этого не сдвигается.
+        ids=True - вернуть (кадр, карта частей): массив h x w с номером части в пикселе, -1 - фон.
         style: realistic / classic, по умолчанию из look.json; ao - сила AO классического стиля.
         shadows: None - как в look.json, но в черновике (step > 1) без теней, чтобы вращение не тормозило"""
         lk = look.get()
@@ -242,7 +254,7 @@ class Scene3D:
         scale = zoom * 0.5 * min(W_, H_) / self.radius
         cx, cy = W_ / 2.0, H_ / 2.0
         ctr = self.center
-        z, nrm, mat, sid, Ug, Vg = self._raster(W_, H_, cam, right, up, scale, cx, cy, step)
+        z, nrm, mat, sid, Ug, Vg = self._raster(W_, H_, cam, right, up, scale, cx, cy, step, hidden)
         hit = mat >= 0
         if style == "realistic" and step == 1 and hit.any():       # в черновике шов не заметен
             self._soften_seams(lk, nrm, z, mat, hit, min(W_, H_))
@@ -316,8 +328,11 @@ class Scene3D:
                 if shadows is None and step > 1:
                     sh = False
                 key_dir = shading.light_dirs(lk, cam, right, up)["key"]
-                vis = self._shadow(lk, P, key_dir) if sh else None
+                vis = self._shadow(lk, P, key_dir, hidden) if sh else None
                 img[hit] = shading.shade(lk, self.mats, P, N, alb, gl, mv, cam, right, up, occ, vis, draft=step > 1)
         out = (np.clip(img, 0, 1) * 255 + 0.5).astype(np.uint8)
         im = Image.fromarray(out)
-        return im.reduce(ss) if ss > 1 else im
+        im = im.reduce(ss) if ss > 1 else im
+        if ids:                                      # номер части в центре каждого итогового пикселя
+            return im, mat[ss // 2::ss, ss // 2::ss][:h, :w].copy()
+        return im

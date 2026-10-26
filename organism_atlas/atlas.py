@@ -17,6 +17,8 @@ from .organs import ORDER, PAINT
 from .render2d.noise import gblur
 
 BODY_ARRAYS = ("glow", "skin", "skin_hi", "skeleton", "veins", "arteries", "fade")
+HALO = 14                       # запас вокруг органа под свечение подсветки (в пикселях схемы при Z = 1)
+LIGHT_FROM = 0.6                # с какой средней яркости орган считается светлым (контур подсветки насыщеннее)
 
 
 def build_atlas(Z):
@@ -171,11 +173,11 @@ class Atlas:
                 return k
         return None
 
-    def _cover(self, key):
-        """насколько орган перекрыт видимыми органами, лежащими выше него"""
+    def _cover(self, key, pad=0):
+        """насколько орган перекрыт видимыми органами, лежащими выше него; pad - запас вокруг рамки органа"""
         d = self.org[key]
-        x0, y0 = d["origin"]
-        h, w = d["hit"].shape
+        x0, y0 = d["origin"][0] - pad, d["origin"][1] - pad
+        h, w = d["hit"].shape[0] + 2 * pad, d["hit"].shape[1] + 2 * pad
         cov = np.zeros((h, w), np.float32)
         for k in ORDER[ORDER.index(key) + 1:]:
             if k in self.hidden:
@@ -198,27 +200,42 @@ class Atlas:
             self._cache[(key, kind)] = self._make(key, kind)
         return self._cache[(key, kind)]
 
+    def _lum(self, key):
+        """средняя яркость органа (0..1) по его видимым пикселям"""
+        d = self.org[key]
+        m = d["hit"] > 0.5
+        if not m.any():
+            return 0.0
+        return float((d["rgba"][..., :3][m].astype(np.float32) / 255 @ np.array([0.2126, 0.7152, 0.0722])).mean())
+
     def _make(self, key, kind):
         Z = self.Z
         d = self.org[key]
-        m = d["hit"]
+        # рамка органа - вплотную к нему: свечение и контур снаружи не поместились бы, а у узкого органа
+        # (трахея) их съедало бы и гашение у края. Поэтому подсветка - на рамке с запасом pad со всех сторон
+        pad = int(np.ceil(HALO * Z))
+        m = np.pad(d["hit"], pad)
         h, w = m.shape
-        vis = 1.0 - np.clip(self._cover(key), 0, 1)
+        vis = 1.0 - np.clip(self._cover(key, pad), 0, 1)
         g1 = gblur(m, 1.3 * Z)
         rim = np.clip((1 - g1) * m * 2.2 + g1 * (1 - m) * 2.4, 0, 1)
         glow = gblur(m, 3.4 * Z) * (1 - m)
         yy, xx = np.mgrid[0:h, 0:w]
         edge = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy)).astype(np.float32)
         fade = np.clip(edge / (7.0 * Z), 0, 1)            # мягко гасим подсветку у края кадра
+        # светлый орган (трахея, мочевой пузырь): почти белый контур на нём не виден - берём насыщенный
+        # цвет подсветки и заливку плотнее. light: 0 - орган тёмный или средний, 1 - светлый
+        light = float(np.clip((self._lum(key) - LIGHT_FROM) / 0.15, 0, 1))
         if kind == "hover":
-            a = rim * 0.95 + glow * 0.55 + m * 0.10
-            rim_c = np.array([1.0, 1.0, 1.0], np.float32)
+            a = rim * 0.95 + glow * 0.55 + m * (0.10 + 0.25 * light)
             glow_c = np.array([0.55, 0.82, 1.0], np.float32)
+            rim_c = np.array([1.0, 1.0, 1.0], np.float32) * (1 - light) + glow_c * 0.85 * light
             rgb = glow_c[None, None, :] * (1 - rim[..., None]) + rim_c[None, None, :] * rim[..., None]
         elif kind == "target":                            # орган-вопрос: тёплый контур, орган виден
-            a = rim * 1.0 + glow * 0.75 + m * 0.18
+            a = rim * 1.0 + glow * (0.75 + 0.2 * light) + m * (0.18 + 0.22 * light)
             col = np.array(TARGET_C, np.float32)
-            rgb = col[None, None, :] * (1 - rim[..., None]) + (col * 0.4 + 0.6)[None, None, :] * rim[..., None]
+            rim_c = (col * 0.4 + 0.6) * (1 - light) + col * 0.85 * light
+            rgb = col[None, None, :] * (1 - rim[..., None]) + rim_c[None, None, :] * rim[..., None]
         else:
             fill = np.array((0.18, 0.55, 0.34) if kind == "ok" else (0.78, 0.22, 0.19), np.float32)
             a = m * 0.82 + rim * 0.5 + glow * 0.4
@@ -226,4 +243,4 @@ class Atlas:
             rgb = fill[None, None, :] * (1 - rim[..., None]) + rim_c[None, None, :] * rim[..., None]
         a = np.clip(a, 0, 1) * vis * fade
         arr = (np.dstack([np.clip(rgb, 0, 1), a]) * 255 + 0.5).astype(np.uint8)
-        return Image.fromarray(arr), d["origin"]
+        return Image.fromarray(arr), (d["origin"][0] - pad, d["origin"][1] - pad)

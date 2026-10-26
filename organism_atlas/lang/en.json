@@ -21,7 +21,7 @@
     "mode_find": "Find the organ",
     "mode_name": "Name the organ",
     "pick_title": "Pick an organ",
-    "pick_hint": "Click any organ on the diagram.",
+    "pick_hint": "Click any organ on the diagram, search for it on the left, or pick a tour.",
     "card_location": "Location",
     "card_facts": "Facts",
     "card_diseases": "Common diseases",
@@ -104,7 +104,7 @@
     "custom_hint": "Pick an answer or press 1–{n}.",
     "time_up_answer": "Time's up! The right answer was: {answer}.",
     "mode_mix": "Mixed",
-    "setup_desc_mix": "All question types mixed together: find the organ, guess its name, guess it by a fact or by its location, and name its organ system.",
+    "setup_desc_mix": "All question types mixed together: find the organ, guess its name, guess it by a fact, by its location, by a disease or by its Latin name, name its organ system and “true or false”.",
     "where_hint": "Which organ is located here? Pick an option or press 1–{n}.",
     "system_title": "Which organ system does this belong to: {name}?",
     "setup_length": "Number of questions",
@@ -124,7 +124,72 @@
     "system_endocrine": "Endocrine",
     "system_urinary": "Urinary",
     "system_reproductive": "Reproductive",
-    "system_immune": "Immune"
+    "system_immune": "Immune",
+    "disease_hint": "Which organ does this disease affect? Pick an option or press 1–{n}.",
+    "latin_hint": "This is the organ's Latin name. Which organ is it? Pick an option or press 1–{n}.",
+    "truth_hint": "Is this true about the {name}? Click a button or press 1–2.",
+    "truth_yes": "True",
+    "truth_no": "False",
+    "search_hint": "Search organs…",
+    "search_nothing": "Nothing found",
+    "ach_button": "★  {got}/{total}",
+    "ach_title": "Achievements",
+    "ach_streak_title": "Streak",
+    "ach_streak": "Days in a row: {n}  ·  best streak: {best}",
+    "ach_streak_hint": "The streak grows if you play at least one quiz every day. A missed day starts it over.",
+    "ach_list_title": "Earned {got} of {total}",
+    "ach_first": "First step",
+    "ach_first_desc": "Play your first quiz",
+    "ach_perfect": "Flawless",
+    "ach_perfect_desc": "Answer every question on the first try in a game of 5 questions or more",
+    "ach_hard": "Professor",
+    "ach_hard_desc": "A game of 10 questions or more on hard without a single mistake",
+    "ach_speed": "Lightning",
+    "ach_speed_desc": "A game of 10 questions or more without mistakes with the 10-second timer",
+    "ach_all_modes": "All-rounder",
+    "ach_all_modes_desc": "Play all four quizzes",
+    "ach_marathon": "Marathon",
+    "ach_marathon_desc": "Play a game about all the organs (18 questions or more)",
+    "ach_review": "Practice makes perfect",
+    "ach_review_desc": "Play the “Due for review” set",
+    "ach_fixer": "Lessons learned",
+    "ach_fixer_desc": "Play “Last game's mistakes” without a single mistake",
+    "ach_streak3": "Three days in a row",
+    "ach_streak3_desc": "Play 3 days in a row",
+    "ach_streak7": "Week of learning",
+    "ach_streak7_desc": "Play 7 days in a row",
+    "ach_scholar": "Anatomy buff",
+    "ach_scholar_desc": "Answer on the first try at least once about 18 different organs",
+    "ach_memory": "Long memory",
+    "ach_memory_desc": "Bring 10 review cards up to box four (reviewed after 8 days)",
+    "results_streak": "Days in a row with a game: {n}",
+    "results_new_ach": "New achievement: {name}",
+    "results_achievements": "Achievements",
+    "tours_title": "Tours",
+    "tour_label": "Tour",
+    "tour_route": "Route: {route}.",
+    "tour_start": "Start →",
+    "tour_exit": "End the tour",
+    "tour_keys": "You can also use the ← → arrow keys.",
+    "tour_back": "← Back",
+    "tour_next": "Next →",
+    "tour_last": "Finish →",
+    "tour_progress": "{title}  ·  step {n} of {total}",
+    "tour_done": "Tour complete!",
+    "tour_done_text": "Organs on the route: {n}. You can take it again or pick another tour.",
+    "tour_finish": "Done",
+    "tour_quiz": "Test yourself: a quiz on this topic",
+    "parts_title": "Model parts",
+    "parts_quiz": "Find the part",
+    "parts_quiz_stop": "Stop",
+    "parts_quiz_again": "Again",
+    "parts_hint": "Hover over the model to see the name of a part. The checkboxes hide parts.",
+    "parts_find": "Find on the model: {name}  ({n} of {total})",
+    "parts_right": "Correct!",
+    "parts_wrong": "That's the {name}. Try again.",
+    "parts_done": "Done! On the first try: {right} of {total}.",
+    "tour_resume": "←  Back to the tour “{title}”",
+    "tours_back": "←  Back to tours"
   },
   "organs": {
     "lungs": {
@@ -581,6 +646,120 @@
         "Prostate cancer is one of the most common cancers in men",
         "Enzymes in its secretion make the seminal fluid more liquid"
       ]
+    }
+  },
+  "parts": {
+    "adrenals": {
+      "adrenal": "Adrenal glands",
+      "kidney_dim": "Kidneys (for reference)"
+    },
+    "appendix": {
+      "appendix": "Appendix",
+      "cecum": "Cecum"
+    },
+    "brain": {
+      "brainstem": "Brainstem",
+      "cerebellum": "Cerebellum",
+      "cortex": "Cerebral hemispheres"
+    },
+    "esophagus": {
+      "esophagus": "Esophagus",
+      "stomach_dim": "Stomach (for reference)"
+    },
+    "heart": {
+      "artery": "Coronary arteries",
+      "myocardium": "Heart muscle (myocardium)",
+      "vein": "Cardiac veins",
+      "vessel": "Aortic valve"
+    },
+    "intestines": {
+      "colon": "Large intestine",
+      "small": "Small intestine",
+      "taenia": "Taeniae coli"
+    },
+    "kidneys": {
+      "artery": "Renal arteries",
+      "kidney": "Kidneys",
+      "ureter": "Ureters"
+    },
+    "liver": {
+      "parenchyma": "Liver tissue",
+      "vein": "Hepatic and portal veins"
+    },
+    "lungs": {
+      "airway": "Bronchi",
+      "lung": "Lungs"
+    },
+    "ovaries": {
+      "cervix": "Cervix",
+      "ovary": "Ovaries",
+      "tube": "Fallopian tubes",
+      "uterus": "Uterus"
+    },
+    "uterus": {
+      "cervix": "Cervix",
+      "ovary": "Ovaries",
+      "tube": "Fallopian tubes",
+      "uterus": "Uterus"
+    },
+    "pancreas": {
+      "artery": "Splenic artery",
+      "duodenum": "Duodenum",
+      "gland": "Pancreas"
+    },
+    "prostate": {
+      "prostate": "Glandular tissue",
+      "stroma": "Anterior fibromuscular stroma"
+    },
+    "thyroid": {
+      "cartilage": "Cricoid cartilage",
+      "thyroid": "Thyroid gland"
+    }
+  },
+  "tours": {
+    "food": {
+      "title": "The path of food",
+      "intro": "Let's follow a bite of food from the esophagus to the rectum. The digestive tract is a tube several meters long, helped by the liver, gallbladder and pancreas.",
+      "steps": {
+        "esophagus": "A swallowed bite enters the esophagus, a muscular tube behind the trachea. Waves of contraction (peristalsis) push it down in 5–10 seconds — even if you stand on your head.",
+        "stomach": "The stomach is a bag where food is mixed with acidic gastric juice. Hydrochloric acid kills germs, and the enzyme pepsin starts breaking down proteins. After 2–4 hours the mush moves on in portions into the duodenum.",
+        "liver": "The liver never touches food, but it makes bile, without which fats are poorly digested. All the blood from the intestines passes through the liver first: harmful substances are neutralized here and glycogen is stored.",
+        "gallbladder": "Bile from the liver is stored and concentrated in the gallbladder. When fatty food reaches the intestine, the gallbladder contracts and squeezes bile into the duodenum.",
+        "pancreas": "The pancreas releases juice with enzymes into the same duodenum; they break down proteins, fats and carbohydrates. The juice is alkaline and neutralizes stomach acid.",
+        "intestines": "In the small intestine digestion is completed, and nutrients are absorbed into the blood through millions of villi. The large intestine absorbs water, and bacteria feed on what we cannot digest ourselves.",
+        "appendix": "The appendix is a small pouch of the cecum, where the large intestine begins. Its wall is rich in lymphoid tissue, so it is considered part of the gut's immune defense.",
+        "rectum": "The last stretch is the rectum. Whatever was not used collects here, and two muscle rings — the sphincters — hold it in until you go to the toilet."
+      }
+    },
+    "air": {
+      "title": "Air and blood",
+      "intro": "How does oxygen get from the air into every cell? Let's follow a breath, then see who carries oxygen around the body and looks after the blood.",
+      "steps": {
+        "trachea": "Inhaled air passes through the nose and larynx into the trachea. Rings of cartilage keep it from collapsing, and tiny cilia sweep dust back up to the throat.",
+        "lungs": "The trachea splits into bronchi, which branch smaller and smaller and end in alveoli — tiny air sacs. Oxygen passes through their thin walls into the blood, and carbon dioxide passes back into the air.",
+        "heart": "Oxygen-rich blood from the lungs flows into the left side of the heart, which pumps it into the aorta and on to every organ. Meanwhile the right side sends “used” blood back to the lungs.",
+        "spleen": "The spleen filters the blood, removing old red blood cells and germs, and its lymphoid tissue supports immunity. You can live without it, but defense against some infections is weaker."
+      }
+    },
+    "water": {
+      "title": "Cleaning and urine",
+      "intro": "The blood is constantly cleaned of waste, extra water and salts. Let's see how urine is made from it and where it goes.",
+      "steps": {
+        "kidneys": "The kidneys filter the blood: more than a thousand liters pass through them each day, yielding about one and a half liters of urine. They also control water, salts and blood pressure.",
+        "bladder": "Urine flows down the ureters into the bladder. Its wall stretches, and at about 200–300 ml the brain gets the signal: time to go.",
+        "prostate": "In men the prostate lies just below the bladder, and the start of the urethra runs through it. That is why urinating gets harder when the prostate enlarges with age."
+      }
+    },
+    "control": {
+      "title": "Control: nerves and hormones",
+      "intro": "The body is controlled in two ways: fast, by nerve signals, and more slowly, by hormones that glands release into the blood.",
+      "steps": {
+        "brain": "The brain is the main control center: its signals travel along nerves in fractions of a second. Its hypothalamus commands many glands through the pituitary.",
+        "thyroid": "The thyroid releases hormones that contain iodine. They set the pace of metabolism: too little makes a person cold and tired, too much makes them lose weight and feel anxious.",
+        "adrenals": "The adrenal glands sit on top of the kidneys. When you are frightened they release adrenaline: the heart beats faster and muscles get ready to act. Cortisol helps cope with stress, and aldosterone keeps salts in balance.",
+        "pancreas": "The pancreas is also a hormone gland: insulin lowers blood sugar after a meal, and glucagon raises it when we are hungry.",
+        "ovaries": "The ovaries make the female sex hormones, estrogens and progesterone, which control the menstrual cycle."
+      }
     }
   }
 }

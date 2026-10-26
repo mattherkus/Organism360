@@ -1,5 +1,5 @@
 """Логика викторины без привязки к интерфейсу: порядок и число вопросов, варианты ответа, таймер,
-вопросы по фактам, по расположению и о системе органов."""
+вопросы по фактам, по расположению, о системе органов, о болезнях, по латинскому названию и «верно ли»."""
 
 import random
 import re
@@ -9,26 +9,41 @@ from . import i18n, questions, settings
 from .i18n import t
 
 MODES = ("find", "name", "facts", "mix")         # найди орган / угадай название / угадай по факту / вперемешку
-# типы вопросов: три режима и ещё два, которые есть только во «Вперемешку»:
-# where - угадай орган по расположению, system - к какой системе органов относится орган
-KINDS = ("find", "name", "facts", "where", "system")
+# типы вопросов: три режима и ещё пять, которые есть только во «Вперемешку»:
+# where - угадай орган по расположению, system - к какой системе органов относится орган,
+# disease - какой орган поражает болезнь, latin - что за орган по латинскому названию,
+# truth - верно ли утверждение об органе (факт с карточки этого или другого органа)
+KINDS = ("find", "name", "facts", "where", "system", "disease", "latin", "truth")
 LEVELS = settings.CHOICES["quiz_level"]
 TIMERS = settings.CHOICES["quiz_timer"]
 LENGTHS = settings.CHOICES["quiz_length"]        # сколько вопросов в игре; 0 - про все органы
 OPTIONS = {"easy": 3, "medium": 4, "hard": 6}    # сколько вариантов ответа на кнопках
+# болезни, о которых не спрашиваем «какой орган поражает»: прежде всего они поражают другой орган схемы.
+# {орган: номера в поле diseases карточки}
+VAGUE_DISEASES = {"pancreas": (3,),              # муковисцидоз - в первую очередь лёгкие
+                  "stomach": (2,),               # рефлюкс-эзофагит - воспаление пищевода
+                  "spleen": (1,)}                # разрыв при травме живота бывает и у печени
+# факты, которые не годятся для «верно ли»: они верны или почти верны и для другого органа схемы
+# (у сердца и почек размер с кулак, у щитовидной железы и простаты масса около 20 г...).
+# {орган: номера в поле facts карточки}; правите факты в lang/ru.json - проверьте и этот список
+SHARED_FACTS = {"gallbladder": (0,), "heart": (1,), "brain": (0,), "thyroid": (1,), "spleen": (0, 1, 2),
+                "bladder": (2,), "trachea": (0,), "rectum": (0, 2), "prostate": (1,)}
 
 
 def _norm(s):
     return s.lower().replace("ё", "е")
 
 
+def _stems(text):
+    """основы слов текста: «желудок» -> «желуд», «лёгкие» -> «легк» (короткие слова не берём)"""
+    return {w[:max(4, len(w) - 2)] for w in re.findall(r"\w+", _norm(text)) if len(w) >= 4}
+
+
 def name_stems(key):
-    """основы слов названия органа на всех языках: «желудок» -> «желуд», «лёгкие» -> «легк»"""
+    """основы слов названия органа на всех языках"""
     stems = set()
     for n in i18n.all_names(key):
-        for w in re.findall(r"\w+", _norm(n)):
-            if len(w) >= 4:
-                stems.add(w[:max(4, len(w) - 2)])
+        stems |= _stems(n)
     return stems
 
 
@@ -59,6 +74,63 @@ def location_leaks(key):
     return any(leaks(i18n.organ_in(code, key, "location"), key) for code in i18n.available())
 
 
+def _items(code, key, field):
+    """список карточки органа (facts, diseases) на языке code, без отката на другие языки"""
+    v = i18n.organ_in(code, key, field)
+    return v if isinstance(v, list) else []
+
+
+def _names_any(text):
+    """называет ли текст хоть один орган схемы"""
+    from .organs import ORGANS
+    return any(leaks(text, k) for k in ORGANS)
+
+
+def disease_choices(key):
+    """номера болезней органа, по которым можно спросить «какой орган поражает эта болезнь»: болезнь
+    ни на одном языке не называет орган схемы, не записана и у другого органа и не из VAGUE_DISEASES"""
+    from .organs import ORGANS
+    own = _items(i18n.BASE, key, "diseases")
+    others = {_norm(d) for k in ORGANS if k != key for d in _items(i18n.BASE, k, "diseases")}
+    out = []
+    for i, d in enumerate(own):
+        texts = [x[i] for x in (_items(code, key, "diseases") for code in i18n.available()) if i < len(x)]
+        if i in VAGUE_DISEASES.get(key, ()) or _norm(d) in others or any(_names_any(s) for s in texts):
+            continue
+        out.append(i)
+    return out
+
+
+def truth_facts(key):
+    """номера фактов карточки органа для вопроса «верно ли»: факт не из SHARED_FACTS и не называет
+    ни один орган схемы, иначе подставленный к чужому органу он сразу выдаёт себя"""
+    out = []
+    for i in range(len(_items(i18n.BASE, key, "facts"))):
+        texts = [x[i] for x in (_items(code, key, "facts") for code in i18n.available()) if i < len(x)]
+        if i not in SHARED_FACTS.get(key, ()) and not any(_names_any(s) for s in texts):
+            out.append(i)
+    return out
+
+
+def plain_name(key):
+    """название органа не по-латыни: в латинском режиме - на языке, выбранном перед латынью"""
+    return i18n.organ(key, "name", skip_current=i18n.current() == "la")
+
+
+def latin_name(key):
+    return i18n.organ_in("la", key, "name") if "la" in i18n.available() else ""
+
+
+def latin_ok(key):
+    """можно ли спросить «что это за орган» по латинскому названию: оно есть и не похоже на название,
+    которым подписаны варианты (Pancreas - Pancreas, Trachea - Трахея спрашивать незачем)"""
+    la, plain = latin_name(key), plain_name(key)
+    if not la:
+        return False
+    return not (_stems(plain) & _stems(la) or any(s in _norm(la) for s in _stems(plain))
+                or any(s in _norm(plain) for s in _stems(la)))
+
+
 def kinds_for(key):
     """какие типы вопросов можно задать про орган во «Вперемешку»"""
     from .organs import ORGANS
@@ -67,6 +139,12 @@ def kinds_for(key):
         out.append("where")
     if key in ORGANS:
         out.append("system")
+        if disease_choices(key):
+            out.append("disease")
+        if truth_facts(key):
+            out.append("truth")
+    if latin_ok(key):
+        out.append("latin")
     return out
 
 
@@ -108,8 +186,23 @@ class QuizSession:
         self._options = {}                           # {номер вопроса: варианты ответа}
         facts = [k for k, kind in zip(self.q, self.kinds) if kind == "facts"]
         self.prompts = fact_prompts(facts, level, rng) if facts else {}
+        # {номер вопроса: что спрашиваем}: у disease - номер болезни, у truth - (чей факт, номер факта)
+        self.picks = {i: self._pick(k, kind) for i, (k, kind) in enumerate(zip(self.q, self.kinds))
+                      if kind in ("disease", "truth")}
         self.deadline = None                         # когда кончится время на текущий вопрос
         self.started, self.ended = clock(), None
+
+    def _pick(self, key, kind):
+        if kind == "disease":
+            return self.rng.choice(disease_choices(key))
+        # «верно ли»: поровну правды и неправды; неправда - факт органа из другой системы (чтобы не
+        # оказался верным и для этого органа)
+        from .organs import ORGANS
+        own = set(ORGANS[key]["systems"])
+        strangers = [k for k in self.pool if k != key and k in ORGANS and not own & set(ORGANS[k]["systems"])
+                     and truth_facts(k)]
+        owner = key if not strangers or self.rng.random() < 0.5 else self.rng.choice(strangers)
+        return owner, self.rng.choice(truth_facts(owner))
 
     @property
     def total(self):
@@ -183,9 +276,10 @@ class QuizSession:
         self._next(False)
         return key
 
-    # --- варианты ответа - органы (ключи), кроме двух случаев:
+    # --- варианты ответа - органы (ключи), кроме трёх случаев:
     # вопрос по факту со своими вариантами - «#0» (верный) и «#1», «#2»... (неверные);
-    # вопрос о системе органов - «@система» (ключ из organs.SYSTEMS)
+    # вопрос о системе органов - «@система» (ключ из organs.SYSTEMS);
+    # вопрос «верно ли» - «?1» (верно) и «?0» (неверно)
     def custom(self):
         """у текущего вопроса свои варианты ответа (а не «какой это орган»)"""
         idx = self.prompts.get(self.current) if self.kind == "facts" else None
@@ -200,6 +294,8 @@ class QuizSession:
         if kind == "system":
             from .organs import ORGANS
             return "@" + ORGANS[key]["systems"][0]
+        if kind == "truth":
+            return "?1" if self.picks[i][0] == key else "?0"
         idx = self.prompts.get(key) if kind == "facts" else None
         if idx is not None and questions.has_answers(key, idx):
             return "#0"
@@ -213,6 +309,8 @@ class QuizSession:
             return t("system_" + right[1:])
         if right.startswith("#"):
             return questions.answer_text(self.q[i], self.prompts[self.q[i]], 0)
+        if right.startswith("?"):
+            return t("truth_yes" if right == "?1" else "truth_no")
         return None
 
     def option_label(self, opt):
@@ -221,6 +319,10 @@ class QuizSession:
             return questions.answer_text(self.current, self.prompts[self.current], int(opt[1:]))
         if opt.startswith("@"):
             return t("system_" + opt[1:])
+        if opt.startswith("?"):
+            return t("truth_yes" if opt == "?1" else "truth_no")
+        if self.kind == "latin":                     # вопрос - латинское название, варианты - не по-латыни
+            return plain_name(opt)
         return i18n.name(opt)
 
     def options(self, n=None):
@@ -231,6 +333,9 @@ class QuizSession:
             return []
         if self.i not in self._options:
             n = n or OPTIONS[self.level]
+            if self.kind == "truth":                 # всегда два варианта и в одном порядке
+                self._options[self.i] = ["?1", "?0"]
+                return self._options[self.i]
             if self.custom():
                 others = ["#%d" % j for j in range(1, questions.n_wrong(self.current, self.prompts[self.current]) + 1)]
             elif self.kind == "system":
@@ -238,19 +343,32 @@ class QuizSession:
                 others = ["@" + x for x in SYSTEMS if x not in ORGANS[self.current]["systems"]]
             else:
                 others = [k for k in self.pool if k != self.current]
+                if self.kind == "disease":           # органы той же системы болеют похоже: их не предлагаем
+                    from .organs import ORGANS
+                    own = set(ORGANS[self.current]["systems"])
+                    far = [k for k in others if not own & set(ORGANS.get(k, {}).get("systems", ()))]
+                    others = far if len(far) >= n - 1 else others
             opts = self.rng.sample(others, min(n - 1, len(others))) + [self.correct()]
             self.rng.shuffle(opts)
             self._options[self.i] = opts
         return self._options[self.i]
 
     def prompt(self):
-        """текст вопроса: факт («Угадай по факту») или расположение органа (вопрос «где находится»)"""
+        """текст вопроса: факт («Угадай по факту»), расположение органа (вопрос «где находится»), болезнь,
+        латинское название или утверждение для «верно ли»"""
         if self.finished:
             return ""
         if self.kind == "facts":
             return prompt_text(self.current, self.prompts[self.current])
         if self.kind == "where":
             return i18n.organ(self.current, "location")
+        if self.kind == "disease":
+            return _item(self.current, "diseases", self.picks[self.i])
+        if self.kind == "latin":
+            return latin_name(self.current)
+        if self.kind == "truth":
+            owner, idx = self.picks[self.i]
+            return _item(owner, "facts", idx)
         return ""
 
     @property
@@ -267,6 +385,16 @@ class QuizSession:
         if pct >= 40:
             return t("verdict_ok")
         return t("verdict_bad")
+
+
+def _item(key, field, i):
+    """i-й пункт списка карточки (facts, diseases) на текущем языке; если в переводе списка нет
+    или он короче - из языка, на который откатывается текст, в конце из русского"""
+    for code in i18n.chain():
+        items = _items(code, key, field)
+        if i < len(items):
+            return items[i]
+    return ""
 
 
 def format_time(seconds):

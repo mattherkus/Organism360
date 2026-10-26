@@ -88,6 +88,20 @@ class AtlasTests(unittest.TestCase):
                 im, (ox, oy) = self.atlas.overlay(key, kind)
                 self.assertEqual(im.mode, "RGBA")
 
+    def test_light_narrow_organ_highlight(self):
+        """трахея светлая и узкая: подсветка на рамке с запасом (свечение не обрезано краем рамки органа)
+        и заметно закрашивает сам орган"""
+        from organism_atlas.atlas import HALO
+        d = self.atlas.org["trachea"]
+        im, (ox, oy) = self.atlas.overlay("trachea", "target")
+        a = np.asarray(im)[..., 3].astype(np.float32) / 255
+        x0, y0 = d["origin"][0] - ox, d["origin"][1] - oy
+        h, w = d["hit"].shape
+        self.assertGreaterEqual(min(x0, y0), HALO * Z)
+        self.assertEqual(im.size, (w + 2 * x0, h + 2 * y0))
+        open_ = (d["hit"] > 0.5) & (self.atlas._cover("trachea") < 0.1)        # видимая часть трахеи
+        self.assertGreater(a[y0:y0 + h, x0:x0 + w][open_].mean(), 0.3)
+
 
 if __name__ == "__main__":
     unittest.main()

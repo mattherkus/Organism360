@@ -127,6 +127,30 @@ def all_names(key):
     return out
 
 
+def tour(name, field):
+    """поле экскурсии name из раздела tours: title, intro (строки) или steps ({орган: рассказ}).
+    У steps каждый орган откатывается на другой язык отдельно"""
+    if field == "steps":
+        out = {}
+        for code in reversed(_chain()):
+            out.update({k: v for k, v in _load(code).get("tours", {}).get(name, {}).get("steps", {}).items() if v})
+        return out
+    for code in _chain():
+        v = _load(code).get("tours", {}).get(name, {}).get(field)
+        if v:
+            return v
+    return ""
+
+
+def part(organ_key, group):
+    """название части анатомической 3D-модели органа (группы сетки) из раздела parts; нет - None"""
+    for code in _chain():
+        v = _load(code).get("parts", {}).get(organ_key, {}).get(group)
+        if v:
+            return v
+    return None
+
+
 def subtitle(key):
     """подпись под названием: латинское название, а в латинском режиме - обычное"""
     if _current == "la":
