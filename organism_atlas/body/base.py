@@ -25,12 +25,28 @@ FADE = 48          # высота растворения нижнего края
 BG_HI = "#1a3547"   # светлое пятно фона за телом (тёмная тема)
 
 
+# на скольких пикселях схемы (при Z = 1) у её краёв гаснут пятно фона и свечение вокруг тела: тогда край схемы
+# ровно цвета фона окна и шва не видно. Свечение тела у края и так слабое, а голова почти у верхнего края -
+# поэтому ему полоса узкая, чтобы не срезать ореол над головой
+EDGE_FADE = 60
+EDGE_FADE_GLOW = 10
+
+
+def edge_window(Z, shape=None, band=EDGE_FADE):
+    """множитель 0..1: у самых краёв схемы 0, дальше band пикселей схемы от края - 1 (плавно)"""
+    h, w = shape or (int(math.ceil(H * Z)), int(math.ceil(W * Z)))
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    d = np.minimum(np.minimum(xx + 0.5, w - 0.5 - xx), np.minimum(yy + 0.5, h - 0.5 - yy)) / Z
+    k = np.clip(d / band, 0, 1)
+    return k * k * (3 - 2 * k)
+
+
 def glow_weight(Z, shape=None):
     """доля светлого пятна в фоне: 1 за грудью, к краям схемы 0; shape - (h, w) картинки"""
     h, w = shape or (int(math.ceil(H * Z)), int(math.ceil(W * Z)))
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     r = np.hypot((xx / Z - CX) / 250, (yy / Z - H * 0.45) / (H * 0.6))
-    return np.clip(1 - r, 0, 1) ** 1.6
+    return np.clip(1 - r, 0, 1) ** 1.6 * edge_window(Z, (h, w))
 
 
 def background(Z, bg=BG, hi=BG_HI, t=None):
@@ -79,7 +95,7 @@ def build_layers(Z=1.0, ss=4):
     # На полупрозрачной кромке цвет бывает ярче 1: прямая альфа его не хранит, поэтому избыток
     # (уже умноженный на M) идёт отдельной добавкой skin_hi - так сумма та же, что прежде одним куском
     x = np.clip(body, 0, 1) + hex2rgb(RIM_LIGHT)[None, None, :] * rim[..., None] * 0.9
-    layers = {"glow": (G * (1 - M)[..., None]).astype(np.float32),
+    layers = {"glow": (G * ((1 - M) * edge_window(Z, M.shape, EDGE_FADE_GLOW))[..., None]).astype(np.float32),
               "skin": np.dstack([np.minimum(x, 1), M]).astype(np.float32),
               "skin_hi": (np.maximum(x - 1, 0) * M[..., None]).astype(np.float32)}
 
@@ -94,7 +110,7 @@ def build_layers(Z=1.0, ss=4):
         cov, col = ink.shaded(color, amp, spec)
         layers[name] = np.dstack([col, cov * alpha]).astype(np.float32)
     # ноги обрезаны краем схемы: плавно растворяем их в фоне
-    yy = np.arange(h, dtype=np.float32) / Z
+    yy = (np.arange(h, dtype=np.float32) + 1) / Z            # +1: последняя строка - ровно цвет фона
     layers["fade"] = (np.clip((yy - (H - FADE)) / FADE, 0, 1) ** 1.5).astype(np.float32)
     layers["mask"] = M
     return layers

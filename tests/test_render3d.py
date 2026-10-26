@@ -15,6 +15,24 @@ class Render3DTests(unittest.TestCase):
                 colors = np.unique(np.asarray(im).reshape(-1, 3), axis=0)
                 self.assertGreater(len(colors), 50)               # не пустая картинка
 
+    def test_hidden_parts_and_part_map(self):
+        """скрытая часть не рисуется, камера не сдвигается; карта частей совпадает с кадром"""
+        from organism_atlas.models import load_mesh
+        parts = load_mesh("brain")
+        cortex = [p["group"] for p in parts].index("cortex")
+        scene = Scene3D(parts)
+        im, ids = scene.render(120, 90, -62, 18, ss=2, ids=True)
+        self.assertEqual(ids.shape, (90, 120))
+        self.assertIn(cortex, np.unique(ids))
+        self.assertEqual(im.tobytes(), scene.render(120, 90, -62, 18, ss=2).tobytes())   # ids кадр не меняют
+        im2, ids2 = scene.render(120, 90, -62, 18, ss=2, hidden={cortex}, ids=True)
+        self.assertNotIn(cortex, np.unique(ids2))
+        self.assertNotEqual(im.tobytes(), im2.tobytes())
+        others = (ids >= 0) & (ids != cortex)               # что было видно и раньше, осталось на месте
+        self.assertTrue((ids2[others] == ids[others]).all())
+        bg = np.asarray(im2)[ids2 < 0]
+        self.assertGreater(len(bg), np.count_nonzero(ids < 0))
+
     def test_rotation_changes_picture(self):
         scene = Scene3D(ORGANS["heart"]["parts"]())
         a = scene.render(100, 80, 0, 10)

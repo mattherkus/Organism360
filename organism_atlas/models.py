@@ -85,7 +85,8 @@ def mesh_credit(key):
 
 
 def load_mesh(key):
-    """анатомическая модель: по сетке на группу материала. Массивы общие для всех вызовов
+    """анатомическая модель: по сетке на группу материала (имя группы - в "group", по нему берётся
+    название части в 3D-просмотре: раздел parts в lang/*.json). Массивы общие для всех вызовов
     и защищены от записи, поэтому список собирается заново, а геометрия не копируется"""
     if key not in _mesh_cache:
         meta = read_mesh_model(key)
@@ -99,8 +100,8 @@ def load_mesh(key):
                 raise ValueError("models/mesh/%s: номер вершины за пределами сетки" % key)
             groups.append((g, arr))
         _mesh_cache[key] = groups
-    return [{"k": "m", "v": V, "f": F, "vn": N, "color": g["color"], "tex": g["texture"], "gloss": g["gloss"]}
-            for g, (V, F, N) in _mesh_cache[key]]
+    return [{"k": "m", "v": V, "f": F, "vn": N, "color": g["color"], "tex": g["texture"], "gloss": g["gloss"],
+             "group": g["group"]} for g, (V, F, N) in _mesh_cache[key]]
 
 
 def load_parts(key):

@@ -3,8 +3,9 @@ import unittest
 
 from organism_atlas import i18n, questions
 from organism_atlas.organs import ORGANS, SYSTEMS, for_body
-from organism_atlas.quiz import (KINDS, LENGTHS, LEVELS, OPTIONS, QuizSession, fact_prompts, format_time,
-                                 game_length, kinds_for, leaks, location_leaks, prompt_text)
+from organism_atlas.quiz import (KINDS, LENGTHS, LEVELS, OPTIONS, SHARED_FACTS, QuizSession, disease_choices,
+                                 fact_prompts, format_time, game_length, kinds_for, latin_ok, leaks, location_leaks,
+                                 prompt_text, truth_facts)
 
 NAMES = {"a": "Аа", "b": "Бб", "c": "Вв", "d": "Гг"}
 
@@ -329,6 +330,92 @@ class CustomAnswerTests(unittest.TestCase):
     def test_prompts_may_name_the_organ(self):
         prompts = [fact_prompts(["heart"], "easy", random.Random(i))["heart"] for i in range(20)]
         self.assertEqual(set(prompts), {0, 1})
+
+
+class NewKindTests(unittest.TestCase):
+    """вопросы «Вперемешку» о болезни, по латинскому названию и «верно ли»"""
+
+    def tearDown(self):
+        i18n._current = i18n._previous = i18n.BASE
+
+    def kind(self, key, kind, seed=0, level="medium"):
+        return QuizSession([key], rng=random.Random(seed), pool=list(ORGANS), mode=kind, level=level)
+
+    def test_disease(self):
+        s = self.kind("kidneys", "disease", level="hard")
+        self.assertIn(s.prompt(), [i18n.organ("kidneys", "diseases")[i] for i in disease_choices("kidneys")])
+        opts = s.options()
+        self.assertEqual(len(opts), 6)
+        self.assertIn("kidneys", opts)
+        self.assertNotIn("bladder", opts)                  # та же система - похожие болезни, не предлагаем
+        self.assertIsNone(s.answer_text(0))
+        i18n.set_lang("en")
+        self.assertIn(s.prompt(), i18n._load("en")["organs"]["kidneys"]["diseases"])
+        self.assertTrue(s.answer("kidneys"))
+
+    def test_disease_never_names_an_organ_or_repeats(self):
+        for key in ORGANS:
+            for i in disease_choices(key):
+                for code in ("ru", "en"):
+                    text = i18n._load(code)["organs"][key]["diseases"][i]
+                    self.assertFalse(any(leaks(text, k) for k in ORGANS), (key, code, text))
+        self.assertEqual(disease_choices("appendix"), [])         # «аппендицит» называет орган
+        self.assertNotIn("Аппендицит", [i18n.organ("intestines", "diseases")[i] for i in disease_choices("intestines")])
+        self.assertNotIn(3, disease_choices("pancreas"))          # VAGUE_DISEASES: муковисцидоз
+
+    def test_latin(self):
+        s = self.kind("liver", "latin")
+        self.assertEqual(s.prompt(), "Hepar")
+        self.assertEqual(s.option_label("liver"), "Печень")
+        i18n.set_lang("la")                                  # в латинском режиме варианты - не по-латыни
+        self.assertEqual(s.option_label("liver"), "Печень")
+        self.assertTrue(s.answer("liver"))
+
+    def test_latin_only_when_not_obvious(self):
+        self.assertTrue(latin_ok("liver"))
+        self.assertTrue(latin_ok("pancreas"))                # Pancreas и «Поджелудочная железа» - не похожи
+        i18n.set_lang("en")
+        self.assertFalse(latin_ok("pancreas"))               # Pancreas - Pancreas
+        self.assertFalse(latin_ok("trachea"))
+        self.assertNotIn("latin", kinds_for("trachea"))
+
+    def test_truth(self):
+        seen = set()
+        for seed in range(40):
+            s = self.kind("heart", "truth", seed)
+            owner, idx = s.picks[0]
+            self.assertEqual(s.options(), ["?1", "?0"])
+            self.assertEqual(s.correct(), "?1" if owner == "heart" else "?0")
+            self.assertEqual(s.prompt(), i18n.organ(owner, "facts")[idx])
+            self.assertIn(idx, truth_facts(owner))
+            if owner != "heart":                             # чужой факт - из органа другой системы
+                self.assertFalse(set(ORGANS[owner]["systems"]) & set(ORGANS["heart"]["systems"]))
+            self.assertEqual(s.option_label("?1"), "Верно")
+            self.assertIn(s.answer_text(0), ("Верно", "Неверно"))
+            seen.add(owner == "heart")
+        self.assertEqual(seen, {True, False})                # бывают и правда, и неправда
+
+    def test_truth_facts_skip_shared_and_naming(self):
+        for key, idx in SHARED_FACTS.items():
+            self.assertFalse(set(idx) & set(truth_facts(key)), key)
+        self.assertEqual(truth_facts("spleen"), [])
+        self.assertNotIn("truth", kinds_for("spleen"))
+        for key in ORGANS:
+            for i in truth_facts(key):
+                self.assertFalse(any(leaks(i18n.organ(key, "facts")[i], k) for k in ORGANS), key)
+
+    def test_mixed_game_has_new_kinds(self):
+        kinds = set()
+        for seed in range(10):
+            s = QuizSession(for_body("female"), rng=random.Random(seed), mode="mix", level="hard")
+            while not s.finished:
+                kinds.add(s.kind)
+                if s.kind in ("disease", "latin", "truth"):
+                    self.assertTrue(s.prompt())
+                    self.assertIn(s.correct(), s.options())
+                    self.assertTrue(all(s.option_label(o) for o in s.options()))
+                self.assertTrue(s.answer(s.correct()))
+        self.assertTrue({"disease", "latin", "truth"} <= kinds)
 
 
 if __name__ == "__main__":

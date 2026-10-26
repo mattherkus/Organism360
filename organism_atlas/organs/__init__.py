@@ -64,5 +64,19 @@ def by_system(keys):
     return [(name, ks) for name, ks in groups if ks]
 
 
+def _norm(s):
+    return s.lower().replace("ё", "е").strip()
+
+
+def search(keys, query):
+    """органы из keys, подходящие под строку поиска (регистр и ё не важны): часть названия органа
+    на любом языке или часть названия системы органов на текущем языке. Пустая строка - все органы"""
+    q = _norm(query)
+    if not q:
+        return list(keys)
+    systems = {s for s in SYSTEMS if q in _norm(i18n.t("system_" + s))}
+    return [k for k in keys if any(q in _norm(n) for n in i18n.all_names(k)) or systems & set(ORGANS[k]["systems"])]
+
+
 def fact_of_day(key, day=None):
     return i18n.fact_of_day(key, list(ORGANS).index(key), day)
