@@ -20,6 +20,7 @@ from ..i18n import t
 from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from ..theme import C, style
+from . import titlebar
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
@@ -40,6 +41,8 @@ class App:
         self.quality = quality
         set_quality(quality)
         style(root, bg="bg")
+        titlebar.set_icon(root)
+        titlebar.paint(root)
         self.mode = "study"                    # study или режим викторины из quiz.MODES
         self.session = None                    # QuizSession во время игры (None - на карточке настройки)
         saved = settings.load()
@@ -147,6 +150,8 @@ class App:
         theme.set_theme(name)
         settings.save(theme=theme.current())
         theme.repaint(self.root)
+        titlebar.set_icon(self.root)
+        titlebar.paint_all(self.root)
         self.c.itemconfigure("loading", fill=C["muted"])
         if self.atlas:
             self.paint_base()

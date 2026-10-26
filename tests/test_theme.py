@@ -43,6 +43,38 @@ class PaletteTests(unittest.TestCase):
                 self.assertTrue(ui.get(k), (code, k))
 
 
+class TitleBarTests(unittest.TestCase):
+    """заголовок окна и иконка в цветах темы"""
+
+    def test_colors(self):
+        from organism_atlas.ui import titlebar
+        self.assertEqual(titlebar._colorref("#102030"), 0x302010)          # COLORREF: 0x00BBGGRR
+        self.assertTrue(titlebar.is_dark(theme.THEMES["dark"]["bg"]))
+        self.assertFalse(titlebar.is_dark(theme.THEMES["light"]["bg"]))
+        self.assertTrue(titlebar.is_dark(theme.THEMES["contrast"]["bg"]))
+
+    def test_icon(self):
+        from organism_atlas.ui import titlebar
+        im = titlebar.icon_image(32)
+        self.assertEqual(im.size, (32, 32))
+        self.assertEqual(im.getpixel((0, 0))[3], 0)                        # скруглённый угол прозрачный
+        self.assertEqual(im.getpixel((16, 16))[:3], tuple(int(theme.C["on_accent"][i:i + 2], 16) for i in (1, 3, 5)))
+
+    def test_paint_window(self):
+        from organism_atlas.ui import titlebar
+        try:
+            root = tk.Tk()
+        except tk.TclError:
+            self.skipTest("нет экрана")
+        try:
+            titlebar.set_icon(root)
+            titlebar.paint(root)
+            titlebar.paint_all(root)                                     # повторно: <Map> привязан один раз
+            self.assertEqual(root.bind("<Map>").count("<lambda>"), 1)
+        finally:
+            root.destroy()
+
+
 class Render3DBackgroundTests(unittest.TestCase):
     def test_frame_background_follows_colors(self):
         from organism_atlas.organs import ORGANS

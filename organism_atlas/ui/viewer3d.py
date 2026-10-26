@@ -14,6 +14,7 @@ from ..i18n import t
 from ..organs import ORGANS
 from ..render3d.scene import Scene3D
 from ..theme import C, style
+from . import titlebar
 from .scaling import px
 from .widgets import fill_card, label, rounded_card
 
@@ -44,6 +45,7 @@ class Viewer3D:
         self.photo = None
         self.error = None                # последняя ошибка рендера (показывается в подписи)
         win =self.win = style(tk.Toplevel(root), bg="bg")
+        titlebar.paint(win)
         win.bind("<Destroy>", self.close)
         threading.Thread(target=self.work, daemon=True).start()
         self.view = label(win, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")

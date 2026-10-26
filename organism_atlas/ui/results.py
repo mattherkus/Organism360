@@ -7,6 +7,7 @@ from ..config import FONT
 from ..i18n import t
 from ..quiz import format_time
 from ..theme import style
+from . import titlebar
 from .scaling import px
 from .widgets import flat_button, frame, label, rounded_card
 
@@ -16,6 +17,7 @@ def show_results_dialog(root, session, on_again, on_retry=None, due=0):
     on_retry - по кнопке «Повторить ошибки» (видна, если ошибки были); due - карточек на повторение сегодня"""
     total, pct = session.total, session.percent
     win = style(tk.Toplevel(root), bg="bg")
+    titlebar.paint(win)
     win.title(t("results_title"))
     win.resizable(False, False)
     win.transient(root)

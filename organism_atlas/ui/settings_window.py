@@ -6,6 +6,7 @@ from .. import i18n, settings, theme
 from ..config import FONT
 from ..i18n import t
 from ..theme import style
+from . import titlebar
 from .scaling import px
 from .widgets import flat_button, frame, label, rounded_card, set_button_bg
 
@@ -18,6 +19,7 @@ class SettingsWindow:
     def __init__(self, app):
         self.app = app
         win = self.win = style(tk.Toplevel(app.root), bg="bg")
+        titlebar.paint(win)
         win.resizable(False, False)
         win.transient(app.root)
         win.bind("<Destroy>", self.close)
