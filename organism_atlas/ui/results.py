@@ -9,7 +9,7 @@ from ..quiz import format_time
 from ..theme import style
 from . import titlebar
 from .scaling import px
-from .widgets import flat_button, frame, label, rounded_card
+from .widgets import center_on, flat_button, frame, label, rounded_card
 
 
 def show_results_dialog(root, session, on_again, on_retry=None, due=0):
@@ -17,6 +17,7 @@ def show_results_dialog(root, session, on_again, on_retry=None, due=0):
     on_retry - по кнопке «Повторить ошибки» (видна, если ошибки были); due - карточек на повторение сегодня"""
     total, pct = session.total, session.percent
     win = style(tk.Toplevel(root), bg="bg")
+    win.withdraw()                              # показать сразу по центру, а не в углу с прыжком
     titlebar.paint(win)
     win.title(t("results_title"))
     win.resizable(False, False)
@@ -50,8 +51,6 @@ def show_results_dialog(root, session, on_again, on_retry=None, due=0):
     if session.missed and on_retry:
         flat_button(row, t("results_retry"), lambda: run(on_retry)).pack(side="left", padx=4)
     flat_button(row, t("results_close"), win.destroy).pack(side="left", padx=4)
-    win.update_idletasks()
-    x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
-    y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 2
-    win.geometry("+%d+%d" % (max(x, 0), max(y, 0)))
+    center_on(win, root)
+    win.deiconify()
     win.grab_set()

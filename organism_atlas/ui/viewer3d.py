@@ -16,7 +16,7 @@ from ..render3d.scene import Scene3D
 from ..theme import C, style
 from . import titlebar
 from .scaling import px
-from .widgets import fill_card, label, rounded_card
+from .widgets import center_on, fill_card, label, rounded_card
 
 _viewer = None                  # единственное окно просмотра: новый орган открывается в нём же
 
@@ -44,7 +44,8 @@ class Viewer3D:
         self.pending, self.alive = None, True
         self.photo = None
         self.error = None                # последняя ошибка рендера (показывается в подписи)
-        win =self.win = style(tk.Toplevel(root), bg="bg")
+        win = self.win = style(tk.Toplevel(root), bg="bg")
+        win.withdraw()                           # показать сразу по центру, а не в углу с прыжком
         titlebar.paint(win)
         win.bind("<Destroy>", self.close)
         threading.Thread(target=self.work, daemon=True).start()
@@ -63,6 +64,8 @@ class Viewer3D:
         v.bind("<Button-5>", lambda e: self.zoom_by(1 / 1.12))
         v.bind("<Double-Button-1>", self.reset)
         self.load(key)
+        center_on(win, root)
+        win.deiconify()
         self.poll()
 
     def load(self, key):

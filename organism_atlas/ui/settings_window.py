@@ -8,7 +8,7 @@ from ..i18n import t
 from ..theme import style
 from . import titlebar
 from .scaling import px
-from .widgets import flat_button, frame, label, rounded_card, set_button_bg
+from .widgets import center_on, flat_button, frame, label, rounded_card, set_button_bg
 
 _window = None                  # окно одно: повторное нажатие «Настройки» поднимает его
 
@@ -19,6 +19,7 @@ class SettingsWindow:
     def __init__(self, app):
         self.app = app
         win = self.win = style(tk.Toplevel(app.root), bg="bg")
+        win.withdraw()                          # показать сразу на месте, а не в углу с прыжком в центр
         titlebar.paint(win)
         win.resizable(False, False)
         win.transient(app.root)
@@ -27,11 +28,8 @@ class SettingsWindow:
         box, self.body = rounded_card(win)
         box.pack(padx=px(16), pady=px(16))
         self.refresh()
-        win.update_idletasks()
-        root = app.root
-        x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
-        y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 3
-        win.geometry("+%d+%d" % (max(x, 0), max(y, 0)))
+        center_on(win, app.root)
+        win.deiconify()
 
     def close(self, e):
         global _window
