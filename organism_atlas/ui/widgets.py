@@ -629,7 +629,7 @@ def fill_setup(card, title, desc, rows, start_text, on_start, history_title, his
         for c in range(cols):
             line.columnconfigure(c, weight=1, uniform="col")
         for i, (text, value, enabled) in enumerate(options):
-            b = flat_button(line, text, lambda v=value: on_pick(v), anchor="w" if vertical else "center")
+            b = flat_button(line, text, lambda v=value, f=on_pick: f(v), anchor="w" if vertical else "center")
             set_button_bg(b, "accent" if value == selected else "card")
             if not enabled:
                 style(b, disabledforeground="muted")

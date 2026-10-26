@@ -174,6 +174,26 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.c.winfo_rootx(), x)
         self.assertEqual(self.errors, [])
 
+    def test_setup_buttons(self):
+        """каждая кнопка карточки настройки меняет свою настройку, а не настройку последней строки"""
+        from organism_atlas.ui.widgets import RoundButton
+
+        def press(text):
+            todo = [self.app.card]
+            while todo:
+                w = todo.pop()
+                if isinstance(w, RoundButton) and w.cget("text") == text:
+                    return w.invoke()
+                todo += w.winfo_children()
+            self.fail(text)
+        self.app.set_mode("name")
+        press(i18n.t("level_hard"))
+        press(i18n.t("timer_sec", sec=10))
+        press("5")
+        self.assertEqual((self.app.cfg["level"], self.app.cfg["timer"], self.app.cfg["length"]), ("hard", 10, 5))
+        self.assertEqual(self.app.cfg["set"], "all")
+        self.assertEqual(self.errors, [])
+
     def test_resize_after_hover(self):
         """после наведения окно поменяло размер: схема перерисовалась, подсветка работает"""
         self.hover_heart()
