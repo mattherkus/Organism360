@@ -1,4 +1,4 @@
-"""Настройки (встроенная панель): тема, качество 3D, масштаб интерфейса, схема тела и язык."""
+"""Настройки (встроенная панель): тема, качество 3D, масштаб интерфейса, схема тела, анимация и язык."""
 
 from .. import i18n, settings, theme
 from ..config import FONT
@@ -47,6 +47,8 @@ class SettingsWindow:
              app.pending_scale, app.set_ui_scale, scale_hint),
             (t("settings_body"), [(t("body_" + v), v) for v in settings.CHOICES["body"]],
              app.body, app.set_body, (t("settings_body_hint"), "muted")),
+            (t("settings_animation"), [(t("animation_" + v), v) for v in settings.CHOICES["animation"]],
+             app.animation, app.set_animation, (t("settings_animation_hint"), "muted")),
             (t("settings_language"), [(i18n.language_name(c), c) for c in i18n.available()],
              i18n.current(), app.set_lang, None),
         ]

@@ -45,7 +45,7 @@ class AppTests(unittest.TestCase):
         self.wait()
 
     def tearDown(self):
-        for job in ("flash_job", "next_job", "timer_job", "resize_job"):      # отложенные вызовы окна
+        for job in ("flash_job", "next_job", "timer_job", "resize_job", "anim_job"):      # отложенные вызовы окна
             if getattr(self.app, job, None):
                 self.root.after_cancel(getattr(self.app, job))
         self.root.destroy()
@@ -381,6 +381,45 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(v.quiz)
         v.win.destroy()
         self.assertIsNone(viewer3d._viewer)
+        self.assertEqual(self.errors, [])
+
+    def test_muscles_layer(self):
+        """мышцы по умолчанию скрыты, флажок их показывает; «Показать всё» мышцы не трогает"""
+        self.assertNotIn("muscles", self.app.atlas.visible)
+        self.assertFalse(self.app.toggles["muscles"].on)
+        self.app.toggle_layer("muscles")
+        self.assertIn("muscles", self.app.atlas.visible)
+        self.assertFalse(self.app.something_hidden())        # мышцы - добавка, а не «что-то скрыто»
+        self.app.toggle_layer("skeleton")
+        self.assertTrue(self.app.something_hidden())
+        self.app.show_all()
+        self.assertIn("muscles", self.app.atlas.visible)
+        self.assertIn("skeleton", self.app.atlas.visible)
+        self.assertEqual(self.errors, [])
+
+    def test_animation(self):
+        """кусок с сердцем и лёгкими поверх схемы; не рисуется, когда выключен или открыта панель"""
+        from organism_atlas.ui import settings_window
+        self.root.after_cancel(self.app.anim_job)
+        self.app.animate()
+        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "normal")
+        x, y = self.app.c.coords(self.app.anim_item)
+        self.assertEqual((int(x), int(y)), self.app.atlas.anim_box()[:2])
+        settings_window.show_settings(self.app)              # поверх панель - не рисуем
+        self.root.after_cancel(self.app.anim_job)
+        self.app.animate()
+        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
+        settings_window._window.win.destroy()
+        self.app.set_animation("off")
+        self.root.after_cancel(self.app.anim_job)
+        self.app.animate()
+        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
+        self.app.set_animation("on")
+        self.app.toggle_organ("heart")
+        self.app.toggle_organ("lungs")                       # оба скрыты - анимировать нечего
+        self.root.after_cancel(self.app.anim_job)
+        self.app.animate()
+        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
         self.assertEqual(self.errors, [])
 
     def test_resize_after_hover(self):

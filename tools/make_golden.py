@@ -4,7 +4,8 @@
     python tools/make_golden.py --out <папка>    # куда-то ещё (например, чтобы сравнить с эталоном)
 
 2D, для каждого масштаба Z (1.0 и 0.7): full.png - схема целиком (фон тёмной темы), base.png - схема
-без органов (кожа, кости, вены, артерии), <орган>.png - RGBA органа и origins.json - где он лежит.
+без органов (кожа, кости, вены, артерии), muscles.png - она же с мышцами, <орган>.png - RGBA органа
+и origins.json - где он лежит.
 3D: <орган>.png - кадр с углом просмотра по умолчанию.
 Эталоны не перезаписываются молча: существующий файл оставляется, если не передан --force.
 """
@@ -21,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from organism_atlas.atlas import build_atlas, to_u8  # noqa: E402
-from organism_atlas.body.base import background, compose, over  # noqa: E402
+from organism_atlas.body.base import BODY_LAYERS, background, compose, over  # noqa: E402
 from organism_atlas.organs import ORDER, ORGANS  # noqa: E402
 
 ZOOMS = (1.0, 0.7)
@@ -45,6 +46,7 @@ def golden_2d(out, force):
         back = background(Z)
         base = compose(body, back)
         save(Image.fromarray(to_u8(base)), d / "base.png", force)
+        save(Image.fromarray(to_u8(compose(body, back, BODY_LAYERS))), d / "muscles.png", force)
         full = base.copy()
         for k in ORDER:
             (ox, oy), (h, w) = organs[k]["origin"], organs[k]["rgba"].shape[:2]

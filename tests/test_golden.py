@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 
 from organism_atlas.atlas import Atlas
-from organism_atlas.body.base import BODY_LAYERS
+from organism_atlas.body.base import BODY_LAYERS, DEFAULT_LAYERS
 from organism_atlas.organs import ORDER, ORGANS
 
 GOLDEN = Path(__file__).with_name("golden")
@@ -36,8 +36,10 @@ class Golden2DTests(unittest.TestCase):
     def check_zoom(self, Z):
         d = GOLDEN / "2d" / ("z%.1f" % Z)
         a = self.atlas(Z)
-        base = a.composite(visible=BODY_LAYERS, organs=())
+        base = a.composite(visible=DEFAULT_LAYERS, organs=())
         self.assertLessEqual(max_diff(base, png(d / "base.png")), TOL, "схема без органов")
+        muscles = a.composite(visible=BODY_LAYERS, organs=())
+        self.assertLessEqual(max_diff(muscles, png(d / "muscles.png")), TOL, "схема без органов, с мышцами")
         self.assertLessEqual(max_diff(a.composite(), png(d / "full.png")), TOL, "схема целиком")
         origins = json.loads((d / "origins.json").read_text(encoding="utf-8"))
         for k in ORDER:

@@ -1,5 +1,5 @@
 """Настройки пользователя, которые переживают перезапуск: язык, тема, качество 3D, масштаб интерфейса,
-схема тела (женская или мужская), сложность, таймер и длина викторины.
+схема тела (женская или мужская), анимация схемы, сложность, таймер и длина викторины.
 
 Файл: %APPDATA%/organism_atlas/settings.json (на других системах ~/.config/organism_atlas/settings.json);
 переменная окружения ORGANISM_ATLAS_SETTINGS задаёт другой путь (нужна тестам).
@@ -19,9 +19,10 @@ CHOICES = {
     "quiz_timer": (0, 20, 10),                   # секунд на вопрос; 0 - без таймера
     "quiz_length": (5, 10, 20, 0),               # вопросов в игре; 0 - про все органы
     "body": ("female", "male"),                  # схема тела: органы малого таза (organs.SEXES)
+    "animation": ("on", "off"),                  # сердце бьётся, лёгкие дышат
 }
 DEFAULTS = {"theme": "dark", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,
-            "quiz_length": 10, "body": "male"}
+            "quiz_length": 10, "body": "male", "animation": "on"}
 
 
 def path():

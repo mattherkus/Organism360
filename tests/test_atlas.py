@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 
 from organism_atlas.atlas import Atlas
-from organism_atlas.body.base import BODY_LAYERS
+from organism_atlas.body.base import BODY_LAYERS, DEFAULT_LAYERS
 from organism_atlas.geometry import CX, H, W
 from organism_atlas.organs import ORDER, ORGANS, PAINT, SYSTEMS, for_body, other_sex
 
@@ -69,8 +69,11 @@ class AtlasTests(unittest.TestCase):
         no_bones = np.asarray(a.base)
         self.assertFalse(np.array_equal(no_bones, full))
         self.assertEqual(a.visible, ("skin", "veins", "arteries"))
-        a.set_layers(BODY_LAYERS)
+        a.set_layers(DEFAULT_LAYERS)
         self.assertTrue(np.array_equal(np.asarray(a.base), full))
+        a.set_layers(BODY_LAYERS)                          # мышцы по умолчанию скрыты: с ними картинка другая
+        self.assertEqual(a.visible, BODY_LAYERS)
+        self.assertFalse(np.array_equal(np.asarray(a.base), full))
 
     def test_other_sex_organs_hidden(self):
         """на мужской схеме нет матки и яичников, на женской - предстательной железы"""
@@ -81,6 +84,31 @@ class AtlasTests(unittest.TestCase):
             self.assertIn(present, for_body(sex))
             self.assertEqual(a.organ_at(*(v * Z for v in HIT_POINTS[present])), present)
             self.assertNotEqual(a.organ_at(*(v * Z for v in HIT_POINTS[gone])), gone)
+
+    def test_animation_frames(self):
+        """в покое кусок анимации совпадает со схемой; на ударе сердце меньше, на вдохе лёгкие больше"""
+        from organism_atlas.atlas import BEAT, BREATH, breathing, heartbeat
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        im, (x, y) = a.anim_frame(0.0)
+        x0, y0, x1, y1 = a.anim_box()
+        self.assertEqual((x, y, x + im.width, y + im.height), (x0, y0, x1, y1))
+        base = np.asarray(a.base.crop((x0, y0, x1, y1))).astype(int)
+        self.assertLessEqual(np.abs(np.asarray(im).astype(int) - base).max(), 2)
+        for t in (BEAT * 0.16, BREATH / 2):
+            self.assertGreater(np.abs(np.asarray(a.anim_frame(t)[0]).astype(int) - base).max(), 40)
+        self.assertLess(heartbeat(BEAT * 0.16), 1)
+        self.assertEqual(heartbeat(BEAT * 0.8), 1)
+        self.assertGreater(breathing(BREATH / 2)[1], breathing(0)[1])
+        for k in ("heart", "lungs"):                     # прямоугольник анимации накрывает оба органа
+            d = a.org[k]
+            ox, oy = d["origin"]
+            h, w = d["rgba"].shape[:2]
+            self.assertTrue(x0 <= ox and y0 <= oy and ox + w <= x1 and oy + h <= y1, k)
+        a.set_hidden({"heart", "lungs"})
+        self.assertIsNone(a.anim_frame(0.0))
+        a.set_hidden({"lungs"})
+        im, pos = a.anim_frame(0.0)
+        self.assertLess(im.width, x1 - x0)                # остался только прямоугольник сердца
 
     def test_overlays(self):
         for key in ORGANS:

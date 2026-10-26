@@ -1,4 +1,4 @@
-"""Сборка тела по слоям: кожа (объём и кромка), скелет, вены, артерии.
+"""Сборка тела по слоям: кожа (объём и кромка), мышцы, скелет, вены, артерии.
 
 Каждый слой - RGBA с прямой альфой, поэтому его можно скрыть или сделать прозрачнее, не пересчитывая
 остальные. Фон (по теме оформления) и свечение вокруг тела лежат под слоями, растворение ног у нижнего
@@ -9,11 +9,12 @@ import math
 import numpy as np
 
 from ..colors import hex2rgb
-from ..config import ART_C, BG, BONE_C, RIM_LIGHT, VEIN_C
+from ..config import ART_C, BG, BONE_C, MUSCLE_C, RIM_LIGHT, VEIN_C
 from ..geometry import CX, H, W
 from ..render2d.layers import Ink, Layer
 from ..render2d.lighting import lighting
 from ..render2d.noise import gblur
+from .muscles import muscles
 from .silhouette import silhouette
 from .skeleton import skeleton
 from .vessels import vessels
@@ -56,7 +57,8 @@ def background(Z, bg=BG, hi=BG_HI, t=None):
     return bg[None, None, :] * (1 - t[..., None]) + hi[None, None, :] * t[..., None]
 
 
-BODY_LAYERS = ("skin", "skeleton", "veins", "arteries")     # слои тела снизу вверх, их можно скрывать
+BODY_LAYERS = ("skin", "muscles", "skeleton", "veins", "arteries")     # слои тела снизу вверх, их можно скрывать
+DEFAULT_LAYERS = ("skin", "skeleton", "veins", "arteries")   # видны при запуске: мышцы включают в панели «Слои»
 
 
 def build_layers(Z=1.0, ss=4):
@@ -99,12 +101,15 @@ def build_layers(Z=1.0, ss=4):
               "skin": np.dstack([np.minimum(x, 1), M]).astype(np.float32),
               "skin_hi": (np.maximum(x - 1, 0) * M[..., None]).astype(np.float32)}
 
-    # --- кости и сосуды
+    # --- мышцы, кости и сосуды
+    U = Ink(box, Z, ss)
+    muscles(U)
     S = Ink(box, Z, ss)
     skeleton(S)
     A, V = Ink(box, Z, ss), Ink(box, Z, ss)
     vessels(A, V)
-    for name, ink, color, alpha, amp, spec in (("skeleton", S, BONE_C, 0.34, 3.2, 0.35),
+    for name, ink, color, alpha, amp, spec in (("muscles", U, MUSCLE_C, 0.5, 2.6, 0.3),
+                                               ("skeleton", S, BONE_C, 0.34, 3.2, 0.35),
                                                ("veins", V, VEIN_C, 0.58, 2.4, 0.25),
                                                ("arteries", A, ART_C, 0.62, 2.4, 0.25)):
         cov, col = ink.shaded(color, amp, spec)
@@ -124,7 +129,7 @@ def over(dst, rgba, alpha=1.0):
     return dst
 
 
-def compose(layers, back, visible=BODY_LAYERS, skin_opacity=1.0, fade=True):
+def compose(layers, back, visible=DEFAULT_LAYERS, skin_opacity=1.0, fade=True):
     """схема без органов: фон back (HxWx3) + видимые слои тела. layers - из build_layers (float 0..1)
     или те же массивы в uint8 (тогда делятся на 255). fade=False - без растворения ног у нижнего края."""
     def f(a):

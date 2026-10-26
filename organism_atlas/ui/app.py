@@ -6,6 +6,7 @@
 import math
 import queue
 import threading
+import time
 import tkinter as tk
 import traceback
 
@@ -13,7 +14,7 @@ from PIL import Image, ImageTk
 
 from .. import achievements, i18n, progress, settings, theme, tours
 from ..atlas import Atlas
-from ..body.base import BODY_LAYERS
+from ..body.base import BODY_LAYERS, DEFAULT_LAYERS
 from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
@@ -29,6 +30,10 @@ from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .widgets import (ORGANS_ALL, ORGANS_LIST, SEARCH, by_color, fill_card, fill_layers, fill_question, fill_setup,
                       fill_start, fill_tour, filter_organs, flat_button, frame, label, rounded_card, set_button_bg,
                       show_all_button)
+
+
+ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
+ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
 
 
 class App:
@@ -52,6 +57,8 @@ class App:
         self.cfg = {"level": settings.get(saved, "quiz_level"), "timer": settings.get(saved, "quiz_timer"),
                     "length": settings.get(saved, "quiz_length"), "topic": None, "set": "all"}
         self.body = settings.get(saved, "body")   # схема тела: female или male (органы малого таза)
+        self.animation = settings.get(saved, "animation")      # on - сердце бьётся, лёгкие дышат
+        self.anim_job = self.anim_photo = None
         self.qset = "all"                      # набор вопросов текущей игры (для истории)
         self.timer_job = None
         self.atlas, self.cur = None, None
@@ -65,7 +72,7 @@ class App:
         self.built = queue.Queue()
         self.building = False                  # в фоне рисуется схема (при запуске или под новый размер окна)
         self.resize_job = None
-        self.layers = set(BODY_LAYERS)         # видимые слои тела
+        self.layers = set(DEFAULT_LAYERS)      # видимые слои тела (мышцы включают в панели)
         self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
         self.query = ""                        # строка поиска органа в панели слоёв
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
@@ -125,6 +132,7 @@ class App:
         self.set_card(self.empty_card)
         self.retranslate()
         self.fix_window_size()           # схема начнёт рисоваться, когда окно покажется (on_resize)
+        self.anim_job = root.after(ANIM_MS, self.animate)
 
     def fix_window_size(self):
         """задать размер окна один раз: иначе Tk растягивает его под каждую новую карточку, а за окном
@@ -171,6 +179,12 @@ class App:
         self.quality = name
         set_quality(name)
         settings.save(quality=name)
+
+    def set_animation(self, value):
+        self.animation = value
+        settings.save(animation=value)
+        if value != "on" and self.atlas is not None:
+            self.c.itemconfigure(self.anim_item, state="hidden")
 
     def organs(self):
         """органы на схеме: без органов другого пола"""
@@ -271,6 +285,7 @@ class App:
         if first:
             self.c.delete("loading")
             self.base_img = self.c.create_image(0, 0, anchor="nw")
+            self.anim_item = self.c.create_image(0, 0, anchor="nw", state="hidden")     # сердце и лёгкие
             self.tg = self.c.create_image(0, 0, anchor="nw", state="hidden")      # орган-вопрос
             self.hov = self.c.create_image(0, 0, anchor="nw", state="hidden")
             self.fl = self.c.create_image(0, 0, anchor="nw", state="hidden")
@@ -298,6 +313,32 @@ class App:
         self.base_photo = ImageTk.PhotoImage(im)
         self.c.itemconfigure(self.base_img, image=self.base_photo)
 
+    # --- анимация: сердце бьётся, лёгкие дышат
+    def animate(self):
+        """раз в ANIM_MS: кусок схемы с сердцем и лёгкими в текущий момент поверх неподвижной схемы.
+        Не рисуем, пока анимация выключена, схема перерисовывается под новый размер, поверх открыта
+        панель (настройки, итоги, 3D) или окно свёрнуто - тогда проверяем реже"""
+        self.anim_job = None
+        if not self.root.winfo_exists():
+            return
+        live = (self.animation == "on" and self.ready() and overlay.top(self.root) is None
+                and self.root.state() != "iconic")
+        frame = self.atlas.anim_frame(time.monotonic()) if live else None
+        if frame is None:
+            if self.atlas is not None:
+                self.c.itemconfigure(self.anim_item, state="hidden")
+            self.anim_job = self.root.after(ANIM_IDLE_MS, self.animate)
+            return
+        im, (x, y) = frame
+        if self.anim_photo is not None and (self.anim_photo.width(), self.anim_photo.height()) == im.size:
+            self.anim_photo.paste(im)                   # в готовую картинку: быстрее, чем новая
+        else:
+            self.anim_photo = ImageTk.PhotoImage(im)
+            self.c.itemconfigure(self.anim_item, image=self.anim_photo)
+        self.c.coords(self.anim_item, x, y)
+        self.c.itemconfigure(self.anim_item, state="normal")
+        self.anim_job = self.root.after(ANIM_MS, self.animate)
+
     # --- размер окна
     def set_zoom(self, Z):
         """новый масштаб схемы: холст под него сразу, сама схема - когда дорисуется"""
@@ -322,7 +363,7 @@ class App:
         if self.atlas is None:                          # первая схема ещё рисуется
             return
         self.on_leave(None)
-        for item in (self.tg, self.fl):
+        for item in (self.tg, self.fl, self.anim_item):  # кусок анимации - в прежнем масштабе
             self.c.itemconfigure(item, state="hidden")
         self.c.delete("rescale")
         if self.ready():                                # вернули прежний размер, пока рисовалась другая
@@ -339,7 +380,7 @@ class App:
         return (self.hidden if self.mode == "study" else set()) | other_sex(self.body)
 
     def something_hidden(self):
-        return bool(self.hidden or len(self.layers) < len(BODY_LAYERS))
+        return bool(self.hidden or not set(DEFAULT_LAYERS) <= self.layers)
 
     def organs_all_text(self):
         """подпись кнопки в заголовке органов: всё скрыто - вернуть, иначе - скрыть все"""
@@ -436,7 +477,7 @@ class App:
         self.apply_view()
 
     def show_all(self):
-        self.layers, self.hidden = set(BODY_LAYERS), set()
+        self.layers, self.hidden = self.layers | set(DEFAULT_LAYERS), set()    # мышцы - как выбрано
         self.apply_view()
 
     def apply_view(self):

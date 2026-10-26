@@ -33,7 +33,7 @@ def _cache_dir():
 
 
 CACHE_DIR = _cache_dir()
-FORMAT = 3                                        # поднять, если поменяется устройство файла
+FORMAT = 4                                        # поднять, если поменяется устройство файла
 KEEP = 6                                          # сколько масштабов хранить (окно меняет размер)
 
 # что влияет на картинку и маски; ui, викторина, тексты и 3D сюда не входят
@@ -41,12 +41,16 @@ _SOURCES = ["atlas.py", "geometry.py", "colors.py", "config.py", "body", "organs
 
 
 def version():
+    """хэш исходников рисунка. В собранной программе (tools/build_exe.py) эти исходники лежат рядом
+    как данные - версия та же, что при запуске из исходников. Если файла нет, хэшируется только его имя:
+    кэш работает, просто не следит за правками этого файла"""
     h = hashlib.sha256(("%d|%s|%s" % (FORMAT, np.__version__, PIL.__version__)).encode())
     for name in _SOURCES:
         p = PKG / name
         for f in sorted(p.rglob("*.py")) if p.is_dir() else [p]:
             h.update(f.relative_to(PKG).as_posix().encode())
-            h.update(f.read_bytes())
+            if f.is_file():
+                h.update(f.read_bytes())
     return h.hexdigest()[:16]
 
 
@@ -59,7 +63,7 @@ def _path(Z, cache_dir, ver):
     return Path(cache_dir) / ("atlas-%s-z%.4f.npz" % (ver, zoom_key(Z)))
 
 
-BODY = ("glow", "skin", "skin_hi", "skeleton", "veins", "arteries", "fade")    # слои тела (uint8)
+BODY = ("glow", "skin", "skin_hi", "muscles", "skeleton", "veins", "arteries", "fade")    # слои тела (uint8)
 
 
 def load(Z, ORDER, cache_dir=CACHE_DIR):

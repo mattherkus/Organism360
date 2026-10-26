@@ -7,3 +7,5 @@ __pycache__/
 .idea/workspace.xml
 .idea/claudeCodeTabState.xml
 .idea/shelf/
+build/
+dist/
