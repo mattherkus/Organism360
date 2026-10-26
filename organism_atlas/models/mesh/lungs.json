@@ -1,6 +1,6 @@
 {
-  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в lungs.npz (пересобрать: tools/bp3d_import.py).",
-  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "_comment": "Анатомическая модель из Human Reference Atlas. Цвет, текстуру и блеск групп можно менять; геометрия в lungs.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Human Reference Atlas 3D Reference Organs (HuBMAP), based on the Visible Human Project, licensed under CC Attribution 4.0 International",
   "mesh": "lungs.npz",
   "groups": [
     {
@@ -8,9 +8,21 @@
       "color": "#dfe2e0",
       "texture": "smooth",
       "gloss": 0.4,
-      "triangles": 1302,
+      "triangles": 22298,
       "source_parts": [
-        "Trachea"
+        "VH_M_carina",
+        "VH_M_cartilage_of_the_lobar_bronchus_L",
+        "VH_M_cartilage_of_the_lobar_bronchus_R",
+        "VH_M_left_anterior_bronchus",
+        "VH_M_left_apical_bronchus",
+        "VH_M_left_inferior_lobar_bronchus",
+        "VH_M_right_anterior_bronchus",
+        "VH_M_right_intermediate_bronchus",
+        "VH_M_right_medial_basal_bronchus",
+        "VH_M_right_middle_lobar_bronchus",
+        "VH_M_right_superior_lobar_bronchus",
+        "VH_M_trachea",
+        "VH_M_tracheal_cartilage"
       ]
     },
     {
@@ -18,10 +30,9 @@
       "color": "#e08a9a",
       "texture": "lung",
       "gloss": 0.22,
-      "triangles": 39805,
+      "triangles": 14709,
       "source_parts": [
-        "Left lung surface (reconstructed)",
-        "Right lung surface (reconstructed)"
+        "lung (welded)"
       ]
     }
   ]

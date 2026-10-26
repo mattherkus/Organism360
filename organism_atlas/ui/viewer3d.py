@@ -1,4 +1,8 @@
-"""Окно 3D-просмотра органа (рендер в фоновом потоке)."""
+"""Панель 3D-просмотра органа. Рендер - в фоновых потоках, окно никогда не ждёт кадра.
+
+При вращении черновики считают два потока по очереди (numpy на больших операциях отпускает GIL,
+поэтому кадры идут внахлёст), каждый берёт самый свежий вид. Разрешение черновика подстраивается так,
+чтобы кадр считался за DRAFT_TIME; после отпускания мыши третий поток считает чистый кадр."""
 
 import queue
 import threading
@@ -11,6 +15,7 @@ from PIL import Image, ImageTk
 from .. import i18n
 from ..config import FONT
 from ..i18n import t
+from ..models import mesh_credit
 from ..organs import ORGANS
 from ..render3d.scene import Scene3D
 from ..theme import C, style
@@ -21,13 +26,17 @@ from .widgets import fill_card, frame, label, rounded_card
 _viewer = None                  # единственное окно просмотра: новый орган открывается в нём же
 
 # качество рендера (окно настроек): суперсэмплинг чистого кадра для обычного и большого (HiDPI) окна
-# и черновик при вращении в половинном разрешении (None - только на больших окнах)
+# и во сколько раз черновик при вращении может быть меньше кадра (наименьший делитель)
 QUALITY = {
-    "low": {"ss": 1, "ss_big": 1, "half_draft": True},
-    "medium": {"ss": 3, "ss_big": 2, "half_draft": None},
-    "high": {"ss": 4, "ss_big": 3, "half_draft": None},
+    "low": {"ss": 1, "ss_big": 1, "draft_min": 2},
+    "medium": {"ss": 3, "ss_big": 2, "draft_min": 1},
+    "high": {"ss": 4, "ss_big": 3, "draft_min": 1},
 }
 _quality = "medium"
+
+DRAFT_TIME = 0.06               # секунд на черновик в одном потоке (двумя потоками - около 25 кадров в секунду)
+DRAFT_MAX = 4.0                 # черновик не меньше четверти кадра по стороне, иначе слишком мутно
+DRAFT_THREADS = 2
 
 
 class Viewer3D:
@@ -38,18 +47,23 @@ class Viewer3D:
         self.key = None
         self.card_w = px(330)                    # ширина карточки органа справа от кадра
         self.w, self.h = self.view_size(root)
-        self.gen, self.last, self.job = 0, 0.0, None
+        self.gen, self.shown, self.job = 0, -1, None    # номер вида и номер показанного кадра
         self.lx = self.ly = 0
         self.q = queue.Queue()
-        self.cv = threading.Condition()
-        self.pending, self.alive = None, True
-        self.photo = None
+        self.cv = threading.Condition()          # слоты запросов чистого кадра и черновика
+        self.pending = self.draft_req = None
+        self.alive = True
+        self.k = max(1.0, (self.w * self.h / 100000) ** 0.5)     # во сколько раз черновик меньше кадра
         self.error = None                # последняя ошибка рендера (показывается в подписи)
         win = self.win = Panel(root)
         win.bind("<Destroy>", self.close)
         threading.Thread(target=self.work, daemon=True).start()
-        # кадр слева, карточка органа справа: так панель ниже и помещается в главное окно
-        self.view = label(win.body, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur")
+        for _ in range(DRAFT_THREADS):
+            threading.Thread(target=self.draft_work, daemon=True).start()
+        # кадр слева, карточка органа справа: так панель ниже и помещается в главное окно;
+        # до первого кадра - пустая картинка нужного размера, чтобы панель не прыгала
+        self.photo = ImageTk.PhotoImage(Image.new("RGB", (self.w, self.h), C["view_bg"]), master=root)
+        self.view = label(win.body, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur", image=self.photo)
         self.view.pack(side="left", anchor="n", padx=(px(16), px(12)), pady=(px(10), px(16)))
         side = frame(win.body, "bg")
         side.pack(side="left", anchor="n", fill="y", padx=(0, px(16)), pady=(px(10), px(16)))
@@ -81,8 +95,10 @@ class Viewer3D:
         """показать в окне другой орган: новая сцена, вид по умолчанию"""
         parts = ORGANS[key]["parts"]()
         self.key = key
-        self.anatomical = any(p["k"] == "m" for p in parts)    # сетка BodyParts3D: нужна подпись авторов
+        # анатомическая сетка: условие лицензии - подпись авторов её источника
+        self.credit = mesh_credit(key) if any(p["k"] == "m" for p in parts) else None
         self.scene = Scene3D(parts)
+        self.shown = self.gen                            # недосчитанные черновики прежнего органа не показывать
         self.retranslate()
         self.reset()                                     # gen растёт: кадры прежнего органа отбросятся
 
@@ -92,7 +108,8 @@ class Viewer3D:
     def retranslate(self):
         self.win.title(t("viewer_title", name=i18n.name(self.key)))
         fill_card(self.card, self.key, compact=True, wrap=self.card_w - px(40))
-        credit = "\n" + t("viewer_credit") if self.anatomical else ""   # условие лицензии CC BY 4.0
+        credit = "\n" + t({"bp3d": "viewer_credit"}.get(self.credit, "viewer_credit_%s" % self.credit)) \
+            if self.credit else ""
         if self.error is not None:
             style(self.hint, fg="bad").config(text=t("viewer_error", error=self.error) + credit)
         else:
@@ -105,8 +122,11 @@ class Viewer3D:
         return C["view_bg"], C["view_hi"]
 
     def show(self, im):
-        self.photo = ImageTk.PhotoImage(im)
-        self.view.configure(image=self.photo)
+        if (self.photo.width(), self.photo.height()) == im.size:
+            self.photo.paste(im)                     # в готовую картинку - втрое быстрее, чем новая
+        else:
+            self.photo = ImageTk.PhotoImage(im, master=self.view)
+            self.view.configure(image=self.photo)
         if self.error:
             self.error = None
             self.retranslate()
@@ -117,19 +137,41 @@ class Viewer3D:
         self.retranslate()
 
     def draft(self):
-        """быстрый кадр при вращении; на больших (HiDPI) окнах - в половинном разрешении:
-        на ходу разницы не видно, а считается вчетверо меньше пикселей"""
-        half = QUALITY[_quality]["half_draft"]
-        k = 2 if (self.w * self.h > 400000 if half is None else half) else 1
-        try:
-            im = self.scene.render(self.w // k, self.h // k, self.az, self.el, self.zoom, ss=1, step=2,
-                                   bg=self.colors())
-        except Exception as ex:
-            if self.error is None:                       # при вращении не печатаем одно и то же на каждый кадр
-                traceback.print_exc()
-            self.show_error(ex)
-            return
-        self.show(im.resize((self.w, self.h), Image.BILINEAR) if k > 1 else im)
+        """быстрый кадр текущего вида: запрос потокам черновиков (более старый неначатый запрос заменяется)"""
+        with self.cv:
+            self.draft_req = (self.gen, self.scene, self.w, self.h, self.az, self.el, self.zoom, self.colors(),
+                              QUALITY[_quality]["draft_min"])
+            self.cv.notify_all()
+
+    def draft_work(self):
+        """поток черновиков: кадр в уменьшенном разрешении (делитель self.k подстраивается под DRAFT_TIME),
+        растянутый до размера кадра"""
+        printed = False
+        while True:
+            with self.cv:
+                while self.draft_req is None and self.alive:
+                    self.cv.wait()
+                if not self.alive:
+                    return
+                gen, scene, w, h, az, el, zoom, bg, k_min = self.draft_req
+                self.draft_req = None
+            k = min(max(self.k, k_min), DRAFT_MAX)
+            dw, dh = max(1, round(w / k)), max(1, round(h / k))
+            t0 = time.perf_counter()
+            try:
+                im = scene.render(dw, dh, az, el, zoom, ss=1, step=2, bg=bg)
+                if (dw, dh) != (w, h):
+                    im = im.resize((w, h), Image.BILINEAR)
+            except Exception as ex:
+                if not printed:                          # при вращении не печатаем одно и то же на каждый кадр
+                    traceback.print_exc()
+                    printed = True
+                self.q.put((gen, ex, True))
+                continue
+            # время растёт с числом пикселей, то есть как квадрат стороны: поправка - корень, сглаженная
+            dt = time.perf_counter() - t0
+            self.k = min(max(0.7 * k + 0.3 * k * (dt / DRAFT_TIME) ** 0.5, 1.0), DRAFT_MAX)
+            self.q.put((gen, im, True))
 
     def refine(self):
         """чистый кадр (суперсэмплинг) считаем в фоновом потоке, чтобы окно не подвисало.
@@ -156,13 +198,13 @@ class Viewer3D:
                 continue
             try:
                 if ss > 1:                               # сначала быстрый чёткий кадр, потом сглаженный
-                    self.q.put((gen, scene.render(w, h, az, el, zoom, ss=1, bg=bg)))
+                    self.q.put((gen, scene.render(w, h, az, el, zoom, ss=1, bg=bg), False))
                     if gen != self.gen or self.pending is not None:
                         continue
-                self.q.put((gen, scene.render(w, h, az, el, zoom, ss=ss, bg=bg)))
+                self.q.put((gen, scene.render(w, h, az, el, zoom, ss=ss, bg=bg), False))
             except Exception as ex:                      # поток не должен умереть: покажем ошибку в окне
                 traceback.print_exc()
-                self.q.put((gen, ex))
+                self.q.put((gen, ex, False))
 
     def close(self, e):
         if e.widget is not self.win:
@@ -172,25 +214,28 @@ class Viewer3D:
             _viewer = None
         with self.cv:
             self.alive = False
-            self.pending = None
-            self.cv.notify()
+            self.pending = self.draft_req = None
+            self.cv.notify_all()
 
     def poll(self):
         try:
             if not self.win.winfo_exists():
                 return
+            frame = None
             try:
                 while True:
-                    gen, im = self.q.get_nowait()
-                    if gen != self.gen:
-                        continue
-                    if isinstance(im, Exception):
-                        self.show_error(im)
-                    else:
-                        self.show(im)
+                    gen, im, draft = self.q.get_nowait()
+                    # черновик - если он новее показанного (вид при вращении всё равно уже чуть ушёл),
+                    # чистый кадр - только для текущего вида
+                    if gen > self.shown if draft else gen == self.gen:
+                        frame, self.shown = im, gen
             except queue.Empty:
                 pass
-            self.win.after(30, self.poll)
+            if isinstance(frame, Exception):
+                self.show_error(frame)
+            elif frame is not None:
+                self.show(frame)                         # из нескольких готовых показываем только последний
+            self.win.after(15, self.poll)
         except tk.TclError:
             pass
 
@@ -203,10 +248,7 @@ class Viewer3D:
         self.el = max(-89.0, min(89.0, self.el + (e.y - self.ly) * 0.4))
         self.lx, self.ly = e.x, e.y
         self.gen += 1                                    # отложенный чистый кадр устарел
-        now = time.monotonic()
-        if now - self.last > 0.03:
-            self.last = now
-            self.draft()
+        self.draft()
 
     def zoom_by(self, f):
         self.zoom = max(0.5, min(3.0, self.zoom * f))

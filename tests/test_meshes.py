@@ -7,14 +7,22 @@ from unittest import mock
 import numpy as np
 
 from organism_atlas import models
-from organism_atlas.models import has_mesh, load_mesh, load_parts, read_mesh_model
+from organism_atlas.models import has_mesh, load_mesh, load_parts, mesh_credit, read_mesh_model
 from organism_atlas.organs import ORGANS
 from organism_atlas.render3d import look
 from organism_atlas.render3d.primitives import E
 from organism_atlas.render3d.scene import Scene3D
 
-ANATOMICAL = {"lungs", "liver", "gallbladder", "stomach", "intestines", "kidneys", "heart", "brain",
-              "pancreas", "bladder"}
+# источник анатомической модели каждого органа (см. models/mesh/ATTRIBUTION.md)
+SOURCES = {
+    "bp3d": {"liver", "gallbladder", "stomach", "intestines", "kidneys", "heart", "brain", "pancreas", "bladder",
+             "adrenals", "esophagus", "rectum", "appendix", "trachea"},
+    "hra": {"lungs", "spleen", "prostate", "uterus", "ovaries"},
+    "spl": {"thyroid"},
+}
+ANATOMICAL = set().union(*SOURCES.values())
+ATTRIBUTION = {"bp3d": ("BodyParts3D", "CC Attribution 4.0"), "hra": ("Human Reference Atlas", "CC Attribution 4.0"),
+               "spl": ("Head and Neck", "3D Slicer License")}
 TEXTURES = {"smooth", "lung", "gyri", "folia", "liver", "muscle", "gland", "bowel"}
 
 
@@ -37,8 +45,10 @@ class MeshFilesTests(unittest.TestCase):
     def test_meta_and_geometry(self):
         for key in ANATOMICAL:
             meta = read_mesh_model(key)
-            self.assertIn("BodyParts3D", meta["attribution"], key)
-            self.assertIn("CC Attribution 4.0", meta["attribution"], key)
+            src = next(s for s, keys in SOURCES.items() if key in keys)
+            self.assertEqual(mesh_credit(key), src, key)
+            for text in ATTRIBUTION[src]:
+                self.assertIn(text, meta["attribution"], key)
             parts = load_mesh(key)
             self.assertEqual(len(parts), len(meta["groups"]), key)
             total = 0

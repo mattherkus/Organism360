@@ -1,0 +1,40 @@
+{
+  "_comment": "Анатомическая модель из Human Reference Atlas. Цвет, текстуру и блеск групп можно менять; геометрия в prostate.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Human Reference Atlas 3D Reference Organs (HuBMAP), based on the Visible Human Project, licensed under CC Attribution 4.0 International",
+  "mesh": "prostate.npz",
+  "groups": [
+    {
+      "group": "prostate",
+      "color": "#bb796b",
+      "texture": "gland",
+      "gloss": 0.45,
+      "triangles": 30630,
+      "source_parts": [
+        "VH_M_apex_of_prostate",
+        "VH_M_base_of_prostate",
+        "VH_M_central_zone_of_prostate_L",
+        "VH_M_central_zone_of_prostate_R",
+        "VH_M_ejaculatory_duct",
+        "VH_M_peripheral_zone_of_prostate_L",
+        "VH_M_peripheral_zone_of_prostate_R",
+        "VH_M_seminal_colliculus",
+        "VH_M_seminal_vesicle",
+        "VH_M_transition_zone__of_prostate_L",
+        "VH_M_transition_zone_of_prostate_R",
+        "VH_M_vas_deferens_L",
+        "VH_M_vas_deferens_R"
+      ]
+    },
+    {
+      "group": "stroma",
+      "color": "#c9a27e",
+      "texture": "muscle",
+      "gloss": 0.45,
+      "triangles": 2378,
+      "source_parts": [
+        "VH_M_anterior_fibromuscular_stroma_L",
+        "VH_M_anterior_fibromuscular_stroma_R"
+      ]
+    }
+  ]
+}

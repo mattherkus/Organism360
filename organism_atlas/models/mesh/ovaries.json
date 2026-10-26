@@ -1,0 +1,48 @@
+{
+  "_comment": "Анатомическая модель из Human Reference Atlas. Цвет, текстуру и блеск групп можно менять; геометрия в ovaries.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Human Reference Atlas 3D Reference Organs (HuBMAP), based on the Visible Human Project, licensed under CC Attribution 4.0 International",
+  "mesh": "ovaries.npz",
+  "groups": [
+    {
+      "group": "cervix",
+      "color": "#a9858e",
+      "texture": "smooth",
+      "gloss": 0.3,
+      "triangles": 3598,
+      "source_parts": [
+        "cervix (welded)"
+      ]
+    },
+    {
+      "group": "ovary",
+      "color": "#f0b49a",
+      "texture": "gland",
+      "gloss": 0.5,
+      "triangles": 834,
+      "source_parts": [
+        "VH_F_left_ovary",
+        "VH_F_right_ovary"
+      ]
+    },
+    {
+      "group": "tube",
+      "color": "#b98f99",
+      "texture": "smooth",
+      "gloss": 0.3,
+      "triangles": 11143,
+      "source_parts": [
+        "tube (welded)"
+      ]
+    },
+    {
+      "group": "uterus",
+      "color": "#a9858e",
+      "texture": "smooth",
+      "gloss": 0.3,
+      "triangles": 27590,
+      "source_parts": [
+        "uterus (welded)"
+      ]
+    }
+  ]
+}

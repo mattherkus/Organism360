@@ -9,7 +9,7 @@ from ..colors import hex2rgb
 from ..render2d.noise import gblur
 from . import look, shading
 from .mathutils import cr_nd, unit
-from .meshraster import raster_mesh, vertex_normals
+from .meshraster import face_normals, raster_mesh, vertex_normals
 from .surface import surface
 
 
@@ -30,7 +30,9 @@ class Scene3D:
                 V = np.asarray(p["v"], np.float64)
                 F = np.asarray(p["f"], np.int64)
                 VN = np.asarray(p["vn"], np.float64) if p.get("vn") is not None else vertex_normals(V, F)
-                self.meshes.append((V, F, VN, mid, p.get("cull", True)))
+                cull = p.get("cull", True)
+                FN = face_normals(V, F) if cull else None        # для отсечения задних граней: один раз
+                self.meshes.append((V, F, VN, mid, cull, FN))
             else:
                 pts = cr_nd(p["path"], 16)
                 seg = np.linalg.norm(np.diff(pts, axis=0), axis=1)
@@ -108,8 +110,9 @@ class Scene3D:
             y1 = min(int(cy - vc * scale + rb * scale) + 2, H_)
             return x0, x1, y0, y1
 
-        for V, F, VN, mid, cull in self.meshes:
-            raster_mesh(V, F, VN, mid, (z, nrm, mat, sid), cam, right, up, scale, cx, cy, ctr, cull)
+        for V, F, VN, mid, cull, FN in self.meshes:
+            raster_mesh(V, F, VN, mid, (z, nrm, mat, sid), cam, right, up, scale, cx, cy, ctr, cull, FN,
+                        exact=step == 1)                # черновик (step > 1) - быстрым способом
 
         for c, r, mid in self.ell:
             rel = c - ctr

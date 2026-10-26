@@ -52,6 +52,8 @@
     "viewer_hint": "Drag to rotate. Scroll to zoom, double-click to reset the view.",
     "viewer_error": "Could not render the model: {error}",
     "viewer_credit": "Anatomical model: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
+    "viewer_credit_hra": "Anatomical model: Human Reference Atlas (HuBMAP), based on the Visible Human Project, CC BY 4.0",
+    "viewer_credit_spl": "Anatomical model: SPL Head and Neck Atlas (Brigham and Women's Hospital), Open Anatomy, 3D Slicer License",
     "settings_button": "Settings",
     "settings_title": "Settings",
     "settings_theme": "Theme",

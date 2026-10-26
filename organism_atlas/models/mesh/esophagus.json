@@ -1,0 +1,27 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в esophagus.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "esophagus.npz",
+  "groups": [
+    {
+      "group": "esophagus",
+      "color": "#cc7a70",
+      "texture": "muscle",
+      "gloss": 0.5,
+      "triangles": 2224,
+      "source_parts": [
+        "Esophagus"
+      ]
+    },
+    {
+      "group": "stomach_dim",
+      "color": "#c79a8c",
+      "texture": "smooth",
+      "gloss": 0.35,
+      "triangles": 7104,
+      "source_parts": [
+        "Stomach"
+      ]
+    }
+  ]
+}

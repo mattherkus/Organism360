@@ -5,7 +5,7 @@ https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
 Нужны файлы partof_element_parts.txt и partof_BP3D_4.0_obj_99.zip (PART-OF tree, 99% reduction).
 
 Запуск (из корня проекта):
-    python tools/bp3d_import.py <папка со скачанными файлами> [орган ...]
+    python tools/bp3d_import.py <папка со скачанными файлами> [орган ...] [--out <папка>]
 
 Что делает с каждым органом:
   1. собирает его части (OBJ) по списку FMA-понятий из ORGANS;
@@ -54,7 +54,15 @@ ORGANS = {
     "kidneys": ["FMA7204", "FMA7205", "FMA14752", "FMA14753", "FMA15571", "FMA15572"],  # + почечные артерии, мочеточники
     "pancreas": ["FMA7198", "FMA7206", "FMA14773"],          # + двенадцатиперстная кишка, селезёночная артерия
     "bladder": ["FMA15900"],
+    "adrenals": ["FMA15629", "FMA15630", "FMA7204", "FMA7205"],     # надпочечники на верхушках почек
+    "esophagus": ["FMA7131", "FMA7148"],                             # пищевод и (для ориентира) желудок
+    "rectum": ["FMA14544"],
+    "appendix": ["FMA14542", "FMA14541"],                            # аппендикс и слепая кишка
+    "trachea": ["FMA7394", "FMA7395", "FMA7396"],                    # трахея и главные бронхи
 }
+# органы, модели которых теперь берутся из другого источника (tools/atlas_import.py): по умолчанию
+# не собираются, только если назвать их явно
+REPLACED = {"lungs"}
 FACE_BUDGET = 45000            # треугольников на орган после упрощения
 # сосуды сердца утоплены в стенку; сегменты печени разделены щелями - раздуваем, чтобы перекрылись
 INFLATE = {"heart": {"artery": 1.0, "vein": 1.0}, "liver": {"parenchyma": 1.2}}
@@ -83,6 +91,11 @@ RULES = {
     "kidneys": [(r"artery", "artery"), (r"ureter", "ureter"), (r"", "kidney")],
     "pancreas": [(r"duct", None), (r"duoden", "duodenum"), (r"artery", "artery"), (r"", "gland")],          # None - не брать (проток внутри железы)
     "bladder": [(r"", "wall")],
+    "adrenals": [(r"adrenal|suprarenal", "adrenal"), (r"kidney|renal", "kidney_dim")],
+    "esophagus": [(r"esophag", "esophagus"), (r"", "stomach_dim")],
+    "rectum": [(r"", "rectum")],
+    "appendix": [(r"appendix", "appendix"), (r"", "cecum")],
+    "trachea": [(r"", "airway")],
 }
 # вид групп: цвет (sRGB), текстура и блеск - те же понятия, что в procedural-моделях
 LOOKS = {
@@ -95,6 +108,9 @@ LOOKS = {
     "taenia": ("#c98a5c", "bowel", 0.4), "colon": ("#d27a50", "bowel", 0.4), "small": ("#ee9f8a", "bowel", 0.5),
     "kidney": ("#a2384a", "smooth", 0.5), "ureter": ("#e6d28a", "smooth", 0.45),
     "duodenum": ("#ee9f8a", "bowel", 0.45), "gland": ("#ecb688", "gland", 0.4),
+    "adrenal": ("#dda03a", "gland", 0.45), "kidney_dim": ("#ad3b4d", "smooth", 0.45),
+    "esophagus": ("#cc7a70", "muscle", 0.5), "stomach_dim": ("#c79a8c", "smooth", 0.35), "rectum": ("#cf7a66", "bowel", 0.45),
+    "appendix": ("#e8a77f", "bowel", 0.45), "cecum": ("#dd9269", "bowel", 0.5),
 }
 
 
@@ -315,6 +331,17 @@ def build(organ, z, elements, names_by_fj):
             pts = np.concatenate([by_fj[f] for c in env["from"] for f in elements[c]
                                   if f in by_fj and id(by_fj[f]) in kept_v])
         parts.append((env["name"], *envelope(pts, env["cell"], env["sigma"], env["cover"])))
+    return finish(organ, parts, group_of, ATTRIBUTION, "BodyParts3D", "tools/bp3d_import.py", outliers)
+
+
+def finish(organ, parts, group_of, attribution, source, tool, outliers=(), looks=None, budget=FACE_BUDGET,
+           inflate=None):
+    """общая часть импорта для любого источника: parts - [(название части, V, F)] в миллиметрах
+    в осях проекта, group_of(название) - группа материала (None - не брать).
+    Упрощение под бюджет треугольников, сглаживание, отбор видимых снаружи частей, масштаб
+    как у процедурной модели, запись models/mesh/<орган>.npz и .json"""
+    looks = {**LOOKS, **(looks or {})}
+    parts = [p for p in parts if group_of(p[0]) is not None]
     allV = np.concatenate([V for _, V, _ in parts])
     ext = float(np.linalg.norm(allV.max(0) - allV.min(0)))
     total = sum(len(F) for *_, F in parts)
@@ -328,16 +355,16 @@ def build(organ, z, elements, names_by_fj):
         simp = [(n, *cluster(V, F, cell)) for n, V, F in parts]
         simp = [(n, V, F) for n, V, F in simp if len(F) >= 4]
         nf = sum(len(F) for *_, F in simp)
-        if nf <= FACE_BUDGET * 1.6:            # невидимые части ещё отсеются
+        if nf <= budget * 1.6:                 # невидимые части ещё отсеются
             break
         cell *= 1.18
     for i, (n, V, F) in enumerate(simp):           # грубые сетки: подразделить, потом сгладятся
         k = 0
-        while n in coarse and edge(V, F) > COARSE_EDGE * ext and len(F) * 4 <= FACE_BUDGET and k < 3:
+        while n in coarse and edge(V, F) > COARSE_EDGE * ext and len(F) * 4 <= budget and k < 3:
             V, F = subdivide(V, F)
             k += 1
         simp[i] = (n, taubin(V, F, SMOOTH_ITERS * (1 + 2 * k)), F)
-    infl = INFLATE.get(organ, {})
+    infl = INFLATE.get(organ, {}) if inflate is None else inflate
     simp = [(n, V + infl[group_of(n)] * vertex_normals(V, F), F) if group_of(n) in infl else (n, V, F)
             for n, V, F in simp]
     vis = visible_parts(simp)
@@ -367,16 +394,16 @@ def build(organ, z, elements, names_by_fj):
         arrays["v%d" % gi] = V.astype(np.float32)
         arrays["f%d" % gi] = F.astype(np.int32)
         arrays["n%d" % gi] = VN.astype(np.float16)
-        color, tex, gloss = LOOKS[g] or (wall, "muscle", 0.45)
+        color, tex, gloss = looks[g] or (wall, "muscle", 0.45)
         meta.append({"group": g, "color": color, "texture": tex, "gloss": gloss,
                      "triangles": int(len(F)), "source_parts": sorted({n for n, *_ in items})})
     OUT.mkdir(parents=True, exist_ok=True)
     buf = io.BytesIO()
     np.savez_compressed(buf, **arrays)
     (OUT / (organ + ".npz")).write_bytes(buf.getvalue())
-    model = {"_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; "
-                         "геометрия в %s.npz (пересобрать: tools/bp3d_import.py)." % organ,
-             "attribution": ATTRIBUTION, "mesh": organ + ".npz", "groups": meta}
+    model = {"_comment": "Анатомическая модель из %s. Цвет, текстуру и блеск групп можно менять; "
+                         "геометрия в %s.npz (пересобрать: %s)." % (source, organ, tool),
+             "attribution": attribution, "mesh": organ + ".npz", "groups": meta}
     (OUT / (organ + ".json")).write_text(json.dumps(model, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     kept_faces = sum(m["triangles"] for m in meta)
     print("%-10s %6d -> %5d triangles, %3d of %3d parts kept, %4.0f KB; groups: %s" % (
@@ -386,8 +413,14 @@ def build(organ, z, elements, names_by_fj):
 
 
 def main():
-    src = Path(sys.argv[1])
-    only = [a for a in sys.argv[2:] if not a.startswith("-")] or list(ORGANS)
+    global OUT
+    args = sys.argv[1:]
+    if "--out" in args:                              # собрать в другую папку (например, для сравнения)
+        i = args.index("--out")
+        OUT = Path(args[i + 1])
+        del args[i:i + 2]
+    src = Path(args[0])
+    only = [a for a in args[1:] if not a.startswith("-")] or [o for o in ORGANS if o not in REPLACED]
     elements = defaultdict(list)
     for line in (src / "partof_element_parts.txt").read_text(encoding="utf-8").splitlines()[1:]:
         cid, _, fj = line.split("\t")

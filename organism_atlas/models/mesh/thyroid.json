@@ -1,0 +1,27 @@
+{
+  "_comment": "Анатомическая модель из атласа головы и шеи Open Anatomy (SPL). Цвет, текстуру и блеск групп можно менять; геометрия в thyroid.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "CT-based Atlas of the Head and Neck, Surgical Planning Laboratory (Brigham and Women's Hospital), Open Anatomy Project; 3D Slicer License, Part B",
+  "mesh": "thyroid.npz",
+  "groups": [
+    {
+      "group": "cartilage",
+      "color": "#dfe6ea",
+      "texture": "smooth",
+      "gloss": 0.4,
+      "triangles": 3684,
+      "source_parts": [
+        "Model_120_cricoid_cartilage"
+      ]
+    },
+    {
+      "group": "thyroid",
+      "color": "#b84a46",
+      "texture": "gland",
+      "gloss": 0.45,
+      "triangles": 34084,
+      "source_parts": [
+        "Model_118_thyroid_gland"
+      ]
+    }
+  ]
+}
