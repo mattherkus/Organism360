@@ -350,8 +350,9 @@ python -m organism_atlas.questions
 создаются сами, в конце программу можно сразу запустить.
 
 - Собирать самому не обязательно: GitHub собирает установщик при каждом push
-  (`.github/workflows/setup.yml`, вкладка Actions → запуск → Artifacts). Тег `v<версия>`
-  (`git tag v1.0.0 && git push origin v1.0.0`) выкладывает его в Releases — эту ссылку и стоит давать пользователям.
+  (`.github/workflows/setup.yml`, вкладка Actions → запуск → Artifacts). В Releases —
+  эту ссылку и стоит давать пользователям — его выкладывает ручной запуск (Actions → «Установщик» →
+  Run workflow; тег `v<версия>` ставится сам) или тег (`git tag v1.0.0 && git push origin v1.0.0`).
 - Для сборки на своём компьютере нужен Inno Setup 6.3 или новее: `winget install JRSoftware.InnoSetup`
   или с https://jrsoftware.org/isdl.php. `ISCC.exe` ищется в PATH и в обычных папках установки;
   другой путь можно задать переменной `ISCC`.
