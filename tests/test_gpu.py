@@ -67,6 +67,22 @@ class GpuRenderTests(unittest.TestCase):
         self.assertLess(time.perf_counter() - t, 1.5)
         self.assertIsNone(g.gpu_error)
 
+    def test_many_sizes_and_scenes(self):
+        """кадры разных размеров (черновики при вращении) и смена органов: посредники и буферы ушедших
+        сцен освобождаются, а кадр по-прежнему на видеокарте"""
+        import gc
+        for key in ("heart", "brain", "kidneys"):
+            g = gpu.GpuScene(ORGANS[key]["parts"]())
+            for i in range(2 * gpu.GL.KEEP):
+                g.render(60 + 7 * i, 50 + 5 * i, -62 + 10 * i, 18, ss=1 + i % 2, step=1 + i % 2)
+                self.assertIsNone(g.gpu_error)
+            del g
+            gc.collect()
+        gl = gpu.context()
+        self.assertFalse([k for k in gl.pool if k[0] == (60, 50)])     # первый черновик давно освобождён
+        self.assertTrue(all(gl.frame - f <= gl.KEEP for f in gl.used.values()))
+        self.check(ORGANS["liver"]["parts"]())
+
     def test_other_thread_falls_back(self):
         """контекст привязан к своему потоку: из другого кадр считает Scene3D"""
         import threading

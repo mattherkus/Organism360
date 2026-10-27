@@ -17,6 +17,7 @@
 (из другого потока кадр считает Scene3D).
 """
 
+import atexit
 import math
 import os
 import sys
@@ -528,6 +529,8 @@ void main() {
 class GL:
     """контекст OpenGL, шейдеры и общие текстуры (тайлы); кадры рисует GpuScene"""
 
+    KEEP = 8                       # сколько кадров держать неиспользуемые текстуры-посредники
+
     def __init__(self):
         import moderngl
         self.mgl = moderngl
@@ -542,7 +545,10 @@ class GL:
         if ctx is None:
             raise RuntimeError("; ".join(errors))
         self.ctx = ctx
-        ctx.gc_mode = "auto"                        # буферы сцены освобождаются вместе с ней
+        # буферы ушедшей сцены освобождаются в потоке контекста (ctx.gc() перед кадром): сборщик мусора
+        # может сработать в любом потоке, а OpenGL можно звать только из своего
+        ctx.gc_mode = "context_gc"
+        atexit.register(setattr, ctx, "gc_mode", None)   # при выходе из Python - уже не освобождать
         self.thread = threading.get_ident()
         prog = ctx.program
         self.mesh = prog(vertex_shader=MESH_VS, fragment_shader=MESH_FS)
@@ -567,8 +573,18 @@ class GL:
             t = ctx.texture((a.shape[1], a.shape[0]), 1, a.tobytes(), dtype="f4")
             t.filter = (moderngl.NEAREST, moderngl.NEAREST)
             self.tiles[name] = t
-        self.pool = {}                             # {(w, h, каналы, тип): [(текстура, fbo)]} - между кадрами
-        self.sizes = []                            # размеры кадров в пуле (последние сверху)
+        self.pool = {}                             # {(размер, каналы, тип, глубина, сколько, tag): (текстуры, fbo)}
+        self.used = {}                             # {ключ пула: номер кадра, в котором он нужен был последний раз}
+        self.frame = 0
+
+    def collect(self):
+        """освободить буферы ушедших сцен. Как ctx.gc(), но пропускает уже освобождённые объекты
+        (пул посредников освобождает свои сам, а их обёртки потом тоже попадают в очередь)"""
+        objects = self.ctx.objects
+        while objects:
+            release = getattr(objects.pop(), "release", None)
+            if release is not None:
+                release()
 
     # --- текстуры-посредники
     def target(self, size, comps=4, dtype="f4", depth=False, n=1, tag=""):
@@ -584,23 +600,19 @@ class GL:
                 texs.append(t)
             db = self.ctx.depth_renderbuffer(size) if depth else None
             self.pool[key] = (texs, self.ctx.framebuffer(color_attachments=texs, depth_attachment=db))
-            if size not in self.sizes:
-                self.sizes.insert(0, size)
-            else:
-                self.sizes.remove(size)
-                self.sizes.insert(0, size)
-            self._trim()
+        self.used[key] = self.frame
         return self.pool[key]
 
-    def _trim(self):
-        """держать посредников не больше чем для 6 размеров кадра (вращение, зум, смена окна)"""
-        while len(self.sizes) > 24:
-            old = self.sizes.pop()
-            for key in [k for k in self.pool if k[0] == old]:
-                texs, fbo = self.pool.pop(key)
-                fbo.release()
-                for t in texs:
-                    t.release()
+    def trim(self):
+        """перед кадром: освободить посредников, которые не понадобились за последние KEEP кадров
+        (размеры черновиков при вращении, прежний размер окна)"""
+        self.frame += 1
+        for key in [k for k, f in self.used.items() if self.frame - f > self.KEEP]:
+            texs, fbo = self.pool.pop(key)
+            del self.used[key]
+            fbo.release()
+            for t in texs:
+                t.release()
 
     def gblur(self, src, size, s, tag):
         """размытие текстуры src (size = (w, h)) по Гауссу с сигмой s - как render2d.noise.gblur:
@@ -769,7 +781,9 @@ class GpuScene(Scene3D):
             why = "другой поток"
         if why is None:
             try:
-                with _lock:
+                with _lock, gl.ctx:                 # контекст - текущий (вдруг в потоке был другой)
+                    gl.collect()
+                    gl.trim()
                     out = self._render_gpu(gl, lk, w, h, az, el, zoom, ss, step, shadows, bg, frozenset(hidden))
                 self.gpu_error = None
                 return out if ids else out[0]
