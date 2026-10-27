@@ -12,8 +12,8 @@ from organism_atlas import atlas_cache
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def load_tool():
-    spec = importlib.util.spec_from_file_location("build_exe", ROOT / "tools" / "build_exe.py")
+def load_tool(name="build_exe"):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "tools" / (name + ".py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -50,6 +50,29 @@ class BuildExeTests(unittest.TestCase):
             self.assertEqual(len(atlas_cache.version()), 16)
         finally:
             atlas_cache.PKG = old
+
+
+class BuildSetupTests(unittest.TestCase):
+    """tools/build_setup.py и tools/setup.iss без Inno Setup"""
+
+    def test_script_matches_build(self):
+        raw = (ROOT / "tools" / "setup.iss").read_bytes()
+        self.assertTrue(raw.startswith(b"\xef\xbb\xbf"), "без BOM Inno Setup испортит русский текст")
+        text = raw.decode("utf-8-sig")
+        name = load_tool().NAME
+        self.assertIn('#define AppExe "%s.exe"' % name, text)
+        self.assertIn("OutputBaseFilename=%s-Setup-{#AppVersion}" % name, text)
+        self.assertIn(r"{localappdata}\organism_atlas\cache", text)       # там atlas_cache хранит кэш
+        self.assertIn(r"{userappdata}\organism_atlas", text)               # а settings.py - настройки
+
+    def test_iscc_command(self):
+        from organism_atlas import __version__
+        cmd = load_tool("build_setup").iscc_command("ISCC.exe")
+        self.assertEqual(cmd[0], "ISCC.exe")
+        self.assertIn("/DAppVersion=" + __version__, cmd)
+        self.assertTrue(cmd[-1].endswith("setup.iss"))
+        for opt in ("/DDist=", "/DIcon=", "/DOutDir="):
+            self.assertEqual(sum(c.startswith(opt) for c in cmd), 1, opt)
 
 
 if __name__ == "__main__":

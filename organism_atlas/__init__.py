@@ -12,3 +12,5 @@
 
 Нужны: Python 3, tkinter, numpy, Pillow (matplotlib больше не требуется).
 """
+
+__version__ = "1.0.0"                             # версия установщика: tools/build_setup.py
