@@ -1,27 +1,30 @@
-"""Общие виджеты: скруглённые кнопка и карточка, круглый флажок, карточка органа.
-Цвета - роли текущей темы (theme.py). Скругления в Tk нет, поэтому подложки кнопок, карточек и флажков -
-сглаженные картинки Pillow на холсте (Canvas), а текст поверх рисует сам Tk."""
+"""Общие виджеты (Qt): скруглённые кнопка и карточка, круглый флажок, строка поиска, карточки органа,
+экскурсии и викторины, панель слоёв.
+
+Цвета - роли текущей темы (theme.py). Кнопки, карточки, полоски и флажки рисуют себя сами (QPainter)
+и берут цвет роли в момент рисования; у надписей роль цвета текста хранится на виджете (set_fg),
+поэтому retheme() перекрашивает всё окно на лету, обойдя виджеты приложения.
+
+Содержимое карточек складывается столбиком (QVBoxLayout) через put(): отступы слева-справа и сверху-снизу
+задаются у каждого виджета, как pack(padx=..., pady=...) раньше."""
 
 import colorsys
-import math
-import time
-import tkinter as tk
-import tkinter.font as tkfont
 
-from PIL import Image, ImageDraw, ImageTk
+import shiboken6
+from PySide6.QtCore import QEasingCurve, QPointF, QRectF, QSize, Qt, QVariantAnimation
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
+from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+                               QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
 
 from .. import i18n
 from ..config import FONT
 from ..i18n import t
 from ..organs import ORGANS, fact_of_day
-from ..theme import C, style
-from .scaling import px
+from ..theme import C
+from .scaling import fs, px
 
-# --- картинки-подложки
 
-_images = {}                    # {ключ: PhotoImage}; виджет держит свою картинку сам, поэтому кэш можно чистить
-_images_tk = None               # интерпретатор Tk, которому принадлежат картинки из _images
-
+# --- цвета, шрифты, картинки
 
 def _rgb(c):
     return tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
@@ -36,480 +39,405 @@ def _hex(rgb):
     return "#%02x%02x%02x" % rgb
 
 
-def cached_image(master, key, draw):
-    """PhotoImage из кэша; draw() рисует картинку Pillow, если её ещё нет"""
-    global _images_tk
-    if _images_tk is not master.tk or len(_images) > 600:     # новое окно Tk или кэш разросся
-        _images.clear()
-        _images_tk = master.tk
-    if key not in _images:
-        _images[key] = ImageTk.PhotoImage(draw(), master=master)
-    return _images[key]
+def color(c):
+    """QColor роли темы (bg, card, accent...) или цвета #rrggbb"""
+    return QColor(C.get(c, c))
 
 
-def rounded_rect(w, h, r, fill, outline=None, width=1, ss=3):
-    """сглаженный скруглённый прямоугольник w x h (картинка Pillow с прозрачными углами)"""
-    im = Image.new("RGBA", (w * ss, h * ss), (0, 0, 0, 0))
-    ImageDraw.Draw(im).rounded_rectangle((0, 0, w * ss - 1, h * ss - 1), r * ss, fill=fill,
-                                         outline=outline, width=width * ss if outline else 0)
-    return im.resize((w, h), Image.LANCZOS)
+def font(size, bold=False, italic=False):
+    """шрифт интерфейса: size - в пунктах при масштабе 100 %"""
+    f = QFont(FONT)
+    f.setPointSizeF(fs(size))
+    f.setBold(bold)
+    f.setItalic(italic)
+    return f
 
 
-class RoundButton(tk.Canvas):
-    """плоская кнопка со скруглёнными углами. Понимает те же настройки, что tk.Button, которыми пользуется
-    интерфейс: text, command, font, padx, pady, anchor, state, bg/fg, activebackground/activeforeground
-    (при нажатии), disabledforeground, highlightbackground (цвет рамки у кнопок цвета карточки) и invoke().
-    Под курсором кнопка чуть подсвечивается, при нажатии - цвет activebackground; цвета меняются плавно"""
-
-    OWN = ("text", "command", "font", "padx", "pady", "anchor", "state", "bg", "fg", "activebackground",
-           "activeforeground", "disabledforeground", "highlightbackground")
-    ALIASES = {"background": "bg", "foreground": "fg"}
-    IGNORED = ("bd", "borderwidth", "relief", "highlightthickness")
-    FADE_MS, PRESS_MS = 150, 70     # длительность смены цвета: наведение и отпускание, нажатие
-    STEPS = 8                       # промежуточных цветов (подложки кэшируются, поэтому их немного)
-
-    def __init__(self, parent, text="", command=None, **kw):
-        self.o = {"text": text, "command": command, "font": (FONT, 10, "bold"), "padx": px(14), "pady": px(6),
-                  "anchor": "center", "state": "normal", "bg": C["card"], "fg": C["text"],
-                  "activebackground": C["accent"], "activeforeground": C["on_accent"],
-                  "disabledforeground": C["muted"], "highlightbackground": C["border"]}
-        self.hover = self.pressed = False
-        self.photo = None
-        self.anim = None            # after-задача плавной смены цвета
-        self.shown = None           # (заливка, рамка, текст), которые сейчас на экране
-        super().__init__(parent, highlightthickness=0, bd=0, cursor="hand2")
-        self.img = self.create_image(0, 0, anchor="nw")
-        self.txt = self.create_text(0, 0)
-        self.bind("<Configure>", lambda e: self.render(e.width, e.height))
-        self.bind("<Enter>", lambda e: self.set_mouse(hover=True))
-        self.bind("<Leave>", lambda e: self.set_mouse(hover=False, pressed=False))
-        self.bind("<ButtonPress-1>", lambda e: self.set_mouse(pressed=True))
-        self.bind("<ButtonRelease-1>", self.release)
-        self.configure(**kw)
-
-    def configure(self, cnf=None, **kw):
-        kw = {self.ALIASES.get(k, k): v for k, v in {**(cnf or {}), **kw}.items() if k not in self.IGNORED}
-        own = {k: kw.pop(k) for k in list(kw) if k in self.OWN}
-        if kw:
-            super().configure(**kw)
-        if own:
-            self.o.update(own)
-            if self.anim:                                   # новые цвета - сразу, без перехода
-                self.after_cancel(self.anim)
-                self.anim = None
-            self.measure()
-            self.render()
-
-    config = configure
-
-    def cget(self, key):
-        key = self.ALIASES.get(key, key)
-        return self.o[key] if key in self.o else super().cget(key)
-
-    def invoke(self):
-        if self.o["state"] != "disabled" and self.o["command"]:
-            self.o["command"]()
-
-    def measure(self):
-        """размер по тексту и отступам (как у tk.Button); растянутая pack/grid кнопка станет шире"""
-        f = tkfont.Font(root=self, font=self.o["font"])
-        super().configure(width=f.measure(self.o["text"]) + 2 * self.o["padx"],
-                          height=f.metrics("linespace") + 2 * self.o["pady"])
-
-    def set_mouse(self, hover=None, pressed=None):
-        if self.o["state"] == "disabled":
-            return
-        was = self.pressed
-        self.hover = self.hover if hover is None else hover
-        self.pressed = self.pressed if pressed is None else pressed
-        self.fade(self.PRESS_MS if self.pressed and not was else self.FADE_MS)
-
-    def fade(self, ms):
-        """плавно перейти от показанных сейчас цветов к цветам состояния за ms миллисекунд"""
-        if self.anim:
-            self.after_cancel(self.anim)
-            self.anim = None
-        if self.shown is None:
-            self.render()
-            return
-        start, end, t0 = self.shown, self.colors(), time.perf_counter()
-
-        def step():
-            self.anim = None
-            if not self.winfo_exists():
-                return
-            k = min(1.0, (time.perf_counter() - t0) * 1000 / ms)
-            k = round((1 - (1 - k) ** 2) * self.STEPS) / self.STEPS       # плавное замедление; шаги - для кэша
-            self.render(colors=tuple(_hex(_mix(a, b, k)) for a, b in zip(start, end)))
-            if k < 1:
-                self.anim = self.after(15, step)
-        step()
-
-    def release(self, e):
-        inside = 0 <= e.x < self.winfo_width() and 0 <= e.y < self.winfo_height()
-        was = self.pressed
-        self.set_mouse(pressed=False)
-        if was and inside:
-            self.invoke()
-
-    def colors(self):
-        """(заливка, рамка, цвет текста) по состоянию кнопки; рамки нет - она цвета заливки"""
-        o = self.o
-        bg, active = o["bg"], o["activebackground"]
-        plain = getattr(self, "_theme_roles", {}).get("bg") in ("card", "bg")    # кнопка цвета фона
-        if o["state"] == "disabled":
-            return bg, o["highlightbackground"] if plain else bg, o["disabledforeground"]
-        if self.pressed:
-            return active, active, o["activeforeground"]
-        fill = _hex(_mix(bg, active, 0.22) if bg != active else _mix(bg, "#ffffff", 0.16)) if self.hover else bg
-        return fill, o["highlightbackground"] if plain else fill, o["fg"]
-
-    def render(self, w=None, h=None, colors=None):
-        """нарисовать в размере w x h (по умолчанию - текущем; до первой раскладки - запрошенном).
-        colors - промежуточные цвета плавного перехода; без них - сразу цвета состояния"""
-        w = w or (self.winfo_width() if self.winfo_width() > 1 else self.winfo_reqwidth())
-        h = h or (self.winfo_height() if self.winfo_height() > 1 else self.winfo_reqheight())
-        if colors is None and self.anim:                    # размер сменился посреди перехода
-            colors = self.shown
-        self.shown = fill, outline, fg = colors or self.colors()
-        r = min(px(8), h // 2)
-        bw = max(1, px(1))
-        self.photo = cached_image(self, ("btn", w, h, r, fill, outline, bw),
-                                  lambda: rounded_rect(w, h, r, fill, outline, bw))
-        super().configure(bg=self.master.cget("bg"))                # в углах виден фон родителя
-        self.itemconfigure(self.img, image=self.photo)
-        left = self.o["anchor"] == "w"
-        self.coords(self.txt, self.o["padx"] if left else w / 2, h / 2)
-        self.itemconfigure(self.txt, text=self.o["text"], font=self.o["font"], fill=fg,
-                           anchor="w" if left else "center")
+def qimage(im):
+    """картинка Pillow (RGB или RGBA) -> QImage (копия: данные Pillow можно отпускать)"""
+    if im.mode == "RGBA":
+        q = QImage(im.tobytes(), im.width, im.height, 4 * im.width, QImage.Format_RGBA8888)
+        return q.convertToFormat(QImage.Format_ARGB32_Premultiplied)
+    im = im.convert("RGB")
+    return QImage(im.tobytes(), im.width, im.height, 3 * im.width, QImage.Format_RGB888).copy()
 
 
-class RoundCard(tk.Canvas):
-    """карточка со скруглёнными углами. Содержимое кладётся в self.inner (обычный Frame цвета fill),
-    а холст рисует под ним подложку с рамкой border (роль темы или #rrggbb). inner отодвинут от края ровно
-    настолько, чтобы его прямые углы не вылезали за скругление; размер карточки следует за содержимым,
-    ширина - ещё и за местом, которое даёт pack/grid. width - постоянная ширина (по содержимому - только высота)"""
-
-    def __init__(self, parent, fill="card", border="border", radius=12, width=None):
-        super().__init__(parent, highlightthickness=0, bd=0, width=1, height=1)    # размер задаёт fit()
-        self.fill, self.border, self.fixed = fill, border, width
-        self.r, self.bw = px(radius), max(1, px(1))
-        self.pad = math.ceil(self.r - (self.r - self.bw - 1) / math.sqrt(2))
-        self.photos = []
-        style(self, bg=getattr(parent, "_theme_roles", {}).get("bg", "bg"))
-        self.inner = frame(self, fill)
-        # обычное дочернее окно, а не элемент холста: тот не показывается, пока холст мал, и не растёт
-        self.inner.place(x=self.pad, y=self.pad, relwidth=1, width=-2 * self.pad)
-        self.inner.shell = self
-        self.inner.bind("<Configure>", lambda e: self.fit())
-        self.bind("<Configure>", lambda e: self.draw(e.width, e.height))
-
-    def configure(self, cnf=None, **kw):
-        super().configure(cnf, **kw)
-        if "bg" in kw or "background" in kw:                        # смена темы: перерисовать подложку
-            self.draw()
-
-    config = configure
-
-    def fit(self):
-        """подогнать размер под содержимое (сама вызывается, когда меняется высота содержимого)"""
-        w = self.fixed or self.inner.winfo_reqwidth() + 2 * self.pad
-        h = self.inner.winfo_reqheight() + 2 * self.pad
-        if (w, h) != (self.winfo_reqwidth(), self.winfo_reqheight()):
-            super().configure(width=w, height=h)
-
-    def draw(self, w=None, h=None):
-        w, h = w or self.winfo_width(), h or self.winfo_height()
-        if w < 2 * self.r or h < 2 * self.r:
-            return
-        fill, border = (C.get(c, c) for c in (self.fill, self.border))
-        r, bw = self.r, self.bw
-
-        def corner(i):
-            def draw():
-                im = rounded_rect(2 * r + 2, 2 * r + 2, r, fill, border, bw)
-                x, y = (0 if i in (0, 2) else r + 2), (0 if i in (0, 1) else r + 2)
-                return im.crop((x, y, x + r, y + r))
-            return cached_image(self, ("corner", r, bw, fill, border, i), draw)
-
-        self.delete("bg")
-        self.photos = [corner(i) for i in range(4)]
-        for i, (x, y) in enumerate(((0, 0), (w - r, 0), (0, h - r), (w - r, h - r))):
-            self.create_image(x, y, image=self.photos[i], anchor="nw", tags="bg")
-        for box, color in (((r, 0, w - r, h), fill), ((0, r, w, h - r), fill),
-                           ((r, 0, w - r, bw), border), ((r, h - bw, w - r, h), border),
-                           ((0, r, bw, h - r), border), ((w - bw, r, w, h - r), border)):
-            self.create_rectangle(*box, fill=color, width=0, tags="bg")
+def alive(w):
+    return w is not None and shiboken6.isValid(w)
 
 
-class Bar(tk.Canvas):
-    """цветная полоска со скруглёнными концами вверху карточки; color - роль темы или #rrggbb"""
-
-    def __init__(self, parent, color):
-        super().__init__(parent, highlightthickness=0, bd=0, width=1, height=px(3))      # ширину даёт pack
-        self.color = color
-        self.photo = None
-        style(self, bg=getattr(parent, "_theme_roles", {}).get("bg", "card"))
-        self.bind("<Configure>", lambda e: self.draw(e.width))
-
-    def configure(self, cnf=None, **kw):
-        super().configure(cnf, **kw)
-        if "bg" in kw or "background" in kw:                        # смена темы
-            self.draw()
-
-    config = configure
-
-    def draw(self, w=None):
-        w, h = w or self.winfo_width(), self.winfo_reqheight()
-        if w < 2 * h:
-            return
-        color = C.get(self.color, self.color)
-        self.photo = cached_image(self, ("bar", w, h, color), lambda: rounded_rect(w, h, h // 2, color))
-        self.delete("all")
-        self.create_image(0, 0, image=self.photo, anchor="nw")
-
-
-class ScrollArea(tk.Canvas):
-    """прокручиваемая область карточки: содержимое кладётся в self.inner, высота растёт за ним до limit
-    (set_limit), а дальше область листается колесом мыши, тачпадом или тонким ползунком справа.
-    Листается, когда указатель над scope (по умолчанию - над самой областью), например над всей панелью.
-    Место под ползунок занято всегда: иначе при его появлении менялась бы ширина панели, а за ней масштаб схемы"""
-
-    STEP = 3                    # строк (yscrollincrement) за щелчок колеса
-
-    def __init__(self, parent, scope=None):
-        self.outer = frame(parent)
-        self.scope = scope or self.outer
-        super().__init__(self.outer, highlightthickness=0, bd=0, width=1, height=1, yscrollincrement=px(8))
-        self.thumb = style(tk.Canvas(self.outer, highlightthickness=0, bd=0, width=px(4), height=1), bg="card")
-        self.limit, self.view, self.rest = None, (0.0, 1.0), 0.0
-        style(self, bg="card")
-        self.pack(side="left", fill="both", expand=True)
-        self.thumb.pack(side="right", fill="y", padx=(px(4), 0))
-        self.inner = frame(self)
-        self.win = self.create_window(0, 0, window=self.inner, anchor="nw")
-        self.config(yscrollcommand=self.on_scroll)
-        self.inner.bind("<Configure>", lambda e: self.fit())
-        self.bind("<Configure>", lambda e: self.itemconfigure(self.win, width=e.width))
-        self.thumb.bind("<Configure>", lambda e: self.draw_thumb())
-        self.thumb.bind("<B1-Motion>", self.drag)
-        self.thumb.bind("<ButtonPress-1>", self.drag)
-        # колесо и тачпад - одни на всё окно (bind_all), но листают, только когда указатель над scope.
-        # Тачпад в Tk 9 шлёт не MouseWheel, а TouchpadScroll: в delta упакованы сдвиги по x и по y
-        self.bind_all("<MouseWheel>", lambda e: self.wheel(e, e.delta))
-        try:
-            self.bind_all("<TouchpadScroll>", lambda e: self.wheel(e, (e.delta & 0xFFFF ^ 0x8000) - 0x8000))
-        except tk.TclError:                                         # Tk 8.6: такого события нет
-            pass
-
-    def configure(self, cnf=None, **kw):
-        super().configure(cnf, **kw)
-        if "bg" in kw or "background" in kw:                        # смена темы: перерисовать ползунок
-            self.draw_thumb()
-
-    config = configure
-
-    def set_limit(self, h):
-        """наибольшая высота области (сколько осталось места в окне)"""
-        self.limit = max(px(60), h)
-        self.fit()
-
-    def fit(self):
-        w, h = self.inner.winfo_reqwidth(), self.inner.winfo_reqheight()
-        vis = min(h, self.limit) if self.limit else h
-        super().configure(width=w, height=vis, scrollregion=(0, 0, w, h))
-        if h <= vis:
-            self.yview_moveto(0)
-
-    def scrollable(self):
-        return self.view != (0.0, 1.0)
-
-    def on_scroll(self, first, last):
-        self.view = (float(first), float(last))
-        self.draw_thumb()
-
-    def draw_thumb(self):
-        if not self.thumb.winfo_exists():
-            return
-        self.thumb.delete("all")
-        h, w = self.thumb.winfo_height(), int(self.thumb["width"])
-        if not self.scrollable() or h < 2:
-            return
-        y0, y1 = self.view[0] * h, max(self.view[1] * h, self.view[0] * h + px(16))
-        color = C["muted"]
-        self.thumb.create_line(w / 2, y0 + w / 2, w / 2, y1 - w / 2, width=w, capstyle="round", fill=color)
-
-    def drag(self, e):
-        """щелчок или протяжка по полосе ползунка: середина ползунка - под указатель"""
-        span = self.view[1] - self.view[0]
-        self.yview_moveto(e.y / max(1, self.thumb.winfo_height()) - span / 2)
-
-    def wheel(self, e, delta):
-        """delta - как у колеса: 120 на щелчок, больше нуля - вверх (тачпад даёт доли щелчка)"""
-        if not self.winfo_exists() or not self.scrollable():
-            return
-        w = self.winfo_containing(e.x_root, e.y_root)
-        if w is None or not (str(w) + ".").startswith(str(self.scope) + "."):
-            return
-        self.rest -= delta / 120 * self.STEP                       # доли строки копятся до целой
-        lines = int(self.rest)
-        if lines:
-            self.rest -= lines
-            self.yview_scroll(lines, "units")
-
-
-def bar(card, color):
-    Bar(card, color).pack(fill="x", padx=px(8), pady=(px(1), 0))
-
-
-def refit(card):
-    """после смены содержимого карточки: подогнать RoundCard, когда Tk пересчитает размеры
-    (смена ширины содержимого сама по себе карточке не сообщается)"""
-    shell = getattr(card, "shell", None)
-    if shell is not None:
-        card.after_idle(lambda: shell.winfo_exists() and shell.fit())
-
-
-def rounded_card(parent, **kw):
-    """(карточка RoundCard для pack/grid, её внутренняя рамка для содержимого)"""
-    card = RoundCard(parent, **kw)
-    return card, card.inner
-
-
-def flat_button(parent, text, command, bg="card", **kw):
-    """bg - роль фона: card для обычной кнопки, accent для главной"""
-    b = RoundButton(parent, text, command, **kw)
-    return set_button_bg(b, bg)
-
-
-def set_button_bg(b, bg):
-    """сменить роль фона кнопки (выбранный режим, язык, тема); текст подбирается к фону.
-    У кнопки, которая уже на экране, цвет меняется плавно"""
-    shown = b.shown if b.winfo_ismapped() else None
-    style(b, bg=bg, fg="on_accent" if bg == "accent" else "text", activebackground="accent",
-          activeforeground="on_accent", highlightbackground="border")
-    if shown and shown != b.shown:
-        b.shown = shown
-        b.fade(b.FADE_MS)
-    return b
-
-
-def label(parent, text, fg="text", bg="card", **kw):
-    return style(tk.Label(parent, text=text, **kw), bg=bg, fg=fg)
-
-
-def frame(parent, bg="card", **kw):
-    return style(tk.Frame(parent, **kw), bg=bg)
-
-
-def heading(card, text):
-    w = label(card, text.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w")
-    w.pack(fill="x", padx=px(16), pady=(px(8), px(2)))
+def set_fg(w, role):
+    """цвет текста виджета - роль темы; запоминается, retheme() перекрасит её при смене темы"""
+    w._fg = role
+    pal = w.palette()
+    for r in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
+        pal.setColor(r, color(role))
+    w.setPalette(pal)
     return w
 
 
-def section(card, title, text, wrap):
-    heading(card, title)
-    label(card, text, font=(FONT, 11), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16))
+def retheme(app=None):
+    """перекрасить все виджеты в текущую тему (после theme.set_theme)"""
+    app = app or QApplication.instance()
+    for w in app.allWidgets():
+        if hasattr(w, "_fg"):
+            set_fg(w, w._fg)
+        if hasattr(w, "retheme"):
+            w.retheme()
+        w.update()
 
 
-def fill_card(card, key, on_3d=None, empty=None, compact=False, wrap=None, back=None):
-    """карточка органа; compact - без заболеваний и факта дня (для окна 3D, где мало места по высоте);
-    wrap - ширина переноса текста (по умолчанию под правую колонку главного окна);
+# --- раскладка: столбик с отступами
+
+def put(lay, w, top=0, bottom=0, x=16, align=None):
+    """добавить виджет (или раскладку) в столбец lay с отступами в пикселях при масштабе 100 %:
+    x - слева и справа (число или пара), top и bottom - сверху и снизу; align="left" - не растягивать
+    по ширине, а прижать влево, "right" - вправо, "center" - по центру"""
+    if top:
+        lay.addSpacing(px(top))
+    left, right = (x, x) if isinstance(x, (int, float)) else x
+    row = QHBoxLayout()
+    row.setContentsMargins(px(left), 0, px(right), 0)
+    row.setSpacing(0)
+    if align in ("right", "center"):
+        row.addStretch(1)
+    if isinstance(w, QWidget):
+        row.addWidget(w)
+    else:
+        row.addLayout(w)
+    if align in ("left", "center"):
+        row.addStretch(1)
+    lay.addLayout(row)
+    if bottom:
+        lay.addSpacing(px(bottom))
+    return w
+
+
+def clear(lay):
+    """убрать всё содержимое раскладки (виджеты удаляются)"""
+    while lay.count():
+        item = lay.takeAt(0)
+        w = item.widget()
+        if w is not None:
+            w.hide()
+            w.setParent(None)
+            w.deleteLater()
+        elif item.layout() is not None:
+            clear(item.layout())
+            item.layout().deleteLater()
+
+
+def hbox(spacing=0):
+    lay = QHBoxLayout()
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(px(spacing))
+    return lay
+
+
+def vbox(parent=None, margins=(0, 0, 0, 0), spacing=0):
+    lay = QVBoxLayout(parent) if parent is not None else QVBoxLayout()
+    lay.setContentsMargins(*(px(m) for m in margins))
+    lay.setSpacing(px(spacing))
+    return lay
+
+
+# --- виджеты
+
+class RoundButton(QAbstractButton):
+    """плоская кнопка со скруглёнными углами. bg - роль фона (card - обычная, accent - главная,
+    bg - цвета окна, right_bg / wrong_bg - верный и неверный ответ). Под курсором кнопка чуть светлее,
+    при нажатии - цвета акцента; цвета меняются плавно"""
+
+    FADE_MS, PRESS_MS = 150, 70     # длительность смены цвета: наведение и отпускание, нажатие
+
+    def __init__(self, text="", command=None, bg="card", anchor="center", size=10, padx=14, pady=6, parent=None):
+        super().__init__(parent)
+        self.command = command
+        self.anchor = anchor
+        self.padx, self.pady = px(padx), px(pady)
+        self.role, self.fg, self.dis_fg = bg, "text", "muted"
+        self.shown = None           # (заливка, рамка, текст), которые сейчас на экране
+        self.anim = None            # QVariantAnimation плавной смены цвета
+        self.hover = False
+        self.setText(text)
+        self.setFont(font(size, bold=True))
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFocusPolicy(Qt.NoFocus)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.clicked.connect(self.invoke)
+        set_button_bg(self, bg)
+
+    def invoke(self):
+        if self.isEnabled() and self.command:
+            self.command()
+
+    def set_command(self, command):
+        self.command = command
+
+    def set_padding(self, padx=None, pady=None):
+        if padx is not None:
+            self.padx = px(padx)
+        if pady is not None:
+            self.pady = px(pady)
+        self.updateGeometry()
+
+    def sizeHint(self):
+        fm = QFontMetrics(self.font())
+        return QSize(fm.horizontalAdvance(self.text()) + 2 * self.padx + 2, fm.height() + 2 * self.pady)
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
+
+    def setText(self, text):
+        if text != self.text():
+            super().setText(text)
+            self.updateGeometry()
+            self.update()
+
+    def colors(self):
+        """(заливка, рамка, цвет текста) по состоянию кнопки; кнопка цвета фона - с рамкой"""
+        bg, active = C[self.role], C["accent"]
+        plain = self.role in ("card", "bg")
+        if not self.isEnabled():
+            return bg, C["border"] if plain else bg, C[self.dis_fg]
+        if self.isDown():
+            return active, active, C["on_accent"]
+        fill = _hex(_mix(bg, active, 0.22) if bg != active else _mix(bg, "#ffffff", 0.16)) if self.hover else bg
+        return fill, C["border"] if plain else fill, C[self.fg]
+
+    def fade(self, ms=None):
+        """плавно перейти от показанных сейчас цветов к цветам состояния за ms миллисекунд"""
+        if self.anim is not None:
+            self.anim.stop()
+            self.anim = None
+        end = self.colors()
+        if self.shown is None or not self.isVisible() or self.shown == end:
+            self.shown = end
+            self.update()
+            return
+        start = self.shown
+        a = QVariantAnimation(self)
+        a.setDuration(ms or self.FADE_MS)
+        a.setStartValue(0.0)
+        a.setEndValue(1.0)
+        a.setEasingCurve(QEasingCurve.OutQuad)
+
+        def step(k):
+            self.shown = tuple(_hex(_mix(x, y, k)) for x, y in zip(start, end))
+            self.update()
+
+        def done():
+            if self.anim is a:
+                self.anim = None
+                self.shown = end
+                self.update()
+
+        a.valueChanged.connect(step)
+        a.finished.connect(done)
+        self.anim = a
+        a.start()
+
+    def changeEvent(self, e):
+        super().changeEvent(e)
+        if e.type() == e.Type.EnabledChange:
+            self.setCursor(Qt.PointingHandCursor if self.isEnabled() else Qt.ArrowCursor)
+            self.fade()
+
+    def enterEvent(self, e):
+        self.hover = True
+        self.fade()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        self.hover = False
+        self.fade()
+        super().leaveEvent(e)
+
+    def mousePressEvent(self, e):
+        super().mousePressEvent(e)
+        self.fade(self.PRESS_MS)
+
+    def mouseReleaseEvent(self, e):
+        super().mouseReleaseEvent(e)
+        if alive(self):                          # команда могла удалить кнопку (новая карточка)
+            self.fade()
+
+    def retheme(self):
+        if self.anim is not None:
+            self.anim.stop()
+            self.anim = None
+        self.shown = self.colors()
+
+    def paintEvent(self, _e):
+        fill, outline, fg = self.shown or self.colors()
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = min(px(8), self.height() / 2)
+        bw = max(1, px(1))
+        p.setPen(QPen(QColor(outline), bw))
+        p.setBrush(QColor(fill))
+        p.drawRoundedRect(QRectF(self.rect()).adjusted(bw / 2, bw / 2, -bw / 2, -bw / 2), r, r)
+        p.setPen(QColor(fg))
+        p.setFont(self.font())
+        if self.anchor == "w":
+            p.drawText(self.rect().adjusted(self.padx, 0, -self.padx, 0), Qt.AlignVCenter | Qt.AlignLeft, self.text())
+        else:
+            p.drawText(self.rect(), Qt.AlignCenter, self.text())
+
+
+def flat_button(text, command, bg="card", anchor="center", size=10, padx=14, pady=6, parent=None):
+    return RoundButton(text, command, bg, anchor, size, padx, pady, parent)
+
+
+def set_button_bg(b, bg, fg=None):
+    """сменить роль фона кнопки (выбранный режим, язык, тема); текст подбирается к фону.
+    У кнопки, которая уже на экране, цвет меняется плавно"""
+    b.role = bg
+    b.fg = fg or ("on_accent" if bg == "accent" else "on_mark" if bg in ("right_bg", "wrong_bg") else "text")
+    b.dis_fg = "on_mark" if bg in ("right_bg", "wrong_bg") else "muted"
+    b.fade()
+    return b
+
+
+class RoundCard(QFrame):
+    """карточка со скруглёнными углами: заливка fill и рамка border (роли темы или #rrggbb).
+    Содержимое - в self.lay (столбик). width - постоянная ширина"""
+
+    def __init__(self, fill="card", border="border", radius=12, width=None, parent=None):
+        super().__init__(parent)
+        self.fill, self.border = fill, border
+        self.r, self.bw = px(radius), max(1, px(1))
+        self.lay = vbox(self)
+        m = self.bw + px(2)
+        self.lay.setContentsMargins(m, m, m, m)
+        if width:
+            self.setFixedWidth(width)
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(QPen(color(self.border), self.bw))
+        p.setBrush(color(self.fill))
+        b = self.bw / 2
+        p.drawRoundedRect(QRectF(self.rect()).adjusted(b, b, -b, -b), self.r, self.r)
+
+
+def rounded_card(fill="card", border="border", radius=12, width=None, parent=None):
+    return RoundCard(fill, border, radius, width, parent)
+
+
+class Bar(QWidget):
+    """цветная полоска со скруглёнными концами вверху карточки; c - роль темы или #rrggbb"""
+
+    def __init__(self, c):
+        super().__init__()
+        self.c = c
+        self.setFixedHeight(px(3))
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen)
+        p.setBrush(color(self.c))
+        h = self.height()
+        p.drawRoundedRect(QRectF(self.rect()), h / 2, h / 2)
+
+
+def bar(lay, c):
+    put(lay, Bar(c), top=1, x=8)
+
+
+def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Qt.AlignLeft):
+    w = QLabel(text)
+    w.setFont(font(size, bold, italic))
+    w.setWordWrap(wrap)
+    w.setAlignment(align | Qt.AlignTop)
+    w.setTextFormat(Qt.PlainText)
+    return set_fg(w, fg)
+
+
+def heading(lay, text, top=8, bottom=2, x=16):
+    return put(lay, label(text.upper(), "muted", 9, bold=True, wrap=False), top=top, bottom=bottom, x=x)
+
+
+def section(lay, title, text):
+    heading(lay, title)
+    put(lay, label(text))
+
+
+def spacer(lay, h):
+    lay.addSpacing(px(h))
+
+
+def fill_card(card, key, on_3d=None, compact=False, back=None):
+    """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям"""
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
-    wrap = wrap or px(300)
-    if empty:
-        label(card, empty[0], font=(FONT, 15, "bold"),
-              anchor="w").pack(fill="x", padx=px(16), pady=(px(14), px(4)))
-        label(card, empty[1], fg="muted", font=(FONT, 11), justify="left",
-              anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(14)))
-        return
-    color = ORGANS[key]["color"]
-    bar(card, color)                                                 # цветная полоска органа
-    label(card, i18n.name(key), font=(FONT, 15, "bold"), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(12), 0))
-    label(card, i18n.subtitle(key), fg="muted", font=(FONT, 11, "italic"),
-          anchor="w").pack(fill="x", padx=px(16), pady=(0, px(6)))
-    label(card, i18n.organ(key, "desc"), font=(FONT, 11), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(8)))
-    section(card, t("card_location"), i18n.organ(key, "location"), wrap)
-    section(card, t("card_system"), ", ".join(t("system_" + x) for x in ORGANS[key]["systems"]), wrap)
-    heading(card, t("card_facts"))
+    lay = card.lay
+    clear(lay)
+    c = ORGANS[key]["color"]
+    bar(lay, c)                                                         # цветная полоска органа
+    put(lay, label(i18n.name(key), size=15, bold=True), top=12)
+    put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
+    put(lay, label(i18n.organ(key, "desc")), bottom=8)
+    section(lay, t("card_location"), i18n.organ(key, "location"))
+    section(lay, t("card_system"), ", ".join(t("system_" + x) for x in ORGANS[key]["systems"]))
+    heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
-        label(card, "•  " + f, font=(FONT, 11), justify="left",
-              anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=2)
+        put(lay, label("•  " + f), top=2, bottom=2)
     if not compact:
-        section(card, t("card_diseases"), "  ·  ".join(i18n.organ(key, "diseases")), wrap)
-        box, day = rounded_card(card, fill="day_bg", border=color, radius=10)
-        box.pack(fill="x", padx=px(16), pady=(px(12), 0))
-        label(day, "★  " + t("card_fact_of_day"), fg="day_title", bg="day_bg", font=(FONT, 10, "bold"),
-              anchor="w").pack(fill="x", padx=px(10), pady=(px(8), px(2)))
-        label(day, fact_of_day(key), bg="day_bg", font=(FONT, 11), justify="left",
-              anchor="w", wraplength=wrap - px(22) - 2 * box.pad).pack(fill="x", padx=px(10), pady=(0, px(8)))
+        section(lay, t("card_diseases"), "  ·  ".join(i18n.organ(key, "diseases")))
+        day = rounded_card(fill="day_bg", border=c, radius=10)
+        put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
+        put(day.lay, label(fact_of_day(key)), bottom=8, x=10)
+        put(lay, day, top=12)
     if on_3d:
-        flat_button(card, t("card_3d"), on_3d, bg="accent").pack(anchor="w", padx=px(16),
-                                                                 pady=(px(12), 0 if back else px(14)))
+        put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=12, bottom=0 if back else 14, align="left")
     if back:
-        flat_button(card, back[0], back[1], anchor="w").pack(anchor="w", padx=px(16),
-                                                            pady=(px(8) if on_3d else px(12), px(14)))
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_3d else 12, bottom=14, align="left")
     if not on_3d and not back:
-        frame(card, height=px(10)).pack()
+        spacer(lay, 10)
 
 
 def fill_start(card, title, hint, tours_title, tours):
     """карточка режима «Изучать», пока орган не выбран: подсказка и кнопки экскурсий.
     tours - [(текст кнопки, функция)]"""
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
-    wrap = px(300)
-    label(card, title, font=(FONT, 15, "bold"), anchor="w").pack(fill="x", padx=px(16), pady=(px(14), px(4)))
-    label(card, hint, fg="muted", font=(FONT, 11), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(6)))
+    lay = card.lay
+    clear(lay)
+    put(lay, label(title, size=15, bold=True), top=14, bottom=4)
+    put(lay, label(hint, "muted"), bottom=6)
     if tours:
-        heading(card, tours_title)
+        heading(lay, tours_title)
         for text, command in tours:
-            b = flat_button(card, text, command, anchor="w")
-            b.config(pady=px(4))
-            b.pack(fill="x", padx=px(16), pady=(px(3), 0))
-    frame(card, height=px(14)).pack()
+            put(lay, flat_button(text, command, anchor="w", pady=4), top=3)
+    spacer(lay, 14)
 
 
-def fill_tour(card, progress, title, subtitle, text, color, buttons, extra=(), hint=None):
-    """карточка шага экскурсии. progress - «Путь пищи · шаг 2 из 8»; color - цвет полоски (орган или роль);
+def fill_tour(card, progress, title, subtitle, text, c, buttons, extra=(), hint=None):
+    """карточка шага экскурсии. progress - «Путь пищи · шаг 2 из 8»; c - цвет полоски (орган или роль);
     buttons - [(текст, функция, роль фона, доступна)] в строку (назад / дальше);
     extra - [(текст, функция)] кнопки столбиком под ними; hint - мелкая подсказка внизу"""
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
-    wrap = px(300)
-    bar(card, color)
-    label(card, progress, fg="muted", font=(FONT, 10, "bold"), anchor="w").pack(fill="x", padx=px(16), pady=(px(12), 0))
-    label(card, title, font=(FONT, 15, "bold"), justify="left", anchor="w",
-          wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(4), 0))
+    lay = card.lay
+    clear(lay)
+    bar(lay, c)
+    put(lay, label(progress, "muted", 10, bold=True), top=12)
+    put(lay, label(title, size=15, bold=True), top=4)
     if subtitle:
-        label(card, subtitle, fg="muted", font=(FONT, 11, "italic"), anchor="w").pack(fill="x", padx=px(16))
-    label(card, text, font=(FONT, 11), justify="left", anchor="w",
-          wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(8), px(12)))
-    row = frame(card)
-    row.pack(fill="x", padx=px(16))
-    row.columnconfigure(tuple(range(len(buttons))), weight=1, uniform="col")
+        put(lay, label(subtitle, "muted", italic=True))
+    put(lay, label(text), top=8, bottom=12)
+    row = QGridLayout()
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setHorizontalSpacing(px(6))
     for i, (txt, command, bg, enabled) in enumerate(buttons):
-        b = flat_button(row, txt, command, bg=bg)
-        if not enabled:
-            style(b, disabledforeground="muted")
-            b.config(state="disabled", cursor="")
-        b.grid(row=0, column=i, sticky="ew", padx=(0 if i == 0 else px(3), 0 if i == len(buttons) - 1 else px(3)))
+        b = flat_button(txt, command, bg=bg)
+        b.setEnabled(enabled)
+        row.addWidget(b, 0, i)
+        row.setColumnStretch(i, 1)
+    put(lay, row)
     for txt, command in extra:
-        flat_button(card, txt, command, anchor="w").pack(fill="x", padx=px(16), pady=(px(6), 0))
+        put(lay, flat_button(txt, command, anchor="w"), top=6)
     if hint:
-        label(card, hint, fg="muted", font=(FONT, 9), justify="left", anchor="w",
-              wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(8), 0))
-    frame(card, height=px(14)).pack()
+        put(lay, label(hint, "muted", 9), top=8)
+    spacer(lay, 14)
 
 
 def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None):
@@ -517,111 +445,116 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
     progress - строка «Вопрос N из M · Ошибок: K»; feedback - (текст, роль цвета) после ответа или None;
     options - [(ключ, название)] для кнопок-вариантов, on_pick(ключ) по нажатию.
     Возвращает (метка прогресса, {ключ: кнопка})."""
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
-    wrap = px(270)
-    bar(card, "accent")
-    prog = label(card, progress, fg="muted", font=(FONT, 10, "bold"), anchor="w")
-    prog.pack(fill="x", padx=px(16), pady=(px(12), 0))
-    label(card, title, font=(FONT, 15, "bold"), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(px(4), px(4)))
-    label(card, hint, fg="muted", font=(FONT, 11), justify="left",
-          anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(10)))
+    lay = card.lay
+    clear(lay)
+    bar(lay, "accent")
+    prog = put(lay, label(progress, "muted", 10, bold=True), top=12)
+    put(lay, label(title, size=15, bold=True), top=4, bottom=4)
+    put(lay, label(hint, "muted"), bottom=10)
     if feedback:
-        label(card, feedback[0], fg=feedback[1], font=(FONT, 11, "bold"), justify="left",
-              anchor="w", wraplength=wrap).pack(fill="x", padx=px(16), pady=(0, px(10)))
+        put(lay, label(feedback[0], feedback[1], bold=True), bottom=10)
     buttons = {}
     for i, (key, name) in enumerate(options):
-        b = flat_button(card, "%d.  %s" % (i + 1, name), lambda k=key: on_pick(k), anchor="w")
-        b.pack(fill="x", padx=px(16), pady=(0, px(8)))
+        b = put(lay, flat_button("%d.  %s" % (i + 1, name), lambda k=key: on_pick(k), anchor="w"), bottom=8)
         buttons[key] = b
-    frame(card, height=px(6)).pack()
+    spacer(lay, 6)
     return prog, buttons
 
 
-def dot_image(master, size, on, state):
-    """круглый флажок (сглаженный, с прозрачным фоном). state: normal, hover, press.
-    Включён - залитый кружок цвета акцента с галочкой, выключен - кольцо. Наведение и нажатие
-    меняют только кружок: при наведении он светлее (у кольца появляется заливка), при нажатии темнее.
-    master - виджет, в котором картинка будет показана (картинки Tk принадлежат своему окну Tk)"""
-    accent, ring, mark = C["accent"], C["muted"], C["on_accent"]
-
-    def draw():
-        ss = 4
-        S = size * ss
-        im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        d = ImageDraw.Draw(im)
-        w = max(ss, round(S * 0.11))                       # толщина кольца
-        box = (w // 2, w // 2, S - 1 - w // 2, S - 1 - w // 2)
-        if on:
-            fill = {"normal": _rgb(accent), "hover": _mix(accent, "#ffffff", 0.22),
-                    "press": _mix(accent, "#000000", 0.25)}[state]
-            d.ellipse(box, fill=fill)
-            pts = [(S * 0.28, S * 0.52), (S * 0.44, S * 0.68), (S * 0.73, S * 0.36)]      # галочка
-            d.line(pts, fill=_rgb(mark), width=round(S * 0.12), joint="curve")
-        else:
-            outline = ring if state == "normal" else _mix(accent, "#ffffff", 0.22)
-            fill = {"normal": None, "hover": _mix(accent, "#000000", 0.45) + (110,),
-                    "press": _mix(accent, "#000000", 0.2) + (200,)}[state]
-            d.ellipse(box, fill=fill, outline=outline, width=w)
-        return im.resize((size, size), Image.LANCZOS)
-
-    return cached_image(master, ("dot", size, on, state, accent, ring, mark), draw)
+def mark(b, role):
+    """покрасить кнопку-вариант: right_bg - верный ответ, wrong_bg - ошибка (такую больше не нажать)"""
+    set_button_bg(b, role)
+    if role == "wrong_bg":
+        b.setEnabled(False)
 
 
-class Toggle:
-    """строка панели слоёв: круглый флажок и подпись; color - цветная метка органа слева.
+# --- панель слоёв
+
+def dot_colors(on, state):
+    """(заливка, рамка, галочка) круглого флажка; state: normal, hover, press"""
+    accent, ring, tick = C["accent"], C["muted"], C["on_accent"]
+    if on:
+        fill = {"normal": accent, "hover": _hex(_mix(accent, "#ffffff", 0.22)),
+                "press": _hex(_mix(accent, "#000000", 0.25))}[state]
+        return QColor(fill), QColor(fill), QColor(tick)
+    outline = ring if state == "normal" else _hex(_mix(accent, "#ffffff", 0.22))
+    fill = {"normal": QColor(0, 0, 0, 0), "hover": QColor(*_mix(accent, "#000000", 0.45), 110),
+            "press": QColor(*_mix(accent, "#000000", 0.2), 200)}[state]
+    return fill, QColor(outline), None
+
+
+class Toggle(QWidget):
+    """строка панели слоёв: круглый флажок и подпись; c - цветная метка органа слева.
     Щелчок по любому месту строки переключает, а подсвечивается при наведении и нажатии только кружок"""
 
-    def __init__(self, parent, text, on, command, color=None):
-        self.command, self.on = command, on
+    def __init__(self, text, on, command, c=None):
+        super().__init__()
+        self.command, self.on, self.c, self.text = command, on, c, text
         self.state = "normal"
-        self.row = frame(parent)
-        self.row.pack(fill="x", pady=(0, px(1)))
-        if color:
-            tk.Frame(self.row, bg=color, width=px(4)).pack(side="left", fill="y")
-        self.dot = label(self.row, None, bd=0)
-        self.dot.pack(side="left", padx=(px(8), px(7)), pady=px(3))
-        self.text = label(self.row, "", font=(FONT, 9), anchor="w")
-        self.text.pack(side="left", fill="x", expand=True)
-        self.parts = (self.row, self.dot, self.text) + tuple(self.row.winfo_children())
-        for w in self.parts:
-            w.config(cursor="hand2")
-            w.bind("<Enter>", lambda e: self.show("hover"))
-            w.bind("<Leave>", self.leave)
-            w.bind("<ButtonPress-1>", lambda e: self.show("press"))
-            w.bind("<ButtonRelease-1>", self.release)
-        self.set(text, on)
-
-    def inside(self, e):
-        """указатель над строкой (над ней или над её частями)"""
-        return self.row.winfo_containing(e.x_root, e.y_root) in self.parts
-
-    def leave(self, e):
-        if not self.inside(e):
-            self.show("normal")
-
-    def release(self, e):
-        if self.inside(e):
-            self.show("hover")
-            self.command()
-        else:
-            self.show("normal")
-
-    def show(self, state):
-        if not self.dot.winfo_exists():
-            return
-        self.state = state
-        self.photo = dot_image(self.dot, px(16), self.on, state)        # своя ссылка: кэш могут очистить
-        self.dot.config(image=self.photo)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFont(font(9))
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
     def set(self, text, on):
         """обновить на месте (без пересоздания панели: так щелчок срабатывает сразу)"""
-        self.on = on
-        style(self.text, fg="text" if on else "muted")
-        self.text.config(text=text)
-        self.show(self.state)
+        if (text, on) != (self.text, self.on):
+            self.text, self.on = text, on
+            self.updateGeometry()
+            self.update()
+
+    def sizeHint(self):
+        fm = QFontMetrics(self.font())
+        return QSize(px(4 + 8 + 16 + 7) + fm.horizontalAdvance(self.text), max(fm.height(), px(16)) + 2 * px(3))
+
+    def minimumSizeHint(self):
+        return QSize(px(40), self.sizeHint().height())
+
+    def show_state(self, state):
+        self.state = state
+        self.update()
+
+    def enterEvent(self, e):
+        self.show_state("hover")
+
+    def leaveEvent(self, e):
+        self.show_state("normal")
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.show_state("press")
+
+    def mouseReleaseEvent(self, e):
+        if e.button() != Qt.LeftButton:
+            return
+        if self.rect().contains(e.position().toPoint()):
+            self.show_state("hover")
+            self.command()
+        else:
+            self.show_state("normal")
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        h = self.height()
+        if self.c:
+            p.fillRect(0, 0, px(4), h, color(self.c))
+        size = px(16)
+        x, y = px(4 + 8), (h - size) / 2
+        fill, outline, tick = dot_colors(self.on, self.state)
+        w = max(1.0, size * 0.11)
+        p.setPen(QPen(outline, w) if not self.on else Qt.NoPen)
+        p.setBrush(fill)
+        p.drawEllipse(QRectF(x + w / 2, y + w / 2, size - w, size - w))
+        if tick is not None:
+            pen = QPen(tick, size * 0.12)
+            pen.setCapStyle(Qt.RoundCap)
+            pen.setJoinStyle(Qt.RoundJoin)
+            p.setPen(pen)
+            p.setBrush(Qt.NoBrush)
+            p.drawPolyline([QPointF(x + a * size, y + b * size) for a, b in ((0.28, 0.52), (0.44, 0.68), (0.73, 0.36))])
+        p.setPen(color("text" if self.on else "muted"))
+        p.setFont(self.font())
+        p.drawText(self.rect().adjusted(px(4 + 8 + 16 + 7), 0, 0, 0), Qt.AlignVCenter | Qt.AlignLeft, self.text)
 
 
 def color_family(c):
@@ -656,80 +589,108 @@ GROUPS = "_groups"                # [(подзаголовок системы, [
 NOTHING = "_nothing"              # надпись «ничего не найдено»
 
 
-class SearchBox:
+class SearchBox(QLineEdit):
     """строка поиска с подсказкой внутри (видна, пока поле пустое).
     on_change(текст) - при каждом изменении, on_enter(текст) - по Enter; Esc очищает поле"""
 
-    def __init__(self, parent, placeholder, text, on_change, on_enter):
-        self.var = tk.StringVar(value=text)
-        # плоская рамка цвета поля - внутренний отступ: и подсказка, и набранный текст не у самого края
-        self.entry = style(tk.Entry(parent, textvariable=self.var, relief="flat", bd=px(4), font=(FONT, 9), width=12,
-                                    highlightthickness=max(1, px(1))),
-                           bg="bg", fg="text", insertbackground="text", highlightbackground="border",
-                           highlightcolor="accent")
-        self.entry.pack(fill="x", ipady=px(1), pady=(0, px(6)))
-        self.hint = label(parent, placeholder, fg="muted", bg="bg", font=(FONT, 9), cursor="xterm")
-        self.hint.bind("<Button-1>", lambda e: self.entry.focus_set())
-        self.var.trace_add("write", lambda *a: self.changed(on_change))
-        self.entry.bind("<Return>", lambda e: on_enter(self.var.get()))
-        self.entry.bind("<Escape>", self.clear)
-        self.show_hint()
+    def __init__(self, placeholder, text, on_change, on_enter):
+        super().__init__(text)
+        self.setPlaceholderText(placeholder)
+        self.setFont(font(9))
+        self.textChanged.connect(on_change)
+        self.returnPressed.connect(lambda: on_enter(self.text()))
+        self.retheme()
 
-    def show_hint(self):
-        if self.var.get():
-            self.hint.place_forget()
-        else:
-            self.hint.place(in_=self.entry, x=px(5), rely=0.5, anchor="w")
+    def keyPressEvent(self, e):
+        """Esc очищает поле; пустое поле Esc не трогает - он закроет панель поверх окна"""
+        if e.key() == Qt.Key_Escape and self.text():
+            self.clear()
+            e.accept()
+            return
+        if e.key() == Qt.Key_Escape:
+            e.ignore()
+            return
+        super().keyPressEvent(e)
 
-    def changed(self, on_change):
-        self.show_hint()
-        on_change(self.var.get())
+    def retheme(self):
+        self.setStyleSheet("QLineEdit {background: %s; color: %s; border: %dpx solid %s; border-radius: %dpx;"
+                           " padding: %dpx %dpx; selection-background-color: %s; selection-color: %s}"
+                           " QLineEdit:focus {border-color: %s}"
+                           % (C["bg"], C["text"], max(1, px(1)), C["border"], px(6), px(3), px(6), C["accent"],
+                              C["on_accent"], C["accent"]))
+        pal = self.palette()
+        pal.setColor(QPalette.PlaceholderText, color("muted"))
+        self.setPalette(pal)
 
-    def clear(self, _e=None):
-        """очистить поле (Esc); "break" - чтобы Esc не закрыл заодно панель поверх окна"""
-        if self.var.get():
-            self.var.set("")
-            return "break"
+
+class ScrollArea(QScrollArea):
+    """прокручиваемый список: содержимое - в self.lay, высота растёт за ним, пока хватает места в окне,
+    а дальше список листается колесом, тачпадом или тонким ползунком справа"""
+
+    def __init__(self):
+        super().__init__()
+        self.setFrameShape(QFrame.NoFrame)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.inner = QWidget()
+        self.inner.setObjectName("scrollInner")
+        self.lay = vbox(self.inner)
+        self.lay.setContentsMargins(0, 0, px(8), 0)                  # место под ползунок - всегда
+        self.setWidget(self.inner)
+        self.viewport().setAutoFillBackground(False)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.retheme()
+
+    def sizeHint(self):
+        return QSize(self.inner.sizeHint().width(), self.inner.sizeHint().height())
+
+    def minimumSizeHint(self):
+        return QSize(self.inner.minimumSizeHint().width(), px(60))
+
+    def retheme(self):
+        w = px(4)
+        self.setStyleSheet("QScrollArea, QWidget#scrollInner {background: transparent}"
+                           " QScrollBar:vertical {background: transparent; width: %dpx; margin: 0}"
+                           " QScrollBar::handle:vertical {background: %s; border-radius: %dpx; min-height: %dpx}"
+                           " QScrollBar::add-line, QScrollBar::sub-line {height: 0}"
+                           " QScrollBar::add-page, QScrollBar::sub-page {background: transparent}"
+                           % (w, C["muted"], w // 2, px(16)))
+
+    def refit(self):
+        self.updateGeometry()
 
 
 def filter_organs(buttons, visible):
     """оставить в списке органов панели слоёв только visible (и подзаголовки систем, где они есть);
     если не осталось ничего - надпись «ничего не найдено». Порядок прежний"""
-    for head, keys in buttons[GROUPS]:
-        head.pack_forget()
-        for k in keys:
-            buttons[k].row.pack_forget()
-    buttons[NOTHING].pack_forget()
     first = True
     for head, keys in buttons[GROUPS]:
         shown = [k for k in keys if k in visible]
-        if not shown:
-            continue
-        head.pack(fill="x", padx=(px(2), 0), pady=(0 if first else px(5), px(1)))
-        first = False
-        for k in shown:
-            buttons[k].row.pack(fill="x", pady=(0, px(1)))
-    if first:
-        buttons[NOTHING].pack(fill="x", padx=(px(2), 0))
-    buttons[ORGANS_LIST].yview_moveto(0)
+        head.setVisible(bool(shown))
+        for k in keys:
+            buttons[k].setVisible(k in visible)
+        if shown:
+            first = False
+    buttons[NOTHING].setVisible(first)
+    area = buttons[ORGANS_LIST]
+    area.refit()
+    area.verticalScrollBar().setValue(0)
 
 
 def show_all_button(buttons, visible):
     """показать или спрятать кнопку «Показать всё», не пересоздавая панель"""
-    b = buttons[SHOW_ALL]
-    if visible and not b.winfo_manager():
-        b.pack(side="right")
-    elif not visible and b.winfo_manager():
-        b.pack_forget()
+    buttons[SHOW_ALL].setVisible(visible)
 
 
-def header(box, title, button, top):
+def header(lay, title, button, top):
     """заголовок раздела панели с маленькой кнопкой справа; button - (текст, функция)"""
-    head = frame(box)
-    head.pack(fill="x", pady=(top, px(4)))
-    label(head, title.upper(), fg="muted", font=(FONT, 9, "bold"), anchor="w").pack(side="left")
-    b = flat_button(head, button[0], button[1])
-    b.config(font=(FONT, 8, "bold"), padx=px(6), pady=0)
+    row = hbox()
+    row.addWidget(label(title.upper(), "muted", 9, bold=True, wrap=False))
+    row.addStretch(1)
+    b = flat_button(button[0], button[1], size=8, padx=6, pady=0)
+    row.addWidget(b)
+    put(lay, row, top=top, bottom=4, x=0)
     return b
 
 
@@ -742,39 +703,51 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     search - (подсказка, текст, on_change, on_enter, «ничего не найдено») строки поиска над списком органов.
     Кнопки - в строках заголовков, а список органов листается: низ панели может не поместиться в окно.
     Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL,
-    ScrollArea списка органов под ORGANS_LIST (её высоту ограничивает окно: set_limit), строку поиска
-    под SEARCH и всё нужное для filter_organs."""
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
-    bar(card, "accent")
-    box = frame(card)
-    box.pack(fill="x", padx=px(12), pady=(0, px(10)))
-    buttons = {SHOW_ALL: header(box, title, show_all, px(8))}
+    ScrollArea списка органов под ORGANS_LIST, строку поиска под SEARCH и всё нужное для filter_organs."""
+    lay = card.lay
+    clear(lay)
+    bar(lay, "accent")
+    box = vbox()
+    put(lay, box, bottom=10, x=12)
+    buttons = {SHOW_ALL: header(box, title, show_all, 8)}
     show_all_button(buttons, show_all[2])
     for key, text, on in layers:
-        buttons[key] = Toggle(box, text, on, lambda k=key: on_layer(k))
-    buttons[ORGANS_ALL] = header(box, organs_title, organs_all, px(8))
-    buttons[ORGANS_ALL].pack(side="right")
+        buttons[key] = Toggle(text, on, lambda k=key: on_layer(k))
+        box.addWidget(buttons[key])
+        box.addSpacing(px(1))
+    buttons[ORGANS_ALL] = header(box, organs_title, organs_all, 8)
     if search:
-        buttons[SEARCH] = SearchBox(box, *search[:4])
-    area = buttons[ORGANS_LIST] = ScrollArea(box, scope=card)            # листается над всей панелью
-    area.outer.pack(fill="x")
+        buttons[SEARCH] = SearchBox(*search[:4])
+        box.addWidget(buttons[SEARCH])
+        box.addSpacing(px(6))
+    area = buttons[ORGANS_LIST] = ScrollArea()
+    box.addWidget(area, 1)
     buttons[GROUPS] = []
     for i, (system, organs) in enumerate(groups):
-        head = label(area.inner, system, fg="muted", font=(FONT, 8), anchor="w")
-        head.pack(fill="x", padx=(px(2), 0), pady=(px(5) if i else 0, px(1)))
-        for key, text, color, on in organs:
-            buttons[key] = Toggle(area.inner, text, on, lambda k=key: on_organ(k), color=color)
+        head = label(system, "muted", 8, wrap=False)
+        if i:
+            area.lay.addSpacing(px(5))
+        area.lay.addWidget(head)
+        area.lay.addSpacing(px(1))
+        for key, text, c, on in organs:
+            buttons[key] = Toggle(text, on, lambda k=key: on_organ(k), c=c)
+            area.lay.addWidget(buttons[key])
+            area.lay.addSpacing(px(1))
         buttons[GROUPS].append((head, [k for k, *_ in organs]))
-    buttons[NOTHING] = label(area.inner, search[4] if search else "", fg="muted", font=(FONT, 9), anchor="w")
+    buttons[NOTHING] = label(search[4] if search else "", "muted", 9)
+    buttons[NOTHING].hide()
+    area.lay.addWidget(buttons[NOTHING])
+    area.lay.addStretch(1)
     return buttons
 
 
+# --- карточка настройки викторины
+
 def setup_button(b, text, command, selected, enabled):
     """кнопка варианта на карточке настройки: текст, действие, выбрана ли, доступна ли"""
-    style(b, disabledforeground="muted")
-    b.config(text=text, command=command, state="normal" if enabled else "disabled", cursor="hand2" if enabled else "")
+    b.setText(text)
+    b.set_command(command)
+    b.setEnabled(enabled)
     set_button_bg(b, "accent" if selected else "card")
 
 
@@ -794,56 +767,54 @@ def fill_setup(card, title, desc, rows, start_text, on_start, history_title, his
                for text, value, enabled in options] + [(start_text, on_start, None, True)]
     shape = [(len(options), bool(hint), vertical) for _h, options, _s, _p, hint, vertical in rows] + [len(history)]
     old = getattr(card, "setup", None)
-    if old and old[0] == shape and all(w.winfo_exists() for w in old[1] + old[2]):
+    if old and old[0] == shape and all(alive(w) and w.parentWidget() is card for w in old[1] + old[2]):
         for w, text in zip(old[1], texts):
-            w.config(text=text)
+            w.setText(text)
         for b, (text, command, selected, enabled) in zip(old[2], choices):
             if selected is None:                                        # «Начать»
-                b.config(text=text, command=command)
+                b.setText(text)
+                b.set_command(command)
             else:
                 setup_button(b, text, command, selected, enabled)
         return
-    for w in card.winfo_children():
-        w.destroy()
-    refit(card)
+    lay = card.lay
+    clear(lay)
     labels, buttons = [], []
-    wrap = px(300)
-    bar(card, "accent")
-    labels.append(label(card, title, font=(FONT, 15, "bold"), anchor="w"))
-    labels[-1].pack(fill="x", padx=px(16), pady=(px(10), 0))
-    labels.append(label(card, desc, fg="muted", font=(FONT, 11), justify="left", anchor="w", wraplength=wrap))
-    labels[-1].pack(fill="x", padx=px(16), pady=(0, px(4)))
+    bar(lay, "accent")
+    labels.append(put(lay, label(title, size=15, bold=True), top=10))
+    labels.append(put(lay, label(desc, "muted"), bottom=4))
     for head, options, _selected, _on_pick, hint, vertical in rows:
-        labels.append(heading(card, head))
-        line = frame(card)
-        line.pack(fill="x", padx=px(16))
+        labels.append(heading(lay, head))
         cols = vertical if isinstance(vertical, int) and vertical > 1 else 0          # True - тоже int (1)
-        for c in range(cols):
-            line.columnconfigure(c, weight=1, uniform="col")
+        if cols:
+            line = QGridLayout()
+            line.setContentsMargins(0, 0, 0, 0)
+            line.setHorizontalSpacing(px(6))
+            line.setVerticalSpacing(px(6))
+            for c in range(cols):
+                line.setColumnStretch(c, 1)
+        elif vertical:
+            line = vbox(spacing=3)
+        else:
+            line = hbox(spacing=6)
         for i in range(len(options)):
             text, command, selected, enabled = choices[len(buttons)]
-            b = flat_button(line, text, command, anchor="w" if vertical else "center")
+            b = flat_button(text, command, anchor="w" if vertical else "center",
+                            padx=10 if not vertical else 14, pady=4 if vertical else 6)
             setup_button(b, text, command, selected, enabled)
             buttons.append(b)
             if cols:
-                b.config(pady=px(4))
-                b.grid(row=i // cols, column=i % cols, sticky="ew",
-                       padx=(px(3) if i % cols else 0, 0 if i % cols == cols - 1 else px(3)),
-                       pady=(px(3) if i >= cols else 0, 0))
-            elif vertical:
-                b.config(pady=px(4))
-                b.pack(fill="x", pady=(px(3) if i else 0, 0))
+                line.addWidget(b, i // cols, i % cols)
             else:
-                b.config(padx=px(10))
-                b.pack(side="left", padx=(px(6) if i else 0, 0))
+                line.addWidget(b)
+        if not vertical:
+            line.addStretch(1)
+        put(lay, line)
         if hint:
-            labels.append(label(card, hint, fg="muted", font=(FONT, 9), justify="left", anchor="w", wraplength=wrap))
-            labels[-1].pack(fill="x", padx=px(16), pady=(px(4), 0))
-    buttons.append(flat_button(card, start_text, on_start, bg="accent"))
-    buttons[-1].pack(fill="x", padx=px(16), pady=(px(12), px(2)))
-    labels.append(heading(card, history_title))
+            labels.append(put(lay, label(hint, "muted", 9), top=4))
+    buttons.append(put(lay, flat_button(start_text, on_start, bg="accent"), top=12, bottom=2))
+    labels.append(heading(lay, history_title))
     for line in history:
-        labels.append(label(card, line, fg="muted", font=(FONT, 10), justify="left", anchor="w", wraplength=wrap))
-        labels[-1].pack(fill="x", padx=px(16))
-    frame(card, height=px(10)).pack()
+        labels.append(put(lay, label(line, "muted", 10)))
+    spacer(lay, 10)
     card.setup = (shape, labels, buttons)

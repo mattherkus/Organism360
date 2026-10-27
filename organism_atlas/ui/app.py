@@ -1,55 +1,153 @@
-"""Главное окно: схема тела, наведение, карточка органа, панель слоёв с поиском органа, режим «Изучать»
+"""Главное окно (Qt): схема тела, наведение, карточка органа, панель слоёв с поиском органа, режим «Изучать»
 с экскурсиями по системам органов и четыре викторины: «Найди орган», «Угадай название», «Угадай по факту»
 и «Вперемешку» (со сложностью, таймером, длиной игры, темой и повторением ошибок).
-Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя."""
+Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя.
+Схема рисуется в пикселях экрана: на экране с масштабом 150 % она в полтора раза подробнее, а не растянута."""
 
 import math
 import queue
 import threading
 import time
-import tkinter as tk
 import traceback
 
-from PIL import Image, ImageTk
+from PySide6.QtCore import QRectF, QSize, Qt, QTimer
+from PySide6.QtGui import QPainter
+from PySide6.QtWidgets import QApplication, QFrame, QLineEdit, QScrollArea, QSizePolicy, QWidget
 
 from .. import achievements, i18n, progress, settings, theme, tours
 from ..atlas import Atlas
 from ..body.base import BODY_LAYERS, DEFAULT_LAYERS
-from ..config import FONT
 from ..geometry import H, W
 from ..i18n import t
 from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex, search
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
-from ..theme import C, style
 from . import overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
-from .widgets import (ORGANS_ALL, ORGANS_LIST, SEARCH, by_color, fill_card, fill_layers, fill_question, fill_setup,
-                      fill_start, fill_tour, filter_organs, flat_button, frame, label, rounded_card, set_button_bg,
-                      show_all_button)
+from .widgets import (ORGANS_ALL, SEARCH, alive, by_color, color, fill_card, fill_layers, fill_question, fill_setup,
+                      fill_start, fill_tour, filter_organs, flat_button, font, hbox, label, mark, qimage, retheme,
+                      rounded_card, set_button_bg, show_all_button, vbox)
 
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
 
 
-class App:
-    def __init__(self, root, ui_scale=1.0, quality="medium"):
+def timer(parent, fn, ms=None):
+    """однократный таймер: start(мс) - вызвать fn через столько-то, stop() - отменить, isActive() - ждёт ли"""
+    tm = QTimer(parent)
+    tm.setSingleShot(True)
+    tm.timeout.connect(fn)
+    if ms is not None:
+        tm.setInterval(ms)
+    return tm
+
+
+class SchemeView(QWidget):
+    """схема тела: картинки в пикселях экрана (масштаб Z подобран под них) и поверх - кусок анимации,
+    подсветка органа-вопроса, органа под курсором и вспышка ответа, подсказка с названием и надпись
+    «рисуется»/«перерисовывается». Координаты мыши передаются окну в пикселях схемы"""
+
+    def __init__(self, app):
+        super().__init__()
+        self.app = app
+        self.base = None                # QImage схемы (пока чёткая не готова - прежняя, растягивается)
+        self.layers = {"anim": None, "target": None, "hover": None, "flash": None}   # (QImage, x, y) или None
+        self.tip = None                 # (x, y, текст) в логических пикселях
+        self.message = None             # (текст, внизу ли) - «Рисуется схема...» или «перерисовывается»
+        self.setMouseTracking(True)
+
+    def dpr(self):
+        return self.devicePixelRatioF()
+
+    def show_layer(self, name, item):
+        """item - (QImage, (x, y)) в пикселях схемы или None - спрятать"""
+        self.layers[name] = None if item is None else (item[0], item[1][0], item[1][1])
+        self.update()
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.fillRect(self.rect(), color("bg"))
+        d = self.dpr()
+        if self.base is not None:
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.drawImage(QRectF(self.rect()), self.base)
+            if self.app.ready():
+                for name in ("anim", "target", "hover", "flash"):
+                    item = self.layers[name]
+                    if item is not None:
+                        im, x, y = item
+                        p.drawImage(QRectF(x / d, y / d, im.width() / d, im.height() / d), im)
+        if self.tip:
+            x, y, text = self.tip
+            p.setFont(font(10, bold=True))
+            fm = p.fontMetrics()
+            w, h = fm.horizontalAdvance(text) + 10, fm.height() + 4
+            x, y = x + 14, y + 14
+            x -= max(0, x + w + 6 - self.width())         # не даём подсказке вылезти за край схемы
+            p.setPen(color("border"))
+            p.setBrush(color("tip_bg"))
+            p.drawRect(QRectF(x, y, w, h))
+            p.setPen(color("tip_fg"))
+            p.drawText(QRectF(x, y, w, h), Qt.AlignCenter, text)
+        if self.message:
+            text, bottom = self.message
+            p.setPen(color("muted"))
+            p.setFont(font(9 if bottom else 12))
+            r = self.rect().adjusted(0, 0, 0, -px(6)) if bottom else self.rect()
+            p.drawText(r, (Qt.AlignBottom | Qt.AlignHCenter) if bottom else Qt.AlignCenter, text)
+
+    def mouseMoveEvent(self, e):
+        d = self.dpr()
+        self.app.on_move(e.position().x() * d, e.position().y() * d)
+
+    def leaveEvent(self, _e):
+        self.app.on_leave()
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.app.setFocus()                          # стрелки и цифры - снова окну, а не строке поиска
+            d = self.dpr()
+            self.app.on_click(e.position().x() * d, e.position().y() * d)
+
+
+class Stage(QWidget):
+    """место под схему, которое растягивается вместе с окном; схема - по центру сверху"""
+
+    def __init__(self, app, view):
+        super().__init__()
+        self.app, self.view = app, view
+        view.setParent(self)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+    def place(self):
+        v = self.view
+        v.move(max(0, (self.width() - v.width()) // 2), 0)
+
+    def sizeHint(self):                                  # раскладка окна при запуске - под размер схемы
+        return self.view.size()
+
+    def minimumSizeHint(self):
+        return QSize(px(200), px(200))
+
+    def resizeEvent(self, e):
+        self.place()
+        self.app.on_resize()
+
+
+class App(QWidget):
+    def __init__(self, ui_scale=1.0, quality="medium"):
         """ui_scale - множитель масштаба из настроек (действует с запуска), quality - качество 3D"""
-        self.root = root
-        dpi = root.winfo_fpixels("1i")
+        super().__init__()
+        self.host = self                       # панели (настройки, итоги, 3D) открываются поверх этого окна
         self.ui_scale = self.pending_scale = ui_scale     # pending - выбрано в настройках до перезапуска
-        if ui_scale != 1.0:
-            root.tk.call("tk", "scaling", dpi / 72.0 * ui_scale)      # шрифты в пунктах тоже крупнее
-        set_scale(max(1.0, dpi / 96.0) * ui_scale)
+        set_scale(ui_scale)
         self.quality = quality
         set_quality(quality)
-        style(root, bg="bg")
-        titlebar.set_icon(root)
-        titlebar.paint(root)
+        titlebar.set_icon(QApplication.instance())
         self.mode = "study"                    # study или режим викторины из quiz.MODES
         self.session = None                    # QuizSession во время игры (None - на карточке настройки)
         saved = settings.load()
@@ -58,11 +156,9 @@ class App:
                     "length": settings.get(saved, "quiz_length"), "topic": None, "set": "all"}
         self.body = settings.get(saved, "body")   # схема тела: female или male (органы малого таза)
         self.animation = settings.get(saved, "animation")      # on - сердце бьётся, лёгкие дышат
-        self.anim_job = self.anim_photo = None
         self.qset = "all"                      # набор вопросов текущей игры (для истории)
-        self.timer_job = None
         self.atlas, self.cur = None, None
-        self.photos, self.flash_job, self.next_job = {}, None, None
+        self.photos = {}                       # {(орган, вид подсветки): (QImage, (x, y))}
         self.choices = {}                      # {ключ органа: кнопка} в режиме «Угадай название»
         self.progress = None                   # метка «Вопрос N из M · Ошибок: K» в карточке
         self.feedback = None                   # (ключ текста, орган, цвет[, вопрос]) - отзыв о прошлом ответе
@@ -71,7 +167,6 @@ class App:
         self.card_fn = self.status_fn = None
         self.built = queue.Queue()
         self.building = False                  # в фоне рисуется схема (при запуске или под новый размер окна)
-        self.resize_job = None
         self.layers = set(DEFAULT_LAYERS)      # видимые слои тела (мышцы включают в панели)
         self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
         self.query = ""                        # строка поиска органа в панели слоёв
@@ -79,82 +174,126 @@ class App:
         self.tour = None                       # (экскурсия, шаг): 0 - вступление, 1..n - органы, n + 1 - конец
         self.paused = None                     # экскурсия, прерванная щелчком по органу: к ней можно вернуться
         self.new_achievements, self.streak = [], 0        # для итогов игры: новые достижения и серия дней
+        self.toggles = {}
+        # отложенные действия
+        self.flash_timer = timer(self, self.unflash, 500)
+        self.next_timer = timer(self, self.next_question, 700)
+        self.tick_timer = timer(self, self.tick, 250)
+        self.resize_timer = timer(self, self.start_build, 400)
+        self.results_timer = timer(self, self.show_results, 600)
+        self.anim_timer = timer(self, self.animate)
+        self.build_timer = QTimer(self)
+        self.build_timer.timeout.connect(self.poll_build)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAutoFillBackground(False)
 
-        top = self.top = frame(root, "bg")
-        top.pack(fill="x", padx=24, pady=(18, 0))
-        left = frame(top, "bg")
-        self.title = label(left, "", bg="bg", font=(FONT, 20, "bold"))
-        self.title.pack(anchor="w")
-        # статус - отдельной строкой: длинный текст не должен теснить кнопки режимов
-        self.status = label(root, "", bg="bg", font=(FONT, 11, "bold"), anchor="w")
-        self.status.pack(fill="x", padx=24, pady=(8, 0))
-        self.settings_button = flat_button(top, "", lambda: show_settings(self))
-        self.settings_button.pack(side="right", anchor="n", padx=(12, 0))
-        self.ach_button = flat_button(top, "", lambda: show_achievements(root))
-        self.ach_button.pack(side="right", anchor="n", padx=(12, 0))
-        langs = frame(top, "bg")                           # переключатель языка, справа от режимов
-        langs.pack(side="right", anchor="n", padx=(20, 0))
-        self.lang_buttons = {}
-        for i, code in enumerate(i18n.available()):
-            b = flat_button(langs, i18n.short_name(code), lambda c=code: self.set_lang(c))
-            b.config(padx=px(8))
-            b.pack(side="left", padx=(4 if i else 0, 0))
-            self.lang_buttons[code] = b
-        btns = frame(top, "bg")
-        btns.pack(side="right", anchor="n")
-        self.mode_buttons = {mode: flat_button(btns, "", lambda m=mode: self.set_mode(m))
-                             for mode in ("study",) + MODES}
+        root = vbox(self, margins=(24, 18, 24, 0))
+        top = hbox()
+        self.title = label("", size=20, bold=True, wrap=False)
+        top.addWidget(self.title)
+        top.addStretch(1)
+        self.mode_buttons = {mode: flat_button("", lambda m=mode: self.set_mode(m)) for mode in ("study",) + MODES}
         for i, b in enumerate(self.mode_buttons.values()):
-            b.pack(side="left", padx=(8 if i else 0, 0))
-        left.pack(side="left")                              # последним: в узком окне теснится заголовок
-        root.bind("<Key>", self.on_key)
+            top.addSpacing(px(8) if i else 0)
+            top.addWidget(b, 0, Qt.AlignTop)
+        top.addSpacing(px(20))
+        self.lang_buttons = {}                             # переключатель языка, справа от режимов
+        for i, code in enumerate(i18n.available()):
+            b = flat_button(i18n.short_name(code), lambda c=code: self.set_lang(c), padx=8)
+            top.addSpacing(px(4) if i else 0)
+            top.addWidget(b, 0, Qt.AlignTop)
+            self.lang_buttons[code] = b
+        self.ach_button = flat_button("", lambda: show_achievements(self))
+        top.addSpacing(px(12))
+        top.addWidget(self.ach_button, 0, Qt.AlignTop)
+        self.settings_button = flat_button("", lambda: show_settings(self))
+        top.addSpacing(px(12))
+        top.addWidget(self.settings_button, 0, Qt.AlignTop)
+        self.top_bar = top
+        root.addLayout(top)
+        # статус - отдельной строкой: длинный текст не должен теснить кнопки режимов
+        self.status = label("", size=11, bold=True)
+        root.addSpacing(px(8))
+        root.addWidget(self.status)
 
-        body = frame(root, "bg")
-        body.pack(fill="both", expand=True, padx=24, pady=10)
-        body.rowconfigure(0, weight=1)
-        body.columnconfigure(1, weight=1)                   # лишнее место при растягивании окна - схеме
-        body.columnconfigure(2, minsize=px(340))
-        self.panel_box, self.panel = rounded_card(body)     # панель слоёв: рамка для grid и место для содержимого
-        self.panel_box.grid(row=0, column=0, sticky="nw", padx=(0, 10), pady=(10, 0))
-        body.bind("<Configure>", lambda e: self.fit_panel())
-        self.want_Z = pick_zoom(root)                       # масштаб схемы под текущий размер окна
-        self.cw, self.ch = int(math.ceil(W * self.want_Z)), int(math.ceil(H * self.want_Z))
-        # схема по центру «сцены», которая растягивается вместе с окном
-        self.stage = frame(body, "bg", width=self.cw, height=self.ch)
-        self.stage.grid(row=0, column=1, sticky="nsew", padx=10)
-        self.c = style(tk.Canvas(self.stage, width=self.cw, height=self.ch, highlightthickness=0), bg="bg")
-        self.c.place(relx=0.5, y=0, anchor="n")
-        self.stage.bind("<Configure>", self.on_resize)
-        self.card_box, self.card = rounded_card(body)
-        self.card_box.grid(row=0, column=2, sticky="new", padx=(10, 0), pady=(10, 0))
-        self.c.create_text(self.cw // 2, self.ch // 2, fill=C["muted"], font=(FONT, 12), tags="loading")
+        body = hbox()
+        root.addSpacing(px(10))
+        root.addLayout(body, 1)
+        root.addSpacing(px(10))
+        left = vbox()
+        self.panel = rounded_card()                        # панель слоёв; в викторине место за ней остаётся
+        sp = self.panel.sizePolicy()
+        sp.setRetainSizeWhenHidden(True)
+        self.panel.setSizePolicy(sp)
+        self.panel.setFixedWidth(px(214))
+        left.addSpacing(px(10))
+        left.addWidget(self.panel)
+        left.addStretch(1)
+        body.addLayout(left)
+        body.addSpacing(px(20))
+        self.view = SchemeView(self)
+        self.stage = Stage(self, self.view)
+        body.addWidget(self.stage, 1)
+        body.addSpacing(px(20))
+        # карточка справа листается, если она выше окна
+        self.card = rounded_card()
+        self.card_area = QScrollArea()
+        self.card_area.setFrameShape(QFrame.NoFrame)
+        self.card_area.setWidgetResizable(True)
+        self.card_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        holder = QWidget()
+        holder.setObjectName("scrollInner")
+        self.card_area.setStyleSheet("QScrollArea, QWidget#scrollInner {background: transparent}")
+        hl = vbox(holder)
+        hl.addSpacing(px(10))
+        hl.addWidget(self.card)
+        hl.addStretch(1)
+        self.card_area.setWidget(holder)
+        body.addWidget(self.card_area)
+
+        self.want_Z = None                                 # масштаб схемы под текущий размер окна
         self.set_status(lambda: t("hint"))
         self.set_card(self.empty_card)
         self.retranslate()
-        self.fix_window_size()           # схема начнёт рисоваться, когда окно покажется (on_resize)
-        self.anim_job = root.after(ANIM_MS, self.animate)
+        self.fix_card_width()
+        self.fit_window()
+        self.view.message = (t("loading"), False)
+        self.anim_timer.start(ANIM_MS)
 
-    def fix_window_size(self):
-        """задать размер окна один раз: иначе Tk растягивает его под каждую новую карточку, а за окном
-        менялся бы и масштаб схемы. Высота - с запасом под самую высокую карточку (настройка викторины)"""
-        root, mode = self.root, self.mode
-        # ширина карточки - один раз, по самой широкой (настройка викторины): иначе при смене режима
-        # колонка раздвигалась бы, а схема сдвигалась и меняла масштаб
-        wide = px(340)
+    def fix_card_width(self):
+        """ширина карточки справа - один раз, по самой широкой (настройка викторины): иначе при смене режима
+        колонка раздвигалась бы, а схема сдвигалась и меняла масштаб"""
+        mode, wide = self.mode, px(340)
         for self.mode in MODES:
             self.render_setup()
-            root.update_idletasks()
-            wide = max(wide, self.card.winfo_reqwidth() + 2 * self.card_box.pad)
+            self.card.layout().activate()
+            wide = max(wide, self.card.minimumSizeHint().width())
         self.mode = mode
-        self.card_box.fixed = wide
-        self.card_box.fit()
-        root.update_idletasks()
-        h = root.winfo_reqheight() + px(40)                 # запас на строки истории игр
         self.card_fn()
-        root.update_idletasks()
-        h = min(max(h, root.winfo_reqheight()), int(0.92 * root.winfo_screenheight()))
-        root.geometry("%dx%d" % (root.winfo_reqwidth(), h))
-        root.minsize(self.top.winfo_reqwidth() + px(48), px(520))      # уже верхней панели окно не сжать
+        self.card.setFixedWidth(wide)
+        self.card_area.setFixedWidth(wide + px(12))
+
+    def fit_window(self):
+        """размер окна при запуске: схема как можно крупнее, но окно целиком на экране"""
+        screen = (self.screen() or QApplication.primaryScreen()).availableGeometry()
+        dpr = self.devicePixelRatioF()
+        Z = pick_zoom(screen.width(), screen.height(), dpr)
+        cw, ch = math.ceil(W * Z / dpr), math.ceil(H * Z / dpr)
+        self.view.setFixedSize(cw, ch)
+        self.layout().activate()
+        hint = self.sizeHint()
+        self.view.setMinimumSize(1, 1)
+        self.view.setMaximumSize(16777215, 16777215)
+        w = min(hint.width(), int(0.96 * screen.width()))
+        h = min(max(hint.height(), ch + px(150)), int(0.92 * screen.height()))
+        self.resize(w, h)
+        self.setMinimumSize(min(self.top_bar.minimumSize().width() + px(48), screen.width()), px(520))
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        titlebar.paint(self)
+        self.setFocus()
+        self.on_resize()                                 # схема начинает рисоваться, когда окно на экране
 
     # --- язык и настройки
     def set_lang(self, code):
@@ -166,10 +305,9 @@ class App:
         """сменить тему на лету: перекрасить все окна, а карточки и тексты перерисовать"""
         theme.set_theme(name)
         settings.save(theme=theme.current())
-        theme.repaint(self.root)
-        titlebar.set_icon(self.root)
-        titlebar.paint_all(self.root)
-        self.c.itemconfigure("loading", fill=C["muted"])
+        retheme()
+        titlebar.set_icon(QApplication.instance())
+        titlebar.paint(self)
         if self.atlas:
             self.paint_base()
         rerender_all()
@@ -183,8 +321,8 @@ class App:
     def set_animation(self, value):
         self.animation = value
         settings.save(animation=value)
-        if value != "on" and self.atlas is not None:
-            self.c.itemconfigure(self.anim_item, state="hidden")
+        if value != "on":
+            self.view.show_layer("anim", None)
 
     def organs(self):
         """органы на схеме: без органов другого пола"""
@@ -213,29 +351,30 @@ class App:
 
     def retranslate(self):
         """переписать все тексты на текущем языке, не сбрасывая режим и вопрос викторины"""
-        self.root.title(t("app_title"))
-        self.title.config(text=t("app_title"))
-        self.settings_button.config(text="⚙  " + t("settings_button"))
-        self.ach_button.config(text=achievements_text())
+        self.setWindowTitle(t("app_title"))
+        self.title.setText(t("app_title"))
+        self.settings_button.setText("⚙  " + t("settings_button"))
+        self.ach_button.setText(achievements_text())
         for mode, b in self.mode_buttons.items():
-            b.config(text=t("mode_" + mode))
+            b.setText(t("mode_" + mode))
         self.update_buttons()
-        self.c.itemconfigure("loading", text=t("loading"))
-        self.c.itemconfigure("rescale", text=t("rescaling"))
-        self.c.delete("tip")
+        if self.view.message:
+            self.view.message = (t("rescaling") if self.view.message[1] else t("loading"), self.view.message[1])
+        self.view.tip = None
         self.render_layers()
-        self.status.config(text=self.status_fn())
+        self.status.setText(self.status_fn())
         self.card_fn()
         retranslate_all()
         refresh_settings()
 
     def set_status(self, fn):
         self.status_fn = fn
-        self.status.config(text=fn())
+        self.status.setText(fn())
 
     def set_card(self, fn):
         self.card_fn = fn
         fn()
+        self.card_area.verticalScrollBar().setValue(0)
 
     def empty_card(self):
         fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
@@ -248,8 +387,8 @@ class App:
 
     def start_build(self):
         """нарисовать схему в масштабе want_Z (из кэша, если есть); одновременно строится одна"""
-        self.resize_job = None
-        if self.building or self.ready():
+        self.resize_timer.stop()
+        if self.building or self.ready() or self.want_Z is None:
             return
         self.building = True
         Z = self.want_Z
@@ -261,95 +400,73 @@ class App:
                 self.built.put((Z, ex))
 
         threading.Thread(target=work, daemon=True).start()
-        self.root.after(50, self.poll_build)
+        self.build_timer.start(50)
 
     def poll_build(self):
         try:
             _Z, res = self.built.get_nowait()
         except queue.Empty:
-            self.root.after(50, self.poll_build)
             return
+        self.build_timer.stop()
         self.building = False
         if isinstance(res, Exception):
             traceback.print_exception(type(res), res, res.__traceback__)
             if self.atlas is None:
-                self.c.itemconfigure("loading", text=t("build_error", error=res))
-                self.c.dtag("loading", "loading")         # чтобы смена языка не затёрла ошибку
+                self.view.message = (t("build_error", error=res), False)
+                self.view.update()
             return                                      # под новый размер не вышло: остаётся растянутая
-        first = self.atlas is None
-        if not first:
+        if self.atlas is not None:
             self.drop_photos()                          # подсветка прежнего масштаба больше не подходит
         self.atlas = res
         self.atlas.set_layers(self.layers)
         self.atlas.set_hidden(self.hidden_now())
-        if first:
-            self.c.delete("loading")
-            self.base_img = self.c.create_image(0, 0, anchor="nw")
-            self.anim_item = self.c.create_image(0, 0, anchor="nw", state="hidden")     # сердце и лёгкие
-            self.tg = self.c.create_image(0, 0, anchor="nw", state="hidden")      # орган-вопрос
-            self.hov = self.c.create_image(0, 0, anchor="nw", state="hidden")
-            self.fl = self.c.create_image(0, 0, anchor="nw", state="hidden")
-            self.c.bind("<Motion>", self.on_move)
-            self.c.bind("<Leave>", self.on_leave)
-            self.c.bind("<Button-1>", self.on_click)
         self.paint_base()
-        self.c.tag_raise("rescale")
         if not self.ready():                            # пока рисовали, окно снова поменяло размер
             self.start_build()
             return
-        self.c.delete("rescale")
+        self.view.message = None
+        self.view.update()
         self.show_target()                              # если режим включили, пока схема строилась
 
     def paint_base(self):
         """схема тела на фоне текущей темы"""
-        self.atlas.set_background(C["scene_bg"], C["scene_hi"])
+        self.atlas.set_background(theme.C["scene_bg"], theme.C["scene_hi"])
         self.show_base()
 
     def show_base(self):
-        """показать готовую схему; пока чёткая под новый размер не готова - растянуть имеющуюся"""
-        im = self.atlas.base
-        if not self.ready():
-            im = im.resize((self.cw, self.ch), Image.BILINEAR)
-        self.base_photo = ImageTk.PhotoImage(im)
-        self.c.itemconfigure(self.base_img, image=self.base_photo)
+        """показать готовую схему (если масштаб уже другой - растянутой, пока не нарисуется чёткая)"""
+        self.view.base = qimage(self.atlas.base)
+        self.view.update()
 
     # --- анимация: сердце бьётся, лёгкие дышат
     def animate(self):
         """раз в ANIM_MS: кусок схемы с сердцем и лёгкими в текущий момент поверх неподвижной схемы.
         Не рисуем, пока анимация выключена, схема перерисовывается под новый размер, поверх открыта
         панель (настройки, итоги, 3D) или окно свёрнуто - тогда проверяем реже"""
-        self.anim_job = None
-        if not self.root.winfo_exists():
-            return
-        live = (self.animation == "on" and self.ready() and overlay.top(self.root) is None
-                and self.root.state() != "iconic")
+        live = (self.animation == "on" and self.ready() and overlay.top(self) is None and not self.isMinimized())
         frame = self.atlas.anim_frame(time.monotonic()) if live else None
         if frame is None:
-            if self.atlas is not None:
-                self.c.itemconfigure(self.anim_item, state="hidden")
-            self.anim_job = self.root.after(ANIM_IDLE_MS, self.animate)
+            self.view.show_layer("anim", None)
+            self.anim_timer.start(ANIM_IDLE_MS)
             return
-        im, (x, y) = frame
-        if self.anim_photo is not None and (self.anim_photo.width(), self.anim_photo.height()) == im.size:
-            self.anim_photo.paste(im)                   # в готовую картинку: быстрее, чем новая
-        else:
-            self.anim_photo = ImageTk.PhotoImage(im)
-            self.c.itemconfigure(self.anim_item, image=self.anim_photo)
-        self.c.coords(self.anim_item, x, y)
-        self.c.itemconfigure(self.anim_item, state="normal")
-        self.anim_job = self.root.after(ANIM_MS, self.animate)
+        im, pos = frame
+        self.view.show_layer("anim", (qimage(im), pos))
+        self.anim_timer.start(ANIM_MS)
 
     # --- размер окна
     def set_zoom(self, Z):
-        """новый масштаб схемы: холст под него сразу, сама схема - когда дорисуется"""
+        """новый масштаб схемы: место под неё сразу, сама схема - когда дорисуется"""
         self.want_Z = Z
-        self.cw, self.ch = int(math.ceil(W * Z)), int(math.ceil(H * Z))
-        self.c.config(width=self.cw, height=self.ch)
-        self.c.coords("loading", self.cw // 2, self.ch // 2)
+        d = self.view.dpr()
+        self.view.setFixedSize(math.ceil(W * Z / d), math.ceil(H * Z / d))
+        self.stage.place()
 
-    def on_resize(self, e):
+    def on_resize(self):
         """окно поменяло размер: схема сразу растягивается, а чёткая рисуется, когда размер устоится"""
-        Z = fit_zoom(e.width, e.height)
+        if not self.isVisible():                         # раскладка до показа окна - размер ещё не настоящий
+            return
+        d = self.stage.devicePixelRatioF()
+        Z = fit_zoom(self.stage.width() * d, self.stage.height() * d)
         if self.atlas is None and not self.building:    # окно показалось: рисуем первую схему сразу
             self.set_zoom(Z)
             self.start_build()
@@ -357,21 +474,18 @@ class App:
         if Z == self.want_Z:
             return
         self.set_zoom(Z)
-        if self.resize_job:
-            self.root.after_cancel(self.resize_job)
-        self.resize_job = self.root.after(400, self.start_build)
+        self.resize_timer.start()
         if self.atlas is None:                          # первая схема ещё рисуется
             return
-        self.on_leave(None)
-        for item in (self.tg, self.fl, self.anim_item):  # кусок анимации - в прежнем масштабе
-            self.c.itemconfigure(item, state="hidden")
-        self.c.delete("rescale")
+        self.on_leave()
+        for name in ("target", "flash", "anim"):        # в прежнем масштабе
+            self.view.show_layer(name, None)
         if self.ready():                                # вернули прежний размер, пока рисовалась другая
+            self.view.message = None
             self.show_target()
         else:
-            self.c.create_text(self.cw // 2, self.ch - px(14), text=t("rescaling"), fill=C["muted"],
-                               font=(FONT, 9), tags="rescale")
-        self.show_base()
+            self.view.message = (t("rescaling"), True)
+        self.view.update()
 
     # --- слои
     def hidden_now(self):
@@ -387,7 +501,7 @@ class App:
         return t("layers_show_organs") if self.hidden == set(self.organs()) else t("layers_hide_organs")
 
     def render_layers(self):
-        """построить панель слоёв заново (смена языка)"""
+        """построить панель слоёв заново (смена языка, схемы тела)"""
         self.toggles = fill_layers(
             self.panel, t("layers_title"),
             [(name, t("layer_" + name), name in self.layers) for name in BODY_LAYERS],
@@ -400,7 +514,6 @@ class App:
             search=(t("search_hint"), self.query, self.on_search, self.on_search_enter, t("search_nothing")))
         if self.query:
             filter_organs(self.toggles, set(search(self.organs(), self.query)))
-        self.root.after_idle(self.fit_panel)
 
     # --- поиск органа
     def on_search(self, text):
@@ -409,7 +522,6 @@ class App:
         self.query = text
         found = search(self.organs(), text)
         filter_organs(self.toggles, set(found))
-        self.root.after_idle(self.fit_panel)
         if self.tour is None:
             self.set_spot(found[0] if text.strip() and len(found) == 1 else None)
 
@@ -430,22 +542,10 @@ class App:
             self.apply_view()
         self.show_target()
 
-    def fit_panel(self):
-        """список органов в панели - не выше, чем осталось места в окне (остальное листается)"""
-        area = getattr(self, "toggles", {}).get(ORGANS_LIST)
-        if area is None or not area.winfo_exists():
-            return
-        body = self.panel_box.master
-        if not body.winfo_ismapped():            # окно ещё не показано: его высоты пока нет
-            return
-        self.root.update_idletasks()
-        rest = self.panel_box.winfo_reqheight() - area.winfo_reqheight()       # панель без списка органов
-        area.set_limit(body.winfo_height() - px(10) - rest)
-
     def update_layers(self):
         """после щелчка: обновить флажки и кнопки на месте (пересоздавать панель долго)"""
         show_all_button(self.toggles, self.something_hidden())
-        self.toggles[ORGANS_ALL].config(text=self.organs_all_text())
+        self.toggles[ORGANS_ALL].setText(self.organs_all_text())
         for name in BODY_LAYERS:
             self.toggles[name].set(t("layer_" + name), name in self.layers)
         for k in self.organs():
@@ -454,15 +554,7 @@ class App:
     def show_panel(self):
         """панель слоёв - только в режиме «Изучать». В викторине её место остаётся пустым,
         чтобы схема не меняла масштаб (и не перерисовывалась) при каждой смене режима"""
-        box = self.panel_box
-        body = box.master
-        if self.mode == "study":
-            if not box.winfo_manager():
-                box.grid()
-                body.columnconfigure(0, minsize=0)
-        elif box.winfo_manager():
-            body.columnconfigure(0, minsize=body.grid_bbox(0, 0)[2])
-            box.grid_remove()
+        self.panel.setVisible(self.mode == "study")
 
     def toggle_all_organs(self):
         self.hidden = set() if self.hidden == set(self.organs()) else set(self.organs())
@@ -484,80 +576,65 @@ class App:
         """применить слои и скрытые органы к схеме и обновить панель"""
         self.update_layers()
         if self.atlas is not None:
-            self.root.update_idletasks()                # флажок виден сразу, ещё до перерисовки схемы
             self.atlas.set_layers(self.layers)
             hidden = frozenset(self.hidden_now())
             if hidden != self.atlas.hidden:
                 self.atlas.set_hidden(hidden)
                 self.drop_photos()                      # подсветка зависит от того, кто кого закрывает
-                self.on_leave(None)
+                self.on_leave()
             self.show_base()
             self.show_target()                          # подсветка органа поиска или экскурсии - заново
 
     # --- наведение и клики
     def drop_photos(self):
-        """забыть картинки подсветки. Сначала отвязать их от элементов холста: иначе удалённая картинка
-        остаётся в элементе, и любая следующая его настройка падает с «image ... does not exist»"""
-        for item in (self.tg, self.hov, self.fl):
-            self.c.itemconfigure(item, image="", state="hidden")
+        """забыть картинки подсветки"""
+        for name in ("target", "hover", "flash"):
+            self.view.show_layer(name, None)
         self.photos.clear()
 
     def photo(self, key, kind):
         if (key, kind) not in self.photos:
             im, pos = self.atlas.overlay(key, kind)
-            self.photos[(key, kind)] = (ImageTk.PhotoImage(im), pos)
+            self.photos[(key, kind)] = (qimage(im), pos)
         return self.photos[(key, kind)]
 
     def set_hover(self, key):
-        if key is None:
-            self.c.itemconfigure(self.hov, state="hidden")
-            self.c.config(cursor="")
-            return
-        ph, (x, y) = self.photo(key, "hover")
-        self.c.itemconfigure(self.hov, image=ph, state="normal")
-        self.c.coords(self.hov, x, y)
-        self.c.config(cursor="hand2")
+        self.view.show_layer("hover", None if key is None else self.photo(key, "hover"))
+        self.view.setCursor(Qt.ArrowCursor if key is None else Qt.PointingHandCursor)
 
     def kind(self):
         """тип текущего вопроса (quiz.KINDS); без игры - режим: study, find, name, facts или mix"""
         s = self.session
         return s.kind if s is not None and not s.finished else self.mode
 
-    def on_move(self, e):
+    def on_move(self, x, y):
+        """мышь над схемой; x, y - в пикселях схемы"""
         if not self.ready() or self.kind() not in ("study", "find"):   # отвечают кнопками; в «Угадай название» подсвечен вопрос
             return
         if self.kind() == "find" and self.session and self.session.level == "hard":
             return                                      # на сложном уровне орган под курсором не подсвечивается
-        key = self.atlas.organ_at(e.x, e.y)
+        key = self.atlas.organ_at(x, y)
         if key != self.cur:
             self.cur = key
             self.set_hover(key)
-        self.c.delete("tip")
-        if key and self.mode == "study":                # в викторине название не показываем
-            self.tooltip(e.x, e.y, i18n.name(key))
+        d = self.view.dpr()
+        tip = (x / d, y / d, i18n.name(key)) if key and self.mode == "study" else None     # в викторине - без названия
+        if tip != self.view.tip:
+            self.view.tip = tip
+            self.view.update()
 
-    def on_leave(self, _e):
+    def on_leave(self):
         if self.atlas is None:
             return
         self.cur = None
         self.set_hover(None)
-        self.c.delete("tip")
+        self.view.tip = None
+        self.view.update()
 
-    def tooltip(self, x, y, text):
-        t = self.c.create_text(x + 14, y + 14, text=text, anchor="nw", fill=C["tip_fg"],
-                               font=(FONT, 10, "bold"), tags="tip")
-        x1, y1, x2, y2 = self.c.bbox(t)
-        shift = max(0, x2 + 6 - self.cw)                # не даём подсказке вылезти за край холста
-        if shift:
-            self.c.move(t, -shift, 0)
-            x1, x2 = x1 - shift, x2 - shift
-        r = self.c.create_rectangle(x1 - 5, y1 - 2, x2 + 5, y2 + 2, fill=C["tip_bg"], outline=C["border"], tags="tip")
-        self.c.tag_lower(r, t)
-
-    def on_click(self, e):
+    def on_click(self, x, y):
         if not self.ready():
             return
-        key = self.atlas.organ_at(e.x, e.y)
+        key = self.atlas.organ_at(x, y)
         if key is None or self.kind() not in ("study", "find"):
             return
         if self.mode != "study":
@@ -573,7 +650,7 @@ class App:
             if self.paused is not None:
                 return t("tour_resume", title=tours.title(self.paused[0])), self.resume_tour
             return t("tours_back"), self.end_tour
-        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self.root, key), back=back()))
+        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key), back=back()))
 
     def update_buttons(self):
         for mode, b in self.mode_buttons.items():
@@ -585,7 +662,7 @@ class App:
         """study - изучение; режим викторины сначала показывает карточку настройки"""
         self.mode = mode
         self.tour = self.paused = None
-        if SEARCH in getattr(self, "toggles", {}):
+        if SEARCH in self.toggles:
             self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
         self.spot = None
         self.update_buttons()
@@ -601,15 +678,13 @@ class App:
 
     def stop_quiz(self):
         """прервать текущую игру: таймеры, подсветка, кнопки-варианты"""
-        for job in ("next_job", "timer_job"):
-            if getattr(self, job):
-                self.root.after_cancel(getattr(self, job))
-                setattr(self, job, None)
+        for tm in (self.next_timer, self.tick_timer, self.results_timer):
+            tm.stop()
         self.session = None
         self.choices = {}
         if self.atlas:
-            self.on_leave(None)
-            self.c.itemconfigure(self.tg, state="hidden")
+            self.on_leave()
+            self.view.show_layer("target", None)
 
     # --- настройка викторины
     def question_keys(self, qset, data=None):
@@ -704,8 +779,7 @@ class App:
             return
         if s.deadline is None:                          # новый вопрос на экране - запускаем его время
             s.start_timer()
-            if self.timer_job:
-                self.root.after_cancel(self.timer_job)
+            self.tick_timer.stop()
             self.tick()
         self.feedback, self.wrong = feedback, set()
         self.set_status(lambda: t("quiz_status", mode=t("mode_" + self.mode)))
@@ -740,7 +814,7 @@ class App:
         self.progress, self.choices = fill_question(
             self.card, self.progress_text(), title, hint, fb, [(k, s.option_label(k)) for k in opts], self.pick)
         for k in self.wrong:
-            self.mark_wrong(self.choices[k])
+            mark(self.choices[k], "wrong_bg")
         self.show_target()
 
     def feedback_text(self, key, organ, _color, i=None):
@@ -751,11 +825,10 @@ class App:
 
     def tick(self):
         """раз в четверть секунды: обновить остаток времени, а когда он вышел - показать ответ и идти дальше"""
-        self.timer_job = None
         s = self.session
         if s is None or s.finished or s.remaining() is None:
             return
-        if self.next_job is None:                       # во время зелёной паузы после ответа не считаем
+        if not self.next_timer.isActive():              # во время зелёной паузы после ответа не считаем
             i = s.i if s.answer_text(s.i) is not None else None      # ответ - не орган: назовём его
             key = s.time_up()
             if key:
@@ -765,14 +838,9 @@ class App:
                     return
                 self.ask(("time_up", key, "bad") if i is None else ("time_up_answer", key, "bad", i))
                 return
-            if self.progress is not None and self.progress.winfo_exists():
-                self.progress.config(text=self.progress_text())
-        self.timer_job = self.root.after(250, self.tick)
-
-    @staticmethod
-    def mark_wrong(btn):
-        style(btn, bg="wrong_bg", disabledforeground="on_mark")
-        btn.config(state="disabled", cursor="")
+            if alive(self.progress):
+                self.progress.setText(self.progress_text())
+        self.tick_timer.start()
 
     def show_target(self):
         """подсветить орган текущего вопроса «Угадай название», а в «Изучать» - орган поиска или экскурсии;
@@ -782,26 +850,20 @@ class App:
         s = self.session
         key = s.current if s is not None and s.kind == "name" else self.spot if self.mode == "study" else None
         if key is None or key in self.hidden_now():
-            self.c.itemconfigure(self.tg, state="hidden")
+            self.view.show_layer("target", None)
             return
-        ph, (x, y) = self.photo(key, "target")
-        self.c.itemconfigure(self.tg, image=ph, state="normal")
-        self.c.coords(self.tg, x, y)
+        self.view.show_layer("target", self.photo(key, "target"))
 
     def flash(self, key, kind):
         """на полсекунды закрасить орган зелёным (верно) или красным (ошибка)"""
         if not self.ready():
             return
-        ph, (x, y) = self.photo(key, kind)
-        self.c.itemconfigure(self.fl, image=ph, state="normal")
-        self.c.coords(self.fl, x, y)
-        if self.flash_job:
-            self.root.after_cancel(self.flash_job)
-        self.flash_job = self.root.after(500, self.unflash)
+        self.view.show_layer("flash", self.photo(key, kind))
+        self.flash_timer.start()
 
     def unflash(self):
-        self.flash_job = None
-        self.c.itemconfigure(self.fl, state="hidden")
+        self.flash_timer.stop()
+        self.view.show_layer("flash", None)
 
     def answer(self, key):
         """клик по органу в режиме «Найди орган»"""
@@ -821,23 +883,25 @@ class App:
     def pick(self, key):
         """выбран вариант ответа в режимах «Угадай название» и «Угадай по факту»"""
         s = self.session
-        if s is None or s.finished or self.next_job or key not in self.choices:
+        if s is None or s.finished or self.next_timer.isActive() or key not in self.choices:
             return
         asked = s.current
         right = s.answer(key)
         btn = self.choices[key]
         if not right:
             self.wrong.add(key)
-            self.mark_wrong(btn)
-            self.progress.config(text=self.progress_text())
+            mark(btn, "wrong_bg")
+            self.progress.setText(self.progress_text())
             return
-        style(btn, bg="right_bg", fg="on_mark", activebackground="right_bg", activeforeground="on_mark")
+        mark(btn, "right_bg")
         self.flash(asked, "ok")
-        self.next_job = self.root.after(700, self.next_question)
+        self.next_timer.start()
 
     def next_question(self):
-        self.next_job = None
+        self.next_timer.stop()
         s = self.session
+        if s is None:
+            return
         if s.finished:
             self.finish(s.q[-1])
             return
@@ -847,36 +911,44 @@ class App:
         """игра закончена: сохранить результат, показать карточку последнего органа и итоги"""
         s = self.session
         self.choices = {}
-        self.c.itemconfigure(self.tg, state="hidden")
+        self.view.show_layer("target", None)
         self.new_achievements, self.streak = [], 0
         try:
             before = progress.load()
             after = progress.record(s, self.qset)
             self.new_achievements = achievements.new_ones(before, after)
             self.streak = achievements.streak(after)
-            self.ach_button.config(text=achievements_text(after))
+            self.ach_button.setText(achievements_text(after))
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
         self.set_card(lambda: fill_card(self.card, last))
         self.ask()
-        self.root.after(600, self.show_results)
+        self.results_timer.start()
 
-    def on_key(self, e):
+    def keyPressEvent(self, e):
+        """Esc закрывает верхнюю панель; остальное - on_key"""
+        if e.key() == Qt.Key_Escape:
+            overlay.close_top(self)
+            return
+        names = {Qt.Key_Right: "Right", Qt.Key_Left: "Left", Qt.Key_Return: "Return", Qt.Key_Enter: "KP_Enter"}
+        self.on_key(names.get(e.key(), ""), e.text())
+
+    def on_key(self, keysym, char):
         """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру, стрелки листают экскурсию
         (но не тогда, когда поверх открыта панель: настройки, итоги или 3D, и не при наборе в поиске)"""
-        if overlay.top(self.root) is not None or isinstance(e.widget, tk.Entry):
+        if overlay.top(self) is not None or isinstance(QApplication.focusWidget(), QLineEdit):
             return
         if self.mode == "study":
-            if self.tour is not None and e.keysym in ("Right", "Left", "Return", "KP_Enter"):
-                self.tour_go(-1 if e.keysym == "Left" else 1)
+            if self.tour is not None and keysym in ("Right", "Left", "Return", "KP_Enter"):
+                self.tour_go(-1 if keysym == "Left" else 1)
             return
         if self.session is None:
-            if e.keysym in ("Return", "KP_Enter"):
+            if keysym in ("Return", "KP_Enter"):
                 self.start_quiz()
             return
-        if self.kind() != "find" and e.char.isdigit():
+        if self.kind() != "find" and char.isdigit():
             keys = list(self.choices)
-            i = int(e.char) - 1
+            i = int(char) - 1
             if 0 <= i < len(keys):
                 self.pick(keys[i])
 
@@ -947,7 +1019,7 @@ class App:
             fill_tour(self.card, t("tour_progress", title=tours.title(name), n=i, total=n), i18n.name(key),
                       i18n.subtitle(key), tours.story(name, key), ORGANS[key]["color"],
                       [back, (t("tour_next") if i < n else t("tour_last"), lambda: self.tour_go(1), "accent", True)],
-                      [(t("card_3d"), lambda: show_3d(self.root, key)), (t("tour_exit"), self.end_tour)])
+                      [(t("card_3d"), lambda: show_3d(self, key)), (t("tour_exit"), self.end_tour)])
 
     def show_results(self):
         s, mode = self.session, self.mode
@@ -958,6 +1030,9 @@ class App:
             if self.mode == mode:
                 self.start_quiz(qset)
 
-        show_results_dialog(self.root, s, on_again=again, on_retry=lambda: again("missed"),
-                            due=len(progress.due(mode, self.organs())), streak=self.streak,
-                            new=self.new_achievements, on_achievements=lambda: show_achievements(self.root))
+        return show_results_dialog(self, s, on_again=again, on_retry=lambda: again("missed"),
+                                   due=len(progress.due(mode, self.organs())), streak=self.streak,
+                                   new=self.new_achievements, on_achievements=lambda: show_achievements(self))
+
+    def paintEvent(self, _e):
+        QPainter(self).fillRect(self.rect(), color("bg"))

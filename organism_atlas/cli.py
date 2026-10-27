@@ -1,31 +1,33 @@
 """Точка входа: python -m organism_atlas."""
 
 import sys
-import tkinter as tk
 
 
 def main():
     try:
         import PIL  # noqa: F401
-    except ImportError:
-        sys.exit("Нужна библиотека Pillow:  pip install pillow")
+        from PySide6.QtWidgets import QApplication, QMessageBox
+    except ImportError as e:
+        sys.exit("Нужны библиотеки из requirements.txt (%s):  pip install -r requirements.txt" % e.name)
     from . import i18n, questions, settings, theme
     from .ui.app import App
-    from .ui.scaling import enable_dpi_awareness
+    from .ui.widgets import font
 
-    enable_dpi_awareness()
-    root = tk.Tk()
+    app = QApplication.instance() or QApplication(sys.argv)
+    app.setApplicationName("Organism Atlas")
     try:
         i18n.load_all()                 # файлы lang/*.json и questions/*.json правят руками:
         from .organs import ORGANS      # сообщим, в каком файле ошибка
         questions.load_all(known=list(ORGANS))
     except ValueError as e:
-        root.withdraw()
-        from tkinter import messagebox
-        messagebox.showerror("Атлас организма", str(e))
+        QMessageBox.critical(None, "Атлас организма", str(e))
         sys.exit(str(e))
     saved = settings.load()
     i18n.restore(saved.get("lang"), saved.get("previous_lang"))
     theme.set_theme(settings.get(saved, "theme"))
-    App(root, ui_scale=settings.get(saved, "ui_scale"), quality=settings.get(saved, "quality"))
-    root.mainloop()
+    from .ui.scaling import set_scale
+    set_scale(settings.get(saved, "ui_scale"))
+    app.setFont(font(10))
+    win = App(ui_scale=settings.get(saved, "ui_scale"), quality=settings.get(saved, "quality"))
+    win.show()
+    sys.exit(app.exec())

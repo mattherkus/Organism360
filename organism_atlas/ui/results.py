@@ -1,55 +1,60 @@
 """Итоги викторины (встроенная панель)."""
 
+from PySide6.QtCore import Qt
+
 from .. import i18n
-from ..config import FONT
 from ..i18n import t
 from ..quiz import format_time
 from .overlay import Panel
 from .scaling import px
-from .widgets import flat_button, frame, label, rounded_card
+from .widgets import flat_button, hbox, label, put, rounded_card, spacer
 
 
-def show_results_dialog(root, session, on_again, on_retry=None, due=0, streak=0, new=(), on_achievements=None):
+def show_results_dialog(host, session, on_again, on_retry=None, due=0, streak=0, new=(), on_achievements=None):
     """session - завершённая QuizSession; on_again - по кнопке «Сыграть ещё»,
     on_retry - по кнопке «Повторить ошибки» (видна, если ошибки были); due - карточек на повторение сегодня;
     streak - дней подряд с игрой; new - ключи достижений, полученных этой игрой,
     on_achievements - по кнопке «Все достижения» (видна, если что-то получено)"""
     total, pct = session.total, session.percent
-    win = Panel(root, t("results_title"))
-    box, card = rounded_card(win.body)
-    box.pack(padx=px(16), pady=(px(10), px(16)))
-    label(card, t("results_heading"), font=(FONT, 15, "bold")).pack(padx=px(40), pady=(px(20), px(4)))
-    label(card, t("results_score", right=session.first_try, total=total), fg="accent_fg",
-          font=(FONT, 36, "bold")).pack()
-    label(card, t("results_first_try", percent=pct), fg="muted", font=(FONT, 11)).pack()
-    label(card, session.verdict, font=(FONT, 12, "bold")).pack(pady=(px(12), px(4)))
-    label(card, t("results_errors", errors=session.errors), font=(FONT, 11)).pack()
-    label(card, t("results_time", time=format_time(session.elapsed), level=t("level_" + session.level)),
-          fg="muted", font=(FONT, 11)).pack()
+    win = Panel(host, t("results_title"))
+    card = rounded_card(width=px(420))
+    put(win.body, card, top=10, bottom=16)
+    lay = card.lay
+    center = Qt.AlignHCenter
+
+    def line(text, fg="text", size=11, bold=False, top=0, bottom=0):
+        return put(lay, label(text, fg, size, bold, align=center), top=top, bottom=bottom, x=20)
+
+    line(t("results_heading"), size=15, bold=True, top=20, bottom=4)
+    line(t("results_score", right=session.first_try, total=total), "accent_fg", 36, True)
+    line(t("results_first_try", percent=pct), "muted")
+    line(session.verdict, size=12, bold=True, top=12, bottom=4)
+    line(t("results_errors", errors=session.errors))
+    line(t("results_time", time=format_time(session.elapsed), level=t("level_" + session.level)), "muted")
     if session.timeouts:
-        label(card, t("results_timeouts", n=session.timeouts), fg="muted", font=(FONT, 11)).pack()
+        line(t("results_timeouts", n=session.timeouts), "muted")
     if session.missed:
-        label(card, t("results_missed", names=", ".join(i18n.name(k) for k in session.missed)), fg="muted",
-              font=(FONT, 11), wraplength=px(300), justify="center").pack(padx=px(20), pady=(px(6), 0))
+        line(t("results_missed", names=", ".join(i18n.name(k) for k in session.missed)), "muted", top=6)
     if due:
-        label(card, t("results_due", n=due), fg="muted", font=(FONT, 10), wraplength=px(300),
-              justify="center").pack(padx=px(20), pady=(px(8), 0))
+        line(t("results_due", n=due), "muted", 10, top=8)
     if streak > 1:
-        label(card, t("results_streak", n=streak), fg="day_title", font=(FONT, 11, "bold")).pack(pady=(px(8), 0))
+        line(t("results_streak", n=streak), "day_title", bold=True, top=8)
     for key in new:
-        label(card, "★  " + t("results_new_ach", name=t("ach_" + key)), fg="day_title", font=(FONT, 11, "bold"),
-              wraplength=px(300), justify="center").pack(padx=px(20), pady=(px(6), 0))
-    row = frame(card)
-    row.pack(padx=px(20), pady=(px(18), px(20)))
+        line("★  " + t("results_new_ach", name=t("ach_" + key)), "day_title", bold=True, top=6)
+    row = hbox(spacing=8)
+    row.addStretch(1)
 
     def run(fn):
-        win.destroy()
+        win.close_panel()
         fn()
 
-    flat_button(row, t("results_again"), lambda: run(on_again), bg="accent").pack(side="left", padx=px(4))
+    row.addWidget(flat_button(t("results_again"), lambda: run(on_again), bg="accent"))
     if session.missed and on_retry:
-        flat_button(row, t("results_retry"), lambda: run(on_retry)).pack(side="left", padx=px(4))
+        row.addWidget(flat_button(t("results_retry"), lambda: run(on_retry)))
     if new and on_achievements:
-        flat_button(row, t("results_achievements"), lambda: run(on_achievements)).pack(side="left", padx=px(4))
-    flat_button(row, t("results_close"), win.destroy).pack(side="left", padx=px(4))
+        row.addWidget(flat_button(t("results_achievements"), lambda: run(on_achievements)))
+    row.addWidget(flat_button(t("results_close"), win.close_panel))
+    row.addStretch(1)
+    put(lay, row, top=18, x=20)
+    spacer(lay, 20)
     return win

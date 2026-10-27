@@ -1,13 +1,14 @@
-"""Главное окно целиком: наведение, панель слоёв, смена размера. Нужен экран; без него тесты пропускаются.
+"""Главное окно целиком: наведение, панель слоёв, викторины, панели, 3D. Окно на Qt без экрана (offscreen).
 Схема рисуется в маленьком масштабе и в свою папку кэша, настройки и прогресс - во временные файлы."""
 
 import os
 import tempfile
-import time
-import tkinter as tk
 import unittest
-from types import SimpleNamespace
 from unittest import mock
+
+from PySide6.QtWidgets import QWidget
+
+from tests.qt import app as qt_app, pump, wait
 
 from organism_atlas import i18n, questions
 from organism_atlas.atlas import Atlas
@@ -18,13 +19,7 @@ Z = 0.7
 
 class AppTests(unittest.TestCase):
     def setUp(self):
-        try:
-            self.root = tk.Tk()
-        except tk.TclError:
-            self.skipTest("нет экрана")
-        self.root.attributes("-alpha", 0.0)            # окно показано (схема рисуется по <Configure>), но невидимо
-        self.errors = []
-        self.root.report_callback_exception = lambda *a: self.errors.append(a[1])
+        self.qt = qt_app()
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         env = mock.patch.dict(os.environ, {"ORGANISM_ATLAS_SETTINGS": os.path.join(self.tmp.name, "s.json"),
@@ -34,47 +29,45 @@ class AppTests(unittest.TestCase):
         from organism_atlas.ui import app
         self.zoom = Z                                       # масштаб, который «выбирает» окно
         cached = Atlas.cached.__func__
-        for p in (mock.patch.object(app, "pick_zoom", lambda root: Z),
+        for p in (mock.patch.object(app, "pick_zoom", lambda w, h, dpr=1.0: Z),
                   mock.patch.object(app, "fit_zoom", lambda w, h: self.zoom),
                   mock.patch.object(app.Atlas, "cached", classmethod(lambda cls, z: cached(cls, z, self.tmp.name)))):
             p.start()
             self.addCleanup(p.stop)
         i18n.load_all()
         questions.load_all(known=list(ORGANS))
-        self.app = app.App(self.root)
+        self.app = app.App()
+        self.app.show()
         self.wait()
 
     def tearDown(self):
-        for job in ("flash_job", "next_job", "timer_job", "resize_job", "anim_job"):      # отложенные вызовы окна
-            if getattr(self.app, job, None):
-                self.root.after_cancel(getattr(self.app, job))
-        self.root.destroy()
+        from organism_atlas.ui import overlay
+        while overlay.close_top(self.app):
+            pass
+        self.app.close()
+        self.app.deleteLater()
+        pump()
+        i18n._current = i18n._previous = i18n.BASE
 
     def wait(self):
-        t = time.time()
-        while not self.app.ready() and time.time() - t < 60:
-            self.root.update()
-            time.sleep(0.01)
-        self.assertTrue(self.app.ready())
+        self.assertTrue(wait(self.app.ready))
 
     def hover_heart(self):
         z = self.app.want_Z
-        self.app.on_move(SimpleNamespace(x=int(210 * z), y=int(230 * z)))
-        self.root.update()
+        self.app.on_move(int(210 * z), int(230 * z))
         self.assertEqual(self.app.cur, "heart")
 
     def test_hide_organ_after_hover(self):
-        """подсветка показывалась, потом орган скрыли: картинки подсветки удаляются без ошибок Tk"""
+        """подсветка показывалась, потом орган скрыли: подсветка убирается, наведение работает дальше"""
         self.hover_heart()
         self.app.flash("heart", "ok")
         self.app.toggle_organ("lungs")
-        self.app.on_leave(None)
+        self.assertIsNone(self.app.view.layers["hover"])
+        self.app.on_leave()
         self.hover_heart()
         self.app.show_all()
-        self.root.after_cancel(self.app.flash_job)          # вспышку гасим сами, не дожидаясь таймера
         self.app.unflash()
-        self.root.update()
-        self.assertEqual(self.errors, [])
+        pump()
         self.assertEqual(self.app.atlas.hidden, self.other)
 
     @property
@@ -89,7 +82,6 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.atlas.hidden, self.other)
         self.app.set_mode("study")
         self.assertEqual(self.app.atlas.hidden, {"heart"} | self.other)
-        self.assertEqual(self.errors, [])
 
     def test_body_switch(self):
         """женская и мужская схема: органы другого пола скрыты и в панели, и в викторине"""
@@ -106,7 +98,6 @@ class AppTests(unittest.TestCase):
         self.assertNotIn("prostate", self.app.session.q)
         self.app.set_body("male")
         self.assertIsNone(self.app.session)             # игра началась заново с карточки настройки
-        self.assertEqual(self.errors, [])
 
     def play(self):
         """пройти начатую игру до конца, отвечая верно: кликом по схеме или кнопкой"""
@@ -116,12 +107,11 @@ class AppTests(unittest.TestCase):
                 self.app.answer(s.current)
             else:
                 self.assertEqual(set(self.app.choices), set(s.options()))
-                self.app.pick(s.correct())
-                self.root.after_cancel(self.app.next_job)
+                self.app.choices[s.correct()].click()               # как щелчок по кнопке
+                self.assertTrue(self.app.next_timer.isActive())
                 self.app.next_question()
-            self.root.update()
-        if self.app.flash_job:
-            self.root.after_cancel(self.app.flash_job)
+        self.app.unflash()
+        self.app.results_timer.stop()
         return s
 
     def test_quiz_length_and_topic(self):
@@ -141,143 +131,180 @@ class AppTests(unittest.TestCase):
         self.assertTrue(all("digestive" in ORGANS[k]["systems"] for k in self.app.session.q))
         self.assertEqual(self.app.session.total, 8)       # органов в теме меньше 20 - спрашиваем про все
         self.play()
-        self.assertEqual(self.errors, [])
+
+    def test_wrong_answer_and_digits(self):
+        """неверный вариант краснеет и больше не нажимается; цифра на клавиатуре выбирает вариант"""
+        self.app.set_mode("name")
+        self.app.on_key("Return", "")                       # Enter на карточке настройки - начать игру
+        s = self.app.session
+        self.assertIsNotNone(s)
+        wrong = next(k for k in s.options() if k != s.correct())
+        b = self.app.choices[wrong]
+        self.app.pick(wrong)
+        self.assertFalse(b.isEnabled())
+        self.assertEqual(b.role, "wrong_bg")
+        self.assertEqual(s.errors, 1)
+        right = s.correct()
+        self.app.on_key("", str(list(self.app.choices).index(right) + 1))
+        self.assertTrue(self.app.next_timer.isActive())
+        self.assertEqual(self.app.choices[right].role, "right_bg")
 
     def test_hide_all_organs(self):
         """кнопка в заголовке органов скрывает все органы, повторно - возвращает"""
         from organism_atlas.ui.widgets import ORGANS_ALL
         button = self.app.toggles[ORGANS_ALL]
         self.app.toggle_organ("heart")
-        button.invoke()
+        button.click()
         self.assertEqual(self.app.atlas.hidden, set(ORGANS))
         self.assertIsNone(self.app.atlas.organ_at(int(210 * Z), int(230 * Z)))
-        self.assertEqual(button.cget("text"), i18n.t("layers_show_organs"))
+        self.assertEqual(button.text(), i18n.t("layers_show_organs"))
         self.assertFalse(any(self.app.toggles[k].on for k in self.app.organs()))
-        button.invoke()
+        button.click()
         self.assertEqual(self.app.atlas.hidden, self.other)
-        self.assertEqual(button.cget("text"), i18n.t("layers_hide_organs"))
-        self.assertEqual(self.errors, [])
+        self.assertEqual(button.text(), i18n.t("layers_hide_organs"))
 
     def test_panel_only_in_study(self):
         """в викторине панели слоёв нет, а схема стоит на месте и не перерисовывается"""
-        self.root.update()
-        x = self.app.c.winfo_rootx()
+        pump()
+        x = self.app.view.mapTo(self.app, self.app.view.rect().topLeft()).x()
         for mode in ("find", "name", "facts", "mix"):
             self.app.set_mode(mode)
-            self.root.update()
-            self.assertFalse(self.app.panel_box.winfo_ismapped(), mode)
-            self.assertEqual(self.app.c.winfo_rootx(), x, mode)
+            pump()
+            self.assertFalse(self.app.panel.isVisible(), mode)
+            self.assertEqual(self.app.view.mapTo(self.app, self.app.view.rect().topLeft()).x(), x, mode)
             self.assertTrue(self.app.ready(), mode)
         self.app.set_mode("study")
-        self.root.update()
-        self.assertTrue(self.app.panel_box.winfo_ismapped())
-        self.assertEqual(self.app.c.winfo_rootx(), x)
-        self.assertEqual(self.errors, [])
+        pump()
+        self.assertTrue(self.app.panel.isVisible())
+        self.assertEqual(self.app.view.mapTo(self.app, self.app.view.rect().topLeft()).x(), x)
+
+    def buttons(self, widget):
+        from organism_atlas.ui.widgets import RoundButton
+        pump()                                              # новые виджеты показываются в цикле событий
+        return [b for b in widget.findChildren(RoundButton) if not b.isHidden()]
 
     def test_setup_buttons(self):
         """каждая кнопка карточки настройки меняет свою настройку, а не настройку последней строки"""
-        from organism_atlas.ui.widgets import RoundButton
-
         def press(text):
-            todo = [self.app.card]
-            while todo:
-                w = todo.pop()
-                if isinstance(w, RoundButton) and w.cget("text") == text:
-                    return w.invoke()
-                todo += w.winfo_children()
+            for b in self.buttons(self.app.card):
+                if b.text() == text:
+                    return b.click()
             self.fail(text)
         self.app.set_mode("name")
-        self.root.update()
-        before = self.app.card.winfo_children()
+        pump()
+        before = self.app.card.findChildren(QWidget)
         press(i18n.t("level_hard"))
         press(i18n.t("timer_sec", sec=10))
         press("5")
         self.assertEqual((self.app.cfg["level"], self.app.cfg["timer"], self.app.cfg["length"]), ("hard", 10, 5))
         self.assertEqual(self.app.cfg["set"], "all")
-        self.assertEqual(self.app.card.winfo_children(), before)          # обновлена на месте: не мигает
-        self.app.set_mode("facts")                                         # другой режим - та же раскладка
-        self.assertEqual(self.app.card.winfo_children(), before)
-        self.assertEqual(self.errors, [])
+        self.assertEqual(self.app.card.findChildren(QWidget), before)       # обновлена на месте: не мигает
+        self.app.set_mode("facts")                                          # другой режим - та же раскладка
+        self.assertEqual(self.app.card.findChildren(QWidget), before)
 
     def test_panels_inside_window(self):
         """настройки, итоги и 3D - панели внутри главного окна, а не отдельные окна; Esc закрывает верхнюю"""
+        from types import SimpleNamespace
+
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
         from organism_atlas.ui import overlay, settings_window, viewer3d
         from organism_atlas.ui.results import show_results_dialog
         settings_window.show_settings(self.app)
-        viewer3d.show_3d(self.root, "heart")
+        viewer3d.show_3d(self.app, "heart")
         s = SimpleNamespace(total=10, percent=80, first_try=8, verdict="", errors=2, elapsed=95, level="medium",
                             timeouts=0, missed=["heart"])
-        results = show_results_dialog(self.root, s, on_again=lambda: None, on_retry=lambda: None)
-        self.root.update()
-        self.assertFalse([w for w in self.root.winfo_children() if isinstance(w, tk.Toplevel)])
+        results = show_results_dialog(self.app, s, on_again=lambda: None, on_retry=lambda: None)
+        pump()
+        self.assertEqual([w for w in self.qt.topLevelWidgets() if w.isVisible()], [self.app])
         for panel in (settings_window._window.win, viewer3d._viewer.win, results):
             self.assertIsInstance(panel, overlay.Panel)
-            self.assertIs(panel.master, self.root)
-            self.assertTrue(panel.winfo_ismapped())
-        self.app.on_key(SimpleNamespace(keysym="1", char="1"))           # цифры не уходят викторине за панелью
-        self.root.focus_force()                                            # клавиши идут окну с фокусом
-        self.root.update()
+            self.assertIs(panel.parent(), self.app)
+            self.assertTrue(panel.isVisible())
+            self.assertTrue(self.app.rect().contains(panel.geometry().center()))
+        self.app.set_mode("name")                                          # цифры не уходят викторине за панелью
+        self.app.start_quiz()
+        self.app.on_key("", "1")
+        self.assertEqual(self.app.session.errors + self.app.session.i, 0)
+        self.assertFalse(self.app.next_timer.isActive())
         for left in (2, 1, 0):
-            self.root.event_generate("<Escape>")
-            self.root.update()
-            self.assertEqual(len(overlay.stack(self.root)), left)
+            QTest.keyClick(self.app, Qt.Key_Escape)
+            pump()
+            self.assertEqual(len(overlay.stack(self.app)), left)
         self.assertIsNone(settings_window._window)
         self.assertIsNone(viewer3d._viewer)
-        self.assertEqual(self.errors, [])
 
     def test_button_fade(self):
         """наведение меняет цвет кнопки плавно и доходит до цвета состояния"""
         b = self.app.mode_buttons["find"]
-        self.root.update()
+        pump()
         start = b.shown
-        b.set_mouse(hover=True)
+        b.hover = True
+        b.fade()
         self.assertIsNotNone(b.anim)
-        t = time.time()
-        while b.anim and time.time() - t < 2:
-            self.root.update()
-            time.sleep(0.005)
+        self.assertTrue(wait(lambda: b.anim is None, 2))
         self.assertEqual(b.shown, b.colors())
         self.assertNotEqual(b.shown, start)
-        b.set_mouse(hover=False)
-        b.config(text="x")                                                 # смена настройки - сразу, без перехода
+        b.hover = False
+        b.retheme()                                        # смена темы - сразу, без перехода
         self.assertIsNone(b.anim)
         self.assertEqual(b.shown, b.colors())
-        self.assertEqual(self.errors, [])
 
     def visible_toggles(self):
         """органы, строки которых сейчас в списке панели слоёв"""
-        return {k for k in self.app.organs() if self.app.toggles[k].row.winfo_manager()}
+        pump()
+        return {k for k in self.app.organs() if not self.app.toggles[k].isHidden()}
 
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.widgets import NOTHING, SEARCH
         box = self.app.toggles[SEARCH]
         self.app.toggle_organ("heart")
-        box.var.set("серд")
+        box.setText("серд")
         self.assertEqual(self.visible_toggles(), {"heart"})
         self.assertEqual(self.app.spot, "heart")
         self.assertNotIn("heart", self.app.hidden)          # найденный скрытый орган снова виден
-        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "normal")
-        box.var.set("почеч")                                # системы «мочевыделительная» нет - ничего
-        box.var.set("ж")
+        self.assertIsNotNone(self.app.view.layers["target"])
+        box.setText("почеч")                                # системы «мочевыделительная» нет - ничего
+        box.setText("ж")
         self.assertGreater(len(self.visible_toggles()), 1)
         self.assertIsNone(self.app.spot)
-        box.var.set("zzz")
+        box.setText("zzz")
         self.assertEqual(self.visible_toggles(), set())
-        self.assertTrue(self.app.toggles[NOTHING].winfo_manager())
-        box.var.set("Hepar")
-        self.app.on_search_enter("Hepar")
+        self.assertFalse(self.app.toggles[NOTHING].isHidden())
+        box.setText("Hepar")
+        box.returnPressed.emit()
         self.assertEqual(self.app.spot, "liver")
         self.app.set_lang("en")                             # панель пересобрана, поиск остался
-        self.assertEqual(self.app.toggles[SEARCH].var.get(), "Hepar")
+        self.assertEqual(self.app.toggles[SEARCH].text(), "Hepar")
         self.assertEqual(self.visible_toggles(), {"liver"})
         self.app.set_lang("ru")
         self.app.set_mode("find")                            # в викторине подсветки поиска нет
-        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "hidden")
+        self.assertIsNone(self.app.view.layers["target"])
         self.app.set_mode("study")
         self.assertEqual(self.app.query, "")
         self.assertEqual(self.visible_toggles(), set(self.app.organs()))
-        self.assertEqual(self.errors, [])
+
+    def test_search_keeps_keys(self):
+        """пока набирают в поиске, цифры и стрелки не уходят викторине и экскурсии; Esc очищает поле"""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        from organism_atlas.ui.widgets import SEARCH
+        self.app.start_tour("food")
+        box = self.app.toggles[SEARCH]
+        self.app.activateWindow()
+        box.setFocus()
+        pump()
+        QTest.keyClicks(box, "hear")
+        QTest.keyClick(box, Qt.Key_Right)                   # курсор в строке, а не шаг экскурсии
+        self.assertEqual(self.app.tour, ("food", 0))
+        QTest.keyClick(box, Qt.Key_Return)                  # Enter - карточка найденного органа, экскурсия на паузе
+        self.assertEqual(self.app.paused, ("food", 0))
+        self.assertEqual(self.app.spot, "heart")
+        QTest.keyClick(box, Qt.Key_Escape)
+        self.assertEqual(box.text(), "")
 
     def test_tour(self):
         """экскурсия: вступление, шаги с подсветкой органа, стрелки, конец и викторина по теме"""
@@ -285,10 +312,10 @@ class AppTests(unittest.TestCase):
         keys = tours.steps("food", self.app.body)
         self.app.start_tour("food")
         self.assertIsNone(self.app.spot)
-        self.app.on_key(SimpleNamespace(keysym="Right", char="", widget=self.root))
+        self.app.on_key("Right", "")
         self.assertEqual(self.app.spot, keys[0])
-        self.assertEqual(self.app.c.itemcget(self.app.tg, "state"), "normal")
-        self.app.on_key(SimpleNamespace(keysym="Left", char="", widget=self.root))
+        self.assertIsNotNone(self.app.view.layers["target"])
+        self.app.on_key("Left", "")
         self.assertEqual(self.app.tour, ("food", 0))
         for _ in range(len(keys) + 3):                      # дальше конца не уходит
             self.app.tour_go(1)
@@ -302,7 +329,7 @@ class AppTests(unittest.TestCase):
         self.app.set_mode("study")
         self.app.start_tour("air")
         self.app.tour_go(2)
-        self.app.on_click(SimpleNamespace(x=int(210 * Z), y=int(230 * Z)))      # щелчок по органу - пауза
+        self.app.on_click(int(210 * Z), int(230 * Z))       # щелчок по органу - пауза
         self.assertIsNone(self.app.tour)
         self.assertEqual(self.app.paused, ("air", 2))
         self.assertIn(i18n.t("tour_resume", title=tours.title("air")), self.button_texts())
@@ -310,20 +337,12 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.tour, ("air", 2))
         self.assertEqual(self.app.spot, tours.steps("air", self.app.body)[1])
         self.app.end_tour()
-        self.app.on_click(SimpleNamespace(x=int(210 * Z), y=int(230 * Z)))      # без экскурсии - к списку
+        self.app.on_click(int(210 * Z), int(230 * Z))       # без экскурсии - к списку
         self.assertIn(i18n.t("tours_back"), self.button_texts())
-        self.assertEqual(self.errors, [])
 
     def button_texts(self):
         """надписи кнопок в карточке справа"""
-        from organism_atlas.ui.widgets import RoundButton
-        out, todo = [], [self.app.card]
-        while todo:
-            w = todo.pop()
-            if isinstance(w, RoundButton):
-                out.append(w.cget("text"))
-            todo += w.winfo_children()
-        return out
+        return [b.text() for b in self.buttons(self.app.card)]
 
     def test_achievements_after_game(self):
         from organism_atlas.ui import achievements as panel
@@ -333,37 +352,40 @@ class AppTests(unittest.TestCase):
         self.play()
         self.assertEqual(self.app.new_achievements, ["first", "perfect"])
         self.assertEqual(self.app.streak, 1)
-        self.assertEqual(self.app.ach_button.cget("text"), i18n.t("ach_button", got=2, total=12))
-        p = panel.show_achievements(self.root)
-        self.assertIs(panel.show_achievements(self.root), p)            # вторая не открывается
-        self.root.update()
-        self.assertTrue(p.winfo_ismapped())
-        p.destroy()
-        self.assertEqual(self.errors, [])
+        self.assertEqual(self.app.ach_button.text(), i18n.t("ach_button", got=2, total=12))
+        results = self.app.show_results()
+        self.assertTrue(results.isVisible())
+        texts = [b.text() for b in self.buttons(results)]
+        self.assertIn(i18n.t("results_achievements"), texts)
+        results.close_panel()
+        p = panel.show_achievements(self.app)
+        self.assertIs(panel.show_achievements(self.app), p)            # вторая не открывается
+        pump()
+        self.assertTrue(p.isVisible())
+        p.close_panel()
 
     def test_3d_parts(self):
         """у мозга три части: список под кадром, подпись под курсором, скрытие и «Найди часть»"""
+        from PySide6.QtCore import QPointF
+
         from organism_atlas.ui import viewer3d
-        viewer3d.show_3d(self.root, "brain")
+        viewer3d.show_3d(self.app, "brain")
         v = viewer3d._viewer
-        t = time.time()
-        while v.ids is None and time.time() - t < 30:
-            self.root.update()
-            time.sleep(0.01)
+        self.assertTrue(wait(lambda: v.ids is not None, 60))
         self.assertEqual([n for _, n, _ in v.names], ["Ствол мозга", "Мозжечок", "Большие полушария"])
-        self.assertTrue(v.parts_box.winfo_manager())
+        self.assertFalse(v.parts_card.isHidden())
         cortex = 2
         ys, xs = (v.ids == cortex).nonzero()
         ih, iw = v.ids.shape
-        x, y = int((xs[len(xs) // 2] + 0.5) * v.w / iw), int((ys[len(ys) // 2] + 0.5) * v.h / ih)
+        x, y = (xs[len(xs) // 2] + 0.5) * v.w / iw, (ys[len(ys) // 2] + 0.5) * v.h / ih
         self.assertEqual(v.part_at(x, y), cortex)
-        v.hover(SimpleNamespace(x=x, y=y))
-        self.assertEqual(v.tip.cget("text"), "Большие полушария")
-        widgets = v.parts.winfo_children()
+        v.hover(QPointF(x, y))
+        self.assertEqual(v.view.tip[2], "Большие полушария")
+        widgets = v.parts_card.findChildren(QWidget)
         v.toggle_part(cortex)
         self.assertEqual(v.hidden, {cortex})
         self.assertFalse(v.part_toggles[cortex].on)
-        self.assertEqual(v.parts.winfo_children(), widgets)          # обновлено на месте, панель не мигает
+        self.assertEqual(v.parts_card.findChildren(QWidget), widgets)       # обновлено на месте, не мигает
         v.toggle_quiz()                                      # викторина: все части снова видны
         self.assertEqual(v.hidden, frozenset())
         target = v.quiz["order"][0]
@@ -374,14 +396,31 @@ class AppTests(unittest.TestCase):
         v.ids[:] = v.quiz["order"][2]                         # не та часть - ошибка
         v.quiz_click(1, 1)
         self.assertTrue(v.quiz["slipped"])
-        self.assertIn("Попробуй ещё", v.note.cget("text"))
-        self.assertEqual(v.parts.winfo_children(), widgets)
-        viewer3d.show_3d(self.root, "bladder")                # одна часть - списка нет
-        self.assertFalse(v.parts_box.winfo_manager())
+        self.assertIn("Попробуй ещё", v.note.text())
+        self.assertEqual(v.parts_card.findChildren(QWidget), widgets)
+        viewer3d.show_3d(self.app, "bladder")                 # одна часть - списка нет
+        self.assertTrue(v.parts_card.isHidden())
         self.assertIsNone(v.quiz)
-        v.win.destroy()
+        v.win.close_panel()
         self.assertIsNone(viewer3d._viewer)
-        self.assertEqual(self.errors, [])
+
+    def test_3d_rotation(self):
+        """вращение мышью: кадр меняется, после отпускания - чистый кадр текущего вида"""
+        from PySide6.QtCore import QPointF
+
+        from organism_atlas.ui import viewer3d
+        v = viewer3d.show_3d(self.app, "heart")
+        self.assertTrue(wait(lambda: v.ids is not None and not v.gpu_timer.isActive(), 60))
+        first = v.view.image
+        v.press(QPointF(100, 100))
+        v.drag(QPointF(160, 110))
+        self.assertTrue(v.moved)
+        self.assertNotEqual(v.az, -62.0)
+        v.release(QPointF(160, 110))
+        self.assertTrue(wait(lambda: v.view.image is not first and not v.gpu_timer.isActive()
+                             and (v.gpu or v.q.empty()), 60))
+        self.assertEqual(v.view.image.width(), round(v.w * v.dpr))
+        v.win.close_panel()
 
     def test_muscles_layer(self):
         """мышцы по умолчанию скрыты, флажок их показывает; «Показать всё» мышцы не трогает"""
@@ -395,44 +434,73 @@ class AppTests(unittest.TestCase):
         self.app.show_all()
         self.assertIn("muscles", self.app.atlas.visible)
         self.assertIn("skeleton", self.app.atlas.visible)
-        self.assertEqual(self.errors, [])
 
     def test_animation(self):
         """кусок с сердцем и лёгкими поверх схемы; не рисуется, когда выключен или открыта панель"""
         from organism_atlas.ui import settings_window
-        self.root.after_cancel(self.app.anim_job)
         self.app.animate()
-        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "normal")
-        x, y = self.app.c.coords(self.app.anim_item)
-        self.assertEqual((int(x), int(y)), self.app.atlas.anim_box()[:2])
+        layer = self.app.view.layers["anim"]
+        self.assertIsNotNone(layer)
+        self.assertEqual(layer[1:], self.app.atlas.anim_box()[:2])
         settings_window.show_settings(self.app)              # поверх панель - не рисуем
-        self.root.after_cancel(self.app.anim_job)
         self.app.animate()
-        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
-        settings_window._window.win.destroy()
+        self.assertIsNone(self.app.view.layers["anim"])
+        settings_window._window.win.close_panel()
         self.app.set_animation("off")
-        self.root.after_cancel(self.app.anim_job)
         self.app.animate()
-        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
+        self.assertIsNone(self.app.view.layers["anim"])
         self.app.set_animation("on")
         self.app.toggle_organ("heart")
         self.app.toggle_organ("lungs")                       # оба скрыты - анимировать нечего
-        self.root.after_cancel(self.app.anim_job)
         self.app.animate()
-        self.assertEqual(self.app.c.itemcget(self.app.anim_item, "state"), "hidden")
-        self.assertEqual(self.errors, [])
+        self.assertIsNone(self.app.view.layers["anim"])
 
     def test_resize_after_hover(self):
         """после наведения окно поменяло размер: схема перерисовалась, подсветка работает"""
         self.hover_heart()
         self.zoom = 0.6
-        self.app.on_resize(SimpleNamespace(width=0, height=0))
+        self.app.on_resize()
         self.assertFalse(self.app.ready())
+        self.assertEqual(self.app.view.message[1], True)    # «перерисовывается» внизу схемы
         self.app.start_build()                              # не ждём паузу после растягивания
         self.wait()
         self.assertEqual(self.app.atlas.Z, 0.6)
+        self.assertIsNone(self.app.view.message)
         self.hover_heart()
-        self.assertEqual(self.errors, [])
+
+    def test_theme_and_settings_apply_and_persist(self):
+        """настройки: тема перекрашивает окно на лету, язык меняет тексты, выбор сохраняется"""
+        from organism_atlas import settings, theme
+        from organism_atlas.ui import settings_window, viewer3d
+        a = self.app
+        settings_window.show_settings(a)
+        win = settings_window._window
+        try:
+            a.set_theme("light")
+            self.assertEqual(theme.C["bg"], theme.THEMES["light"]["bg"])
+            self.assertEqual(a.title.palette().windowText().color().name(), theme.THEMES["light"]["text"])
+            self.assertEqual(a.mode_buttons["study"].colors()[0], theme.THEMES["light"]["accent"])
+            a.set_lang("en")
+            self.assertEqual(win.win.title(), "Settings")
+            self.assertIn("Settings", a.settings_button.text())
+            a.set_quality("high")
+            self.assertEqual(viewer3d._quality, "high")
+            before = win.card.findChildren(QWidget)
+            next(b for b in self.buttons(win.card) if b.text() == "125%").click()    # как щелчок в панели
+            self.assertEqual(win.card.findChildren(QWidget), before)           # обновлено на месте: не мигает
+            self.assertEqual(a.ui_scale, 1.0)                 # сам масштаб - после перезапуска
+            from PySide6.QtWidgets import QLabel
+            texts = [w.text() for w in win.card.findChildren(QLabel)]
+            self.assertIn("125% selected: restart the app to apply it.", texts)
+            saved = settings.load()
+            self.assertEqual({k: settings.get(saved, k) for k in settings.DEFAULTS},
+                             {**settings.DEFAULTS, "theme": "light", "quality": "high", "ui_scale": 1.25})
+            self.assertEqual(saved["lang"], "en")
+            win.win.close_panel()
+            self.assertIsNone(settings_window._window)
+        finally:
+            theme.set_theme(theme.DEFAULT)
+            viewer3d.set_quality("medium")
 
 
 class ColorGroupTests(unittest.TestCase):
@@ -455,7 +523,6 @@ class ColorGroupTests(unittest.TestCase):
         self.assertEqual(fams, sorted(fams))
         self.assertEqual(order[-2:], ["gallbladder", "trachea"])      # зелёный, затем серо-голубая трахея
         self.assertLess(abs(order.index("lungs") - order.index("brain")), 2)
-
 
 
 class SystemGroupTests(unittest.TestCase):
