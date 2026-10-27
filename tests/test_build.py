@@ -36,23 +36,17 @@ class BuildExeTests(unittest.TestCase):
                 atlas_cache.PKG = old
                 shutil.rmtree(tmp, ignore_errors=True)
 
-    def test_commands_bundle_data_and_stamp(self):
-        """обе сборки кладут данные пакета, хэш исходников и бэкенды OpenGL, но не tkinter"""
+    def test_command_bundles_data_and_stamp(self):
+        """сборка кладёт данные пакета, хэш исходников и бэкенды OpenGL, но не tkinter"""
         tool = load_tool()
-        icon, stamp = Path("a.ico"), Path("stamp.txt")
-        nk = tool.nuitka_command(icon, stamp)
-        self.assertIn("--mode=standalone", nk)
-        self.assertIn("--include-package-data=organism_atlas", nk)
-        self.assertIn("--include-package=glcontext", nk)
-        self.assertIn("--include-data-files=stamp.txt=organism_atlas/" + atlas_cache.STAMP, nk)
-        self.assertIn("--nofollow-import-to=tkinter", nk)
-        self.assertIn("--windows-console-mode=disable", nk)
-        self.assertIn("--mode=onefile", tool.nuitka_command(icon, stamp, onefile=True))
-        pi = tool.pyinstaller_command(icon, stamp, console=True)
+        pi = tool.pyinstaller_command(Path("a.ico"), Path("stamp.txt"), console=True)
         self.assertIn("--console", pi)
+        self.assertNotIn("--onefile", pi)
         self.assertEqual(pi[pi.index("--collect-data") + 1], "organism_atlas")
+        self.assertEqual(pi[pi.index("--collect-submodules") + 1], "glcontext")
         self.assertTrue(any(a.startswith("stamp.txt") and a.endswith("organism_atlas") for a in pi))
         self.assertEqual(pi[pi.index("--exclude-module") + 1], "tkinter")
+        self.assertIn("--onefile", tool.pyinstaller_command(Path("a.ico"), Path("stamp.txt"), onefile=True))
 
     def test_icon(self):
         tool = load_tool()
