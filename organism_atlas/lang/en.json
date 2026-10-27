@@ -66,6 +66,8 @@
     "quality_medium": "Medium",
     "quality_high": "High",
     "settings_quality_hint": "Higher quality gives smoother model edges but takes longer to render the final frame.",
+    "settings_gpu": "3D is rendered by the graphics card: {name}.",
+    "settings_no_gpu": "No graphics card available: 3D is rendered in software (slower).",
     "settings_scale": "Interface scale",
     "settings_scale_hint": "A new scale takes effect after restarting the app.",
     "settings_scale_pending": "{percent}% selected: restart the app to apply it.",

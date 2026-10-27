@@ -1,34 +1,42 @@
-"""Панель 3D-просмотра органа. Рендер - в фоновых потоках, окно никогда не ждёт кадра.
+"""Панель 3D-просмотра органа.
+
+Кадр считает видеокарта (render3d/gpu.py): при вращении сразу показывается полный кадр с тенями и деталями,
+а после отпускания мыши - он же со сглаживанием (суперсэмплинг из настроек качества). Если кадр
+считается дольше DRAFT_TIME (нет видеокарты, программный OpenGL), при вращении разрешение кадра
+подстраивается так же, как у программного рендера.
+
+Без OpenGL кадр считает Scene3D в фоновых потоках, окно никогда не ждёт кадра: черновики при вращении
+считают два потока по очереди (numpy на больших операциях отпускает GIL, поэтому кадры идут внахлёст),
+каждый берёт самый свежий вид; после отпускания мыши третий поток считает чистый кадр.
 
 У анатомической модели из нескольких частей (групп сетки) под кадром - список частей: их можно скрывать,
 под курсором показывается название части, а «Найди часть» - маленькая викторина: назвали часть - щёлкни по ней.
-Названия частей - раздел parts в lang/*.json; часть без названия в список не попадает.
+Названия частей - раздел parts в lang/*.json; часть без названия в список не попадает."""
 
-При вращении черновики считают два потока по очереди (numpy на больших операциях отпускает GIL,
-поэтому кадры идут внахлёст), каждый берёт самый свежий вид. Разрешение черновика подстраивается так,
-чтобы кадр считался за DRAFT_TIME; после отпускания мыши третий поток считает чистый кадр."""
-
+import math
 import queue
 import random
 import threading
 import time
-import tkinter as tk
 import traceback
 
-from PIL import Image, ImageTk
+from PIL import Image
+from PySide6.QtCore import QRectF, Qt, QTimer
+from PySide6.QtGui import QPainter
+from PySide6.QtWidgets import QGridLayout, QWidget
 
 from .. import i18n
-from ..config import FONT
 from ..i18n import t
 from ..models import mesh_credit
 from ..organs import ORGANS
-from ..render3d.scene import Scene3D
-from ..theme import C, style
+from ..render3d import gpu
+from ..theme import C
 from .overlay import Panel
 from .scaling import px
-from .widgets import Toggle, fill_card, flat_button, frame, heading, label, rounded_card, set_button_bg
+from .widgets import (Toggle, clear, color, fill_card, flat_button, font, hbox, label, put, qimage, rounded_card,
+                      set_button_bg, set_fg, vbox)
 
-_viewer = None                  # единственное окно просмотра: новый орган открывается в нём же
+_viewer = None                  # единственная панель просмотра: новый орган открывается в ней же
 
 # качество рендера (окно настроек): суперсэмплинг чистого кадра для обычного и большого (HiDPI) окна
 # и во сколько раз черновик при вращении может быть меньше кадра (наименьший делитель)
@@ -39,84 +47,158 @@ QUALITY = {
 }
 _quality = "medium"
 
-DRAFT_TIME = 0.06               # секунд на черновик в одном потоке (двумя потоками - около 25 кадров в секунду)
+DRAFT_TIME = 0.06               # секунд на черновик (программно - в одном потоке из двух)
 DRAFT_MAX = 4.0                 # черновик не меньше четверти кадра по стороне, иначе слишком мутно
 DRAFT_THREADS = 2
 CLICK_MOVE = 4                  # сдвиг мыши (в пикселях), после которого нажатие - уже вращение, а не щелчок
 
 
-class Viewer3D:
-    """Окно с 3D-моделью органа. Рендер программный: сглаженный, с попиксельным освещением.
-    При вращении показывается быстрый черновик, после отпускания мыши — чистый кадр."""
+class Frame(QWidget):
+    """кадр модели: картинка в пикселях экрана и подсказка с названием части под курсором"""
 
-    def __init__(self, root, key):
+    def __init__(self, viewer, w, h):
+        super().__init__()
+        self.viewer = viewer
+        self.setFixedSize(w, h)
+        self.image = None
+        self.tip = None                     # (x, y, текст)
+        self.setMouseTracking(True)
+        self.setCursor(Qt.SizeAllCursor)
+
+    def set_image(self, im):
+        q = qimage(im)
+        q.setDevicePixelRatio(im.width / self.width())
+        self.image = q
+        self.update()
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        if self.image is None:
+            p.fillRect(self.rect(), color("view_bg"))
+        else:
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.drawImage(QRectF(self.rect()), self.image)
+        if self.tip:
+            x, y, text = self.tip
+            p.setFont(font(10, bold=True))
+            fm = p.fontMetrics()
+            w, h = fm.horizontalAdvance(text) + 2 * px(5), fm.height() + 2 * px(1)
+            x = min(x + px(14), max(0, self.width() - w))
+            y = y + px(14)
+            p.fillRect(x, y, w, h, color("tip_bg"))
+            p.setPen(color("tip_fg"))
+            p.drawText(QRectF(x, y, w, h), Qt.AlignCenter, text)
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.viewer.press(e.position())
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() & Qt.LeftButton:
+            self.viewer.drag(e.position())
+        else:
+            self.viewer.hover(e.position())
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.viewer.release(e.position())
+
+    def mouseDoubleClickEvent(self, e):
+        self.viewer.reset()
+
+    def leaveEvent(self, e):
+        self.show_tip(None)
+
+    def wheelEvent(self, e):
+        d = e.angleDelta().y()
+        if d:
+            self.viewer.zoom_by(1.12 if d > 0 else 1 / 1.12)
+
+    def show_tip(self, tip):
+        if tip != self.tip:
+            self.tip = tip
+            self.update()
+
+
+class Viewer3D:
+    """Панель с 3D-моделью органа: кадр слева, карточка органа справа, части модели под кадром."""
+
+    def __init__(self, host, key):
+        self.host = host
         self.key = None
         self.card_w = px(330)                    # ширина карточки органа справа от кадра
-        self.w, self.h = self.view_size(root)
-        self.gen, self.shown, self.job = 0, -1, None    # номер вида и номер показанного кадра
+        self.w, self.h = self.view_size(host)
+        self.dpr = host.devicePixelRatioF()
+        self.gen, self.shown = 0, -1             # номер вида и номер показанного кадра
         self.lx = self.ly = 0
+        self.az, self.el, self.zoom = -62.0, 18.0, 1.0
+        self.k = max(1.0, (self.w * self.h * self.dpr ** 2 / 100000) ** 0.5)  # во сколько раз черновик меньше
+        self.k_gpu = 1.0                         # то же для видеокарты: обычно 1 - черновик в полном размере
+        self.error = None                        # последняя ошибка рендера (показывается в подписи)
+        self.ids = None                          # карта частей показанного кадра (номер части в пикселе, -1 - фон)
+        self.hidden = frozenset()                # скрытые части модели
+        self.names = []                          # [(номер части, название, цвет)] - части со своим названием
+        self.part_toggles = {}                   # {номер части: Toggle} в списке под кадром
+        self.quiz = None                         # викторина «Найди часть»: {order, i, right, slipped, note}
+        self.press_at, self.moved = None, False
+        # программный рендер: очереди и потоки (запускаются, только если видеокарты нет)
         self.q = queue.Queue()
-        self.cv = threading.Condition()          # слоты запросов чистого кадра и черновика
+        self.cv = threading.Condition()
         self.pending = self.draft_req = None
         self.alive = True
-        self.k = max(1.0, (self.w * self.h / 100000) ** 0.5)     # во сколько раз черновик меньше кадра
-        self.error = None                # последняя ошибка рендера (показывается в подписи)
-        self.ids = None                  # карта частей показанного кадра (номер части в пикселе, -1 - фон)
-        self.hidden = frozenset()        # скрытые части модели
-        self.names = []                  # [(номер части, название, цвет)] - части со своим названием
-        self.part_toggles = {}           # {номер части: Toggle} в списке под кадром
-        self.quiz = None                 # викторина «Найди часть»: {order, i, right, slipped, note}
-        self.press_at, self.moved = None, False
-        win = self.win = Panel(root)
-        win.bind("<Destroy>", self.close)
-        threading.Thread(target=self.work, daemon=True).start()
-        for _ in range(DRAFT_THREADS):
-            threading.Thread(target=self.draft_work, daemon=True).start()
-        # кадр слева, карточка органа справа: так панель ниже и помещается в главное окно;
-        # до первого кадра - пустая картинка нужного размера, чтобы панель не прыгала
-        self.photo = ImageTk.PhotoImage(Image.new("RGB", (self.w, self.h), C["view_bg"]), master=root)
-        left = frame(win.body, "bg")
-        left.pack(side="left", anchor="n", padx=(px(16), px(12)), pady=(px(10), px(16)))
-        self.view = label(left, None, bg="bg", bd=0, highlightthickness=0, cursor="fleur", image=self.photo)
-        self.view.pack(anchor="n")
-        self.tip = label(left, "", fg="tip_fg", bg="tip_bg", font=(FONT, 10, "bold"), padx=px(5), pady=px(1))
-        self.parts_box, self.parts = rounded_card(left, width=self.w)        # части модели под кадром
-        side = frame(win.body, "bg")
-        side.pack(side="left", anchor="n", fill="y", padx=(0, px(16)), pady=(px(10), px(16)))
-        box, self.card = rounded_card(side, width=self.card_w)
-        box.pack(fill="x")
-        self.hint = label(side, "", fg="muted", bg="bg", font=(FONT, 9), justify="left", anchor="w",
-                          wraplength=self.card_w)
-        self.hint.pack(fill="x", pady=(px(8), 0))
-        v = self.view
-        v.bind("<ButtonPress-1>", self.press)
-        v.bind("<B1-Motion>", self.drag)
-        v.bind("<ButtonRelease-1>", self.release)
-        v.bind("<Motion>", self.hover)
-        v.bind("<Leave>", lambda e: self.tip.place_forget())
-        v.bind("<MouseWheel>", lambda e: self.zoom_by(1.12 if e.delta > 0 else 1 / 1.12))
-        v.bind("<Button-4>", lambda e: self.zoom_by(1.12))
-        v.bind("<Button-5>", lambda e: self.zoom_by(1 / 1.12))
-        v.bind("<Double-Button-1>", self.reset)
-        self.load(key)
-        self.poll()
+        self.threads = False
+        # видеокарта: кадр считается в потоке окна, вид при вращении - в слоте (кадры не копятся)
+        self.gpu_draft = self.gpu_full = False
+        self.gpu_timer = QTimer()
+        self.gpu_timer.setSingleShot(True)
+        self.gpu_timer.timeout.connect(self.gpu_frame)
+        self.zoom_timer = QTimer()
+        self.zoom_timer.setSingleShot(True)
+        self.zoom_timer.timeout.connect(self.refine)
+        self.poll_timer = QTimer()
+        self.poll_timer.timeout.connect(self.poll)
 
-    def view_size(self, root):
+        win = self.win = Panel(host)
+        win.closed.connect(self.close)
+        row = hbox(spacing=12)
+        left = vbox()
+        self.view = Frame(self, self.w, self.h)
+        left.addWidget(self.view)
+        self.parts_card = rounded_card(width=self.w)        # части модели под кадром
+        left.addSpacing(px(10))
+        left.addWidget(self.parts_card)
+        left.addStretch(1)
+        row.addLayout(left)
+        side = vbox()
+        self.card = rounded_card(width=self.card_w)
+        side.addWidget(self.card)
+        self.hint = label("", "muted", 9)
+        self.hint.setFixedWidth(self.card_w)
+        side.addSpacing(px(8))
+        side.addWidget(self.hint)
+        side.addStretch(1)
+        row.addLayout(side)
+        put(win.body, row, top=10, bottom=16)
+        self.load(key)
+
+    def view_size(self, host):
         """размер кадра: 600 x 450 (с учётом масштаба), а в небольшом окне - меньше, чтобы панель влезла
         (под кадром место для списка частей модели)"""
-        root.update_idletasks()
-        w = min(px(600), root.winfo_width() - self.card_w - px(110))
-        h = min(px(450), root.winfo_height() - px(230), round(w * 3 / 4))
+        w = min(px(600), host.width() - self.card_w - px(110))
+        h = min(px(450), host.height() - px(230), round(w * 3 / 4))
         h = max(px(180), h)
         return round(h * 4 / 3), h
 
     def load(self, key):
-        """показать в окне другой орган: новая сцена, вид по умолчанию"""
+        """показать в панели другой орган: новая сцена, вид по умолчанию"""
         parts = ORGANS[key]["parts"]()
         self.key = key
         # анатомическая сетка: условие лицензии - подпись авторов её источника
         self.credit = mesh_credit(key) if any(p["k"] == "m" for p in parts) else None
-        self.scene = Scene3D(parts)
+        self.scene = gpu.make_scene(parts)
+        self.gpu = isinstance(self.scene, gpu.GpuScene)
+        if not self.gpu:
+            self.start_threads()
         self.groups = [(p.get("group"), p["color"]) for p in parts]
         self.hidden, self.quiz, self.ids = frozenset(), None, None
         self.shown = self.gen                            # недосчитанные черновики прежнего органа не показывать
@@ -124,52 +206,52 @@ class Viewer3D:
         self.reset()                                     # gen растёт: кадры прежнего органа отбросятся
 
     def raise_(self):
-        self.win.raise_()
+        self.win.raise_panel()
 
     def retranslate(self):
         self.win.title(t("viewer_title", name=i18n.name(self.key)))
-        fill_card(self.card, self.key, compact=True, wrap=self.card_w - px(40))
+        fill_card(self.card, self.key, compact=True)
         credit = "\n" + t({"bp3d": "viewer_credit"}.get(self.credit, "viewer_credit_%s" % self.credit)) \
             if self.credit else ""
         if self.error is not None:
-            style(self.hint, fg="bad").config(text=t("viewer_error", error=self.error) + credit)
+            set_fg(self.hint, "bad").setText(t("viewer_error", error=self.error) + credit)
         else:
-            style(self.hint, fg="muted").config(text=t("viewer_hint") + credit)
+            set_fg(self.hint, "muted").setText(t("viewer_hint") + credit)
         self.fill_parts()
 
     # --- части модели
     def fill_parts(self):
         """построить список частей под кадром (новый орган, другой язык); у модели меньше чем из двух
-        названных частей его нет. Дальше щелчки только обновляют его на месте (refresh_parts): если строить
-        заново, панель на миг схлопывается и мигает"""
-        names = [(i, i18n.part(self.key, g), color) for i, (g, color) in enumerate(self.groups) if g]
+        названных частей его нет. Дальше щелчки только обновляют его на месте (refresh_parts)"""
+        names = [(i, i18n.part(self.key, g), c) for i, (g, c) in enumerate(self.groups) if g]
         self.names = [(i, n, c) for i, n, c in names if n]
-        card = self.parts
-        for w in card.winfo_children():
-            w.destroy()
+        lay = self.parts_card.lay
+        clear(lay)
         self.part_toggles = {}
         if len(self.names) < 2:
-            self.parts_box.pack_forget()
+            self.parts_card.hide()
             return
-        self.parts_box.pack(fill="x", pady=(px(10), 0))
-        head = frame(card)
-        head.pack(fill="x", padx=(0, px(12)), pady=(px(2), 0))
-        heading(head, t("parts_title")).pack(side="left")
-        self.quiz_button = flat_button(head, "", self.toggle_quiz)
-        self.quiz_button.config(font=(FONT, 9, "bold"), padx=px(10), pady=px(3))
-        self.quiz_button.pack(side="right", pady=(px(6), 0))
-        grid = frame(card)
-        grid.pack(fill="x", padx=px(12), pady=(px(2), 0))
-        grid.columnconfigure((0, 1), weight=1, uniform="col")
-        for n, (i, name, color) in enumerate(self.names):
-            cell = frame(grid)
-            cell.grid(row=n // 2, column=n % 2, sticky="ew", padx=(0, px(6) if n % 2 == 0 else 0))
-            self.part_toggles[i] = Toggle(cell, name, i not in self.hidden, lambda i=i: self.toggle_part(i),
-                                          color=color)
+        self.parts_card.show()
+        head = hbox()
+        head.addWidget(label(t("parts_title").upper(), "muted", 9, bold=True, wrap=False))
+        head.addStretch(1)
+        self.quiz_button = flat_button("", self.toggle_quiz, size=9, padx=10, pady=3)
+        head.addWidget(self.quiz_button)
+        put(lay, head, top=6, x=(16, 12))
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(px(6))
+        grid.setVerticalSpacing(px(1))
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+        for n, (i, name, c) in enumerate(self.names):
+            self.part_toggles[i] = Toggle(name, i not in self.hidden, lambda i=i: self.toggle_part(i), c=c)
+            grid.addWidget(self.part_toggles[i], n // 2, n % 2)
+        put(lay, grid, top=2, x=12)
         # высота - всегда две строки: подпись меняется после каждого ответа, а панель не должна прыгать
-        self.note = label(card, "", font=(FONT, 10, "bold"), anchor="nw", justify="left", height=2,
-                          wraplength=self.w - px(40))
-        self.note.pack(fill="x", padx=px(16), pady=(px(6), px(10)))
+        self.note = label("", "muted", 10, bold=True)
+        self.note.setFixedHeight(2 * self.note.fontMetrics().lineSpacing() + px(2))
+        put(lay, self.note, top=6, bottom=10)
         self.refresh_parts()
 
     def refresh_parts(self):
@@ -177,13 +259,12 @@ class Viewer3D:
         if not self.part_toggles:
             return
         for i, toggle in self.part_toggles.items():
-            if toggle.on != (i not in self.hidden):
-                toggle.set(self.name_of(i), i not in self.hidden)
+            toggle.set(self.name_of(i), i not in self.hidden)
         playing = self.quiz is not None and not self.quiz_done()
         text = t("parts_quiz") if self.quiz is None else t("parts_quiz_stop") if playing else t("parts_quiz_again")
-        self.quiz_button.config(text=text)
+        self.quiz_button.setText(text)
         set_button_bg(self.quiz_button, "card" if playing else "accent")
-        style(self.note, fg="accent_fg" if self.quiz else "muted").config(text=self.quiz_text())
+        set_fg(self.note, "accent_fg" if self.quiz else "muted").setText(self.quiz_text())
 
     def name_of(self, i):
         return dict((j, n) for j, n, _ in self.names).get(i)
@@ -197,14 +278,11 @@ class Viewer3D:
         i = int(ids[min(ih - 1, int(y * ih / self.h)), min(iw - 1, int(x * iw / self.w))])
         return i if i >= 0 else None
 
-    def hover(self, e):
+    def hover(self, pos):
         """название части под курсором - подсказкой рядом с ним (во время викторины - нет: это подсказка ответа)"""
-        name = self.name_of(self.part_at(e.x, e.y)) if len(self.names) >= 2 and self.quiz is None else None
-        if name is None:
-            self.tip.place_forget()
-            return
-        self.tip.config(text=name)
-        self.tip.place(in_=self.view, x=min(e.x + px(14), max(0, self.w - self.tip.winfo_reqwidth())), y=e.y + px(14))
+        x, y = pos.x(), pos.y()
+        name = self.name_of(self.part_at(x, y)) if len(self.names) >= 2 and self.quiz is None else None
+        self.view.show_tip(None if name is None else (int(x), int(y), name))
 
     def toggle_part(self, i):
         self.hidden = self.hidden ^ {i}
@@ -238,7 +316,7 @@ class Viewer3D:
                 self.hidden = frozenset()
                 self.draft()
                 self.refine()
-        self.tip.place_forget()
+        self.view.show_tip(None)
         self.refresh_parts()
 
     def quiz_click(self, x, y):
@@ -264,12 +342,12 @@ class Viewer3D:
         """фон кадра по текущей теме; читается в потоке окна и передаётся воркеру готовым"""
         return C["view_bg"], C["view_hi"]
 
+    def pixels(self):
+        """размер кадра в пикселях экрана (на экране с масштабом 150 % - в полтора раза больше логического)"""
+        return max(1, round(self.w * self.dpr)), max(1, round(self.h * self.dpr))
+
     def show(self, im):
-        if (self.photo.width(), self.photo.height()) == im.size:
-            self.photo.paste(im)                     # в готовую картинку - втрое быстрее, чем новая
-        else:
-            self.photo = ImageTk.PhotoImage(im, master=self.view)
-            self.view.configure(image=self.photo)
+        self.view.set_image(im)
         if self.error:
             self.error = None
             self.retranslate()
@@ -280,11 +358,78 @@ class Viewer3D:
         self.retranslate()
 
     def draft(self):
-        """быстрый кадр текущего вида: запрос потокам черновиков (более старый неначатый запрос заменяется)"""
+        """быстрый кадр текущего вида"""
+        if self.gpu:
+            self.gpu_draft = True
+            if not self.gpu_timer.isActive():
+                self.gpu_timer.start(0)              # события мыши копятся, кадр - один на все
+            return
+        w, h = self.pixels()
         with self.cv:
-            self.draft_req = (self.gen, self.scene, self.w, self.h, self.az, self.el, self.zoom, self.colors(),
+            self.draft_req = (self.gen, self.scene, w, h, self.az, self.el, self.zoom, self.colors(),
                               QUALITY[_quality]["draft_min"], self.hidden)
             self.cv.notify_all()
+
+    def refine(self):
+        """чистый кадр (суперсэмплинг)"""
+        self.gen += 1
+        w, h = self.pixels()
+        q = QUALITY[_quality]
+        ss = q["ss_big"] if w * h > 450000 else q["ss"]
+        if self.gpu:
+            self.gpu_full = True
+            if not self.gpu_timer.isActive():
+                self.gpu_timer.start(0)
+            return
+        with self.cv:
+            self.pending = (self.gen, self.scene, w, h, self.az, self.el, self.zoom, ss, self.colors(), self.hidden)
+            self.cv.notify()
+
+    def gpu_frame(self):
+        """кадр на видеокарте (в потоке окна). Черновик - полный кадр, только без суперсэмплинга; если он
+        считается дольше DRAFT_TIME (программный OpenGL), разрешение уменьшается, а при вращении убираются
+        тени и мелкие детали, как у программного черновика"""
+        if not self.alive:
+            return
+        full, self.gpu_full = self.gpu_full, False
+        self.gpu_draft = False
+        w, h = self.pixels()
+        try:
+            if full:
+                q = QUALITY[_quality]
+                ss = q["ss_big"] if w * h > 450000 else q["ss"]
+                im, ids = self.scene.render(w, h, self.az, self.el, self.zoom, ss=ss, bg=self.colors(),
+                                            hidden=self.hidden, ids=True)
+            else:
+                k = min(max(self.k_gpu, QUALITY[_quality]["draft_min"] if self.k_gpu > 1 else 1), DRAFT_MAX)
+                k = math.ceil(k * 4) / 4                 # ступеньками: у видеокарты меньше разных размеров кадра
+                dw, dh = max(1, round(w / k)), max(1, round(h / k))
+                t0 = time.perf_counter()
+                im, ids = self.scene.render(dw, dh, self.az, self.el, self.zoom, ss=1, bg=self.colors(),
+                                            hidden=self.hidden, ids=True, step=1 if k <= 1 else 2)
+                dt = time.perf_counter() - t0
+                self.k_gpu = min(max(0.7 * k + 0.3 * k * (dt / DRAFT_TIME) ** 0.5, 1.0), DRAFT_MAX)
+                if (dw, dh) != (w, h):
+                    im = im.resize((w, h), Image.BILINEAR)
+        except Exception as ex:
+            traceback.print_exc()
+            self.show_error(ex)
+            return
+        self.ids = ids
+        self.show(im)
+        if self.scene.gpu_error and self.scene.gpu_error != "другой поток":   # видеокарта отказала: дальше в потоках
+            self.gpu = False
+            self.start_threads()
+
+    # --- программный рендер в потоках
+    def start_threads(self):
+        if self.threads:
+            return
+        self.threads = True
+        threading.Thread(target=self.work, daemon=True).start()
+        for _ in range(DRAFT_THREADS):
+            threading.Thread(target=self.draft_work, daemon=True).start()
+        self.poll_timer.start(15)
 
     def draft_work(self):
         """поток черновиков: кадр в уменьшенном разрешении (делитель self.k подстраивается под DRAFT_TIME),
@@ -316,18 +461,6 @@ class Viewer3D:
             self.k = min(max(0.7 * k + 0.3 * k * (dt / DRAFT_TIME) ** 0.5, 1.0), DRAFT_MAX)
             self.q.put((gen, (im, ids), True))
 
-    def refine(self):
-        """чистый кадр (суперсэмплинг) считаем в фоновом потоке, чтобы окно не подвисало.
-        Запрос кладётся в единственный слот: если воркер занят, более старый
-        необработанный запрос просто перезаписывается."""
-        self.gen += 1
-        w, h = self.w, self.h
-        q = QUALITY[_quality]
-        ss = q["ss_big"] if w * h > 450000 else q["ss"]
-        with self.cv:
-            self.pending = (self.gen, self.scene, w, h, self.az, self.el, self.zoom, ss, self.colors(), self.hidden)
-            self.cv.notify()
-
     def work(self):
         while True:
             with self.cv:
@@ -349,88 +482,85 @@ class Viewer3D:
                 traceback.print_exc()
                 self.q.put((gen, ex, False))
 
-    def close(self, e):
-        if e.widget is not self.win:
-            return
+    def poll(self):
+        frame = None
+        try:
+            while True:
+                gen, im, draft = self.q.get_nowait()
+                # черновик - если он новее показанного (вид при вращении всё равно уже чуть ушёл),
+                # чистый кадр - только для текущего вида
+                if gen > self.shown if draft else gen == self.gen:
+                    frame, self.shown = im, gen
+        except queue.Empty:
+            pass
+        if isinstance(frame, Exception):
+            self.show_error(frame)
+        elif frame is not None:
+            im, self.ids = frame
+            self.show(im)                                # из нескольких готовых показываем только последний
+
+    def close(self):
         global _viewer
         if _viewer is self:
             _viewer = None
+        self.gpu_timer.stop()
+        self.zoom_timer.stop()
+        self.poll_timer.stop()
         with self.cv:
             self.alive = False
             self.pending = self.draft_req = None
             self.cv.notify_all()
 
-    def poll(self):
-        try:
-            if not self.win.winfo_exists():
-                return
-            frame = None
-            try:
-                while True:
-                    gen, im, draft = self.q.get_nowait()
-                    # черновик - если он новее показанного (вид при вращении всё равно уже чуть ушёл),
-                    # чистый кадр - только для текущего вида
-                    if gen > self.shown if draft else gen == self.gen:
-                        frame, self.shown = im, gen
-            except queue.Empty:
-                pass
-            if isinstance(frame, Exception):
-                self.show_error(frame)
-            elif frame is not None:
-                im, self.ids = frame
-                self.show(im)                            # из нескольких готовых показываем только последний
-            self.win.after(15, self.poll)
-        except tk.TclError:
-            pass
-
     # --- мышь
-    def press(self, e):
-        self.lx, self.ly = e.x, e.y
-        self.press_at, self.moved = (e.x, e.y), False
-        self.tip.place_forget()
+    def press(self, pos):
+        self.lx, self.ly = pos.x(), pos.y()
+        self.press_at, self.moved = (pos.x(), pos.y()), False
+        self.view.show_tip(None)
 
-    def release(self, e):
+    def release(self, pos):
         """отпустили кнопку: после вращения - чистый кадр, а щелчок на месте - ответ викторины «Найди часть»"""
         if self.moved:
             self.refine()
         elif self.quiz is not None:
-            self.quiz_click(e.x, e.y)
+            self.quiz_click(pos.x(), pos.y())
 
-    def drag(self, e):
+    def drag(self, pos):
+        x, y = pos.x(), pos.y()
         if not self.moved:
-            x0, y0 = self.press_at or (e.x, e.y)
-            if abs(e.x - x0) + abs(e.y - y0) < CLICK_MOVE:   # дрожание руки при щелчке - не вращение
+            x0, y0 = self.press_at or (x, y)
+            if abs(x - x0) + abs(y - y0) < CLICK_MOVE:   # дрожание руки при щелчке - не вращение
                 return
             self.moved = True
-        self.az -= (e.x - self.lx) * 0.5
-        self.el = max(-89.0, min(89.0, self.el + (e.y - self.ly) * 0.4))
-        self.lx, self.ly = e.x, e.y
+        self.az -= (x - self.lx) * 0.5
+        self.el = max(-89.0, min(89.0, self.el + (y - self.ly) * 0.4))
+        self.lx, self.ly = x, y
         self.gen += 1                                    # отложенный чистый кадр устарел
+        self.gpu_full = False
         self.draft()
 
     def zoom_by(self, f):
         self.zoom = max(0.5, min(3.0, self.zoom * f))
         self.gen += 1
+        self.gpu_full = False
         self.draft()
-        if self.job:
-            self.win.after_cancel(self.job)
-        self.job = self.win.after(200, self.refine)
+        self.zoom_timer.start(200)
 
-    def reset(self, _e=None):
+    def reset(self):
         self.az, self.el, self.zoom = -62.0, 18.0, 1.0
         self.draft()
         self.refine()
 
 
-def show_3d(root, key):
-    """открыть орган в окне просмотра; если окно уже открыто - переиспользовать его"""
+def show_3d(host, key):
+    """открыть орган в панели просмотра; если она уже открыта - переиспользовать её"""
     global _viewer
     if _viewer is None:
-        _viewer = Viewer3D(root, key)
-        return
+        _viewer = Viewer3D(host, key)
+        return _viewer
     if key != _viewer.key:
         _viewer.load(key)
     _viewer.raise_()
+    return _viewer
 
 
 def retranslate_all():
@@ -439,14 +569,14 @@ def retranslate_all():
 
 
 def set_quality(name):
-    """сменить качество рендера; открытое окно сразу перерисовывает кадр"""
+    """сменить качество рендера; открытая панель сразу перерисовывает кадр"""
     global _quality
     _quality = name if name in QUALITY else "medium"
     rerender_all()
 
 
 def rerender_all():
-    """перерисовать кадр открытого окна (сменились качество или тема)"""
+    """перерисовать кадр открытой панели (сменились качество или тема)"""
     if _viewer is not None:
         _viewer.draft()
         _viewer.refine()

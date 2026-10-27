@@ -1,2 +1,4 @@
 numpy
 pillow
+PySide6-Essentials   # интерфейс (Qt)
+moderngl             # 3D на видеокарте (без него - программный рендер)

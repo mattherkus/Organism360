@@ -1,12 +1,14 @@
-"""Масштаб интерфейса (DPI Windows) и выбор размера схемы под экран."""
+"""Масштаб интерфейса и выбор размера схемы под экран.
+
+Размеры в коде интерфейса - в пикселях при масштабе 100 %: px() умножает их на масштаб из настроек.
+Масштаб экрана Windows (125-200 %) Qt учитывает сам: логический пиксель на таком экране крупнее, а схема
+и 3D рисуются в настоящих пикселях экрана (devicePixelRatio), поэтому остаются чёткими."""
 
 import math
-import sys
 
 from ..geometry import H, W
 
-
-_scale = 1.0          # масштаб интерфейса на экранах с «увеличением» Windows
+_scale = 1.0          # масштаб интерфейса из настроек (100 %, 125 %, ...)
 
 
 def set_scale(value):
@@ -22,18 +24,9 @@ def px(v):
     return int(round(v * _scale))
 
 
-def enable_dpi_awareness():
-    """Просим Windows не растягивать окно: картинка остаётся чёткой при масштабе 125–200 %."""
-    if sys.platform != "win32":
-        return
-    try:
-        import ctypes
-        try:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except Exception:
-            ctypes.windll.user32.SetProcessDPIAware()
-    except Exception:
-        pass
+def fs(points):
+    """размер шрифта в пунктах с учётом масштаба интерфейса"""
+    return points * _scale
 
 
 ZOOM_STEP = 0.05                  # масштаб схемы меняется ступеньками: меньше перерисовок и файлов кэша
@@ -48,8 +41,9 @@ def fit_zoom(w, h):
     return round(max(ZOOM_MIN, min(z, ZOOM_MAX)), 4)
 
 
-def pick_zoom(root):
-    """Масштаб схемы при запуске: как можно крупнее, но чтобы окно влезло в экран."""
-    avail_h = 0.88 * root.winfo_screenheight() - 150 * _scale
-    avail_w = 0.94 * root.winfo_screenwidth() - SIDE_W * _scale
+def pick_zoom(screen_w, screen_h, dpr=1.0):
+    """масштаб схемы при запуске (в пикселях экрана): как можно крупнее, но чтобы окно влезло в экран
+    размером screen_w x screen_h логических пикселей"""
+    avail_h = (0.88 * screen_h - 150 * _scale) * dpr
+    avail_w = (0.94 * screen_w - SIDE_W * _scale) * dpr
     return fit_zoom(avail_w, avail_h)

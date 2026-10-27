@@ -60,7 +60,9 @@ def main():
     sep = ";" if sys.platform == "win32" else ":"
     cmd = [str(ROOT / "run.py"), "--name", NAME, "--console" if args.console else "--windowed", "--noconfirm", "--clean",
            "--icon", str(icon), "--distpath", str(ROOT / "dist"), "--workpath", str(build),
-           "--specpath", str(build), "--collect-data", "organism_atlas"]
+           "--specpath", str(build), "--collect-data", "organism_atlas",
+           "--collect-submodules", "glcontext",           # moderngl выбирает бэкенд OpenGL при запуске
+           "--exclude-module", "tkinter"]
     for src, dest in source_datas():
         cmd += ["--add-data", "%s%s%s" % (src, sep, dest.as_posix())]
     if args.onefile:

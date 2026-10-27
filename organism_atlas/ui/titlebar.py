@@ -1,4 +1,4 @@
-"""Заголовок окна в цветах темы и своя иконка вместо пёрышка Tk.
+"""Заголовок окна в цветах темы и своя иконка.
 
 Заголовок остаётся системным (перетаскивание, прилипание к краям экрана, кнопка на панели задач работают
 как обычно), но Windows 11 красит его по просьбе программы (DwmSetWindowAttribute): фон - цвет фона окна,
@@ -7,9 +7,8 @@
 
 import math
 import sys
-import tkinter as tk
 
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageDraw
 
 from ..theme import C
 
@@ -18,8 +17,6 @@ DARK_MODE = 20                  # DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1
 BORDER_COLOR = 34               # DWMWA_BORDER_COLOR (Windows 11)
 CAPTION_COLOR = 35              # DWMWA_CAPTION_COLOR
 TEXT_COLOR = 36                 # DWMWA_TEXT_COLOR
-
-_icons = []                     # PhotoImage иконки: держим ссылку, иначе Tk её потеряет
 
 
 def _rgb(c):
@@ -43,33 +40,19 @@ def _set(hwnd, attr, value):
 
 
 def paint(win):
-    """покрасить заголовок окна win (Tk или Toplevel) в текущую тему - сейчас и каждый раз, когда окно
-    появляется на экране: цвет, заданный до первого показа, Windows забывает"""
+    """покрасить заголовок окна win (QWidget верхнего уровня) в текущую тему; окно зовёт это
+    и при каждом показе (showEvent): цвет, заданный до первого показа, Windows забывает"""
     if sys.platform != "win32":
-        return
-    if not getattr(win, "_titlebar", False):
-        win._titlebar = True
-        win.bind("<Map>", lambda e: e.widget is win and _apply(win), add="+")
-    _apply(win)
-
-
-def _apply(win):
+        return False
     try:
-        hwnd = int(win.wm_frame(), 16)          # внешнее окно с заголовком (создаёт его, если ещё нет)
+        hwnd = int(win.winId())
         _set(hwnd, DARK_MODE, int(is_dark(C["bg"])))
         _set(hwnd, CAPTION_COLOR, _colorref(C["bg"]))
         _set(hwnd, TEXT_COLOR, _colorref(C["text"]))
         _set(hwnd, BORDER_COLOR, _colorref(C["border"]))
+        return True
     except Exception:                           # нет dwmapi или окно уже закрыто - заголовок останется обычным
-        pass
-
-
-def paint_all(root):
-    """покрасить главное окно и все открытые дочерние окна (после смены темы)"""
-    paint(root)
-    for w in root.winfo_children():
-        if isinstance(w, tk.Toplevel):
-            paint(w)
+        return False
 
 
 def heart(size):
@@ -93,15 +76,16 @@ def icon_image(size, ss=4):
     return im.resize((size, size), Image.LANCZOS)
 
 
-def set_icon(root):
-    """иконка всех окон программы (заголовок и панель задач) в цветах текущей темы; уже открытые - тоже"""
-    global _icons
-    try:
-        icons = [ImageTk.PhotoImage(icon_image(n), master=root) for n in (64, 32, 16)]
-        root.iconphoto(True, *icons)               # True - и для окон, которые откроются потом
-        for w in root.winfo_children():
-            if isinstance(w, tk.Toplevel):
-                w.iconphoto(False, *icons)
-        _icons = icons
-    except tk.TclError:
-        pass
+def icon():
+    """QIcon программы в цветах текущей темы (все размеры для заголовка и панели задач)"""
+    from PySide6.QtGui import QIcon, QPixmap
+    from .widgets import qimage
+    ic = QIcon()
+    for n in (16, 32, 64, 256):
+        ic.addPixmap(QPixmap.fromImage(qimage(icon_image(n))))
+    return ic
+
+
+def set_icon(app):
+    """иконка всех окон программы в цветах текущей темы (QApplication.setWindowIcon - и для уже открытых)"""
+    app.setWindowIcon(icon())

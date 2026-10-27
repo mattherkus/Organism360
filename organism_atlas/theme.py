@@ -1,7 +1,8 @@
 """Темы оформления интерфейса: тёмная, светлая и высококонтрастная.
 
-Виджет получает цвета не числами, а ролями (bg, card, text, ...) через style(); роли запоминаются
-на самом виджете, поэтому repaint() может перекрасить всё окно на лету, обойдя дерево виджетов.
+Виджеты получают цвета не числами, а ролями (bg, card, text, ...): кнопки и карточки берут цвет роли
+в момент рисования, а надписи запоминают свою роль (ui/widgets.py: set_fg), поэтому ui.widgets.retheme()
+перекрашивает всё окно на лету.
 Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы.
 """
 
@@ -70,23 +71,6 @@ def set_theme(name):
     _name = name
     C.clear()
     C.update(THEMES[name])
-
-
-def style(widget, **roles):
-    """покрасить виджет по ролям: style(label, bg="card", fg="text"); роли запоминаются для repaint"""
-    roles = {**getattr(widget, "_theme_roles", {}), **roles}
-    widget._theme_roles = roles
-    widget.configure(**{opt: C[role] for opt, role in roles.items()})
-    return widget
-
-
-def repaint(widget):
-    """перекрасить виджет и всех его потомков (в том числе дочерние окна) в текущую тему"""
-    roles = getattr(widget, "_theme_roles", None)
-    if roles:
-        widget.configure(**{opt: C[role] for opt, role in roles.items()})
-    for child in widget.winfo_children():
-        repaint(child)
 
 
 def contrast(a, b):
