@@ -1,0 +1,39 @@
+# Сборка установщика OrganismAtlas-Setup-<версия>.exe на Windows (tools/build_setup.py).
+# Каждый запуск кладёт установщик в «Artifacts» на странице запуска (Actions).
+# Тег v* (например v1.0.0) ещё и выкладывает его в Releases - оттуда пользователи скачивают setup.exe.
+name: Установщик
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Зависимости
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          choco install innosetup -y --no-progress
+      - name: Сборка
+        run: python tools/build_setup.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OrganismAtlas-Setup
+          path: dist/OrganismAtlas-Setup-*.exe
+          if-no-files-found: error
+      - name: Выпуск
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/OrganismAtlas-Setup-*.exe

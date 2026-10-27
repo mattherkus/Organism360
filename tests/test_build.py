@@ -65,6 +65,15 @@ class BuildSetupTests(unittest.TestCase):
         self.assertIn(r"{localappdata}\organism_atlas\cache", text)       # там atlas_cache хранит кэш
         self.assertIn(r"{userappdata}\organism_atlas", text)               # а settings.py - настройки
 
+    def test_wizard_is_short(self):
+        """мастер: только выбор папки и «Готово» - без вопросов про язык, права, группу и ярлыки"""
+        text = (ROOT / "tools" / "setup.iss").read_text(encoding="utf-8-sig")
+        for line in ("DisableDirPage=no", "DisableWelcomePage=yes", "DisableReadyPage=yes",
+                     "DisableProgramGroupPage=yes", "ShowLanguageDialog=no",
+                     "PrivilegesRequiredOverridesAllowed=commandline"):
+            self.assertIn(line, text.splitlines())
+        self.assertNotIn("[Tasks]", text)
+
     def test_iscc_command(self):
         from organism_atlas import __version__
         cmd = load_tool("build_setup").iscc_command("ISCC.exe")

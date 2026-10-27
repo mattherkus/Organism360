@@ -2,9 +2,9 @@
 ; Собирается командой  python tools/build_setup.py : она сначала собирает dist/OrganismAtlas (build_exe.py),
 ; потом вызывает ISCC с версией и путями. Вручную:  iscc tools\setup.iss  (после python tools/build_exe.py)
 ;
-; Ставит программу без прав администратора в %LOCALAPPDATA%\Programs\OrganismAtlas (или, если выбрать
-; «для всех пользователей», в Program Files), добавляет ярлыки в меню «Пуск» и на рабочий стол
-; и пункт в «Приложения и возможности». При удалении стирает кэш схемы и спрашивает, удалить ли
+; Мастер в два шага: выбор папки (по умолчанию %LOCALAPPDATA%\Programs\OrganismAtlas, прав администратора
+; не нужно) и «Готово» с запуском программы. Язык - по языку Windows, без вопросов. Ярлыки в меню «Пуск»
+; и на рабочем столе и пункт в «Приложения и возможности» создаются сами. При удалении стирает кэш схемы и спрашивает, удалить ли
 ; настройки и прогресс (%APPDATA%\organism_atlas).
 
 #ifndef AppVersion
@@ -31,8 +31,13 @@ AppPublisher=Organism Atlas
 DefaultDirName={autopf}\OrganismAtlas
 DefaultGroupName={cm:AppName}
 DisableProgramGroupPage=yes
+DisableDirPage=no
+DisableWelcomePage=yes
+DisableReadyPage=yes
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog commandline
+; для всех пользователей - только из командной строки: setup.exe /ALLUSERS. Если выбрать папку, куда нельзя
+; писать без прав администратора (Program Files), мастер скажет об этом сразу (NextButtonClick ниже)
+PrivilegesRequiredOverridesAllowed=commandline
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir={#OutDir}
@@ -44,7 +49,7 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes
-ShowLanguageDialog=auto
+ShowLanguageDialog=no
 
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
@@ -55,16 +60,15 @@ russian.AppName=Атлас организма
 english.AppName=Organism Atlas
 russian.DeleteUserData=Удалить также настройки и прогресс (историю игр, достижения)?
 english.DeleteUserData=Also delete settings and progress (game history, achievements)?
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+russian.DirNotWritable=В эту папку нельзя установить программу без прав администратора. Выберите другую папку, например предложенную по умолчанию.
+english.DirNotWritable=This folder needs administrator rights. Please choose another folder, for example the default one.
 
 [Files]
 Source: "{#Dist}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{cm:AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autodesktop}\{cm:AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autodesktop}\{cm:AppName}"; Filename: "{app}\{#AppExe}"
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{cm:AppName}}"; Flags: nowait postinstall skipifsilent
@@ -75,6 +79,33 @@ Type: filesandordirs; Name: "{localappdata}\organism_atlas\cache"
 Type: dirifempty; Name: "{localappdata}\organism_atlas"
 
 [Code]
+function CanWrite(Dir: String): Boolean;
+var
+  Created: Boolean;
+  Probe: String;
+begin
+  Created := not DirExists(Dir);
+  Result := ForceDirectories(Dir);
+  if Result then
+  begin
+    Probe := AddBackslash(Dir) + '.write-test';
+    Result := SaveStringToFile(Probe, '', False);
+    DeleteFile(Probe);
+  end;
+  if Created then
+    RemoveDir(Dir);           { пустую папку создаст сама установка; если вернутся и выберут другую - не мусорим }
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if (CurPageID = wpSelectDir) and not IsAdminInstallMode and not CanWrite(WizardDirValue) then
+  begin
+    MsgBox(CustomMessage('DirNotWritable'), mbError, MB_OK);
+    Result := False;
+  end;
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Data: String;
