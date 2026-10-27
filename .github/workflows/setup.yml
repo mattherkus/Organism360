@@ -15,9 +15,11 @@ permissions:
 jobs:
   setup:
     runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"                  # консоль раннера - cp1252, а скрипты пишут по-русски
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Зависимости
@@ -27,7 +29,7 @@ jobs:
           choco install innosetup -y --no-progress
       - name: Сборка
         run: python tools/build_setup.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: OrganismAtlas-Setup
           path: dist/OrganismAtlas-Setup-*.exe
