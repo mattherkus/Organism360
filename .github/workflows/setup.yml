@@ -28,6 +28,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           choco install innosetup -y --no-progress
+      - name: Кэш Nuitka                # скомпилированный C-код: повторная сборка в разы быстрее
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\Nuitka\Nuitka\Cache
+          key: nuitka-${{ runner.os }}-${{ hashFiles('requirements*.txt') }}-${{ github.sha }}
+          restore-keys: nuitka-${{ runner.os }}-${{ hashFiles('requirements*.txt') }}-
       - name: Сборка
         run: python tools/build_setup.py
       - uses: actions/upload-artifact@v5

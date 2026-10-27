@@ -20,18 +20,39 @@ def load_tool(name="build_exe"):
 
 
 class BuildExeTests(unittest.TestCase):
-    def test_sources_for_cache_version_are_bundled(self):
-        """в сборке - все исходники, по которым atlas_cache.version() считает версию, на тех же местах"""
+    def test_stamp_gives_same_cache_version(self):
+        """в сборке исходников рисунка нет, вместо них - их хэш (STAMP): версия кэша та же, что из исходников"""
+        import shutil
         tool = load_tool()
-        bundled = {(dest / src.name).as_posix() for src, dest in tool.source_datas()}
-        pkg = atlas_cache.PKG
-        expected = set()
-        for name in atlas_cache._SOURCES:
-            p = pkg / name
-            for f in (p.rglob("*.py") if p.is_dir() else [p]):
-                expected.add("organism_atlas/" + f.relative_to(pkg).as_posix())
-        self.assertEqual(bundled, expected)
-        self.assertIn("organism_atlas/body/muscles.py", bundled)
+        v = atlas_cache.version()
+        old = atlas_cache.PKG
+        with tempfile.TemporaryDirectory() as tmp:
+            tool.write_stamp(Path(tmp) / atlas_cache.STAMP)     # сборка считает хэш по исходникам
+            try:
+                atlas_cache.PKG = Path(tmp)                      # «собранная программа»: только данные
+                self.assertNotEqual(atlas_cache.sources_digest(), (Path(tmp) / atlas_cache.STAMP).read_text().strip())
+                self.assertEqual(atlas_cache.version(), v)
+            finally:
+                atlas_cache.PKG = old
+                shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_commands_bundle_data_and_stamp(self):
+        """обе сборки кладут данные пакета, хэш исходников и бэкенды OpenGL, но не tkinter"""
+        tool = load_tool()
+        icon, stamp = Path("a.ico"), Path("stamp.txt")
+        nk = tool.nuitka_command(icon, stamp)
+        self.assertIn("--mode=standalone", nk)
+        self.assertIn("--include-package-data=organism_atlas", nk)
+        self.assertIn("--include-package=glcontext", nk)
+        self.assertIn("--include-data-files=stamp.txt=organism_atlas/" + atlas_cache.STAMP, nk)
+        self.assertIn("--nofollow-import-to=tkinter", nk)
+        self.assertIn("--windows-console-mode=disable", nk)
+        self.assertIn("--mode=onefile", tool.nuitka_command(icon, stamp, onefile=True))
+        pi = tool.pyinstaller_command(icon, stamp, console=True)
+        self.assertIn("--console", pi)
+        self.assertEqual(pi[pi.index("--collect-data") + 1], "organism_atlas")
+        self.assertTrue(any(a.startswith("stamp.txt") and a.endswith("organism_atlas") for a in pi))
+        self.assertEqual(pi[pi.index("--exclude-module") + 1], "tkinter")
 
     def test_icon(self):
         tool = load_tool()
@@ -50,6 +71,27 @@ class BuildExeTests(unittest.TestCase):
             self.assertEqual(len(atlas_cache.version()), 16)
         finally:
             atlas_cache.PKG = old
+
+
+class SelftestTests(unittest.TestCase):
+    def test_selftest_from_sources(self):
+        """run.py --selftest: окно, 3D-кадр, отчёт и код 0 - так build_exe.py проверяет собранную программу"""
+        import sys
+        tool = load_tool()
+        tool_exe = [sys.executable, str(ROOT / "run.py")]
+        with tempfile.TemporaryDirectory() as tmp:
+            import os
+            import subprocess
+            report = Path(tmp) / "r.txt"
+            env = dict(os.environ, QT_QPA_PLATFORM="offscreen", ORGANISM_ATLAS_SETTINGS=str(Path(tmp) / "s.json"),
+                       ORGANISM_ATLAS_PROGRESS=str(Path(tmp) / "p.json"), ORGANISM_ATLAS_CACHE=tmp)
+            r = subprocess.run(tool_exe + ["--selftest=" + str(report)], env=env, timeout=300)
+            self.assertEqual(r.returncode, 0, report.read_text(encoding="utf-8") if report.exists() else "")
+            text = report.read_text(encoding="utf-8")
+            self.assertIn("window", text)
+            self.assertIn("3d", text)
+            self.assertFalse(os.path.exists(env["ORGANISM_ATLAS_SETTINGS"]))       # настройки не тронуты
+        self.assertTrue(callable(tool.selftest))
 
 
 class BuildSetupTests(unittest.TestCase):

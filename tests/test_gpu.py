@@ -83,6 +83,11 @@ class GpuRenderTests(unittest.TestCase):
         self.assertTrue(all(gl.frame - f <= gl.KEEP for f in gl.used.values()))
         self.check(ORGANS["liver"]["parts"]())
 
+    def test_renderer_name_after_frame(self):
+        """название видеокарты для настроек - и после кадра (контекст тогда уже не текущий)"""
+        gpu.GpuScene(ORGANS["bladder"]["parts"]()).render(40, 30, -62, 18)
+        self.assertTrue(gpu.info())
+
     def test_other_thread_falls_back(self):
         """контекст привязан к своему потоку: из другого кадр считает Scene3D"""
         import threading

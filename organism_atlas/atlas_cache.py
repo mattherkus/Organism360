@@ -40,17 +40,31 @@ KEEP = 6                                          # сколько масшта�
 _SOURCES = ["atlas.py", "geometry.py", "colors.py", "config.py", "body", "organs", "render2d"]
 
 
-def version():
-    """хэш исходников рисунка. В собранной программе (tools/build_exe.py) эти исходники лежат рядом
-    как данные - версия та же, что при запуске из исходников. Если файла нет, хэшируется только его имя:
-    кэш работает, просто не следит за правками этого файла"""
-    h = hashlib.sha256(("%d|%s|%s" % (FORMAT, np.__version__, PIL.__version__)).encode())
+STAMP = "atlas_sources.txt"                       # хэш исходников рисунка в собранной программе
+
+
+def sources_digest():
+    """хэш исходников рисунка. Если файла нет, хэшируется только его имя: кэш работает, просто не следит
+    за правками этого файла"""
+    h = hashlib.sha256()
     for name in _SOURCES:
         p = PKG / name
         for f in sorted(p.rglob("*.py")) if p.is_dir() else [p]:
             h.update(f.relative_to(PKG).as_posix().encode())
             if f.is_file():
                 h.update(f.read_bytes())
+    return h.hexdigest()
+
+
+def version():
+    """версия кэша: хэш исходников рисунка, FORMAT и версии numpy и Pillow. В собранной программе
+    (tools/build_exe.py) исходников нет - сборка кладёт рядом их хэш (STAMP), посчитанный тем же
+    sources_digest(), поэтому версия та же, что при запуске из исходников"""
+    try:
+        digest = (PKG / STAMP).read_text(encoding="ascii").strip()
+    except OSError:
+        digest = sources_digest()
+    h = hashlib.sha256(("%d|%s|%s|%s" % (FORMAT, np.__version__, PIL.__version__, digest)).encode())
     return h.hexdigest()[:16]
 
 

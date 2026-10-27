@@ -69,7 +69,7 @@ def available():
 def info():
     """название видеокарты (для подписи в настройках) или None"""
     gl = context()
-    return gl.ctx.info.get("GL_RENDERER") if gl else None
+    return gl.renderer if gl else None
 
 
 def make_scene(parts):
@@ -545,6 +545,8 @@ class GL:
         if ctx is None:
             raise RuntimeError("; ".join(errors))
         self.ctx = ctx
+        # название - сразу: ctx.info спрашивает драйвер, а после кадра контекст уже не текущий
+        self.renderer = ctx.info.get("GL_RENDERER") or "OpenGL"
         # буферы ушедшей сцены освобождаются в потоке контекста (ctx.gc() перед кадром): сборщик мусора
         # может сработать в любом потоке, а OpenGL можно звать только из своего
         ctx.gc_mode = "context_gc"

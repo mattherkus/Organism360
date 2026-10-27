@@ -1,2 +1,4 @@
 -r requirements.txt
-pyinstaller       # сборка .exe: python tools/build_exe.py
+nuitka            # сборка .exe: python tools/build_exe.py
+zstandard         # Nuitka: сжатие для --onefile
+pyinstaller       # запасная сборка: python tools/build_exe.py --builder pyinstaller
