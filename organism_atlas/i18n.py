@@ -16,7 +16,7 @@ PREFERRED = ("ru", "en", "la")      # порядок кнопок; осталь�
 
 _cache = {}
 _current, _previous = BASE, BASE
-_links = None                       # (регулярное выражение, {группа: орган или None}) для links()
+_links = None                       # (регулярное выражение, {группа: орган, болезнь или None}) для links()
 
 
 def _load(code):
@@ -114,6 +114,11 @@ def name(key):
     return organ(key, "name")
 
 
+def section(code, name):
+    """раздел файла языка code как есть (например, diseases); нет - пустой словарь"""
+    return _load(code).get(name, {})
+
+
 def organ_in(code, key, field):
     """поле карточки органа на языке code как есть, без отката на другие языки ("" - поля нет)"""
     return _load(code)["organs"].get(key, {}).get(field) or ""
@@ -176,7 +181,7 @@ def _fold(s):
 
 
 def _links_re():
-    """одно выражение по разделам links всех языков: каждое сочетание - именованная группа.
+    """одно выражение по разделам links всех языков (органы и болезни): каждое сочетание - именованная группа.
     Длинные сочетания идут первыми, чтобы «прямая кишка» не стала ссылкой на «кишку»"""
     global _links
     if _links is None:
@@ -184,7 +189,7 @@ def _links_re():
         for code in available():
             sec = _load(code).get("links", {})
             items += [(p, None) for p in sec.get("skip", [])]
-            items += [(p, key) for key, ps in sec.get("organs", {}).items() for p in ps]
+            items += [(p, key) for part in ("organs", "diseases") for key, ps in sec.get(part, {}).items() for p in ps]
         items.sort(key=lambda it: (-len(it[0].split()), -len(it[0])))
         groups, parts = {}, []
         for i, (p, key) in enumerate(items):
@@ -196,8 +201,8 @@ def _links_re():
 
 
 def links(text):
-    """текст карточки -> [(кусок, орган или None)]: упоминания органов (раздел links в lang/*.json)
-    становятся кусками со своим органом, остальной текст - кусками с None"""
+    """текст карточки -> [(кусок, ключ или None)]: упоминания органов и болезней (раздел links в lang/*.json)
+    становятся кусками с ключом органа или болезни, остальной текст - кусками с None"""
     rx, groups = _links_re()
     out, pos = [], 0
     for m in rx.finditer(_fold(text)):

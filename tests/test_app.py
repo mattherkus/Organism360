@@ -82,6 +82,43 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.spot, "lungs")
         self.assertTrue([w for w in self.app.card.findChildren(QLabel) if w.text() == i18n.name("lungs")])
 
+    def test_diseases_guide_links(self):
+        """заболевание в карточке органа ведёт в справочник, орган в статье - обратно в карточку"""
+        from PySide6.QtWidgets import QLabel
+        from organism_atlas.ui.diseases import DiseasesPanel
+        from organism_atlas.ui.overlay import top
+        self.app.show_info("liver")
+        link = [w for w in self.app.card.findChildren(QLabel) if 'href="cirrhosis"' in w.text()]
+        self.assertEqual(len(link), 1)
+        link[0].linkActivated.emit("cirrhosis")
+        pump()
+        panel = top(self.app)
+        self.assertIsInstance(panel, DiseasesPanel)
+        self.assertEqual(panel.key, "cirrhosis")
+        texts = [w.text() for w in panel.card.findChildren(QLabel)]
+        self.assertTrue(any('href="hepatitis"' in s for s in texts))        # болезнь -> болезнь
+        panel.select("hepatitis")
+        self.assertEqual(panel.key, "hepatitis")
+        panel.on_search("почк")
+        self.assertIn("ckd", panel.items)
+        self.assertNotIn("stroke", panel.items)
+        panel.select("stroke")                                               # ссылка вне поиска сбрасывает его
+        self.assertEqual(panel.search.text(), "")
+        self.assertIn("ckd", panel.items)
+        organ = [w for w in panel.card.findChildren(QLabel) if 'href="brain"' in w.text()]
+        organ[0].linkActivated.emit("brain")                                 # болезнь -> орган
+        pump()
+        self.assertIsNone(top(self.app))
+        self.assertEqual(self.app.spot, "brain")
+
+    def test_diseases_only_in_study(self):
+        from organism_atlas.ui.overlay import top
+        self.app.diseases_button.invoke()
+        self.assertIsNotNone(top(self.app))
+        self.app.set_mode("find")
+        self.assertIsNone(top(self.app))
+        self.assertFalse(self.app.diseases_button.isEnabled())
+
     @property
     def other(self):
         """органы другого пола: на схеме их нет никогда"""

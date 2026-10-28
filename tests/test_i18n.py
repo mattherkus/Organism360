@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from organism_atlas import i18n
+from organism_atlas import diseases, i18n
 from organism_atlas.organs import ORGANS, fact_of_day
 
 FIELDS = ("name", "desc", "location", "facts", "diseases", "daily")
@@ -111,7 +111,11 @@ class LinkTests(unittest.TestCase):
                          [("мочевого пузыря", "bladder"), ("матки", "uterus")])
         self.assertEqual(self.found("перед прямой кишкой; в двенадцатиперстную кишку"),
                          [("прямой кишкой", "rectum"), ("кишку", "intestines")])
-        self.assertEqual(self.found("Рак поджелудочной железы"), [("поджелудочной железы", "pancreas")])
+        self.assertEqual(self.found("Сок поджелудочной железы"), [("поджелудочной железы", "pancreas")])
+        self.assertEqual(self.found("Рак поджелудочной железы"), [("Рак поджелудочной железы", "pancreatic_cancer")])
+        self.assertEqual(self.found("Язвенный колит и язва желудка"),
+                         [("Язвенный колит", "ibd"), ("язва", "peptic_ulcer"), ("желудка", "stomach")])
+        self.assertEqual(self.found("The fallopian tubes connect"), [])
         self.assertEqual(self.found("Heartburn: stomach content flows into the esophagus"),
                          [("stomach", "stomach"), ("esophagus", "esophagus")])
 
@@ -127,6 +131,43 @@ class LinkTests(unittest.TestCase):
             for key, o in i18n._load(code)["organs"].items():
                 for text in [o["desc"], o["location"]] + o["facts"] + o["daily"]:
                     self.assertEqual("".join(piece for piece, _ in i18n.links(text)), text)
+
+
+class DiseaseTests(unittest.TestCase):
+    """справочник болезней: diseases.py и разделы diseases в lang/*.json"""
+
+    def test_cards_match_registry(self):
+        """i-я болезнь в карточке органа - ON_CARD[орган][i] на всех языках"""
+        for code in ("ru", "en"):
+            for key in ORGANS:
+                self.assertEqual(len(i18n._load(code)["organs"][key]["diseases"]), len(diseases.ON_CARD[key]),
+                                 (code, key))
+
+    def test_every_disease_has_article(self):
+        for code in ("ru", "en"):
+            sec = i18n.section(code, "diseases")
+            self.assertEqual(set(sec) - {"_comment"}, set(diseases.KEYS), code)
+            for d in diseases.KEYS:
+                for field in ("name", "desc", "symptoms", "causes", "treatment"):
+                    self.assertTrue(sec[d].get(field), (code, d, field))
+            self.assertEqual(set(i18n._load(code)["links"]["diseases"]), set(diseases.KEYS), code)
+
+    def test_keys_do_not_clash_with_organs(self):
+        self.assertFalse(set(diseases.KEYS) & set(ORGANS))
+        self.assertEqual(len(diseases.KEYS), len(set(diseases.KEYS)))
+
+    def test_shared_diseases_and_related(self):
+        self.assertEqual(diseases.ORGANS_OF["appendicitis"], ("intestines", "appendix"))
+        self.assertEqual(diseases.ORGANS_OF["gerd"], ("stomach", "esophagus"))
+        self.assertIn("lungs", diseases.ORGANS_OF["cystic_fibrosis"])
+        self.assertIn("esophagitis", diseases.related("gerd"))
+        self.assertNotIn("gerd", diseases.related("gerd"))
+
+    def test_search(self):
+        self.assertEqual(diseases.search("цирроз"), ["cirrhosis"])
+        self.assertEqual(diseases.search("Cirrhosis"), ["cirrhosis"])
+        self.assertEqual(set(diseases.search("печень")), set(diseases.ON_CARD["liver"]))
+        self.assertEqual(diseases.search(""), diseases.KEYS)
 
 
 class BrokenFileTests(unittest.TestCase):

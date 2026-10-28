@@ -23,6 +23,7 @@ from ..organs import ORGANS, SYSTEMS, by_system, for_body, in_system, other_sex,
 from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
 from . import overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
+from .diseases import close_diseases, refresh_diseases, show_diseases
 from .results import show_results_dialog
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
@@ -203,8 +204,11 @@ class App(QWidget):
             top.addSpacing(px(4) if i else 0)
             top.addWidget(b, 0, Qt.AlignTop)
             self.lang_buttons[code] = b
-        self.ach_button = flat_button("", lambda: show_achievements(self))
+        self.diseases_button = flat_button("", lambda: show_diseases(self))     # справочник - в режиме «Изучать»
         top.addSpacing(px(12))
+        top.addWidget(self.diseases_button, 0, Qt.AlignTop)
+        self.ach_button = flat_button("", lambda: show_achievements(self))
+        top.addSpacing(px(8))
         top.addWidget(self.ach_button, 0, Qt.AlignTop)
         self.settings_button = flat_button("", lambda: show_settings(self))
         top.addSpacing(px(12))
@@ -354,6 +358,7 @@ class App(QWidget):
         self.setWindowTitle(t("app_title"))
         self.title.setText(t("app_title"))
         self.settings_button.setText("⚙  " + t("settings_button"))
+        self.diseases_button.setText(t("diseases_button"))
         self.ach_button.setText(achievements_text())
         for mode, b in self.mode_buttons.items():
             b.setText(t("mode_" + mode))
@@ -366,6 +371,7 @@ class App(QWidget):
         self.card_fn()
         retranslate_all()
         refresh_settings()
+        refresh_diseases(self)
 
     def set_status(self, fn):
         self.status_fn = fn
@@ -654,7 +660,11 @@ class App(QWidget):
                                         on_link=self.open_link))
 
     def open_link(self, key):
-        """щелчок по названию органа в карточке: открыть его карточку и подсветить на схеме"""
+        """щелчок по ссылке в карточке: орган - открыть его карточку и подсветить на схеме,
+        болезнь - статью справочника болезней"""
+        if key not in ORGANS:
+            show_diseases(self, key)
+            return
         self.show_info(key)
         self.set_spot(key if key in self.organs() else None)
 
@@ -663,6 +673,7 @@ class App(QWidget):
             set_button_bg(b, "accent" if mode == self.mode else "card")
         for code, b in self.lang_buttons.items():
             set_button_bg(b, "accent" if code == i18n.current() else "card")
+        self.diseases_button.setEnabled(self.mode == "study")     # в викторине справочник подсказал бы ответ
 
     def set_mode(self, mode):
         """study - изучение; режим викторины сначала показывает карточку настройки"""
@@ -672,6 +683,8 @@ class App(QWidget):
             self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
         self.spot = None
         self.update_buttons()
+        if mode != "study":
+            close_diseases(self)
         self.stop_quiz()
         self.show_panel()
         self.apply_view()                               # в викторине скрытые органы снова видны

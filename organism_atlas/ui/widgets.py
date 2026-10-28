@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QGridLayou
 
 from .. import i18n
 from ..config import FONT
+from ..diseases import ON_CARD
 from ..i18n import t
 from ..organs import ORGANS, fact_of_day
 from ..theme import C
@@ -357,31 +358,50 @@ def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Q
     return set_fg(w, fg)
 
 
+def rich_label(pieces, on_link, fg="text", size=11, bold=False):
+    """надпись из кусков [(текст, ключ или None)]: куски с ключом - ссылки, щелчок вызывает on_link(ключ).
+    Без ссылок (или без on_link) - обычная надпись"""
+    text = "".join(piece for piece, _ in pieces)
+    w = label(text, fg, size, bold)
+    if on_link is None or not any(key for _, key in pieces):
+        return w
+    rich = '<span style="white-space:pre-wrap">%s</span>' % "".join(          # пробелы как в тексте
+        '<a href="%s" style="color:{link}">%s</a>' % (key, html.escape(piece)) if key else html.escape(piece)
+        for piece, key in pieces)
+    # цвет ссылки Qt берёт не из палитры надписи, поэтому он вписан в текст и обновляется при смене темы
+    w.retheme = lambda: w.setText(rich.replace("{link}", C.get("accent_fg")))
+    w.setTextFormat(Qt.RichText)
+    w.retheme()
+    w.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+    # окно пересобирается после щелчка, а не внутри него: надпись-отправитель ещё обрабатывает мышь
+    w.linkActivated.connect(lambda key: QTimer.singleShot(0, lambda: on_link(key)))
+    return w
+
+
 def linked(text, on_link, seen, fg="text", size=11):
-    """надпись, где названия органов - ссылки, как в статье: щелчок вызывает on_link(орган).
-    seen - органы, которые уже стали ссылкой выше в карточке (и сам орган карточки): ссылка на орган
+    """надпись, где названия органов и болезней - ссылки, как в статье: щелчок вызывает on_link(ключ).
+    seen - ключи, которые уже стали ссылкой выше (и сам орган или болезнь статьи): ссылка на каждый
     одна, при первом упоминании. Без on_link - обычная надпись"""
     if on_link is None:
         return label(text, fg, size)
-    out, found = [], False
+    pieces = []
     for piece, key in i18n.links(text):
-        if key is None or key in seen:
-            out.append(html.escape(piece))
-        else:
+        if key in seen:
+            key = None
+        elif key is not None:
             seen.add(key)
-            found = True
-            out.append('<a href="%s" style="color:{link}">%s</a>' % (key, html.escape(piece)))
-    w = label(text, fg, size)
-    if found:
-        # цвет ссылки Qt берёт не из палитры надписи, поэтому он вписан в текст и обновляется при смене темы
-        rich = '<span style="white-space:pre-wrap">%s</span>' % "".join(out)      # пробелы как в тексте
-        w.retheme = lambda: w.setText(rich.replace("{link}", C.get("accent_fg")))
-        w.setTextFormat(Qt.RichText)
-        w.retheme()
-        w.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
-        # карточка пересобирается после щелчка, а не внутри него: надпись-отправитель ещё обрабатывает мышь
-        w.linkActivated.connect(lambda key: QTimer.singleShot(0, lambda: on_link(key)))
-    return w
+        pieces.append((piece, key))
+    return rich_label(pieces, on_link, fg, size)
+
+
+def joined(items, sep):
+    """[(текст, ключ)] через разделитель -> куски для rich_label"""
+    out = []
+    for i, item in enumerate(items):
+        if i:
+            out.append((sep, None))
+        out.append(item)
+    return out
 
 
 def heading(lay, text, top=8, bottom=2, x=16):
@@ -400,7 +420,8 @@ def spacer(lay, h):
 def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None):
     """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
-    on_link(орган) - упоминания других органов в тексте становятся ссылками на их карточки"""
+    on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
+    а заболевания органа - ссылками на статьи справочника болезней"""
     lay = card.lay
     clear(lay)
     c = ORGANS[key]["color"]
@@ -415,7 +436,12 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None):
     for f in i18n.organ(key, "facts"):
         put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
     if not compact:
-        section(lay, t("card_diseases"), "  ·  ".join(i18n.organ(key, "diseases")), on_link, seen)
+        heading(lay, t("card_diseases"))
+        names = i18n.organ(key, "diseases")
+        refs = ON_CARD.get(key, ())
+        if len(refs) != len(names):                                     # список не сходится с diseases.py
+            refs = [None] * len(names)
+        put(lay, rich_label(joined(list(zip(names, refs)), "  ·  "), on_link))     # ссылки на статьи
         day = rounded_card(fill="day_bg", border=c, radius=10)
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
         put(day.lay, linked(fact_of_day(key), on_link, seen), bottom=8, x=10)

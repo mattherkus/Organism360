@@ -196,7 +196,18 @@
     "parts_wrong": "That's the {name}. Try again.",
     "parts_done": "Done! On the first try: {right} of {total}.",
     "tour_resume": "←  Back to the tour “{title}”",
-    "tours_back": "←  Back to tours"
+    "tours_back": "←  Back to tours",
+    "diseases_button": "Diseases",
+    "diseases_title": "Disease guide",
+    "diseases_search": "Find a disease or organ",
+    "diseases_nothing": "Nothing found",
+    "disease_organs": "Organs",
+    "disease_what": "What it is",
+    "disease_symptoms": "Signs",
+    "disease_causes": "Causes and risks",
+    "disease_treatment": "Treatment and prevention",
+    "disease_related": "Other diseases of these organs",
+    "disease_note": "General information, not a treatment guide: if you have symptoms, see a doctor."
   },
   "organs": {
     "lungs": {
@@ -769,6 +780,520 @@
       }
     }
   },
+  "diseases": {
+    "_comment": "Articles of the disease guide (the Diseases button). Which organ has which disease is in diseases.py.",
+    "pneumonia": {
+      "name": "Pneumonia",
+      "desc": "An infection of the lung tissue: the alveoli fill with fluid and pus and pass less oxygen into the blood.",
+      "symptoms": "Cough with phlegm, high fever, shortness of breath, chest pain when breathing, weakness.",
+      "causes": "Usually bacteria (pneumococcus), less often viruses or fungi. The risk is higher in older people, smokers, after flu and with COPD.",
+      "treatment": "Bacterial pneumonia is treated with antibiotics, severe cases in hospital with oxygen. Vaccines protect against pneumococcus and flu."
+    },
+    "asthma": {
+      "name": "Asthma",
+      "desc": "Long-term inflammation of the airways: in response to triggers they narrow, swell and fill with mucus.",
+      "symptoms": "Attacks of breathlessness, wheezing, coughing (often at night), a tight feeling in the chest.",
+      "causes": "An inherited tendency and allergies. Attacks are triggered by dust, pollen, pet hair, cold air, exercise and smoke.",
+      "treatment": "Inhalers: steroid ones every day to calm the inflammation and reliever ones to open the airways during an attack. Avoiding triggers matters."
+    },
+    "copd": {
+      "name": "COPD",
+      "desc": "Chronic obstructive pulmonary disease: the airways slowly and permanently narrow and the alveoli break down (emphysema).",
+      "symptoms": "Breathlessness that grows over years, a long-lasting cough with phlegm, frequent chest infections.",
+      "causes": "Mostly smoking; less often years of breathing smoke, dust and fumes at work or at home.",
+      "treatment": "Quitting smoking slows it down. Inhalers open the airways; breathing exercises and flu and pneumococcal vaccines help."
+    },
+    "lung_cancer": {
+      "name": "Lung cancer",
+      "desc": "A malignant tumour of the cells of the bronchi or lung tissue; one of the deadliest cancers worldwide.",
+      "symptoms": "Few signs for a long time. Later: a persistent cough, blood in phlegm, breathlessness, chest pain, weight loss.",
+      "causes": "About 85% of cases are linked to smoking. Second-hand smoke, radon, asbestos and air pollution add to the risk.",
+      "treatment": "Surgery, radiotherapy, chemotherapy, targeted drugs and immunotherapy, depending on the type and stage."
+    },
+    "hepatitis": {
+      "name": "Viral hepatitis",
+      "desc": "Inflammation of the liver caused by hepatitis viruses A, B, C, D or E. B and C can become chronic.",
+      "symptoms": "Tiredness, nausea, dark urine, jaundice. Chronic hepatitis often goes unnoticed for years.",
+      "causes": "A and E spread through dirty water and food; B, C and D through blood, shared needles and sex.",
+      "treatment": "Hepatitis C is cured with antiviral pills, B is kept under control with them. There are vaccines against hepatitis A and B."
+    },
+    "fatty_liver": {
+      "name": "Fatty liver disease",
+      "desc": "Fat builds up in the liver cells. Over time inflammation can follow, and then cirrhosis.",
+      "symptoms": "Usually none; sometimes heaviness under the right ribs and tiredness. It is often found by chance on an ultrasound.",
+      "causes": "Excess weight, type 2 diabetes, lack of exercise, and alcohol.",
+      "treatment": "Losing 7–10% of body weight, exercise, avoiding alcohol and treating diabetes. In the early stages the liver recovers."
+    },
+    "cirrhosis": {
+      "name": "Cirrhosis",
+      "desc": "The end stage of many liver diseases: the tissue is replaced by scars and the liver can no longer do its job.",
+      "symptoms": "Weakness, jaundice, swelling and fluid in the abdomen, bleeding from swollen veins in the esophagus, confusion.",
+      "causes": "Most often years of heavy drinking, chronic hepatitis B and C, and fatty liver disease.",
+      "treatment": "Stopping the cause (virus, alcohol) and treating complications. A liver transplant saves lives in severe cases."
+    },
+    "liver_cancer": {
+      "name": "Liver cancer",
+      "desc": "A malignant tumour of the liver cells (hepatocellular carcinoma). It usually develops in a liver with cirrhosis.",
+      "symptoms": "Heaviness and pain under the right ribs, weight loss, jaundice; almost no signs early on.",
+      "causes": "Cirrhosis, chronic hepatitis B and C, alcohol, fatty liver disease.",
+      "treatment": "Removing part of the liver, a transplant, destroying the tumour from inside, medicines. People with cirrhosis are checked regularly to catch it early."
+    },
+    "gallstones": {
+      "name": "Gallstones",
+      "desc": "Stones form in the gallbladder from parts of bile, most often cholesterol.",
+      "symptoms": "Often none. If a stone blocks the duct: biliary colic, severe pain under the right ribs after a fatty meal.",
+      "causes": "Too much cholesterol in bile, excess weight, rapid weight loss, pregnancy; more common in women over 40.",
+      "treatment": "Stones that cause no trouble are usually left alone. With attacks of colic the gallbladder is removed, usually through small cuts."
+    },
+    "cholecystitis": {
+      "name": "Cholecystitis",
+      "desc": "Inflammation of the gallbladder, usually because a stone has blocked its outlet.",
+      "symptoms": "Severe constant pain under the right ribs, fever, nausea and vomiting.",
+      "causes": "Gallstones in 9 cases out of 10: bile gets trapped and becomes infected.",
+      "treatment": "Fasting, pain relief and antibiotics in hospital, then removal of the gallbladder."
+    },
+    "gastritis": {
+      "name": "Gastritis",
+      "desc": "Inflammation of the stomach lining, sudden or long-lasting.",
+      "symptoms": "Pain and burning in the upper abdomen, heaviness after meals, nausea; chronic gastritis often causes no symptoms.",
+      "causes": "The bacterium Helicobacter pylori, painkillers such as ibuprofen and aspirin, alcohol, and less often autoimmune causes.",
+      "treatment": "Antibiotics to clear Helicobacter, acid-reducing medicines, avoiding alcohol and the pills that harm the stomach."
+    },
+    "peptic_ulcer": {
+      "name": "Peptic ulcer",
+      "desc": "A deep sore in the lining of the stomach or duodenum.",
+      "symptoms": "Upper abdominal pain on an empty stomach or after eating, heartburn. Dangerous complications are bleeding and perforation.",
+      "causes": "Mostly Helicobacter pylori and anti-inflammatory painkillers; smoking slows healing.",
+      "treatment": "Antibiotics against Helicobacter and acid-suppressing drugs; the ulcer usually heals within a few weeks."
+    },
+    "gerd": {
+      "name": "Gastroesophageal reflux disease (GERD)",
+      "desc": "Acidic stomach contents regularly flow back into the esophagus and irritate its wall.",
+      "symptoms": "Heartburn, sour burps, pain behind the breastbone, sometimes cough and hoarseness, especially lying down and after meals.",
+      "causes": "A weak lower esophageal sphincter, excess weight, overeating, a hiatal hernia, smoking.",
+      "treatment": "No food before bed, a raised head of the bed, weight loss, and acid-reducing medicines. Untreated, it can lead to esophagitis and Barrett's esophagus."
+    },
+    "stomach_cancer": {
+      "name": "Stomach cancer",
+      "desc": "A malignant tumour of the cells of the stomach lining.",
+      "symptoms": "At first, vague discomfort in the abdomen and feeling full quickly. Later, weight loss, anaemia, vomiting, black stools.",
+      "causes": "Long-term Helicobacter pylori infection, smoking, a lot of salty and smoked food, family history.",
+      "treatment": "Surgery to remove part or all of the stomach, chemotherapy. Early tumours can sometimes be removed through a gastroscope."
+    },
+    "ibs": {
+      "name": "Irritable bowel syndrome",
+      "desc": "A problem with how the bowel works, with no visible damage: the gut becomes oversensitive.",
+      "symptoms": "Abdominal pain and bloating that ease after a bowel movement; diarrhoea, constipation or both in turn.",
+      "causes": "Disturbed signalling between the gut and the nervous system, stress, a past gut infection.",
+      "treatment": "Adjusting the diet (for example fewer fermentable carbohydrates), medicines for cramps, diarrhoea or constipation, managing stress."
+    },
+    "ibd": {
+      "name": "Crohn's disease and ulcerative colitis",
+      "desc": "Inflammatory bowel diseases: the immune system attacks the wall of the gut. Ulcerative colitis affects the large intestine, Crohn's disease any part of the gut.",
+      "symptoms": "Diarrhoea, often with blood, abdominal pain, weight loss, fever; flare-ups alternate with calm periods.",
+      "causes": "A mix of genes, a faulty immune response and gut bacteria; smoking makes Crohn's disease worse.",
+      "treatment": "Anti-inflammatory and immune-suppressing drugs, biologic medicines, sometimes surgery."
+    },
+    "appendicitis": {
+      "name": "Appendicitis",
+      "desc": "Sudden inflammation of the appendix, the worm-like pouch of the cecum.",
+      "symptoms": "Pain starts around the navel and moves to the lower right within a few hours; nausea, fever.",
+      "causes": "The opening of the appendix gets blocked (by a lump of stool or swollen lymphoid tissue) and bacteria multiply inside.",
+      "treatment": "Urgent surgery to remove the appendix. Without it the appendix can burst and cause peritonitis."
+    },
+    "colorectal_cancer": {
+      "name": "Colorectal cancer",
+      "desc": "A malignant tumour of the large intestine or rectum; it usually grows over years from a harmless polyp.",
+      "symptoms": "Blood in the stool, a change in bowel habits, abdominal pain, tiredness from anaemia, weight loss.",
+      "causes": "Age over 50, family history, a lot of red and processed meat, little fibre, smoking, excess weight.",
+      "treatment": "Surgery, chemotherapy and radiotherapy. A colonoscopy finds polyps and removes them before they turn into cancer."
+    },
+    "kidney_stones": {
+      "name": "Kidney stones",
+      "desc": "Stones form in the kidneys from salts in the urine and can slip into the ureter.",
+      "symptoms": "Renal colic: sudden, extreme pain in the lower back spreading to the groin, blood in the urine, nausea.",
+      "causes": "Too little water, a lot of salt and animal protein, metabolic disorders, family history.",
+      "treatment": "Small stones pass on their own with plenty of fluids and pain relief; large ones are broken up with shock waves or removed with a scope."
+    },
+    "pyelonephritis": {
+      "name": "Pyelonephritis",
+      "desc": "A bacterial infection of the kidney and its pelvis.",
+      "symptoms": "High fever with chills, pain in the lower back on one side, frequent painful urination.",
+      "causes": "Usually bacteria travel up the ureter from the bladder; the risk is higher with stones, in pregnancy and in women.",
+      "treatment": "Antibiotics; severe cases are treated in hospital."
+    },
+    "glomerulonephritis": {
+      "name": "Glomerulonephritis",
+      "desc": "Inflammation of the glomeruli, the tiny filters of the kidney, usually caused by a mistake of the immune system.",
+      "symptoms": "Dark, cola-coloured urine, puffy face in the morning, high blood pressure, protein in the urine.",
+      "causes": "An immune reaction after a strep throat or another infection, autoimmune diseases.",
+      "treatment": "Drugs that calm the immune inflammation, blood pressure control, less salt."
+    },
+    "ckd": {
+      "name": "Chronic kidney disease",
+      "desc": "Over years the kidneys slowly lose their ability to filter the blood.",
+      "symptoms": "Unnoticed for a long time. Later: swelling, weakness, nausea, itching, high blood pressure, anaemia.",
+      "causes": "Most often diabetes and high blood pressure, less often glomerulonephritis and inherited diseases.",
+      "treatment": "Controlling blood sugar and blood pressure slows it down. In the final stage, dialysis or a kidney transplant is needed."
+    },
+    "ihd": {
+      "name": "Coronary heart disease",
+      "desc": "The heart muscle does not get enough blood because the coronary arteries are narrowed by fatty plaques.",
+      "symptoms": "Pressing chest pain during exertion (angina). If a plaque ruptures and blocks the vessel, it is a heart attack.",
+      "causes": "Atherosclerosis caused by high cholesterol, smoking, high blood pressure, diabetes and lack of exercise.",
+      "treatment": "Medicines (against clotting, to lower cholesterol), a stent or bypass surgery. Quitting smoking and staying active."
+    },
+    "hypertension": {
+      "name": "High blood pressure",
+      "desc": "Blood pressure that stays at 140/90 mmHg or higher.",
+      "symptoms": "Often none, which is why it is called a \"silent killer\"; sometimes headaches or ringing in the ears.",
+      "causes": "Family history, too much salt, excess weight, alcohol, lack of exercise, stress, age.",
+      "treatment": "Less salt, exercise, weight loss and medicines. Untreated, it raises the risk of stroke, heart attack, heart failure and chronic kidney disease."
+    },
+    "arrhythmia": {
+      "name": "Arrhythmias",
+      "desc": "Heart rhythm disorders: the heart beats too fast, too slowly or irregularly.",
+      "symptoms": "Skipped beats and fluttering in the chest, palpitations, dizziness, fainting.",
+      "causes": "Heart disease, thyroid hormones, caffeine, alcohol, imbalanced salts in the blood. The most common one is atrial fibrillation.",
+      "treatment": "Medicines, destroying the faulty spot through a catheter, a pacemaker. With atrial fibrillation, blood thinners help prevent a stroke."
+    },
+    "heart_failure": {
+      "name": "Heart failure",
+      "desc": "The heart cannot pump as much blood as the body needs.",
+      "symptoms": "Breathlessness on exertion and lying flat, swollen legs, getting tired quickly.",
+      "causes": "A past heart attack, coronary heart disease, high blood pressure, valve disease.",
+      "treatment": "Medicines that ease the heart's workload and remove extra fluid, less salt, sometimes special pacemakers."
+    },
+    "stroke": {
+      "name": "Stroke",
+      "desc": "A sudden loss of blood flow in the brain: a vessel is blocked by a clot or bursts.",
+      "symptoms": "A suddenly drooping face, weakness of an arm or leg on one side, slurred speech. Call an ambulance at once.",
+      "causes": "High blood pressure, atrial fibrillation, atherosclerosis, smoking, diabetes.",
+      "treatment": "In the first hours the clot is dissolved with a drug or removed through a catheter. Then come rehabilitation and preventing another stroke."
+    },
+    "migraine": {
+      "name": "Migraine",
+      "desc": "Attacks of strong throbbing headache, often on one side of the head.",
+      "symptoms": "Pain for 4–72 hours, nausea, sensitivity to light and sound; some people get an aura (flashes, zigzags) beforehand.",
+      "causes": "An inherited feature of the brain. Attacks are triggered by lack of sleep, stress, hunger, alcohol and hormone changes.",
+      "treatment": "Painkillers and special drugs (triptans) at the start of an attack; preventive medicines for frequent attacks."
+    },
+    "epilepsy": {
+      "name": "Epilepsy",
+      "desc": "A tendency to repeated seizures caused by sudden bursts of activity in the brain's nerve cells.",
+      "symptoms": "Convulsions with loss of consciousness, brief blank spells, strange sensations or movements.",
+      "causes": "Brain injuries and tumours, stroke, conditions present from birth, genes; often no cause is found.",
+      "treatment": "Anti-seizure medicines work for most people; sometimes surgery."
+    },
+    "alzheimer": {
+      "name": "Alzheimer's disease",
+      "desc": "A slow loss of nerve cells in the brain; the most common cause of dementia.",
+      "symptoms": "First recent events are forgotten, then speech, orientation and the ability to look after oneself decline.",
+      "causes": "Proteins (beta-amyloid and tau) building up in the brain, age, genes.",
+      "treatment": "There is no cure. Medicines slightly slow the symptoms; care, activity and support from family matter."
+    },
+    "hypothyroidism": {
+      "name": "Hypothyroidism",
+      "desc": "The thyroid gland makes too little hormone and metabolism slows down.",
+      "symptoms": "Tiredness, feeling cold, weight gain, dry skin, constipation, low mood.",
+      "causes": "Most often Hashimoto's thyroiditis, also removal of the gland and lack of iodine.",
+      "treatment": "A daily thyroxine tablet that replaces the missing hormone."
+    },
+    "hyperthyroidism": {
+      "name": "Hyperthyroidism (Graves' disease)",
+      "desc": "The thyroid gland makes too much hormone and metabolism speeds up. A common cause is Graves' disease.",
+      "symptoms": "Fast heartbeat, weight loss despite a good appetite, sweating, trembling, irritability, sometimes bulging eyes.",
+      "causes": "In Graves' disease antibodies make the gland work non-stop; less often hormone-producing nodules.",
+      "treatment": "Medicines that slow the gland, radioactive iodine or surgery."
+    },
+    "thyroiditis": {
+      "name": "Hashimoto's thyroiditis",
+      "desc": "The immune system attacks the thyroid gland.",
+      "symptoms": "Unnoticed for a long time; gradually the signs of hypothyroidism appear, and sometimes the gland gets bigger.",
+      "causes": "An inherited tendency; it is much more common in women.",
+      "treatment": "The inflammation itself is not treated; when hormone levels fall, thyroxine is taken."
+    },
+    "goiter": {
+      "name": "Thyroid nodules",
+      "desc": "Lumps form in the thyroid gland; the vast majority are benign.",
+      "symptoms": "Usually none; a large nodule can be seen on the neck and may make swallowing harder.",
+      "causes": "Lack of iodine, age, family history.",
+      "treatment": "Ultrasound check-ups; a suspicious nodule is tested with a needle. Large or dangerous ones are removed."
+    },
+    "splenomegaly": {
+      "name": "Enlarged spleen (splenomegaly)",
+      "desc": "The spleen grows larger than normal; it is a sign of another illness rather than a disease of its own.",
+      "symptoms": "Heaviness under the left ribs, feeling full quickly; often found only during an examination.",
+      "causes": "Infections (mononucleosis, malaria), cirrhosis of the liver, blood disorders, lymphomas.",
+      "treatment": "The cause is treated. An enlarged spleen ruptures easily, so blows to the abdomen should be avoided."
+    },
+    "spleen_rupture": {
+      "name": "Ruptured spleen after an abdominal injury",
+      "desc": "The spleen is full of blood vessels, and a blow can tear it and cause heavy internal bleeding.",
+      "symptoms": "Pain under the left ribs spreading to the left shoulder, pale skin, weakness, falling blood pressure.",
+      "causes": "A blow to the abdomen or left side: a crash, a fall, sport. An enlarged spleen tears more easily.",
+      "treatment": "Small tears sometimes heal under observation; with heavy bleeding the spleen is removed."
+    },
+    "spleen_infarction": {
+      "name": "Splenic infarction",
+      "desc": "Part of the spleen dies because the artery feeding it is blocked.",
+      "symptoms": "Sudden pain under the left ribs, sometimes fever; it can also cause no symptoms.",
+      "causes": "Clots in heart and blood disorders, sickle cell disease, a greatly enlarged spleen.",
+      "treatment": "Pain relief and treating the cause; surgery is rarely needed."
+    },
+    "hypersplenism": {
+      "name": "Hypersplenism",
+      "desc": "An enlarged spleen traps and destroys too many blood cells.",
+      "symptoms": "Signs of low blood counts: weakness (anaemia), easy bruising and bleeding, frequent infections.",
+      "causes": "Any cause of splenomegaly, most often cirrhosis of the liver with blood backing up.",
+      "treatment": "Treating the underlying disease; sometimes the spleen or part of it is removed."
+    },
+    "pancreatitis": {
+      "name": "Pancreatitis",
+      "desc": "Inflammation of the pancreas: its enzymes start digesting the gland itself.",
+      "symptoms": "Acute: severe upper abdominal pain spreading to the back, vomiting. Chronic: pain after meals, fatty stools, weight loss.",
+      "causes": "Mostly alcohol and gallstones blocking the duct outlet.",
+      "treatment": "Acute pancreatitis is treated in hospital with fasting, drips and pain relief. Chronic: no alcohol, enzyme tablets."
+    },
+    "diabetes": {
+      "name": "Diabetes",
+      "desc": "Blood sugar stays high: there is not enough insulin (type 1) or the cells respond poorly to it (type 2).",
+      "symptoms": "Thirst, frequent urination, weakness, weight loss (in type 1); type 2 can go unnoticed for a long time.",
+      "causes": "Type 1: the immune system destroys the cells of the islets of Langerhans. Type 2: excess weight, lack of exercise, family history.",
+      "treatment": "Type 1: insulin injections. Type 2: diet, exercise, tablets, sometimes insulin. Uncontrolled, it damages the kidneys, eyes, nerves and heart vessels."
+    },
+    "pancreatic_cancer": {
+      "name": "Pancreatic cancer",
+      "desc": "A malignant tumour of the pancreas, usually from the cells of its ducts.",
+      "symptoms": "Usually found late: jaundice, pain in the upper abdomen and back, weight loss, newly appearing diabetes.",
+      "causes": "Smoking, age, chronic pancreatitis, obesity, family history.",
+      "treatment": "Surgery if the tumour can be removed, otherwise chemotherapy and relief of symptoms."
+    },
+    "cystic_fibrosis": {
+      "name": "Cystic fibrosis",
+      "desc": "An inherited disease in which the mucus in many organs becomes thick and sticky.",
+      "symptoms": "Blocked ducts of the pancreas cause poor digestion and fatty stools; in the lungs, a persistent cough and infections.",
+      "causes": "A faulty CFTR gene inherited from both parents.",
+      "treatment": "Enzyme tablets, airway clearance, antibiotics; newer drugs correct how the CFTR protein works."
+    },
+    "cystitis": {
+      "name": "Cystitis",
+      "desc": "Inflammation of the urinary bladder, usually from a bacterial infection.",
+      "symptoms": "Frequent painful urges, burning when passing urine, lower abdominal pain, cloudy urine.",
+      "causes": "Bacteria from the gut get into the urethra; women have a shorter urethra, so they get cystitis more often.",
+      "treatment": "Antibiotics and plenty of fluids. Untreated, the infection can spread up to the kidneys (pyelonephritis)."
+    },
+    "overactive_bladder": {
+      "name": "Overactive bladder",
+      "desc": "The muscle of the bladder wall contracts before the bladder is full.",
+      "symptoms": "Sudden strong urges, frequent urination day and night, sometimes leaking.",
+      "causes": "Often no clear cause; it can come with nervous system diseases and with age.",
+      "treatment": "Bladder training, pelvic floor exercises, medicines that relax the bladder wall."
+    },
+    "bladder_stones": {
+      "name": "Bladder stones",
+      "desc": "Stones form in the bladder itself when urine stays in it too long.",
+      "symptoms": "Lower abdominal pain, a stop-start stream, blood in the urine, frequent urges.",
+      "causes": "Incomplete emptying of the bladder, in men most often due to an enlarged prostate; stones coming down from the kidneys.",
+      "treatment": "Breaking up and removing them with a scope, and treating the cause of urine retention."
+    },
+    "incontinence": {
+      "name": "Urinary incontinence",
+      "desc": "Involuntary leaking of urine.",
+      "symptoms": "Leaking when coughing, laughing or exercising (stress incontinence), or with a sudden strong urge (urge incontinence).",
+      "causes": "Weak pelvic floor muscles after childbirth and with age, overactive bladder, prostate and nervous system diseases.",
+      "treatment": "Pelvic floor exercises, medicines, surgery; it can be treated, and there is no need to feel embarrassed seeing a doctor."
+    },
+    "esophagitis": {
+      "name": "Esophagitis",
+      "desc": "Inflammation of the lining of the esophagus.",
+      "symptoms": "Heartburn, pain behind the breastbone, pain and difficulty when swallowing.",
+      "causes": "Most often GERD; also infections, allergy (eosinophilic esophagitis), tablets that get stuck in the esophagus.",
+      "treatment": "Treating the cause: lowering stomach acid, antifungal drugs, a special diet for allergy."
+    },
+    "barrett": {
+      "name": "Barrett's esophagus",
+      "desc": "Under the effect of acid, the lining of the lower esophagus changes and comes to look like the lining of the intestine.",
+      "symptoms": "No signs of its own, only long-lasting heartburn from GERD.",
+      "causes": "Years of stomach contents flowing back; more common in men over 50 with excess weight.",
+      "treatment": "Controlling GERD and regular gastroscopy: the changes raise the risk of esophageal cancer and can be removed through a scope."
+    },
+    "hiatal_hernia": {
+      "name": "Hiatal hernia",
+      "desc": "Part of the stomach slides through the opening in the diaphragm from the abdomen into the chest.",
+      "symptoms": "Often none; otherwise heartburn, burping, pain behind the breastbone, especially lying down.",
+      "causes": "Tissues weakening with age, raised pressure in the abdomen: excess weight, pregnancy, straining.",
+      "treatment": "Treating reflux; large hernias are repaired with surgery."
+    },
+    "tracheitis": {
+      "name": "Tracheitis",
+      "desc": "Inflammation of the lining of the trachea, usually together with laryngitis or bronchitis.",
+      "symptoms": "A dry, tiring cough, a raw feeling behind the breastbone, fever.",
+      "causes": "Most often cold and flu viruses, less often bacteria; irritation from smoke and cold air.",
+      "treatment": "It usually clears up on its own: warm drinks, humid air; antibiotics for a bacterial infection."
+    },
+    "tracheal_stenosis": {
+      "name": "Tracheal stenosis",
+      "desc": "The trachea narrows because of a scar or a tumour, and air passes through it with difficulty.",
+      "symptoms": "Breathlessness and noisy, whistling breathing (stridor) that slowly get worse.",
+      "causes": "Most often scarring after a long time on a ventilator or after a tracheostomy, less often tumours.",
+      "treatment": "Widening the narrow part through a bronchoscope, a stent, or removing that section of the trachea."
+    },
+    "foreign_body": {
+      "name": "Inhaled foreign body",
+      "desc": "An object or piece of food gets into the larynx, trachea or bronchi.",
+      "symptoms": "Sudden coughing, choking, being unable to speak; if the object moves into a bronchus, a long-lasting cough and pneumonia.",
+      "causes": "More common in small children (nuts, small toys) and older people; talking and laughing while eating.",
+      "treatment": "For choking, the Heimlich manoeuvre (thrusts into the upper abdomen). A stuck object is removed with a bronchoscope."
+    },
+    "tracheomalacia": {
+      "name": "Tracheomalacia",
+      "desc": "The cartilage of the trachea is too soft, so the tube collapses when breathing out or coughing.",
+      "symptoms": "Noisy breathing, a barking cough, frequent chest infections; in babies from the first weeks of life.",
+      "causes": "Immature cartilage from birth; in adults, after a long intubation or pressure from a tumour or goitre.",
+      "treatment": "In children it usually goes away by age 2–3; severe cases need stents or surgery."
+    },
+    "addison": {
+      "name": "Adrenal insufficiency (Addison's disease)",
+      "desc": "The adrenal cortex makes too little cortisol and aldosterone.",
+      "symptoms": "Weakness, weight loss, low blood pressure, craving salt, darkening of the skin.",
+      "causes": "Most often the immune system destroys the adrenal cortex; less often tuberculosis.",
+      "treatment": "Lifelong hormone tablets to replace the missing ones; the dose is raised during stress and illness."
+    },
+    "cushing": {
+      "name": "Cushing's syndrome",
+      "desc": "There is too much cortisol in the body.",
+      "symptoms": "A round face, belly fat with thin arms and legs, purple stretch marks, high blood pressure, weak muscles, diabetes.",
+      "causes": "Most often long-term use of steroid medicines; less often a tumour of the pituitary or an adrenal gland.",
+      "treatment": "Gradually stopping the steroids if possible, or removing the tumour."
+    },
+    "pheochromocytoma": {
+      "name": "Pheochromocytoma",
+      "desc": "A tumour of the adrenal medulla that releases adrenaline and noradrenaline into the blood.",
+      "symptoms": "Episodes of a sharp rise in blood pressure, pounding heartbeat, headache, sweating, pale skin.",
+      "causes": "Usually no clear cause; some cases are inherited.",
+      "treatment": "Removing the tumour after preparation with medicines that lower blood pressure."
+    },
+    "conn": {
+      "name": "Primary aldosteronism (Conn's syndrome)",
+      "desc": "The adrenal glands make too much aldosterone.",
+      "symptoms": "Persistent high blood pressure that is hard to treat; low potassium causing weakness and cramps.",
+      "causes": "A small benign tumour of one adrenal gland or overgrowth of both adrenal glands.",
+      "treatment": "Removing the adrenal gland with the tumour, or medicines that block aldosterone."
+    },
+    "appendix_tumors": {
+      "name": "Appendiceal tumors",
+      "desc": "Rare tumours of the appendix; the most common is a neuroendocrine tumour, usually small and harmless.",
+      "symptoms": "Usually none; they are often found by chance after the appendix is removed.",
+      "causes": "The causes are unknown.",
+      "treatment": "Removing the appendix, and for large tumours part of the large intestine."
+    },
+    "mucocele": {
+      "name": "Appendiceal mucocele",
+      "desc": "The appendix becomes swollen with mucus trapped inside it.",
+      "symptoms": "Usually none; sometimes pain in the lower right abdomen, like appendicitis.",
+      "causes": "A blocked opening or a mucus-producing tumour.",
+      "treatment": "Careful removal: if the mucocele bursts, the mucus can spread through the abdominal cavity."
+    },
+    "hemorrhoids": {
+      "name": "Hemorrhoids",
+      "desc": "Clusters of blood vessels in the lower rectum swell, become inflamed and can prolapse.",
+      "symptoms": "Bright red blood on the paper after a bowel movement, itching, lumps that come out, pain if a lump clots.",
+      "causes": "Constipation and straining, long sitting, pregnancy, too little fibre.",
+      "treatment": "Fibre and water, suppositories and creams; lumps can be banded with rubber rings or removed."
+    },
+    "anal_fissure": {
+      "name": "Anal fissure",
+      "desc": "A small tear in the lining of the anus.",
+      "symptoms": "Sharp pain during and after a bowel movement, a little bright red blood.",
+      "causes": "Hard stools and constipation, less often diarrhoea.",
+      "treatment": "Soft stools thanks to fibre, warm baths, creams that relax the sphincter; surgery is rarely needed."
+    },
+    "proctitis": {
+      "name": "Proctitis",
+      "desc": "Inflammation of the lining of the rectum.",
+      "symptoms": "Frequent false urges, mucus and blood in the stool, pain in the anus.",
+      "causes": "Ulcerative colitis and Crohn's disease, infections, radiotherapy to the pelvis.",
+      "treatment": "Treating the cause: anti-inflammatory suppositories and enemas, antibiotics for infections."
+    },
+    "fibroids": {
+      "name": "Uterine fibroids",
+      "desc": "Benign tumours of the uterine muscle; very common, many women have them by age 50.",
+      "symptoms": "Often none; otherwise heavy, long periods, pelvic heaviness, frequent urges from pressure on the bladder.",
+      "causes": "They grow under the influence of estrogen; family history matters.",
+      "treatment": "Watching, hormone medicines, removing the fibroids or blocking the arteries that feed them. After menopause they usually shrink."
+    },
+    "endometriosis": {
+      "name": "Endometriosis",
+      "desc": "Tissue similar to the endometrium grows outside the uterus: on the ovaries, the lining of the abdomen, the bowel.",
+      "symptoms": "Very painful periods, pelvic pain, difficulty getting pregnant.",
+      "causes": "The exact cause is unknown; one theory is menstrual blood flowing back through the fallopian tubes.",
+      "treatment": "Painkillers, hormone medicines, removing the patches during laparoscopy."
+    },
+    "cervical_cancer": {
+      "name": "Cervical cancer",
+      "desc": "A malignant tumour of the cervix; it is almost always caused by the human papillomavirus (HPV).",
+      "symptoms": "No signs early on; later, bleeding after sex or between periods.",
+      "causes": "Long-term infection with high-risk HPV types, smoking.",
+      "treatment": "The HPV vaccine and regular smear tests prevent most cases. Treatment: surgery, radiotherapy and chemotherapy."
+    },
+    "endometritis": {
+      "name": "Endometritis",
+      "desc": "Inflammation of the inner lining of the uterus, the endometrium.",
+      "symptoms": "Lower abdominal pain, fever, unusual discharge.",
+      "causes": "Infection after childbirth, abortion or procedures inside the uterus, sexually transmitted infections.",
+      "treatment": "Antibiotics."
+    },
+    "pcos": {
+      "name": "Polycystic ovary syndrome",
+      "desc": "A hormonal disorder: the ovaries have many immature follicles and ovulation is rare.",
+      "symptoms": "Irregular or infrequent periods, acne, excess hair growth, weight gain, difficulty getting pregnant.",
+      "causes": "Excess male hormones and insulin resistance; family history.",
+      "treatment": "Weight loss, hormone medicines, drugs for insulin resistance, ovulation induction."
+    },
+    "ovarian_cyst": {
+      "name": "Ovarian cyst",
+      "desc": "A fluid-filled sac in an ovary; most often a functional cyst from a follicle or the corpus luteum.",
+      "symptoms": "Usually none; a large cyst causes heaviness and pelvic pain.",
+      "causes": "A follicle did not burst at ovulation or the corpus luteum filled with fluid; less often endometriosis or tumours.",
+      "treatment": "Functional cysts go away on their own within 1–3 cycles; persistent and large ones are removed."
+    },
+    "ovarian_cancer": {
+      "name": "Ovarian cancer",
+      "desc": "A malignant tumour of the ovary; it is often found late.",
+      "symptoms": "Vague signs: bloating and a growing belly, feeling full quickly, pelvic pain.",
+      "causes": "Age, family history (BRCA gene mutations), endometriosis.",
+      "treatment": "Surgery and chemotherapy; carriers of BRCA mutations sometimes have the ovaries and tubes removed as a precaution."
+    },
+    "ovarian_apoplexy": {
+      "name": "Ovarian apoplexy",
+      "desc": "A sudden rupture of an ovary with bleeding, usually at ovulation or from the corpus luteum.",
+      "symptoms": "Sharp pain on one side of the lower abdomen, weakness, dizziness with heavy bleeding.",
+      "causes": "A burst vessel in a follicle or the corpus luteum, sometimes after exercise or sex.",
+      "treatment": "Observation for light bleeding; surgery that saves the ovary for heavy bleeding."
+    },
+    "prostatitis": {
+      "name": "Prostatitis",
+      "desc": "Inflammation of the prostate, either an acute bacterial infection or a long-lasting condition.",
+      "symptoms": "Pain between the legs and in the lower abdomen, frequent painful urination, fever in acute cases.",
+      "causes": "Bacteria; in the chronic form the cause is often unclear.",
+      "treatment": "Antibiotics for bacterial prostatitis; painkillers, relaxing medicines and physiotherapy for the chronic form."
+    },
+    "bph": {
+      "name": "Benign prostatic hyperplasia",
+      "desc": "With age the prostate grows and squeezes the urethra.",
+      "symptoms": "A weak, stop-start stream, frequent urges, especially at night, a feeling that the bladder is not empty.",
+      "causes": "Age and male hormones: most men over 60 have it.",
+      "treatment": "Medicines that relax the bladder neck or shrink the gland; surgery if the squeezing is severe."
+    },
+    "prostate_cancer": {
+      "name": "Prostate cancer",
+      "desc": "A malignant tumour of the prostate; it often grows very slowly.",
+      "symptoms": "No signs in the early stages; later, difficulty urinating and bone pain.",
+      "causes": "Age, family history, African ancestry.",
+      "treatment": "A PSA blood test and MRI help find it early. Slow tumours are watched, others are treated with surgery, radiotherapy or hormones."
+    }
+  },
   "links": {
     "_comment": "Links between organ cards. Each line is the starts of consecutive words: \"urinary bladder\" also finds \"urinary bladders\". Case does not matter. skip - phrases that must not become links.",
     "skip": ["heartburn", "thyroid cartilage", "spinal cord"],
@@ -793,6 +1318,81 @@
       "uterus": ["uterus", "uterine"],
       "ovaries": ["ovar"],
       "prostate": ["prostat"]
+    },
+    "diseases": {
+      "pneumonia": ["pneumonia"],
+      "asthma": ["asthma"],
+      "copd": ["copd"],
+      "lung_cancer": ["lung cancer"],
+      "hepatitis": ["hepatitis"],
+      "fatty_liver": ["fatty liver"],
+      "cirrhosis": ["cirrhosis"],
+      "liver_cancer": ["liver cancer"],
+      "gallstones": ["gallstone"],
+      "cholecystitis": ["cholecystitis"],
+      "gastritis": ["gastritis"],
+      "peptic_ulcer": ["peptic ulcer", "ulcer"],
+      "gerd": ["gerd", "reflux"],
+      "stomach_cancer": ["stomach cancer"],
+      "ibs": ["irritable bowel"],
+      "ibd": ["crohn", "ulcerative colitis", "inflammatory bowel"],
+      "appendicitis": ["appendicitis"],
+      "colorectal_cancer": ["colorectal cancer"],
+      "kidney_stones": ["kidney stone"],
+      "pyelonephritis": ["pyelonephritis"],
+      "glomerulonephritis": ["glomerulonephritis"],
+      "ckd": ["chronic kidney disease"],
+      "ihd": ["coronary heart disease"],
+      "hypertension": ["high blood pressure"],
+      "arrhythmia": ["arrhythmia", "atrial fibrillation"],
+      "heart_failure": ["heart failure"],
+      "stroke": ["stroke"],
+      "migraine": ["migraine"],
+      "epilepsy": ["epilepsy"],
+      "alzheimer": ["alzheimer"],
+      "hypothyroidism": ["hypothyroidism"],
+      "hyperthyroidism": ["hyperthyroidism", "graves"],
+      "thyroiditis": ["hashimoto", "thyroiditis"],
+      "goiter": ["thyroid nodule"],
+      "splenomegaly": ["splenomegaly", "enlarged spleen"],
+      "spleen_rupture": ["ruptured spleen"],
+      "spleen_infarction": ["splenic infarction"],
+      "hypersplenism": ["hypersplenism"],
+      "pancreatitis": ["pancreatitis"],
+      "diabetes": ["diabetes"],
+      "pancreatic_cancer": ["pancreatic cancer"],
+      "cystic_fibrosis": ["cystic fibrosis"],
+      "cystitis": ["cystitis"],
+      "overactive_bladder": ["overactive bladder"],
+      "bladder_stones": ["bladder stone"],
+      "incontinence": ["incontinence"],
+      "esophagitis": ["esophagitis"],
+      "barrett": ["barrett"],
+      "hiatal_hernia": ["hiatal hernia"],
+      "tracheitis": ["tracheitis"],
+      "tracheal_stenosis": ["tracheal stenosis"],
+      "foreign_body": ["inhaled foreign body"],
+      "tracheomalacia": ["tracheomalacia"],
+      "addison": ["addison", "adrenal insufficiency"],
+      "cushing": ["cushing"],
+      "pheochromocytoma": ["pheochromocytoma"],
+      "conn": ["aldosteronism"],
+      "appendix_tumors": ["appendiceal tumo"],
+      "mucocele": ["mucocele"],
+      "hemorrhoids": ["hemorrhoid"],
+      "anal_fissure": ["anal fissure"],
+      "proctitis": ["proctitis"],
+      "fibroids": ["fibroid"],
+      "endometriosis": ["endometriosis"],
+      "cervical_cancer": ["cervical cancer"],
+      "endometritis": ["endometritis"],
+      "pcos": ["polycystic ovary"],
+      "ovarian_cyst": ["ovarian cyst"],
+      "ovarian_cancer": ["ovarian cancer"],
+      "ovarian_apoplexy": ["ovarian apoplexy"],
+      "prostatitis": ["prostatitis"],
+      "bph": ["prostatic hyperplasia", "enlarged prostate"],
+      "prostate_cancer": ["prostate cancer"]
     }
   }
 }
