@@ -92,6 +92,43 @@ class SwitchTests(unittest.TestCase):
         self.assertEqual(fact_of_day("heart", d), fact_of_day("heart", d))
 
 
+class LinkTests(unittest.TestCase):
+    """упоминания органов в тексте карточек: ссылки на карточки других органов"""
+
+    def found(self, text):
+        return [(piece, key) for piece, key in i18n.links(text) if key]
+
+    def test_links_section_names_real_organs(self):
+        for code in ("ru", "en"):
+            sec = i18n._load(code)["links"]
+            self.assertTrue(set(sec["organs"]) <= set(ORGANS), code)
+            for key, patterns in sec["organs"].items():
+                self.assertTrue(patterns, (code, key))
+
+    def test_word_forms_and_phrases(self):
+        self.assertEqual(self.found("Грудная полость между лёгкими"), [("лёгкими", "lungs")])
+        self.assertEqual(self.found("у мужчин позади мочевого пузыря, у женщин позади матки"),
+                         [("мочевого пузыря", "bladder"), ("матки", "uterus")])
+        self.assertEqual(self.found("перед прямой кишкой; в двенадцатиперстную кишку"),
+                         [("прямой кишкой", "rectum"), ("кишку", "intestines")])
+        self.assertEqual(self.found("Рак поджелудочной железы"), [("поджелудочной железы", "pancreas")])
+        self.assertEqual(self.found("Heartburn: stomach content flows into the esophagus"),
+                         [("stomach", "stomach"), ("esophagus", "esophagus")])
+
+    def test_skip_and_lookalikes(self):
+        """«спинной мозг», «щитовидный хрящ», «желудочек» сердца и «надпочечники» - не ссылки не туда"""
+        self.assertEqual(self.found("переходит в спинной мозг; ниже щитовидного хряща"), [])
+        self.assertEqual(self.found("два предсердия и два желудочка"), [])
+        self.assertEqual(self.found("над полюсами почек, надпочечники"),
+                         [("почек", "kidneys"), ("надпочечники", "adrenals")])
+
+    def test_pieces_rebuild_text(self):
+        for code in ("ru", "en"):
+            for key, o in i18n._load(code)["organs"].items():
+                for text in [o["desc"], o["location"]] + o["facts"] + o["daily"]:
+                    self.assertEqual("".join(piece for piece, _ in i18n.links(text)), text)
+
+
 class BrokenFileTests(unittest.TestCase):
     def test_syntax_error_names_file_and_line(self):
         with tempfile.TemporaryDirectory() as tmp:

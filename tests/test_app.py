@@ -70,6 +70,18 @@ class AppTests(unittest.TestCase):
         pump()
         self.assertEqual(self.app.atlas.hidden, self.other)
 
+    def test_card_links_open_other_organ(self):
+        """в карточке сердца «лёгкие» - ссылка: щелчок открывает карточку лёгких и подсвечивает их"""
+        from PySide6.QtWidgets import QLabel
+        self.app.show_info("heart")
+        links = [w for w in self.app.card.findChildren(QLabel) if 'href="lungs"' in w.text()]
+        self.assertEqual(len(links), 1)                     # ссылка на орган одна, при первом упоминании
+        self.assertFalse([w for w in self.app.card.findChildren(QLabel) if 'href="heart"' in w.text()])
+        links[0].linkActivated.emit("lungs")
+        pump()
+        self.assertEqual(self.app.spot, "lungs")
+        self.assertTrue([w for w in self.app.card.findChildren(QLabel) if w.text() == i18n.name("lungs")])
+
     @property
     def other(self):
         """органы другого пола: на схеме их нет никогда"""

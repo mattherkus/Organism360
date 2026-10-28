@@ -650,7 +650,13 @@ class App(QWidget):
             if self.paused is not None:
                 return t("tour_resume", title=tours.title(self.paused[0])), self.resume_tour
             return t("tours_back"), self.end_tour
-        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key), back=back()))
+        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key), back=back(),
+                                        on_link=self.open_link))
+
+    def open_link(self, key):
+        """щелчок по названию органа в карточке: открыть его карточку и подсветить на схеме"""
+        self.show_info(key)
+        self.set_spot(key if key in self.organs() else None)
 
     def update_buttons(self):
         for mode, b in self.mode_buttons.items():

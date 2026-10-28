@@ -7,6 +7,7 @@
 
 import datetime
 import json
+import re
 from pathlib import Path
 
 LANG_DIR = Path(__file__).with_name("lang")
@@ -15,6 +16,7 @@ PREFERRED = ("ru", "en", "la")      # порядок кнопок; осталь�
 
 _cache = {}
 _current, _previous = BASE, BASE
+_links = None                       # (регулярное выражение, {группа: орган или None}) для links()
 
 
 def _load(code):
@@ -166,3 +168,46 @@ def fact_of_day(key, order, day=None):
         return ""
     day = day or datetime.date.today()
     return pool[(day.toordinal() + order) % len(pool)]
+
+
+def _fold(s):
+    """ё -> е без смены длины: позиции в тексте и в сложенной строке совпадают"""
+    return s.replace("ё", "е").replace("Ё", "Е")
+
+
+def _links_re():
+    """одно выражение по разделам links всех языков: каждое сочетание - именованная группа.
+    Длинные сочетания идут первыми, чтобы «прямая кишка» не стала ссылкой на «кишку»"""
+    global _links
+    if _links is None:
+        items = []
+        for code in available():
+            sec = _load(code).get("links", {})
+            items += [(p, None) for p in sec.get("skip", [])]
+            items += [(p, key) for key, ps in sec.get("organs", {}).items() for p in ps]
+        items.sort(key=lambda it: (-len(it[0].split()), -len(it[0])))
+        groups, parts = {}, []
+        for i, (p, key) in enumerate(items):
+            words = _fold(p).lower().split()
+            groups["g%d" % i] = key
+            parts.append("(?P<g%d>%s)" % (i, r"\s+".join(re.escape(w) + r"\w*" for w in words)))
+        _links = re.compile(r"(?<!\w)(?:%s)" % "|".join(parts), re.IGNORECASE), groups
+    return _links
+
+
+def links(text):
+    """текст карточки -> [(кусок, орган или None)]: упоминания органов (раздел links в lang/*.json)
+    становятся кусками со своим органом, остальной текст - кусками с None"""
+    rx, groups = _links_re()
+    out, pos = [], 0
+    for m in rx.finditer(_fold(text)):
+        key = groups[m.lastgroup]
+        if key is None:                         # сочетание из skip: не ссылка
+            continue
+        if m.start() > pos:
+            out.append((text[pos:m.start()], None))
+        out.append((text[m.start():m.end()], key))
+        pos = m.end()
+    if pos < len(text):
+        out.append((text[pos:], None))
+    return out

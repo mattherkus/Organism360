@@ -210,7 +210,7 @@ class Viewer3D:
 
     def retranslate(self):
         self.win.title(t("viewer_title", name=i18n.name(self.key)))
-        fill_card(self.card, self.key, compact=True)
+        fill_card(self.card, self.key, compact=True, on_link=self.load)      # ссылка открывает модель органа
         credit = "\n" + t({"bp3d": "viewer_credit"}.get(self.credit, "viewer_credit_%s" % self.credit)) \
             if self.credit else ""
         if self.error is not None:

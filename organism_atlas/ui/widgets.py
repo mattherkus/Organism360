@@ -9,9 +9,10 @@
 задаются у каждого виджета, как pack(padx=..., pady=...) раньше."""
 
 import colorsys
+import html
 
 import shiboken6
-from PySide6.QtCore import QEasingCurve, QPointF, QRectF, QSize, Qt, QVariantAnimation
+from PySide6.QtCore import QEasingCurve, QPointF, QRectF, QSize, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
                                QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
@@ -356,39 +357,68 @@ def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Q
     return set_fg(w, fg)
 
 
+def linked(text, on_link, seen, fg="text", size=11):
+    """надпись, где названия органов - ссылки, как в статье: щелчок вызывает on_link(орган).
+    seen - органы, которые уже стали ссылкой выше в карточке (и сам орган карточки): ссылка на орган
+    одна, при первом упоминании. Без on_link - обычная надпись"""
+    if on_link is None:
+        return label(text, fg, size)
+    out, found = [], False
+    for piece, key in i18n.links(text):
+        if key is None or key in seen:
+            out.append(html.escape(piece))
+        else:
+            seen.add(key)
+            found = True
+            out.append('<a href="%s" style="color:{link}">%s</a>' % (key, html.escape(piece)))
+    w = label(text, fg, size)
+    if found:
+        # цвет ссылки Qt берёт не из палитры надписи, поэтому он вписан в текст и обновляется при смене темы
+        rich = '<span style="white-space:pre-wrap">%s</span>' % "".join(out)      # пробелы как в тексте
+        w.retheme = lambda: w.setText(rich.replace("{link}", C.get("accent_fg")))
+        w.setTextFormat(Qt.RichText)
+        w.retheme()
+        w.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+        # карточка пересобирается после щелчка, а не внутри него: надпись-отправитель ещё обрабатывает мышь
+        w.linkActivated.connect(lambda key: QTimer.singleShot(0, lambda: on_link(key)))
+    return w
+
+
 def heading(lay, text, top=8, bottom=2, x=16):
     return put(lay, label(text.upper(), "muted", 9, bold=True, wrap=False), top=top, bottom=bottom, x=x)
 
 
-def section(lay, title, text):
+def section(lay, title, text, on_link=None, seen=None):
     heading(lay, title)
-    put(lay, label(text))
+    put(lay, linked(text, on_link, seen))
 
 
 def spacer(lay, h):
     lay.addSpacing(px(h))
 
 
-def fill_card(card, key, on_3d=None, compact=False, back=None):
+def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None):
     """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
-    back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям"""
+    back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
+    on_link(орган) - упоминания других органов в тексте становятся ссылками на их карточки"""
     lay = card.lay
     clear(lay)
     c = ORGANS[key]["color"]
+    seen = {key}                                                        # на себя ссылок нет
     bar(lay, c)                                                         # цветная полоска органа
     put(lay, label(i18n.name(key), size=15, bold=True), top=12)
     put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
-    put(lay, label(i18n.organ(key, "desc")), bottom=8)
-    section(lay, t("card_location"), i18n.organ(key, "location"))
+    put(lay, linked(i18n.organ(key, "desc"), on_link, seen), bottom=8)
+    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen)
     section(lay, t("card_system"), ", ".join(t("system_" + x) for x in ORGANS[key]["systems"]))
     heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
-        put(lay, label("•  " + f), top=2, bottom=2)
+        put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
     if not compact:
-        section(lay, t("card_diseases"), "  ·  ".join(i18n.organ(key, "diseases")))
+        section(lay, t("card_diseases"), "  ·  ".join(i18n.organ(key, "diseases")), on_link, seen)
         day = rounded_card(fill="day_bg", border=c, radius=10)
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
-        put(day.lay, label(fact_of_day(key)), bottom=8, x=10)
+        put(day.lay, linked(fact_of_day(key), on_link, seen), bottom=8, x=10)
         put(lay, day, top=12)
     if on_3d:
         put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=12, bottom=0 if back else 14, align="left")

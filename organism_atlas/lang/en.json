@@ -768,5 +768,31 @@
         "ovaries": "The ovaries make the female sex hormones, estrogens and progesterone, which control the menstrual cycle."
       }
     }
+  },
+  "links": {
+    "_comment": "Links between organ cards. Each line is the starts of consecutive words: \"urinary bladder\" also finds \"urinary bladders\". Case does not matter. skip - phrases that must not become links.",
+    "skip": ["heartburn", "thyroid cartilage", "spinal cord"],
+    "organs": {
+      "lungs": ["lung"],
+      "liver": ["liver"],
+      "gallbladder": ["gallbladder"],
+      "stomach": ["stomach"],
+      "intestines": ["intestin", "gut", "bowel"],
+      "kidneys": ["kidney"],
+      "heart": ["heart"],
+      "brain": ["brain"],
+      "thyroid": ["thyroid gland", "thyroid"],
+      "spleen": ["spleen"],
+      "pancreas": ["pancrea"],
+      "bladder": ["urinary bladder", "bladder"],
+      "esophagus": ["esophag", "oesophag"],
+      "trachea": ["trachea", "windpipe"],
+      "adrenals": ["adrenal gland", "adrenals"],
+      "appendix": ["appendix"],
+      "rectum": ["rectum"],
+      "uterus": ["uterus", "uterine"],
+      "ovaries": ["ovar"],
+      "prostate": ["prostat"]
+    }
   }
 }
