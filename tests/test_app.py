@@ -115,17 +115,19 @@ class AppTests(unittest.TestCase):
         """кнопка «Латынь»: названия органов по-латыни, язык кнопок не меняется и запоминается"""
         from organism_atlas import settings
         self.app.set_lang("en")
-        self.app.latin_button.invoke()
+        self.app.latin_action.trigger()
         self.assertTrue(i18n.latin())
         self.assertEqual(i18n.base(), "en")
-        self.assertEqual(self.app.latin_button.role, "accent")              # нажатая - как выбранный язык
+        self.assertTrue(self.app.latin_action.isChecked())
+        self.assertTrue(self.app.lang_actions["en"].isChecked())
+        self.assertIn("LA", self.app.lang_button.text())                  # кнопка меню показывает и латынь
         self.assertEqual(self.app.toggles["heart"].text, "Cor")
-        self.assertEqual(set(self.app.lang_buttons), set(i18n.languages()))
+        self.assertEqual(set(self.app.lang_actions), set(i18n.languages()))
         saved = settings.load()
         self.assertEqual((saved["lang"], saved["previous_lang"]), ("la", "en"))
-        self.app.latin_button.invoke()
+        self.app.latin_action.trigger()
         self.assertFalse(i18n.latin())
-        self.assertEqual(self.app.latin_button.role, "card")
+        self.assertFalse(self.app.latin_action.isChecked())
         self.assertEqual(self.app.toggles["heart"].text, "Heart")
 
     def test_diseases_only_in_study(self):
@@ -192,10 +194,10 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(s.first_try, s.total)
                 self.app.set_mode(mode)
         self.app.set_cfg("topic", "digestive")
-        self.app.set_cfg("length", 20)
+        self.app.set_cfg("length", 15)
         self.app.start_quiz()
         self.assertTrue(all("digestive" in ORGANS[k]["systems"] for k in self.app.session.q))
-        self.assertEqual(self.app.session.total, 8)       # органов в теме меньше 20 - спрашиваем про все
+        self.assertEqual(self.app.session.total, 8)       # органов в теме меньше 15 - спрашиваем про все
         self.play()
 
     def test_wrong_answer_and_digits(self):
@@ -214,6 +216,152 @@ class AppTests(unittest.TestCase):
         self.app.on_key("", str(list(self.app.choices).index(right) + 1))
         self.assertTrue(self.app.next_timer.isActive())
         self.assertEqual(self.app.choices[right].role, "right_bg")
+
+    def test_easy_reveal(self):
+        """лёгкий уровень: после ошибки верный орган подсвечен и подписан, верный ответ подсказку убирает;
+        на среднем уровне подсказки нет"""
+        self.app.set_mode("find")
+        self.app.set_cfg("level", "easy")
+        self.app.start_quiz()
+        s = self.app.session
+        asked = s.current
+        self.app.answer(next(k for k in self.app.organs() if k != asked))
+        self.assertIsNotNone(self.app.view.layers["reveal"])
+        self.assertEqual(self.app.view.pin[2], i18n.name(asked))
+        self.assertTrue(self.app.reveal_timer.isActive())
+        self.app.answer(asked)
+        self.assertIsNone(self.app.view.pin)
+        self.app.set_mode("find")
+        self.app.set_cfg("level", "medium")
+        self.app.start_quiz()
+        s = self.app.session
+        self.app.answer(next(k for k in self.app.organs() if k != s.current))
+        self.assertIsNone(self.app.view.pin)
+
+    def test_give_up(self):
+        """«Сдаться»: ошибка засчитана, верный орган подписан на схеме, игра сразу заканчивается - итоги"""
+        self.app.set_mode("find")
+        self.app.set_cfg("length", 5)
+        self.app.start_quiz()
+        s = self.app.session
+        self.app.answer(s.current)                          # первый вопрос - верно
+        asked = s.current
+        next(b for b in self.buttons(self.app.card) if b.text() == i18n.t("give_up")).invoke()
+        self.assertTrue(s.finished)
+        self.assertEqual((s.total, s.planned, s.errors, s.first_try, s.missed), (2, 5, 1, 1, [asked]))
+        self.assertEqual(self.app.view.pin[2], i18n.name(asked))
+        self.app.show_results()
+        self.assertIn(i18n.t("results_gave_up", n=2, total=5), self.label_texts())
+
+    def label_texts(self):
+        from PySide6.QtWidgets import QLabel
+        return [w.text() for w in self.app.card.findChildren(QLabel)]
+
+    def test_quiz_progress_bars(self):
+        """шапка вопроса: шкала пройденных вопросов и шкала таймера; цифра - значок на кнопке варианта"""
+        self.app.set_mode("name")
+        self.app.set_cfg("timer", 10)
+        self.app.start_quiz()
+        p = self.app.progress
+        self.assertEqual(p.done.value, 0)
+        self.assertFalse(p.time.isHidden())
+        self.assertGreater(p.time.value, 0.5)
+        self.assertEqual([b.key_hint for b in self.app.choices.values()],
+                         [str(i + 1) for i in range(len(self.app.choices))])
+        s = self.app.session
+        self.app.pick(s.correct())
+        self.app.next_question()
+        self.assertAlmostEqual(self.app.progress.done.value, 1 / s.total)
+
+    def test_quiz_mode_on_setup_card(self):
+        """вид викторины выбирается на карточке настройки и запоминается для кнопки «Викторина»"""
+        from organism_atlas import settings
+        self.app.mode_buttons["quiz"].invoke()
+        self.assertEqual(self.app.mode, "find")
+        next(b for b in self.buttons(self.app.card) if b.text() == i18n.t("mode_facts")).invoke()
+        self.assertEqual(self.app.mode, "facts")
+        self.assertEqual(settings.load()["quiz_mode"], "facts")
+        self.app.set_mode("study")
+        self.app.mode_buttons["quiz"].invoke()
+        self.assertEqual(self.app.mode, "facts")
+
+    def test_card_history(self):
+        """назад и вперёд по просмотренным карточкам; переход в сторону обрезает «вперёд»"""
+        a = self.app
+        for key in ("heart", "lungs", "liver"):
+            a.open_link(key)
+        self.assertEqual((a.history, a.hpos), (["heart", "lungs", "liver"], 2))
+        a.go_history(-1)
+        self.assertEqual((a.hpos, a.spot), (1, "lungs"))
+        a.go_history(-1)
+        a.go_history(-1)                                    # дальше назад некуда
+        self.assertEqual(a.hpos, 0)
+        a.go_history(1)
+        self.assertEqual(a.history[a.hpos], "lungs")
+        a.open_link("brain")
+        self.assertEqual(a.history, ["heart", "lungs", "brain"])
+        self.assertIn("←", self.button_texts())
+        a.set_mode("find")
+        self.assertEqual(a.history, [])
+
+    def test_system_toggle_and_layers_fold(self):
+        """щелчок по системе скрывает и показывает её органы; раздел «Слои» сворачивается и это запоминается"""
+        from organism_atlas import settings
+        a = self.app
+        keys = set(dict(a.groups())["digestive"])
+        a.toggle_system("digestive")
+        self.assertEqual(a.hidden, keys)
+        a.toggle_organ("liver")
+        a.toggle_system("digestive")                        # часть скрыта - показать все
+        self.assertEqual(a.hidden, set())
+        a.fold_layers()
+        self.assertTrue(a.toggles["skin"].isHidden())
+        self.assertEqual(settings.load()["layers_panel"], "closed")
+        a.fold_layers()
+        pump()                                              # новые виджеты панели показываются в цикле событий
+        self.assertFalse(a.toggles["skin"].isHidden())
+
+    def test_skin_opacity(self):
+        from organism_atlas.ui.widgets import SKIN
+        a = self.app
+        a.toggles[SKIN].setValue(100)
+        a.apply_skin()
+        self.assertEqual(a.atlas.skin_opacity, 0.0)
+        a.toggle_layer("skin")                              # кожа выключена - ползунок прячется
+        self.assertTrue(a.toggles[SKIN].isHidden())
+
+    def test_zoom(self):
+        """приближение: точка под курсором остаётся на месте, наведение попадает в тот же орган"""
+        from PySide6.QtCore import QPointF
+        v = self.app.view
+        x, y = int(210 * Z), int(230 * Z)                   # сердце в пикселях схемы
+        at = QPointF(*v.to_screen(x, y))
+        v.zoom_step(2, at)
+        self.assertGreater(v.k, 1)
+        sx, sy = v.to_screen(x, y)
+        self.assertAlmostEqual(sx, at.x(), delta=1)
+        self.assertAlmostEqual(sy, at.y(), delta=1)
+        self.assertEqual(self.app.atlas.organ_at(*v.to_scheme(QPointF(sx, sy))), "heart")
+        self.assertTrue(self.app.stage.zoom_buttons["zoom_reset"].isEnabled())
+        self.app.on_key("", "0")
+        self.assertEqual(v.k, 1)
+        self.assertFalse(self.app.stage.zoom_buttons["zoom_reset"].isEnabled())
+
+    def test_help_and_search_keys(self):
+        from organism_atlas.ui import help, overlay
+        from organism_atlas.ui.widgets import SEARCH
+        self.app.focus_search()
+        self.assertTrue(self.app.toggles[SEARCH].hasFocus() or not self.app.isActiveWindow())
+        self.app.show_help()
+        self.assertIsInstance(overlay.top(self.app), help.HelpPanel)
+        self.assertIs(help.show_help(self.app), overlay.top(self.app))
+
+    def test_home_card(self):
+        """стартовая карточка: орган дня открывает свою карточку"""
+        texts = self.button_texts()
+        opener = next(t for t in texts if t.startswith(i18n.t("home_organ_open", name="")))
+        next(b for b in self.buttons(self.app.card) if b.text() == opener).invoke()
+        self.assertEqual(len(self.app.history), 1)
 
     def test_hide_all_organs(self):
         """кнопка в заголовке органов скрывает все органы, повторно - возвращает"""
@@ -301,7 +449,7 @@ class AppTests(unittest.TestCase):
 
     def test_button_fade(self):
         """наведение меняет цвет кнопки плавно и доходит до цвета состояния"""
-        b = self.app.mode_buttons["find"]
+        b = self.app.mode_buttons["quiz"]
         pump()
         start = b.shown
         b.hover = True
@@ -555,19 +703,28 @@ class AppTests(unittest.TestCase):
             self.assertEqual(a.mode_buttons["study"].colors()[0], theme.THEMES["light"]["accent"])
             a.set_lang("en")
             self.assertEqual(win.win.title(), "Settings")
-            self.assertIn("Settings", a.settings_button.text())
+            self.assertEqual(a.settings_button.toolTip(), "Settings")
             a.set_quality("high")
             self.assertEqual(viewer3d._quality, "high")
             before = win.card.findChildren(QWidget)
-            next(b for b in self.buttons(win.card) if b.text() == "125%").click()    # как щелчок в панели
+            a.open_link("heart")
+            next(b for b in self.buttons(win.card) if b.text() == "Medium").click()    # как щелчок в панели
             self.assertEqual(win.card.findChildren(QWidget), before)           # обновлено на месте: не мигает
-            self.assertEqual(a.ui_scale, 1.0)                 # сам масштаб - после перезапуска
-            from PySide6.QtWidgets import QLabel
-            texts = [w.text() for w in win.card.findChildren(QLabel)]
-            self.assertIn("125% selected: restart the app to apply it.", texts)
+            next(b for b in self.buttons(win.card) if b.text() == "125%").click()
+            pump()                                            # окно пересобирается в новом масштабе сразу
+            from organism_atlas.ui.app import App
+            from organism_atlas.ui.scaling import get_scale
+            new = App.main
+            self.assertIsNot(new, a)
+            self.app = new                                    # закроет tearDown
+            self.assertEqual((new.ui_scale, get_scale()), (1.25, 1.25))
+            self.assertEqual(new.history, ["heart"])          # открытая карточка осталась
+            win = settings_window._window                     # настройки снова открыты - уже в новом окне
+            self.assertIsNotNone(win)
+            self.assertIs(win.app, new)
             saved = settings.load()
             self.assertEqual({k: settings.get(saved, k) for k in settings.DEFAULTS},
-                             {**settings.DEFAULTS, "theme": "light", "quality": "high", "ui_scale": 1.25})
+                             {**settings.DEFAULTS, "theme": "light", "quality": "medium", "ui_scale": 1.25})
             self.assertEqual(saved["lang"], "en")
             win.win.close_panel()
             self.assertIsNone(settings_window._window)

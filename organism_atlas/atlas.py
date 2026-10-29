@@ -60,6 +60,7 @@ class Atlas:
         self.size = self.body["skin"].shape[1], self.body["skin"].shape[0]
         self.hidden = frozenset()        # скрытые органы: не ловят клик и не закрывают нижние
         self.visible = DEFAULT_LAYERS    # видимые слои тела
+        self.skin_opacity = 1.0          # непрозрачность кожи (0 - кожи не видно, 1 - как нарисована)
         self._bg = (BG, BG_HI)           # цвета фона (тема)
         self._base = None
         self._show = {}                  # заготовки для base при текущем фоне: кожа с фоном, растворение
@@ -110,10 +111,14 @@ class Atlas:
 
     def _assemble(self, organs):
         """фон темы, видимые слои тела и органы organs (по порядку ORDER) средствами Pillow"""
-        skin = "skin" in self.visible
+        skin = self.skin_opacity if "skin" in self.visible else 0.0
         if skin not in self._show:
-            # свечение и кромка кожи не выражаются прямой альфой, поэтому кожа - вместе с фоном
-            out = compose(self.body, self._back(*self._bg), ("skin",) if skin else (), fade=False)
+            # свечение и кромка кожи не выражаются прямой альфой, поэтому кожа - вместе с фоном.
+            # Храним только кожу текущей прозрачности (и без кожи): ползунок не копит картинки
+            for k in [k for k in self._show if k not in ("fade", 0.0)]:
+                del self._show[k]
+            out = compose(self.body, self._back(*self._bg), ("skin",) if skin else (), skin_opacity=skin or 1.0,
+                          fade=False)
             self._show[skin] = Image.fromarray(to_u8(out))
         if "fade" not in self._show:
             self._show["fade"] = self.fade_image(*self._bg)
@@ -209,6 +214,23 @@ class Atlas:
         if visible != self.visible:
             self.visible = visible
             self._base = None
+
+    def set_skin_opacity(self, value):
+        """непрозрачность кожи 0..1; картинка self.base пересоберётся при обращении"""
+        value = round(max(0.0, min(1.0, value)), 2)
+        if value != self.skin_opacity:
+            self.skin_opacity = value
+            self._base = None
+
+    def anchor(self, key):
+        """точка для подписи органа (x, y) в пикселях схемы: над серединой органа, у его верхнего края"""
+        d = self.org[key]
+        ys, xs = np.nonzero(d["hit"] > 0.5)
+        if not len(xs):
+            return d["origin"][0] + d["hit"].shape[1] / 2, d["origin"][1]
+        cx = float(xs.mean())
+        col = ys[np.abs(xs - cx) <= max(2, 0.1 * (xs.max() - xs.min()))]      # верх органа над серединой
+        return d["origin"][0] + cx, d["origin"][1] + float(col.min() if len(col) else ys.min())
 
     @classmethod
     def cached(cls, Z, cache_dir=atlas_cache.CACHE_DIR):

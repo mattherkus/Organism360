@@ -180,6 +180,8 @@ class QuizSession:
         self.errors = 0                              # всего ошибок (включая вышедшее время)
         self.first_try = 0                           # верных с первой попытки
         self.timeouts = 0                            # сколько раз не успели
+        self.planned = len(self.q)                   # сколько вопросов было задумано (до «Сдаться»)
+        self.gave_up = False                         # игру закончили кнопкой «Сдаться»
         self.slipped = False                         # на текущем вопросе уже была ошибка
         self.missed = []                             # ключи органов, на которых ошибались
         self.results = {}                            # {орган: True - с первой попытки, False - нет}
@@ -269,12 +271,25 @@ class QuizSession:
         rem = self.remaining()
         if rem is None or rem > 0:
             return None
-        key = self.q[self.i]
         self.timeouts += 1
+        return self._skip()
+
+    def _skip(self):
+        """засчитать ошибку на текущем вопросе и перейти дальше; возвращает пропущенный орган"""
+        key = self.q[self.i]
         if not self.slipped:                         # уже ошибся на этом вопросе - вторую ошибку не берём
             self._miss()
         self._next(False)
         return key
+
+    def give_up(self):
+        """кнопка «Сдаться»: текущий вопрос - ошибка, и игра на нём заканчивается (оставшихся вопросов не будет,
+        в итогах - только пройденные). Возвращает орган текущего вопроса (None - викторина уже закончена)"""
+        if self.finished:
+            return None
+        self.gave_up = True
+        del self.q[self.i + 1:]
+        return self._skip()
 
     # --- варианты ответа - органы (ключи), кроме трёх случаев:
     # вопрос по факту со своими вариантами - «#0» (верный) и «#1», «#2»... (неверные);

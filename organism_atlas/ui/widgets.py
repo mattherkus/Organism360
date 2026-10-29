@@ -15,7 +15,7 @@ import shiboken6
 from PySide6.QtCore import QEasingCurve, QPointF, QRectF, QSize, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
-                               QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
+                               QScrollArea, QSizePolicy, QSlider, QVBoxLayout, QWidget)
 
 from .. import i18n
 from ..config import FONT
@@ -158,6 +158,7 @@ class RoundButton(QAbstractButton):
         self.anchor = anchor
         self.padx, self.pady = px(padx), px(pady)
         self.role, self.fg, self.dis_fg = bg, "text", "muted"
+        self.key_hint = None        # клавиша, которая нажимает кнопку («1»): рисуется значком слева от текста
         self.shown = None           # (заливка, рамка, текст), которые сейчас на экране
         self.anim = None            # QVariantAnimation плавной смены цвета
         self.hover = False
@@ -183,9 +184,24 @@ class RoundButton(QAbstractButton):
             self.pady = px(pady)
         self.updateGeometry()
 
+    def key_width(self):
+        """место под значок клавиши слева (0 - значка нет)"""
+        return self.key_size().width() + px(8) if self.key_hint else 0
+
+    def key_size(self):
+        fm = QFontMetrics(font(8, bold=True))
+        h = fm.height() + px(2)
+        return QSize(max(h, fm.horizontalAdvance(self.key_hint or "") + px(8)), h)
+
+    def set_key_hint(self, key):
+        self.key_hint = key
+        self.updateGeometry()
+        self.update()
+
     def sizeHint(self):
         fm = QFontMetrics(self.font())
-        return QSize(fm.horizontalAdvance(self.text()) + 2 * self.padx + 2, fm.height() + 2 * self.pady)
+        return QSize(fm.horizontalAdvance(self.text()) + 2 * self.padx + 2 + self.key_width(),
+                     fm.height() + 2 * self.pady)
 
     def minimumSizeHint(self):
         return self.sizeHint()
@@ -279,10 +295,23 @@ class RoundButton(QAbstractButton):
         p.setPen(QPen(QColor(outline), bw))
         p.setBrush(QColor(fill))
         p.drawRoundedRect(QRectF(self.rect()).adjusted(bw / 2, bw / 2, -bw / 2, -bw / 2), r, r)
+        left = self.padx
+        if self.key_hint:                        # значок клавиши - скруглённая «клавиша» в цвет текста
+            ks = self.key_size()
+            box = QRectF(left, (self.height() - ks.height()) / 2, ks.width(), ks.height())
+            p.setPen(QPen(QColor(fg), bw))
+            p.setBrush(Qt.NoBrush)
+            p.setOpacity(0.55)
+            p.drawRoundedRect(box, px(4), px(4))
+            p.setOpacity(0.8)
+            p.setFont(font(8, bold=True))
+            p.drawText(box, Qt.AlignCenter, self.key_hint)
+            p.setOpacity(1.0)
+            left += self.key_width()
         p.setPen(QColor(fg))
         p.setFont(self.font())
         if self.anchor == "w":
-            p.drawText(self.rect().adjusted(self.padx, 0, -self.padx, 0), Qt.AlignVCenter | Qt.AlignLeft, self.text())
+            p.drawText(self.rect().adjusted(left, 0, -self.padx, 0), Qt.AlignVCenter | Qt.AlignLeft, self.text())
         else:
             p.drawText(self.rect(), Qt.AlignCenter, self.text())
 
@@ -347,6 +376,64 @@ class Bar(QWidget):
 
 def bar(lay, c):
     put(lay, Bar(c), top=1, x=8)
+
+
+class Meter(QWidget):
+    """тонкая полоска-шкала: дорожка цвета рамки и заполненная доля value (0..1) цвета c"""
+
+    def __init__(self, c, value=0.0, height=6):
+        super().__init__()
+        self.c, self.value = c, value
+        self.setFixedHeight(px(height))
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+    def set(self, value, c=None):
+        value = max(0.0, min(1.0, value))
+        if (value, c or self.c) != (self.value, self.c):
+            self.value, self.c = value, c or self.c
+            self.update()
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen)
+        r = QRectF(self.rect())
+        h = r.height()
+        p.setBrush(color("border"))
+        p.drawRoundedRect(r, h / 2, h / 2)
+        if self.value > 0:
+            p.setBrush(color(self.c))
+            p.drawRoundedRect(QRectF(r.x(), r.y(), max(h, r.width() * self.value), h), h / 2, h / 2)
+
+
+class QuizProgress(QWidget):
+    """шапка вопроса викторины: строка «Вопрос N из M · Ошибок: K», шкала пройденных вопросов
+    и (если включён таймер) шкала оставшегося времени, которая к концу краснеет"""
+
+    def __init__(self, text, done, time_left=None):
+        super().__init__()
+        lay = vbox(self, spacing=4)
+        self.label = label(text, "muted", 10, bold=True)
+        lay.addWidget(self.label)
+        self.done = Meter("accent", done)
+        lay.addWidget(self.done)
+        self.time = Meter("ok", 1.0, height=4)
+        lay.addWidget(self.time)
+        self.time.setVisible(time_left is not None)
+        self.set(text, done, time_left)
+
+    def text(self):
+        return self.label.text()
+
+    def setText(self, text):
+        self.label.setText(text)
+
+    def set(self, text, done, time_left=None):
+        """time_left - доля оставшегося времени (0..1) или None - таймера нет"""
+        self.label.setText(text)
+        self.done.set(done)
+        if time_left is not None:
+            self.time.set(time_left, "ok" if time_left > 0.5 else "day_title" if time_left > 0.25 else "bad")
 
 
 def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Qt.AlignLeft):
@@ -417,17 +504,41 @@ def spacer(lay, h):
     lay.addSpacing(px(h))
 
 
-def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None):
+def nav_row(lay, nav):
+    """строка над карточкой органа: кнопки «назад» и «вперёд» по просмотренным карточкам и «крошки» -
+    предыдущие карточки ссылками. nav - (назад (подсказка, функция или None), вперёд (то же),
+    [(название, ключ-ссылка)], on_crumb(ключ))"""
+    back, forward, crumbs, on_crumb = nav
+    row = hbox(spacing=4)
+    for text, (tip, command) in (("←", back), ("→", forward)):
+        b = flat_button(text, command, size=9, padx=8, pady=1)
+        b.setToolTip(tip)
+        b.setEnabled(command is not None)
+        row.addWidget(b)
+    if crumbs:
+        row.addSpacing(px(6))
+        w = rich_label(joined(crumbs, "  ›  "), on_crumb, "muted", 9)
+        w.setWordWrap(False)
+        row.addWidget(w, 1)
+    else:
+        row.addStretch(1)
+    put(lay, row, top=10)
+
+
+def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None):
     """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
-    а заболевания органа - ссылками на статьи справочника болезней"""
+    а заболевания органа - ссылками на статьи справочника болезней;
+    nav - история просмотренных карточек (см. nav_row)"""
     lay = card.lay
     clear(lay)
     c = ORGANS[key]["color"]
     seen = {key}                                                        # на себя ссылок нет
     bar(lay, c)                                                         # цветная полоска органа
-    put(lay, label(i18n.name(key), size=15, bold=True), top=12)
+    if nav:
+        nav_row(lay, nav)
+    put(lay, label(i18n.name(key), size=15, bold=True), top=8 if nav else 12)
     put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
     put(lay, linked(i18n.organ(key, "desc"), on_link, seen), bottom=8)
     section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen)
@@ -454,9 +565,11 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None):
         spacer(lay, 10)
 
 
-def fill_start(card, title, hint, tours_title, tours):
-    """карточка режима «Изучать», пока орган не выбран: подсказка и кнопки экскурсий.
-    tours - [(текст кнопки, функция)]"""
+def fill_start(card, title, hint, tours_title, tours, review=None, organ=None):
+    """карточка режима «Изучать», пока орган не выбран: подсказка, кнопки экскурсий, повторение и орган дня.
+    tours - [(текст кнопки, функция)];
+    review - (заголовок, [(текст, роль цвета)], кнопка (текст, функция) или None): сколько пора повторить, серия дней;
+    organ - (заголовок, ключ органа, факт, кнопка (текст, функция)): орган дня"""
     lay = card.lay
     clear(lay)
     put(lay, label(title, size=15, bold=True), top=14, bottom=4)
@@ -465,6 +578,22 @@ def fill_start(card, title, hint, tours_title, tours):
         heading(lay, tours_title)
         for text, command in tours:
             put(lay, flat_button(text, command, anchor="w", pady=4), top=3)
+    if review:
+        head, lines, button = review
+        heading(lay, head, top=12)
+        for text, fg in lines:
+            put(lay, label(text, fg, 10, bold=fg != "muted"), top=2)
+        if button:
+            put(lay, flat_button(button[0], button[1], bg="accent", pady=4), top=6, align="left")
+    if organ:
+        head, key, fact, button = organ
+        c = ORGANS[key]["color"]
+        day = rounded_card(fill="day_bg", border=c, radius=10)
+        put(day.lay, label("★  " + head, "day_title", 10, bold=True), top=8, bottom=2, x=10)
+        put(day.lay, label(i18n.name(key), size=12, bold=True), x=10)
+        put(day.lay, label(fact, size=10), top=2, bottom=6, x=10)
+        put(day.lay, flat_button(button[0], button[1], pady=3, size=9), bottom=10, x=10, align="left")
+        put(lay, day, top=14)
     spacer(lay, 14)
 
 
@@ -496,23 +625,30 @@ def fill_tour(card, progress, title, subtitle, text, c, buttons, extra=(), hint=
     spacer(lay, 14)
 
 
-def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None):
+def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None, give_up=None):
     """карточка вопроса викторины.
-    progress - строка «Вопрос N из M · Ошибок: K»; feedback - (текст, роль цвета) после ответа или None;
-    options - [(ключ, название)] для кнопок-вариантов, on_pick(ключ) по нажатию.
-    Возвращает (метка прогресса, {ключ: кнопка})."""
+    progress - (строка «Вопрос N из M · Ошибок: K», доля пройденных вопросов, доля оставшегося времени или None);
+    feedback - (текст, роль цвета) после ответа или None;
+    options - [(ключ, название)] для кнопок-вариантов, on_pick(ключ) по нажатию; на кнопке - значок
+    клавиши-цифры, которая её нажимает; give_up - (текст, функция) кнопки «Сдаться» под вариантами.
+    Возвращает (шапку QuizProgress, {ключ: кнопка})."""
     lay = card.lay
     clear(lay)
     bar(lay, "accent")
-    prog = put(lay, label(progress, "muted", 10, bold=True), top=12)
-    put(lay, label(title, size=15, bold=True), top=4, bottom=4)
+    prog = put(lay, QuizProgress(*progress), top=12)
+    put(lay, label(title, size=15, bold=True), top=8, bottom=4)
     put(lay, label(hint, "muted"), bottom=10)
     if feedback:
         put(lay, label(feedback[0], feedback[1], bold=True), bottom=10)
     buttons = {}
     for i, (key, name) in enumerate(options):
-        b = put(lay, flat_button("%d.  %s" % (i + 1, name), lambda k=key: on_pick(k), anchor="w"), bottom=8)
+        b = put(lay, flat_button(name, lambda k=key: on_pick(k), anchor="w", padx=10), bottom=8)
+        b.set_key_hint(str(i + 1))
         buttons[key] = b
+    if give_up:
+        b = flat_button(give_up[0], give_up[1], bg="bg", size=9, padx=10, pady=3)
+        b.fg = "muted"
+        put(lay, b, top=4 if options else 0, bottom=8, align="left")
     spacer(lay, 6)
     return prog, buttons
 
@@ -643,6 +779,7 @@ ORGANS_LIST = "_organs_list"      # прокручиваемый список о
 SEARCH = "_search"                # строка поиска органа (SearchBox)
 GROUPS = "_groups"                # [(подзаголовок системы, [органы группы])] - для фильтра поиска
 NOTHING = "_nothing"              # надпись «ничего не найдено»
+SKIN = "_skin"                    # ползунок прозрачности кожи (Slider)
 
 
 class SearchBox(QLineEdit):
@@ -739,10 +876,66 @@ def show_all_button(buttons, visible):
     buttons[SHOW_ALL].setVisible(visible)
 
 
-def header(lay, title, button, top):
-    """заголовок раздела панели с маленькой кнопкой справа; button - (текст, функция)"""
+class ClickLabel(QLabel):
+    """надпись, которая нажимается как кнопка: под курсором светлеет, щелчок вызывает command()"""
+
+    def __init__(self, text, command, fg="muted", size=9, bold=False, tip=None):
+        super().__init__(text)
+        self.command, self.fg = command, fg
+        self.setFont(font(size, bold))
+        self.setCursor(Qt.PointingHandCursor)
+        if tip:
+            self.setToolTip(tip)
+        set_fg(self, fg)
+
+    def enterEvent(self, e):
+        set_fg(self, "text")
+        self._fg = self.fg                       # при смене темы - обычный цвет
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        set_fg(self, self.fg)
+        super().leaveEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.LeftButton and self.rect().contains(e.position().toPoint()):
+            QTimer.singleShot(0, self.command)  # панель может пересобраться: надпись ещё обрабатывает мышь
+
+
+class Slider(QSlider):
+    """горизонтальный ползунок в цветах темы"""
+
+    def __init__(self, value, lo, hi, step, on_change, tip=None):
+        super().__init__(Qt.Horizontal)
+        self.setRange(lo, hi)
+        self.setSingleStep(step)
+        self.setPageStep(step * 4)
+        self.setValue(value)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFocusPolicy(Qt.NoFocus)
+        if tip:
+            self.setToolTip(tip)
+        self.valueChanged.connect(on_change)
+        self.retheme()
+
+    def retheme(self):
+        h = px(14)
+        self.setStyleSheet(
+            "QSlider {background: transparent; height: %dpx}"
+            " QSlider::groove:horizontal {height: %dpx; background: %s; border-radius: %dpx}"
+            " QSlider::sub-page:horizontal {background: %s; border-radius: %dpx}"
+            " QSlider::handle:horizontal {background: %s; width: %dpx; margin: -%dpx 0; border-radius: %dpx}"
+            % (h + 2, px(4), C["border"], px(2), C["accent"], px(2), C["text"], h, (h - px(4)) // 2, h // 2))
+
+
+def header(lay, title, button, top, on_title=None, tip=None):
+    """заголовок раздела панели с маленькой кнопкой справа; button - (текст, функция);
+    on_title - щелчок по самому заголовку (свернуть раздел)"""
     row = hbox()
-    row.addWidget(label(title.upper(), "muted", 9, bold=True, wrap=False))
+    if on_title:
+        row.addWidget(ClickLabel(title.upper(), on_title, size=9, bold=True, tip=tip))
+    else:
+        row.addWidget(label(title.upper(), "muted", 9, bold=True, wrap=False))
     row.addStretch(1)
     b = flat_button(button[0], button[1], size=8, padx=6, pady=0)
     row.addWidget(b)
@@ -750,27 +943,43 @@ def header(lay, title, button, top):
     return b
 
 
-def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all, search=None):
+def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all, search=None,
+                fold=None, skin=None, on_system=None, system_tip=None):
     """панель слоёв слева от схемы (только в режиме «Изучать»).
-    layers - [(ключ, текст, виден)] слоёв тела; groups - [(название системы, [(ключ, название, цвет, виден)])]:
-    органы по системам, у каждой группы - свой маленький подзаголовок;
+    layers - [(ключ, текст, виден)] слоёв тела; groups - [(система, название системы, [(ключ, название, цвет, виден)])]:
+    органы по системам, у каждой группы - свой маленький подзаголовок; щелчок по нему - on_system(система);
     show_all - (текст, функция, видна ли) кнопки «Показать всё» (видна, когда что-то скрыто);
     organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов;
-    search - (подсказка, текст, on_change, on_enter, «ничего не найдено») строки поиска над списком органов.
+    search - (подсказка, текст, on_change, on_enter, «ничего не найдено») строки поиска над списком органов;
+    fold - (раскрыт ли раздел слоёв, функция): щелчок по заголовку «Слои» сворачивает и разворачивает его;
+    skin - (прозрачность кожи 0..100, on_change, подсказка): ползунок под строкой кожи.
     Кнопки - в строках заголовков, а список органов листается: низ панели может не поместиться в окно.
     Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL,
-    ScrollArea списка органов под ORGANS_LIST, строку поиска под SEARCH и всё нужное для filter_organs."""
+    ScrollArea списка органов под ORGANS_LIST, строку поиска под SEARCH, ползунок кожи под SKIN
+    и всё нужное для filter_organs."""
     lay = card.lay
     clear(lay)
     bar(lay, "accent")
     box = vbox()
     put(lay, box, bottom=10, x=12)
-    buttons = {SHOW_ALL: header(box, title, show_all, 8)}
+    is_open = fold is None or fold[0]
+    title = ("▾  " if is_open else "▸  ") + title if fold else title
+    buttons = {SHOW_ALL: header(box, title, show_all, 8, on_title=fold and fold[1])}
     show_all_button(buttons, show_all[2])
     for key, text, on in layers:
         buttons[key] = Toggle(text, on, lambda k=key: on_layer(k))
         box.addWidget(buttons[key])
         box.addSpacing(px(1))
+        if not is_open:                            # прятать - уже в раскладке: без родителя виджет стал бы окном
+            buttons[key].hide()
+        if key == "skin" and skin:
+            buttons[SKIN] = Slider(skin[0], 0, 100, 5, skin[1], skin[2])
+            row = hbox()
+            row.setContentsMargins(px(4 + 8 + 16 + 7), 0, px(6), px(2))
+            row.addWidget(buttons[SKIN])
+            box.addLayout(row)
+            if not (is_open and on):
+                buttons[SKIN].hide()
     buttons[ORGANS_ALL] = header(box, organs_title, organs_all, 8)
     if search:
         buttons[SEARCH] = SearchBox(*search[:4])
@@ -779,8 +988,11 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     area = buttons[ORGANS_LIST] = ScrollArea()
     box.addWidget(area, 1)
     buttons[GROUPS] = []
-    for i, (system, organs) in enumerate(groups):
-        head = label(system, "muted", 8, wrap=False)
+    for i, (system, name, organs) in enumerate(groups):
+        if on_system:
+            head = ClickLabel(name, lambda s=system: on_system(s), size=8, tip=system_tip)
+        else:
+            head = label(name, "muted", 8, wrap=False)
         if i:
             area.lay.addSpacing(px(5))
         area.lay.addWidget(head)

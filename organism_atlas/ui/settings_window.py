@@ -32,10 +32,7 @@ class SettingsWindow:
 
     def rows(self):
         app = self.app
-        if app.pending_scale != app.ui_scale:
-            scale_hint = t("settings_scale_pending", percent=round(app.pending_scale * 100)), "accent_fg"
-        else:
-            scale_hint = t("settings_scale_hint"), "muted"
+        scale_hint = t("settings_scale_hint"), "muted"
         renderer = gpu.info()
         quality_hint = t("settings_quality_hint") + "\n" + (t("settings_gpu", name=renderer) if renderer
                                                             else t("settings_no_gpu"))
@@ -45,7 +42,7 @@ class SettingsWindow:
             (t("settings_quality"), [(t("quality_" + q), q) for q in settings.CHOICES["quality"]],
              app.quality, app.set_quality, (quality_hint, "muted")),
             (t("settings_scale"), [("%d%%" % round(v * 100), v) for v in settings.CHOICES["ui_scale"]],
-             app.pending_scale, app.set_ui_scale, scale_hint),
+             app.ui_scale, app.set_ui_scale, scale_hint),
             (t("settings_body"), [(t("body_" + v), v) for v in settings.CHOICES["body"]],
              app.body, app.set_body, (t("settings_body_hint"), "muted")),
             (t("settings_animation"), [(t("animation_" + v), v) for v in settings.CHOICES["animation"]],

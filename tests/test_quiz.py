@@ -123,6 +123,18 @@ class LevelAndTimerTests(unittest.TestCase):
         s.time_up()
         self.assertEqual((s.errors, s.timeouts, len(s.missed)), (1, 1, 1))
 
+    def test_give_up(self):
+        """«Сдаться»: одна ошибка (даже после промаха), не «время вышло», остальных вопросов нет"""
+        s = QuizSession(list(NAMES), rng=random.Random(0), count=4)
+        s.answer(s.current)
+        asked = s.current
+        s.answer(next(k for k in NAMES if k != asked))
+        self.assertEqual(s.give_up(), asked)
+        self.assertTrue(s.finished and s.gave_up)
+        self.assertEqual((s.total, s.planned, s.errors, s.timeouts, s.missed, s.results[asked]),
+                         (2, 4, 1, 0, [asked], False))
+        self.assertIsNone(s.give_up())
+
     def test_no_timer(self):
         s = session()
         s.start_timer()

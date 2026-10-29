@@ -28,6 +28,8 @@ def fill_results(card, session, on_again, on_retry=None, on_setup=None, due=0, s
     line(session.verdict, size=12, bold=True, top=12, bottom=4)
     line(t("results_errors", errors=session.errors))
     line(t("results_time", time=format_time(session.elapsed), level=t("level_" + session.level)), "muted")
+    if session.gave_up:
+        line(t("results_gave_up", n=session.total, total=session.planned), "muted")
     if session.timeouts:
         line(t("results_timeouts", n=session.timeouts), "muted")
     if session.missed:
