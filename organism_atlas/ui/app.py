@@ -24,13 +24,13 @@ from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, gam
 from . import overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
-from .results import show_results_dialog
+from .results import fill_results
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .widgets import (ORGANS_ALL, SEARCH, alive, by_color, color, fill_card, fill_layers, fill_question, fill_setup,
                       fill_start, fill_tour, filter_organs, flat_button, font, hbox, label, mark, qimage, retheme,
-                      rounded_card, set_button_bg, show_all_button, Toggle, vbox)
+                      rounded_card, set_button_bg, show_all_button, vbox)
 
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
@@ -143,7 +143,7 @@ class App(QWidget):
     def __init__(self, ui_scale=1.0, quality="medium"):
         """ui_scale - множитель масштаба из настроек (действует с запуска), quality - качество 3D"""
         super().__init__()
-        self.host = self                       # панели (настройки, итоги, 3D) открываются поверх этого окна
+        self.host = self                       # панели (настройки, болезни, 3D) открываются поверх этого окна
         self.ui_scale = self.pending_scale = ui_scale     # pending - выбрано в настройках до перезапуска
         set_scale(ui_scale)
         self.quality = quality
@@ -204,12 +204,10 @@ class App(QWidget):
             top.addSpacing(px(4) if i else 0)
             top.addWidget(b, 0, Qt.AlignTop)
             self.lang_buttons[code] = b
-        # латинские названия органов - флажком поверх языка, а не отдельным языком
-        self.latin_toggle = Toggle("", i18n.latin(), lambda: self.set_latin(not i18n.latin()))
-        self.latin_toggle.setFont(font(10))
-        self.latin_toggle.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)     # подпись не обрезается
-        top.addSpacing(px(8))
-        top.addWidget(self.latin_toggle, 0, Qt.AlignVCenter)
+        # латинские названия органов - кнопкой-переключателем поверх языка, а не отдельным языком
+        self.latin_button = flat_button("", lambda: self.set_latin(not i18n.latin()), padx=8)
+        top.addSpacing(px(4))
+        top.addWidget(self.latin_button, 0, Qt.AlignTop)
         self.diseases_button = flat_button("", lambda: show_diseases(self))     # справочник - в режиме «Изучать»
         top.addSpacing(px(12))
         top.addWidget(self.diseases_button, 0, Qt.AlignTop)
@@ -223,6 +221,7 @@ class App(QWidget):
         root.addLayout(top)
         # статус - отдельной строкой: длинный текст не должен теснить кнопки режимов
         self.status = label("", size=11, bold=True)
+        self.status.setMinimumHeight(self.status.fontMetrics().lineSpacing())   # пустая не сдвигает схему
         root.addSpacing(px(8))
         root.addWidget(self.status)
 
@@ -313,7 +312,7 @@ class App(QWidget):
         self.retranslate()
 
     def set_latin(self, on):
-        """флажок «Латынь»: названия органов по-латыни, остальной текст - на выбранном языке"""
+        """кнопка «Латынь»: названия органов по-латыни, остальной текст - на выбранном языке"""
         i18n.set_latin(on)
         settings.save(lang=i18n.current(), previous_lang=i18n.previous())
         self.retranslate()
@@ -461,7 +460,7 @@ class App(QWidget):
     def animate(self):
         """раз в ANIM_MS: кусок схемы с сердцем и лёгкими в текущий момент поверх неподвижной схемы.
         Не рисуем, пока анимация выключена, схема перерисовывается под новый размер, поверх открыта
-        панель (настройки, итоги, 3D) или окно свёрнуто - тогда проверяем реже"""
+        панель (настройки, болезни, 3D) или окно свёрнуто - тогда проверяем реже"""
         live = (self.animation == "on" and self.ready() and overlay.top(self) is None and not self.isMinimized())
         frame = self.atlas.anim_frame(time.monotonic()) if live else None
         if frame is None:
@@ -686,8 +685,9 @@ class App(QWidget):
             set_button_bg(b, "accent" if mode == self.mode else "card")
         for code, b in self.lang_buttons.items():
             set_button_bg(b, "accent" if code == i18n.base() else "card")
-        self.latin_toggle.set(t("latin_toggle"), i18n.latin())
-        self.latin_toggle.setToolTip(t("latin_hint"))
+        self.latin_button.setText(t("latin_toggle"))
+        self.latin_button.setToolTip(t("latin_hint"))
+        set_button_bg(self.latin_button, "accent" if i18n.latin() else "card")
         self.diseases_button.setEnabled(self.mode == "study")     # в викторине справочник подсказал бы ответ
 
     def set_mode(self, mode):
@@ -809,7 +809,7 @@ class App(QWidget):
         feedback - (ключ текста, орган, цвет[, номер вопроса со своими вариантами]): отзыв о прошлом ответе"""
         s = self.session
         if s.finished:
-            self.set_status(lambda: t("quiz_done", errors=s.errors, mode=t("mode_" + self.mode)))
+            self.set_status(lambda: "")                # итоги - в карточке справа, строка статуса не нужна
             return
         if s.deadline is None:                          # новый вопрос на экране - запускаем его время
             s.start_timer()
@@ -942,7 +942,7 @@ class App(QWidget):
         self.ask()
 
     def finish(self, last):
-        """игра закончена: сохранить результат, показать карточку последнего органа и итоги"""
+        """игра закончена: сохранить результат, показать карточку последнего органа, а следом - итоги"""
         s = self.session
         self.choices = {}
         self.view.show_layer("target", None)
@@ -969,7 +969,7 @@ class App(QWidget):
 
     def on_key(self, keysym, char):
         """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру, стрелки листают экскурсию
-        (но не тогда, когда поверх открыта панель: настройки, итоги или 3D, и не при наборе в поиске)"""
+        (но не тогда, когда поверх открыта панель: настройки, болезни или 3D, и не при наборе в поиске)"""
         if overlay.top(self) is not None or isinstance(QApplication.focusWidget(), QLineEdit):
             return
         if self.mode == "study":
@@ -1064,9 +1064,12 @@ class App(QWidget):
             if self.mode == mode:
                 self.start_quiz(qset)
 
-        return show_results_dialog(self, s, on_again=again, on_retry=lambda: again("missed"),
-                                   due=len(progress.due(mode, self.organs())), streak=self.streak,
-                                   new=self.new_achievements, on_achievements=lambda: show_achievements(self))
+        due = len(progress.due(mode, self.organs()))
+        new, streak = self.new_achievements, self.streak
+        # итоги - в карточке справа, на месте карточки последнего органа
+        self.set_card(lambda: fill_results(self.card, s, on_again=again, on_retry=lambda: again("missed"),
+                                           on_setup=lambda: self.set_mode(mode), due=due, streak=streak, new=new,
+                                           on_achievements=lambda: show_achievements(self)))
 
     def paintEvent(self, _e):
         QPainter(self).fillRect(self.rect(), color("bg"))

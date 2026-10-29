@@ -112,19 +112,20 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.spot, "brain")
 
     def test_latin_toggle(self):
-        """флажок «Латынь»: названия органов по-латыни, язык кнопок не меняется и запоминается"""
+        """кнопка «Латынь»: названия органов по-латыни, язык кнопок не меняется и запоминается"""
         from organism_atlas import settings
         self.app.set_lang("en")
-        self.app.latin_toggle.command()
+        self.app.latin_button.invoke()
         self.assertTrue(i18n.latin())
         self.assertEqual(i18n.base(), "en")
-        self.assertTrue(self.app.latin_toggle.on)
+        self.assertEqual(self.app.latin_button.role, "accent")              # нажатая - как выбранный язык
         self.assertEqual(self.app.toggles["heart"].text, "Cor")
         self.assertEqual(set(self.app.lang_buttons), set(i18n.languages()))
         saved = settings.load()
         self.assertEqual((saved["lang"], saved["previous_lang"]), ("la", "en"))
-        self.app.latin_toggle.command()
+        self.app.latin_button.invoke()
         self.assertFalse(i18n.latin())
+        self.assertEqual(self.app.latin_button.role, "card")
         self.assertEqual(self.app.toggles["heart"].text, "Heart")
 
     def test_diseases_only_in_study(self):
@@ -268,32 +269,30 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.card.findChildren(QWidget), before)
 
     def test_panels_inside_window(self):
-        """настройки, итоги и 3D - панели внутри главного окна, а не отдельные окна; Esc закрывает верхнюю"""
-        from types import SimpleNamespace
-
+        """настройки, 3D и справочник болезней - панели внутри главного окна, а не отдельные окна;
+        Esc закрывает верхнюю"""
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
 
         from organism_atlas.ui import overlay, settings_window, viewer3d
-        from organism_atlas.ui.results import show_results_dialog
+        from organism_atlas.ui.diseases import show_diseases
         settings_window.show_settings(self.app)
         viewer3d.show_3d(self.app, "heart")
-        s = SimpleNamespace(total=10, percent=80, first_try=8, verdict="", errors=2, elapsed=95, level="medium",
-                            timeouts=0, missed=["heart"])
-        results = show_results_dialog(self.app, s, on_again=lambda: None, on_retry=lambda: None)
+        guide = show_diseases(self.app)
         pump()
         self.assertEqual([w for w in self.qt.topLevelWidgets() if w.isVisible()], [self.app])
-        for panel in (settings_window._window.win, viewer3d._viewer.win, results):
+        for panel in (settings_window._window.win, viewer3d._viewer.win, guide):
             self.assertIsInstance(panel, overlay.Panel)
             self.assertIs(panel.parent(), self.app)
             self.assertTrue(panel.isVisible())
             self.assertTrue(self.app.rect().contains(panel.geometry().center()))
         self.app.set_mode("name")                                          # цифры не уходят викторине за панелью
+        self.assertNotIn(guide, overlay.stack(self.app))                   # справочник в викторине закрывается
         self.app.start_quiz()
         self.app.on_key("", "1")
         self.assertEqual(self.app.session.errors + self.app.session.i, 0)
         self.assertFalse(self.app.next_timer.isActive())
-        for left in (2, 1, 0):
+        for left in (1, 0):
             QTest.keyClick(self.app, Qt.Key_Escape)
             pump()
             self.assertEqual(len(overlay.stack(self.app)), left)
@@ -410,7 +409,9 @@ class AppTests(unittest.TestCase):
         return [b.text() for b in self.buttons(self.app.card)]
 
     def test_achievements_after_game(self):
-        from organism_atlas.ui import achievements as panel
+        from PySide6.QtWidgets import QLabel
+
+        from organism_atlas.ui import achievements as panel, overlay
         self.app.set_mode("find")
         self.app.set_cfg("length", 5)
         self.app.start_quiz()
@@ -418,11 +419,18 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.new_achievements, ["first", "perfect"])
         self.assertEqual(self.app.streak, 1)
         self.assertEqual(self.app.ach_button.text(), i18n.t("ach_button", got=2, total=12))
-        results = self.app.show_results()
-        self.assertTrue(results.isVisible())
-        texts = [b.text() for b in self.buttons(results)]
+        self.app.show_results()                             # итоги - в карточке справа, а не панелью поверх
+        self.assertIsNone(overlay.top(self.app))
+        texts = self.button_texts()
+        self.assertEqual(texts[0], i18n.t("results_again"))
         self.assertIn(i18n.t("results_achievements"), texts)
-        results.close_panel()
+        self.assertTrue(any(w.text() == i18n.t("results_score", right=5, total=5)
+                            for w in self.app.card.findChildren(QLabel)))
+        self.app.set_lang("en")                                 # итоги перерисовались на другом языке
+        self.assertEqual(self.button_texts()[0], "Play again")
+        self.app.set_lang("ru")
+        self.buttons(self.app.card)[-1].invoke()                # «Изменить настройки игры»
+        self.assertIn(i18n.t("setup_start"), self.button_texts())
         p = panel.show_achievements(self.app)
         self.assertIs(panel.show_achievements(self.app), p)            # вторая не открывается
         pump()

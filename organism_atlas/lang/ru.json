@@ -29,7 +29,6 @@
     "card_fact_of_day": "Интересный факт дня",
     "card_3d": "Рассмотреть в 3D",
     "quiz_status": "Викторина «{mode}»",
-    "quiz_done": "Готово! Ошибок: {errors}. Нажми «{mode}», чтобы сыграть ещё.",
     "progress": "Вопрос {n} из {total}  ·  Ошибок: {errors}",
     "find_title": "Найди: {name}",
     "find_hint": "Нажми на этот орган на схеме.",
@@ -41,14 +40,12 @@
     "verdict_good": "Хороший результат!",
     "verdict_ok": "Неплохо, но есть что повторить.",
     "verdict_bad": "Стоит повторить материал.",
-    "results_title": "Результаты викторины",
     "results_heading": "Викторина завершена",
     "results_score": "{right} из {total}",
     "results_first_try": "с первой попытки ({percent}%)",
     "results_errors": "Всего ошибок: {errors}",
     "results_missed": "Повтори: {names}",
     "results_again": "Сыграть ещё",
-    "results_close": "Закрыть",
     "viewer_title": "{name} — 3D",
     "viewer_hint": "Тяни мышью, чтобы вращать. Колесо мыши меняет масштаб, двойной щелчок сбрасывает вид.",
     "viewer_error": "Не удалось нарисовать модель: {error}",
@@ -211,7 +208,8 @@
     "latin_toggle": "Латынь",
     "settings_latin": "Латинские названия",
     "latin_on": "Включены",
-    "latin_off": "Выключены"
+    "latin_off": "Выключены",
+    "results_setup": "Изменить настройки игры"
   },
   "organs": {
     "lungs": {

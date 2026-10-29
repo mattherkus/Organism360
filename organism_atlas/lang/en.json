@@ -29,7 +29,6 @@
     "card_fact_of_day": "Fact of the day",
     "card_3d": "View in 3D",
     "quiz_status": "Quiz: {mode}",
-    "quiz_done": "Done! Mistakes: {errors}. Press “{mode}” to play again.",
     "progress": "Question {n} of {total}  ·  Mistakes: {errors}",
     "find_title": "Find: {name}",
     "find_hint": "Click this organ on the diagram.",
@@ -41,14 +40,12 @@
     "verdict_good": "Good result!",
     "verdict_ok": "Not bad, but some things are worth revisiting.",
     "verdict_bad": "Worth going over the material again.",
-    "results_title": "Quiz results",
     "results_heading": "Quiz complete",
     "results_score": "{right} of {total}",
     "results_first_try": "on the first try ({percent}%)",
     "results_errors": "Total mistakes: {errors}",
     "results_missed": "Review: {names}",
     "results_again": "Play again",
-    "results_close": "Close",
     "viewer_title": "{name} — 3D",
     "viewer_hint": "Drag to rotate. Scroll to zoom, double-click to reset the view.",
     "viewer_error": "Could not render the model: {error}",
@@ -211,7 +208,8 @@
     "latin_toggle": "Latin",
     "settings_latin": "Latin names",
     "latin_on": "On",
-    "latin_off": "Off"
+    "latin_off": "Off",
+    "results_setup": "Change game settings"
   },
   "organs": {
     "lungs": {
