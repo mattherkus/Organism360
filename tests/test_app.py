@@ -111,6 +111,22 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(top(self.app))
         self.assertEqual(self.app.spot, "brain")
 
+    def test_latin_toggle(self):
+        """флажок «Латынь»: названия органов по-латыни, язык кнопок не меняется и запоминается"""
+        from organism_atlas import settings
+        self.app.set_lang("en")
+        self.app.latin_toggle.command()
+        self.assertTrue(i18n.latin())
+        self.assertEqual(i18n.base(), "en")
+        self.assertTrue(self.app.latin_toggle.on)
+        self.assertEqual(self.app.toggles["heart"].text, "Cor")
+        self.assertEqual(set(self.app.lang_buttons), set(i18n.languages()))
+        saved = settings.load()
+        self.assertEqual((saved["lang"], saved["previous_lang"]), ("la", "en"))
+        self.app.latin_toggle.command()
+        self.assertFalse(i18n.latin())
+        self.assertEqual(self.app.toggles["heart"].text, "Heart")
+
     def test_diseases_only_in_study(self):
         from organism_atlas.ui.overlay import top
         self.app.diseases_button.invoke()

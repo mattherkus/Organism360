@@ -81,6 +81,21 @@ class SwitchTests(unittest.TestCase):
         i18n.set_lang("la")
         self.assertEqual(i18n.t("card_facts"), "Факты")
 
+    def test_latin_is_a_toggle_over_language(self):
+        """латынь включается и выключается флажком, не меняя язык остального текста"""
+        self.assertEqual(i18n.languages()[:2], ["ru", "en"])
+        self.assertNotIn("la", i18n.languages())
+        i18n.set_base("en")
+        i18n.set_latin(True)
+        self.assertTrue(i18n.latin())
+        self.assertEqual((i18n.name("heart"), i18n.t("card_facts"), i18n.base()), ("Cor", "Facts", "en"))
+        i18n.set_base("ru")                         # язык сменили - латынь осталась
+        self.assertEqual((i18n.name("heart"), i18n.t("card_facts"), i18n.base()), ("Cor", "Факты", "ru"))
+        i18n.set_latin(False)
+        self.assertEqual((i18n.name("heart"), i18n.base(), i18n.latin()), ("Сердце", "ru", False))
+        i18n.set_latin(False)                       # повторное выключение ничего не ломает
+        self.assertEqual(i18n.current(), "ru")
+
     def test_missing_key_is_visible(self):
         self.assertEqual(i18n.t("no_such_key"), "no_such_key")
 

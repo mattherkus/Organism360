@@ -133,7 +133,7 @@
     "system_reproductive": "Reproductive",
     "system_immune": "Immune",
     "disease_hint": "Which organ does this disease affect? Pick an option or press 1–{n}.",
-    "latin_hint": "This is the organ's Latin name. Which organ is it? Pick an option or press 1–{n}.",
+    "latin_hint": "Organ names in Latin; the rest of the text stays in the chosen language.",
     "truth_hint": "Is this true about the {name}? Click a button or press 1–2.",
     "truth_yes": "True",
     "truth_no": "False",
@@ -207,7 +207,11 @@
     "disease_causes": "Causes and risks",
     "disease_treatment": "Treatment and prevention",
     "disease_related": "Other diseases of these organs",
-    "disease_note": "General information, not a treatment guide: if you have symptoms, see a doctor."
+    "disease_note": "General information, not a treatment guide: if you have symptoms, see a doctor.",
+    "latin_toggle": "Latin",
+    "settings_latin": "Latin names",
+    "latin_on": "On",
+    "latin_off": "Off"
   },
   "organs": {
     "lungs": {

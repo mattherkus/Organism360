@@ -50,8 +50,10 @@ class SettingsWindow:
              app.body, app.set_body, (t("settings_body_hint"), "muted")),
             (t("settings_animation"), [(t("animation_" + v), v) for v in settings.CHOICES["animation"]],
              app.animation, app.set_animation, (t("settings_animation_hint"), "muted")),
-            (t("settings_language"), [(i18n.language_name(c), c) for c in i18n.available()],
-             i18n.current(), app.set_lang, None),
+            (t("settings_language"), [(i18n.language_name(c), c) for c in i18n.languages()],
+             i18n.base(), app.set_lang, None),
+            (t("settings_latin"), [(t("latin_on"), True), (t("latin_off"), False)],
+             i18n.latin(), app.set_latin, (t("latin_hint"), "muted")),
         ]
 
     def refresh(self):

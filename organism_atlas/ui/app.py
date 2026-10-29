@@ -30,7 +30,7 @@ from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .widgets import (ORGANS_ALL, SEARCH, alive, by_color, color, fill_card, fill_layers, fill_question, fill_setup,
                       fill_start, fill_tour, filter_organs, flat_button, font, hbox, label, mark, qimage, retheme,
-                      rounded_card, set_button_bg, show_all_button, vbox)
+                      rounded_card, set_button_bg, show_all_button, Toggle, vbox)
 
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
@@ -199,11 +199,17 @@ class App(QWidget):
             top.addWidget(b, 0, Qt.AlignTop)
         top.addSpacing(px(20))
         self.lang_buttons = {}                             # переключатель языка, справа от режимов
-        for i, code in enumerate(i18n.available()):
+        for i, code in enumerate(i18n.languages()):
             b = flat_button(i18n.short_name(code), lambda c=code: self.set_lang(c), padx=8)
             top.addSpacing(px(4) if i else 0)
             top.addWidget(b, 0, Qt.AlignTop)
             self.lang_buttons[code] = b
+        # латинские названия органов - флажком поверх языка, а не отдельным языком
+        self.latin_toggle = Toggle("", i18n.latin(), lambda: self.set_latin(not i18n.latin()))
+        self.latin_toggle.setFont(font(10))
+        self.latin_toggle.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)     # подпись не обрезается
+        top.addSpacing(px(8))
+        top.addWidget(self.latin_toggle, 0, Qt.AlignVCenter)
         self.diseases_button = flat_button("", lambda: show_diseases(self))     # справочник - в режиме «Изучать»
         top.addSpacing(px(12))
         top.addWidget(self.diseases_button, 0, Qt.AlignTop)
@@ -301,7 +307,14 @@ class App(QWidget):
 
     # --- язык и настройки
     def set_lang(self, code):
-        i18n.set_lang(code)
+        """язык текста (кнопки RU, EN); латинские названия остаются включёнными или выключенными"""
+        i18n.set_base(code)
+        settings.save(lang=i18n.current(), previous_lang=i18n.previous())
+        self.retranslate()
+
+    def set_latin(self, on):
+        """флажок «Латынь»: названия органов по-латыни, остальной текст - на выбранном языке"""
+        i18n.set_latin(on)
         settings.save(lang=i18n.current(), previous_lang=i18n.previous())
         self.retranslate()
 
@@ -672,7 +685,9 @@ class App(QWidget):
         for mode, b in self.mode_buttons.items():
             set_button_bg(b, "accent" if mode == self.mode else "card")
         for code, b in self.lang_buttons.items():
-            set_button_bg(b, "accent" if code == i18n.current() else "card")
+            set_button_bg(b, "accent" if code == i18n.base() else "card")
+        self.latin_toggle.set(t("latin_toggle"), i18n.latin())
+        self.latin_toggle.setToolTip(t("latin_hint"))
         self.diseases_button.setEnabled(self.mode == "study")     # в викторине справочник подсказал бы ответ
 
     def set_mode(self, mode):

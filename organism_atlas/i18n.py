@@ -3,6 +3,7 @@
 Тексты лежат в lang/<код>.json, по файлу на язык; новый файл сразу появляется в переключателе.
 Файл может быть неполным (как la.json, где только латинские названия органов): чего нет в нём,
 берётся из языка, выбранного перед ним, а затем из русского (ru.json должен быть полным).
+Латынь - не язык в переключателе, а флажок поверх него: set_latin() / set_base() вместо set_lang().
 """
 
 import datetime
@@ -13,6 +14,7 @@ from pathlib import Path
 LANG_DIR = Path(__file__).with_name("lang")
 BASE = "ru"                         # полный язык, на который всё откатывается в конце
 PREFERRED = ("ru", "en", "la")      # порядок кнопок; остальные языки идут следом по алфавиту
+LATIN = "la"                        # только названия органов: включается флажком, а не кнопкой языка
 
 _cache = {}
 _current, _previous = BASE, BASE
@@ -68,6 +70,40 @@ def set_lang(code):
         _previous, _current = _current, code
 
 
+def latin():
+    """включены ли латинские названия органов (флажок «Латынь» рядом с языками)"""
+    return _current == LATIN
+
+
+def base():
+    """язык остального текста: выбранный кнопкой языка (при латыни - тот, что под ней)"""
+    return _previous if latin() else _current
+
+
+def languages():
+    """языки для кнопок и настроек: все, кроме латыни - она включается флажком поверх языка"""
+    return [c for c in available() if c != LATIN]
+
+
+def set_base(code):
+    """выбрать язык текста; флажок латыни остаётся как был"""
+    global _current, _previous
+    _load(code)
+    if latin():
+        _previous = code
+    else:
+        _current = _previous = code
+
+
+def set_latin(on):
+    """включить или выключить латинские названия органов поверх выбранного языка"""
+    global _current, _previous
+    if on and not latin() and LATIN in available():
+        _previous, _current = _current, LATIN
+    elif not on and latin():
+        _current = _previous
+
+
 def restore(code, prev=None):
     """вернуть язык прошлого запуска; prev нужен латыни, чтобы остальной текст был на том же языке,
     что и тогда. Языки, файлов которых уже нет, пропускаются."""
@@ -75,7 +111,7 @@ def restore(code, prev=None):
     codes = available()
     if code not in codes:
         return
-    _previous = prev if prev in codes else BASE
+    _previous = prev if prev in codes and prev != LATIN else BASE
     _current = code
 
 
