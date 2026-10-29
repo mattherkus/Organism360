@@ -39,6 +39,7 @@ from .widgets import (ORGANS_ALL, SEARCH, SKIN, alive, by_color, color, fill_car
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
 REVEAL_MS = 1600                # сколько на лёгком уровне видна подсказка «верный орган здесь» после ошибки
+REBUILD_WAIT = 5                # сколько секунд ждать, пока пересобранное окно нарисует схему (смена масштаба)
 CRUMBS = 2                      # сколько прежних карточек показывать «крошками» над карточкой органа
 
 
@@ -503,12 +504,11 @@ class App(QWidget):
 
     def rebuild(self, scale):
         """новое окно в масштабе scale на месте этого: слои, скрытые органы, режим и открытая карточка органа
-        переносятся (начатая игра - нет: она начинается заново с карточки настройки), настройки снова открыты"""
+        переносятся (начатая игра - нет: она начинается заново с карточки настройки), настройки снова открыты.
+        Новое окно сначала невидимо (прозрачность 0) и показывается, только когда схема нарисована, -
+        до тех пор на экране прежнее: без белой вспышки пустого окна"""
         if App.main is not self and App.main is not None:
             return                                      # окно уже пересобрали
-        settings_open = settings_window._window is not None
-        while overlay.close_top(self):
-            pass
         set_scale(scale)
         QApplication.instance().setFont(font(10))
         new = App(ui_scale=scale, quality=self.quality)
@@ -519,16 +519,29 @@ class App(QWidget):
         elif 0 <= self.hpos < len(self.history) and self.card_fn not in (self.empty_card, self.tour_card):
             new.history, new.hpos = self.history[:self.hpos + 1], self.hpos
             new.show_info(self.history[self.hpos], record=False)
-        geo = self.frameGeometry()
-        new.move(geo.topLeft())
+        new.setWindowOpacity(0.0)                       # заголовок красится в showEvent, пока окно невидимо
+        new.move(self.frameGeometry().topLeft())
         if self.isMaximized():
             new.showMaximized()
         else:
             new.show()
-        if settings_open:
-            show_settings(new)
-        self.close()
-        self.deleteLater()
+        start = time.monotonic()
+
+        def swap():
+            if not new.ready() and time.monotonic() - start < REBUILD_WAIT:
+                QTimer.singleShot(30, swap)             # схема ещё рисуется - прежнее окно пока на экране
+                return
+            settings_open = settings_window._window is not None
+            while overlay.close_top(self):
+                pass
+            if settings_open:
+                show_settings(new)
+            new.repaint()                               # нарисовать всё, пока окно невидимо
+            new.setWindowOpacity(1.0)
+            self.close()
+            self.deleteLater()
+
+        QTimer.singleShot(0, swap)
 
     def retranslate(self):
         """переписать все тексты на текущем языке, не сбрасывая режим и вопрос викторины"""

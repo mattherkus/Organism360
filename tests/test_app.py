@@ -717,6 +717,9 @@ class AppTests(unittest.TestCase):
             new = App.main
             self.assertIsNot(new, a)
             self.app = new                                    # закроет tearDown
+            self.assertEqual(new.windowOpacity(), 0.0)        # пока схема рисуется, видно прежнее окно
+            self.assertTrue(wait(lambda: new.windowOpacity() == 1.0))
+            self.assertFalse(a.isVisible())
             self.assertEqual((new.ui_scale, get_scale()), (1.25, 1.25))
             self.assertEqual(new.history, ["heart"])          # открытая карточка осталась
             win = settings_window._window                     # настройки снова открыты - уже в новом окне
