@@ -103,7 +103,8 @@ class RepaintTests(unittest.TestCase):
     def test_retheme(self):
         from tests.qt import app
 
-        from organism_atlas.ui.widgets import RoundCard, fill_card, flat_button, label, retheme
+        from organism_atlas.ui.cards import fill_card
+        from organism_atlas.ui.widgets import RoundCard, flat_button, label, retheme
         app()
         card = RoundCard()
         fill_card(card, "heart")

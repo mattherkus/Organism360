@@ -28,10 +28,14 @@ class AppTests(unittest.TestCase):
         self.addCleanup(env.stop)
         from organism_atlas.ui import app
         self.zoom = Z                                       # масштаб, который «выбирает» окно
-        cached = Atlas.cached.__func__
+        cached, preview = Atlas.cached.__func__, Atlas.preview.__func__
+        self.pre = os.path.join(self.tmp.name, "prebuilt")     # готовые схемы «из сборки»
         for p in (mock.patch.object(app, "pick_zoom", lambda w, h, dpr=1.0: Z),
                   mock.patch.object(app, "fit_zoom", lambda w, h: self.zoom),
-                  mock.patch.object(app.Atlas, "cached", classmethod(lambda cls, z: cached(cls, z, self.tmp.name)))):
+                  mock.patch.object(app.Atlas, "cached", classmethod(lambda cls, z: cached(cls, z, self.tmp.name,
+                                                                                          self.pre))),
+                  mock.patch.object(app.Atlas, "preview", classmethod(lambda cls, z: preview(cls, z, self.tmp.name,
+                                                                                            self.pre)))):
             p.start()
             self.addCleanup(p.stop)
         i18n.load_all()
@@ -322,7 +326,7 @@ class AppTests(unittest.TestCase):
         self.assertFalse(a.toggles["skin"].isHidden())
 
     def test_skin_opacity(self):
-        from organism_atlas.ui.widgets import SKIN
+        from organism_atlas.ui.layers_panel import SKIN
         a = self.app
         a.toggles[SKIN].setValue(100)
         a.apply_skin()
@@ -334,7 +338,7 @@ class AppTests(unittest.TestCase):
         """приближение: точка под курсором остаётся на месте, наведение попадает в тот же орган;
         схема всегда под всем окном, а при сильном приближении интерфейс уезжает и возвращается"""
         from PySide6.QtCore import QPointF
-        from organism_atlas.ui.app import HIDE_FROM, ZOOM_STEPS
+        from organism_atlas.ui.scheme_view import HIDE_FROM, ZOOM_STEPS
         a, v = self.app, self.app.view
         self.assertEqual(v.geometry(), a.rect())
         x, y = int(210 * Z), int(230 * Z)                   # сердце в пикселях схемы
@@ -368,7 +372,7 @@ class AppTests(unittest.TestCase):
 
     def test_help_and_search_keys(self):
         from organism_atlas.ui import help, overlay
-        from organism_atlas.ui.widgets import SEARCH
+        from organism_atlas.ui.layers_panel import SEARCH
         self.app.focus_search()
         self.assertTrue(self.app.toggles[SEARCH].hasFocus() or not self.app.isActiveWindow())
         self.app.show_help()
@@ -384,7 +388,7 @@ class AppTests(unittest.TestCase):
 
     def test_hide_all_organs(self):
         """кнопка в заголовке органов скрывает все органы, повторно - возвращает"""
-        from organism_atlas.ui.widgets import ORGANS_ALL
+        from organism_atlas.ui.layers_panel import ORGANS_ALL
         button = self.app.toggles[ORGANS_ALL]
         self.app.toggle_organ("heart")
         button.click()
@@ -489,7 +493,7 @@ class AppTests(unittest.TestCase):
 
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
-        from organism_atlas.ui.widgets import NOTHING, SEARCH
+        from organism_atlas.ui.layers_panel import NOTHING, SEARCH
         box = self.app.toggles[SEARCH]
         self.app.toggle_organ("heart")
         box.setText("серд")
@@ -522,7 +526,7 @@ class AppTests(unittest.TestCase):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
 
-        from organism_atlas.ui.widgets import SEARCH
+        from organism_atlas.ui.layers_panel import SEARCH
         self.app.start_tour("food")
         box = self.app.toggles[SEARCH]
         self.app.activateWindow()
@@ -675,9 +679,33 @@ class AppTests(unittest.TestCase):
         self.assertIn("muscles", self.app.atlas.visible)
         self.assertIn("skeleton", self.app.atlas.visible)
 
+    def test_first_scheme_from_prebuilt(self):
+        """первая схема - готовая из сборки другого масштаба (растянутая), следом рисуется точная"""
+        from organism_atlas import atlas_cache
+        from organism_atlas.ui import app
+        atlas_cache.save(0.65, self.app.atlas.body, self.app.atlas.org, self.pre)
+        for f in os.listdir(self.tmp.name):                 # точной схемы в кэше пользователя ещё нет
+            if f.startswith("atlas-"):
+                os.remove(os.path.join(self.tmp.name, f))
+        win = app.App()
+        self.addCleanup(win.deleteLater)
+        self.addCleanup(win.close)
+        win.show()
+        self.assertTrue(wait(lambda: win.atlas is not None))
+        self.assertEqual(win.atlas.Z, 0.65)
+        self.assertFalse(win.ready())                       # растянутая: наведение и клики ждут точную
+        self.assertTrue(wait(win.ready))
+        self.assertEqual(win.atlas.Z, Z)
+        self.assertIsNone(win.view.message)
+
     def test_animation(self):
-        """кусок с сердцем и лёгкими поверх схемы; не рисуется, когда выключен или открыта панель"""
+        """кусок с сердцем и лёгкими поверх схемы; не рисуется, когда выключен, открыта панель или окно неактивно"""
         from organism_atlas.ui import settings_window
+        with mock.patch.object(self.app, "isActiveWindow", return_value=False):
+            self.app.animate()
+        self.assertIsNone(self.app.view.layers["anim"])
+        self.app.activateWindow()
+        pump()
         self.app.animate()
         layer = self.app.view.layers["anim"]
         self.assertIsNotNone(layer)
@@ -759,7 +787,7 @@ class ColorGroupTests(unittest.TestCase):
     """органы в панели слоёв идут группами по цвету"""
 
     def test_families(self):
-        from organism_atlas.ui.widgets import color_family
+        from organism_atlas.ui.layers_panel import color_family
         self.assertEqual(color_family("#ea9fb6")[0], 0)          # розовый
         self.assertEqual(color_family("#c8323a")[0], 1)          # красный
         self.assertEqual(color_family("#7b2f55")[0], 2)          # тёмно-красный
@@ -768,7 +796,7 @@ class ColorGroupTests(unittest.TestCase):
         self.assertEqual(color_family("#3060c0")[0], 5)          # синий - прочие
 
     def test_order_keeps_families_together(self):
-        from organism_atlas.ui.widgets import by_color, color_family
+        from organism_atlas.ui.layers_panel import by_color, color_family
         order = by_color(ORGANS)
         self.assertEqual(sorted(order), sorted(ORGANS))
         fams = [color_family(ORGANS[k]["color"])[0] for k in order]

@@ -34,8 +34,10 @@ from ..theme import C
 from .diseases import show_diseases
 from .overlay import Panel
 from .scaling import px
-from .widgets import (Toggle, clear, color, fill_card, flat_button, font, hbox, label, put, qimage, rounded_card,
-                      set_button_bg, set_fg, vbox)
+from .cards import fill_card
+from .layers_panel import Toggle
+from .widgets import (clear, color, flat_button, font, hbox, label, put, qimage, rounded_card, set_button_bg, set_fg,
+                      vbox)
 
 _viewer = None                  # единственная панель просмотра: новый орган открывается в ней же
 

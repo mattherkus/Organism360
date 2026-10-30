@@ -9,7 +9,9 @@
 В сборку входят все данные пакета: тексты lang/*.json, вопросы, 3D-модели с подписями авторов и лицензиями
 (models/mesh/ATTRIBUTION.md, LICENSE-3D-Slicer.txt - условие лицензий моделей), look.json. Ещё - исходники
 рисунка схемы как данные: по ним atlas_cache.version() считает версию кэша, как и при запуске из исходников.
-Настройки, прогресс и кэш схемы собранная программа хранит там же, где обычная (%APPDATA%, %LOCALAPPDATA%).
+Ещё - готовые схемы нескольких масштабов (папка prebuilt, см. PREBUILT_ZOOMS): первый запуск не ждёт, пока
+схема нарисуется. Настройки, прогресс и кэш схемы собранная программа хранит там же, где обычная
+(%APPDATA%, %LOCALAPPDATA%).
 """
 
 import argparse
@@ -23,6 +25,9 @@ sys.path.insert(0, str(ROOT))
 from organism_atlas import atlas_cache  # noqa: E402
 
 NAME = "OrganismAtlas"
+# готовые схемы в сборке (~1-1.5 МБ каждая): 1.0 - ноутбуки 1366-1600 px, 1.5 - экраны 1920x1080 и 1920x1200.
+# Масштаб под окно обычно совпадает с одной из них, а нет - ближайшая показывается растянутой, пока рисуется точная
+PREBUILT_ZOOMS = (1.0, 1.5)
 PKG = ROOT / "organism_atlas"
 
 
@@ -45,6 +50,16 @@ def source_datas():
     return out
 
 
+def make_prebuilt(folder):
+    """готовые схемы PREBUILT_ZOOMS в folder - в том же виде, что кэш пользователя (atlas_cache.save)"""
+    from organism_atlas.atlas import Atlas
+    shutil.rmtree(folder, ignore_errors=True)
+    for Z in PREBUILT_ZOOMS:
+        print("Схема для сборки, масштаб", Z)
+        Atlas.cached(Z, cache_dir=folder)
+    return folder
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--onefile", action="store_true", help="один .exe вместо папки")
@@ -65,6 +80,8 @@ def main():
            "--exclude-module", "tkinter"]
     for src, dest in source_datas():
         cmd += ["--add-data", "%s%s%s" % (src, sep, dest.as_posix())]
+    prebuilt = make_prebuilt(build / "prebuilt")
+    cmd += ["--add-data", "%s%sorganism_atlas/prebuilt" % (prebuilt, sep)]
     if args.onefile:
         cmd.append("--onefile")
     PyInstaller.__main__.run(cmd)

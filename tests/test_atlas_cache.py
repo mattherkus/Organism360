@@ -94,6 +94,35 @@ class AtlasCacheTests(unittest.TestCase):
         self.assertEqual(len(self.files()), 1)
         self.assertFalse(self.files()[0].startswith("atlas-old-"))
 
+    def test_old_version_tmp_leftovers_are_removed(self):
+        """недописанный файл прошлой версии (программу закрыли посреди записи) не копится вечно"""
+        (self.dir / "atlas-old-z0.7000.npz.123.tmp").write_bytes(b"half")
+        Atlas.cached(Z, self.dir)
+        self.assertEqual(len(self.files()), 1)
+        self.assertFalse(self.files()[0].endswith(".tmp"))
+
+    def test_prebuilt_is_read_when_user_cache_is_empty(self):
+        """готовая схема из сборки: кэш пользователя пуст, а схема не рисуется и в кэш не копируется"""
+        pre, user = self.dir / "pre", self.dir / "user"
+        Atlas.cached(Z, pre)
+        with mock.patch.object(atlas, "build_atlas", no_build):
+            a = Atlas.cached(Z, user, prebuilt=pre)
+            b = Atlas.preview(Z, user, prebuilt=pre)
+        self.assertSameAtlas(a, self.fresh)
+        self.assertEqual(b.Z, atlas_cache.zoom_key(Z))
+        self.assertFalse(user.exists())
+
+    def test_preview_falls_back_to_nearest_prebuilt(self):
+        pre, user = self.dir / "pre", self.dir / "user"
+        Atlas.cached(Z, pre)
+        Atlas.cached(0.5, pre)
+        with mock.patch.object(atlas, "build_atlas", no_build):
+            self.assertEqual(Atlas.preview(0.75, user, prebuilt=pre).Z, Z)
+            self.assertEqual(Atlas.preview(0.55, user, prebuilt=pre).Z, 0.5)
+        self.assertIsNone(Atlas.preview(Z, user, prebuilt=self.dir / "none"))
+        with mock.patch.object(atlas_cache, "version", return_value="other"):      # схемы другой версии не годятся
+            self.assertIsNone(Atlas.preview(Z, user, prebuilt=pre))
+
     def test_version_depends_on_drawing_code(self):
         v = atlas_cache.version()
         self.assertEqual(v, atlas_cache.version())

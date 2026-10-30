@@ -12,8 +12,8 @@ from ..i18n import name as organ_name, t
 from ..organs import ORGANS
 from .overlay import Panel, top
 from .scaling import px
-from .widgets import (ScrollArea, SearchBox, alive, bar, clear, heading, hbox, joined, label, linked, put, rich_label,
-                      rounded_card, spacer)
+from .layers_panel import ScrollArea, SearchBox
+from .widgets import alive, bar, clear, hbox, heading, joined, label, linked, put, rich_label, rounded_card, spacer
 
 LIST_W, CARD_W = 270, 470          # ширина списка и статьи при масштабе 100 %
 

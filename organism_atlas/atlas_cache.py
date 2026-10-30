@@ -8,6 +8,8 @@
 Версия - хэш исходников, от которых зависит рисунок, плюс версии numpy и Pillow. Поправили рисунок
 органа - версия сменилась, схема перерисуется сама, а старые файлы удалятся.
 Любая проблема с кэшем (нет прав, файл испорчен) - просто рисуем заново, как без кэша.
+Сборка (tools/build_exe.py) кладёт в пакет папку prebuilt с готовыми схемами нескольких масштабов: при первом
+запуске схема берётся оттуда (или ближайшая из них показывается растянутой, пока рисуется точная).
 """
 
 import hashlib
@@ -33,6 +35,7 @@ def _cache_dir():
 
 
 CACHE_DIR = _cache_dir()
+PREBUILT = PKG / "prebuilt"                       # готовые схемы из сборки (tools/build_exe.py), только чтение
 FORMAT = 4                                        # поднять, если поменяется устройство файла
 KEEP = 6                                          # сколько масштабов хранить (окно меняет размер)
 
@@ -66,9 +69,8 @@ def _path(Z, cache_dir, ver):
 BODY = ("glow", "skin", "skin_hi", "muscles", "skeleton", "veins", "arteries", "fade")    # слои тела (uint8)
 
 
-def load(Z, ORDER, cache_dir=CACHE_DIR):
-    """({слой тела: uint8}, {орган: {rgba, hit, origin}}) или None, если в кэше нет"""
-    p = _path(Z, cache_dir, version())
+def _read(p, ORDER):
+    """({слой тела: uint8}, {орган: {rgba, hit, origin}}) из файла p или None, если его нет или он не годится"""
     try:
         with np.load(p) as z:
             body = {k: z["body_" + k] for k in BODY}
@@ -76,16 +78,44 @@ def load(Z, ORDER, cache_dir=CACHE_DIR):
                        "origin": tuple(int(v) for v in z["origin_" + k])} for k in ORDER}
     except (OSError, KeyError, ValueError, EOFError):   # нет файла, другой набор органов, мусор
         return None
-    try:
-        os.utime(p)                                     # свежий по времени: его save() удалит последним
-    except OSError:
-        pass
     shape = body["skin"].shape
     if any(a.dtype != np.uint8 for a in body.values()) or len(shape) != 3 or shape[2] != 4:
         return None
     if any(d["rgba"].dtype != np.uint8 or d["rgba"].shape[:2] != d["hit"].shape for d in org.values()):
         return None
     return body, org
+
+
+def load(Z, ORDER, cache_dir=CACHE_DIR, prebuilt=PREBUILT):
+    """({слой тела: uint8}, {орган: {rgba, hit, origin}}) или None, если в кэше нет.
+    Сначала кэш пользователя, потом готовые схемы, которые положила сборка (prebuilt)"""
+    ver = version()
+    p = _path(Z, cache_dir, ver)
+    data = _read(p, ORDER)
+    if data is None:
+        return _read(_path(Z, prebuilt, ver), ORDER)
+    try:
+        os.utime(p)                                     # свежий по времени: его save() удалит последним
+    except OSError:
+        pass
+    return data
+
+
+def nearest(Z, ORDER, prebuilt=PREBUILT):
+    """(масштаб, данные) готовой схемы из сборки, ближайшей по масштабу к Z, или None. Её показывают
+    растянутой при первом запуске, пока рисуется схема точно под окно"""
+    ver = version()
+    zooms = []
+    for f in Path(prebuilt).glob("atlas-%s-z*.npz" % ver):
+        try:
+            zooms.append(float(f.stem.rsplit("-z", 1)[1]))
+        except ValueError:
+            continue
+    for z in sorted(zooms, key=lambda z: abs(z - Z)):
+        data = _read(_path(z, prebuilt, ver), ORDER)
+        if data is not None:
+            return zoom_key(z), data
+    return None
 
 
 def save(Z, body, org, cache_dir=CACHE_DIR):
@@ -103,7 +133,7 @@ def save(Z, body, org, cache_dir=CACHE_DIR):
         with open(tmp, "wb") as f:
             np.savez_compressed(f, **arrays)
         os.replace(tmp, p)
-        for old in p.parent.glob("atlas-*.npz"):
+        for old in p.parent.glob("atlas-*.npz*"):        # и недописанные .tmp прошлых версий
             if not old.name.startswith("atlas-%s-" % ver):
                 old.unlink()
         mine = sorted(p.parent.glob("atlas-%s-*.npz" % ver), key=lambda f: f.stat().st_mtime, reverse=True)

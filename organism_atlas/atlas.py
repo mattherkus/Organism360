@@ -233,15 +233,26 @@ class Atlas:
         return d["origin"][0] + cx, d["origin"][1] + float(col.min() if len(col) else ys.min())
 
     @classmethod
-    def cached(cls, Z, cache_dir=atlas_cache.CACHE_DIR):
-        """схема из кэша на диске, а если её там нет - нарисовать и сохранить"""
+    def cached(cls, Z, cache_dir=atlas_cache.CACHE_DIR, prebuilt=atlas_cache.PREBUILT):
+        """схема из кэша на диске (или готовая из сборки), а если её там нет - нарисовать и сохранить"""
         Z = atlas_cache.zoom_key(Z)
-        data = atlas_cache.load(Z, ORDER, cache_dir)
+        data = atlas_cache.load(Z, ORDER, cache_dir, prebuilt)
         if data is not None:
             return cls(Z, data)
         atlas = cls(Z)
         atlas_cache.save(Z, atlas.body, atlas.org, cache_dir)
         return atlas
+
+    @classmethod
+    def preview(cls, Z, cache_dir=atlas_cache.CACHE_DIR, prebuilt=atlas_cache.PREBUILT):
+        """схема масштаба Z, если она уже есть (кэш или сборка), иначе готовая схема из сборки ближайшего
+        масштаба - её можно показать растянутой; None, если нет ни той, ни другой"""
+        Z = atlas_cache.zoom_key(Z)
+        data = atlas_cache.load(Z, ORDER, cache_dir, prebuilt)
+        if data is not None:
+            return cls(Z, data)
+        found = atlas_cache.nearest(Z, ORDER, prebuilt)
+        return None if found is None else cls(*found)
 
     # --- видимость органов
     def set_hidden(self, organs):
