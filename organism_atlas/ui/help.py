@@ -15,7 +15,7 @@ KEYS = (
     ("Alt + ← →", "help_history"),
     ("Ctrl + F", "help_search"),
     ("+  −", "help_zoom"),
-    ("0", "help_zoom_reset"),
+    ("0  Esc", "help_zoom_reset"),
     (None, "help_pan"),
     ("Esc", "help_esc"),
     ("F1  ?", "help_f1"),

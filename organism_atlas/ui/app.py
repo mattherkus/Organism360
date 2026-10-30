@@ -11,9 +11,10 @@ import time
 import traceback
 from datetime import date
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QTimer
-from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QPen, QShortcut
-from PySide6.QtWidgets import QApplication, QFrame, QLineEdit, QMenu, QScrollArea, QSizePolicy, QWidget
+from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt, QTimer,
+                            QVariantAnimation)
+from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QPen, QPixmap, QRegion, QShortcut
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QLineEdit, QMenu, QScrollArea, QSizePolicy, QWidget
 
 from .. import achievements, i18n, progress, settings, theme, tours
 from ..atlas import Atlas
@@ -54,14 +55,34 @@ def timer(parent, fn, ms=None):
 
 
 ZOOM_STEPS = (1.0, 1.25, 1.6, 2.0, 2.5, 3.2, 4.0)     # приближение схемы колесом и кнопками
+HIDE_FROM = ZOOM_STEPS[2]                              # с такого приближения интерфейс уезжает к краям окна
+ZOOM_MS = 220                                          # длительность анимации приближения
+SLIDE_MS = 260                                         # длительность выезда интерфейса
 DRAG_PX = 5                                            # сдвиг мыши, после которого нажатие - перетаскивание
+
+
+def slide(w, start, end, done=None):
+    """плавно передвинуть виджет из start в end (координаты родителя); done - после"""
+    old = getattr(w, "_slide", None)
+    if old is not None:
+        old.stop()
+    a = QPropertyAnimation(w, b"pos", w)
+    a.setDuration(SLIDE_MS)
+    a.setStartValue(start)
+    a.setEndValue(end)
+    a.setEasingCurve(QEasingCurve.InOutCubic)
+    if done:
+        a.finished.connect(done)
+    w._slide = a
+    a.start()
 
 
 class SchemeView(QWidget):
     """схема тела: картинки в пикселях экрана (масштаб Z подобран под них) и поверх - кусок анимации,
     подсветка органа-вопроса, органа под курсором и вспышка ответа, подсказка с названием, подпись
     верного ответа и надпись «рисуется»/«перерисовывается». Координаты мыши передаются окну в пикселях схемы.
-    Схему можно приблизить (колесо, +/−) и двигать мышью: k - во сколько раз, pan - где левый верхний угол"""
+    Схему можно приблизить (колесо, +/−) и двигать мышью: k - во сколько раз, pan - где левый верхний угол.
+    Виджет лежит под всем окном: приближенная схема продолжается под панелями и карточкой, без рамки"""
 
     def __init__(self, app):
         super().__init__()
@@ -72,6 +93,15 @@ class SchemeView(QWidget):
         self.pin = None                 # (x, y, текст) - подпись органа в пикселях схемы (верный ответ)
         self.message = None             # (текст, внизу ли) - «Рисуется схема...» или «перерисовывается»
         self.k, self.pan = 1.0, QPointF(0, 0)
+        self.scheme = QSizeF(1, 1)      # размер схемы при k = 1 в логических пикселях
+        self.start = self.goal = None   # (k, угол схемы в координатах окна) в начале и в конце анимации
+        self.anim = QVariantAnimation(self)
+        self.anim.setDuration(ZOOM_MS)
+        self.anim.setStartValue(0.0)
+        self.anim.setEndValue(1.0)
+        self.anim.setEasingCurve(QEasingCurve.OutCubic)
+        self.anim.valueChanged.connect(self.step)
+        self.anim.finished.connect(self.finish)
         self.press = None               # (точка нажатия, pan в тот момент, кнопка) или None
         self.dragging = False
         self.setMouseTracking(True)
@@ -95,43 +125,97 @@ class SchemeView(QWidget):
         d = self.dpr()
         return (pos.x() - self.pan.x()) / self.k * d, (pos.y() - self.pan.y()) / self.k * d
 
+    def set_size(self, w, h):
+        """новый размер схемы (масштаб окна поменялся): она снова целиком на своём месте"""
+        self.scheme = QSizeF(w, h)
+        self.reset_zoom(animate=False)
+
+    def home(self):
+        """левый верхний угол схемы при k = 1: на её месте в раскладке окна (по центру сверху)"""
+        stage = self.app.stage
+        x = max(0, (stage.width() - math.ceil(self.scheme.width())) // 2)
+        return QPointF(stage.mapTo(self.app, QPoint(x, 0)))
+
+    def rehome(self):
+        """раскладка окна сдвинула место схемы: неприближенная встаёт на него"""
+        if self.aim() == 1:
+            self.reset_zoom(animate=False)
+
+    @staticmethod
+    def clamped(pan, size, room):
+        """схема больше окна - не уезжает краем внутрь, меньше - не уходит за край"""
+        def axis(pan, size, room):
+            return min(max(pan, room - size), 0.0) if size >= room else min(max(pan, 0.0), room - size)
+        return QPointF(axis(pan.x(), size.width(), room.width()), axis(pan.y(), size.height(), room.height()))
+
     def clamp_pan(self):
-        w, h = self.width(), self.height()
-        self.pan = QPointF(min(0.0, max(w - w * self.k, self.pan.x())), min(0.0, max(h - h * self.k, self.pan.y())))
+        self.pan = self.clamped(self.pan, self.scheme * self.k, QSizeF(self.size()))
+
+    def aim(self):
+        """приближение, к которому идёт схема (во время анимации - конечное)"""
+        return self.goal[0] if self.goal else self.k
 
     def zoom_to(self, k, at=None):
-        """приблизить в k раз (1 - вся схема); at - логическая точка, которая остаётся на месте (по умолчанию центр)"""
+        """приблизить в k раз (1 - вся схема); at - логическая точка, которая остаётся на месте
+        (по умолчанию середина схемы)"""
         k = max(ZOOM_STEPS[0], min(ZOOM_STEPS[-1], k))
-        if k == self.k:
+        k0, o0 = self.goal or (self.k, self.pan)
+        if k == k0:
             return
-        at = at or QPointF(self.width() / 2, self.height() / 2)
-        self.pan = at - (at - self.pan) * (k / self.k)
-        self.k = k
-        self.clamp_pan()
-        self.tip = None
-        self.app.zoom_changed()
-        self.update()
+        if k == ZOOM_STEPS[0]:
+            self.reset_zoom()
+            return
+        at = at or o0 + QPointF(self.scheme.width(), self.scheme.height()) * (k0 / 2)
+        self.move_to(k, self.clamped(at - (at - o0) * (k / k0), self.scheme * k, QSizeF(self.size())))
 
     def zoom_step(self, n, at=None):
         """на n ступенек ZOOM_STEPS ближе (n < 0 - дальше)"""
-        i = min(range(len(ZOOM_STEPS)), key=lambda j: abs(ZOOM_STEPS[j] - self.k))
+        i = min(range(len(ZOOM_STEPS)), key=lambda j: abs(ZOOM_STEPS[j] - self.aim()))
         self.zoom_to(ZOOM_STEPS[max(0, min(len(ZOOM_STEPS) - 1, i + n))], at)
 
-    def reset_zoom(self):
-        self.k, self.pan = 1.0, QPointF(0, 0)
-        self.app.zoom_changed()
+    def reset_zoom(self, animate=True):
+        self.move_to(1.0, self.home(), animate)
+
+    def move_to(self, k, pan, animate=True):
+        """плавно (animate) или сразу приблизить в k раз так, чтобы угол схемы был в pan"""
+        self.anim.stop()
+        self.tip = None
+        if animate and self.isVisible():
+            self.start, self.goal = (self.k, QPointF(self.pan)), (k, pan)
+            self.anim.start()
+        else:
+            self.goal = None
+            self.apply(k, pan)
+        self.app.zoom_changed(animate)
+
+    def step(self, t):
+        """кадр анимации приближения: t от 0 до 1 (уже с замедлением к концу)"""
+        if self.goal is None:
+            return
+        (k0, o0), (k1, o1) = self.start, self.goal
+        self.apply(k0 + (k1 - k0) * t, o0 + (o1 - o0) * t)
+
+    def finish(self):
+        """анимация приближения дошла до конца или её прервали: схема сразу на конечном месте"""
+        if self.goal is not None:
+            goal, self.goal = self.goal, None
+            self.anim.stop()
+            self.apply(*goal)
+
+    def apply(self, k, pan):
+        self.k, self.pan = k, pan
         self.update()
 
     def paintEvent(self, _e):
         p = QPainter(self)
-        p.fillRect(self.rect(), color("bg"))
+        p.fillRect(self.rect(), color("bg"))             # фон схемы тот же: где она кончается, не видно
         d = self.dpr()
         if self.base is not None:
             p.save()
             p.translate(self.pan)
             p.scale(self.k, self.k)
             p.setRenderHint(QPainter.SmoothPixmapTransform)
-            p.drawImage(QRectF(self.rect()), self.base)
+            p.drawImage(QRectF(QPointF(0, 0), self.scheme), self.base)
             if self.app.ready():
                 for name in ("anim", "target", "hover", "reveal", "flash"):
                     item = self.layers[name]
@@ -152,7 +236,8 @@ class SchemeView(QWidget):
             text, bottom = self.message
             p.setPen(color("muted"))
             p.setFont(font(9 if bottom else 12))
-            r = self.rect().adjusted(0, 0, 0, -px(6)) if bottom else self.rect()
+            r = QRectF(self.home(), self.scheme)         # надпись - посередине места схемы
+            r = r.adjusted(0, 0, 0, -px(6)) if bottom else r
             p.drawText(r, (Qt.AlignBottom | Qt.AlignHCenter) if bottom else Qt.AlignCenter, text)
 
     def bubble(self, p, x, y, text, size, edge, above=False):
@@ -171,10 +256,6 @@ class SchemeView(QWidget):
         p.drawRoundedRect(QRectF(x, y, w, h), px(4), px(4))
         p.setPen(color("tip_fg"))
         p.drawText(QRectF(x, y, w, h), Qt.AlignCenter, text)
-
-    def resizeEvent(self, e):
-        self.reset_zoom()                                # новый размер схемы - снова целиком
-        super().resizeEvent(e)
 
     def wheelEvent(self, e):
         steps = e.angleDelta().y() / 120
@@ -205,6 +286,7 @@ class SchemeView(QWidget):
             e.ignore()                                   # кнопки мыши «назад/вперёд» - окну
             return
         self.app.setFocus()                              # стрелки и цифры - снова окну, а не строке поиска
+        self.finish()                                    # двигаем уже с конечного места
         self.press, self.dragging = (e.position(), QPointF(self.pan), e.button()), False
 
     def mouseReleaseEvent(self, e):
@@ -219,38 +301,56 @@ class SchemeView(QWidget):
 
 
 class Stage(QWidget):
-    """место под схему, которое растягивается вместе с окном; схема - по центру сверху"""
+    """место под схему в раскладке окна, которое растягивается вместе с окном; схема - по центру сверху.
+    Сама схема рисуется под всем окном (SchemeView), а это место пропускает мышь к ней"""
 
     def __init__(self, app, view):
         super().__init__()
         self.app, self.view = app, view
-        view.setParent(self)
+        self.hint = QSize(px(200), px(200))              # размер схемы для раскладки окна при запуске
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # кнопки приближения - столбиком у правого края схемы
-        self.zoom_buttons = {name: flat_button(text, command, size=11, padx=0, pady=2, parent=self)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        # кнопки приближения - столбиком у правого края схемы, а когда интерфейс скрыт - у края окна
+        self.zoom_buttons = {name: flat_button(text, command, size=11, padx=0, pady=2, parent=app)
                              for name, text, command in (("zoom_in", "+", lambda: view.zoom_step(1)),
                                                          ("zoom_out", "−", lambda: view.zoom_step(-1)),
                                                          ("zoom_reset", "⟲", view.reset_zoom))}
         for b in self.zoom_buttons.values():
             b.setFixedSize(px(30), px(30))
 
-    def place(self):
-        v = self.view
-        v.move(max(0, (self.width() - v.width()) // 2), 0)
-        x = min(v.x() + v.width() - px(8), self.width()) - px(30)
+    def buttons_at(self, edge):
+        """где кнопки приближения: у края схемы (edge=False) или окна"""
+        app = self.app
+        if edge:
+            return QPoint(app.width() - px(38), px(8))
+        right = self.mapTo(app, QPoint(int(min((self.width() + self.view.scheme.width()) / 2, self.width())), 0))
+        return QPoint(right.x() - px(38), right.y() + px(8))
+
+    def place(self, animate=False):
+        """кнопки приближения - на своё место (плавно, если интерфейс уезжает или возвращается)"""
+        to = self.buttons_at(self.app.ui_hidden)
         for i, b in enumerate(self.zoom_buttons.values()):
-            b.move(x, px(8) + i * px(36))
             b.raise_()
+            end = to + QPoint(0, i * px(36))
+            if animate and self.isVisible():
+                slide(b, b.pos(), end)
+            else:
+                b.move(end)
 
     def sizeHint(self):                                  # раскладка окна при запуске - под размер схемы
-        return self.view.size()
+        return self.hint
 
     def minimumSizeHint(self):
         return QSize(px(200), px(200))
 
     def resizeEvent(self, e):
+        self.view.rehome()
         self.place()
         self.app.on_resize()
+
+    def moveEvent(self, e):
+        self.view.rehome()
+        self.place()
 
 
 class App(QWidget):
@@ -310,6 +410,8 @@ class App(QWidget):
         self.build_timer.timeout.connect(self.poll_build)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAutoFillBackground(False)
+        self.ui_hidden = False                 # схема приближена сильно: заголовок, слои и карточка уехали
+        self.ghosts = {}                       # {виджет: его картинка, которая сейчас уезжает или возвращается}
 
         root = vbox(self, margins=(24, 18, 24, 0))
         top = hbox()
@@ -348,12 +450,15 @@ class App(QWidget):
         for b in (self.diseases_button, self.settings_button):         # значок крупнее - высота как у соседних
             b.setFixedHeight(self.ach_button.sizeHint().height())
         self.top_bar = top
-        root.addLayout(top)
+        self.header = QWidget()                            # заголовок с кнопками и статус - уезжают вместе
+        head = vbox(self.header)
+        head.addLayout(top)
         # статус - отдельной строкой: длинный текст не должен теснить кнопки режимов
         self.status = label("", size=11, bold=True)
         self.status.setMinimumHeight(self.status.fontMetrics().lineSpacing())   # пустая не сдвигает схему
-        root.addSpacing(px(8))
-        root.addWidget(self.status)
+        head.addSpacing(px(8))
+        head.addWidget(self.status)
+        root.addWidget(self.header)
 
         body = hbox()
         root.addSpacing(px(10))
@@ -371,6 +476,8 @@ class App(QWidget):
         body.addLayout(left)
         body.addSpacing(px(20))
         self.view = SchemeView(self)
+        self.view.setParent(self)                          # схема - под всем окном, раскладка - поверх неё
+        self.view.lower()
         self.stage = Stage(self, self.view)
         body.addWidget(self.stage, 1)
         body.addSpacing(px(20))
@@ -389,6 +496,10 @@ class App(QWidget):
         hl.addStretch(1)
         self.card_area.setWidget(holder)
         body.addWidget(self.card_area)
+        for w in (self.header, self.card_area):            # уехавшие при приближении держат место в раскладке
+            sp = w.sizePolicy()
+            sp.setRetainSizeWhenHidden(True)
+            w.setSizePolicy(sp)
 
         # горячие клавиши, которые работают и при наборе в поиске
         for keys, command in ((QKeySequence.Find, self.focus_search), ("F1", self.show_help),
@@ -423,11 +534,10 @@ class App(QWidget):
         dpr = self.devicePixelRatioF()
         Z = pick_zoom(screen.width(), screen.height(), dpr)
         cw, ch = math.ceil(W * Z / dpr), math.ceil(H * Z / dpr)
-        self.view.setFixedSize(cw, ch)
+        self.stage.hint = QSize(cw, ch)
+        self.stage.updateGeometry()
         self.layout().activate()
         hint = self.sizeHint()
-        self.view.setMinimumSize(1, 1)
-        self.view.setMaximumSize(16777215, 16777215)
         w = min(hint.width(), int(0.96 * screen.width()))
         h = min(max(hint.height(), ch + px(150)), int(0.92 * screen.height()))
         self.resize(w, h)
@@ -692,8 +802,7 @@ class App(QWidget):
         """новый масштаб схемы: место под неё сразу, сама схема - когда дорисуется"""
         self.want_Z = Z
         d = self.view.dpr()
-        self.view.setFixedSize(math.ceil(W * Z / d), math.ceil(H * Z / d))
-        self.stage.place()
+        self.view.set_size(math.ceil(W * Z / d), math.ceil(H * Z / d))
 
     def on_resize(self):
         """окно поменяло размер: схема сразу растягивается, а чёткая рисуется, когда размер устоится"""
@@ -821,7 +930,7 @@ class App(QWidget):
     def show_panel(self):
         """панель слоёв - только в режиме «Изучать». В викторине её место остаётся пустым,
         чтобы схема не меняла масштаб (и не перерисовывалась) при каждой смене режима"""
-        self.panel.setVisible(self.mode == "study")
+        self.panel.setVisible(self.mode == "study" and not self.ui_hidden)
 
     def toggle_all_organs(self):
         self.hidden = set() if self.hidden == set(self.organs()) else set(self.organs())
@@ -899,15 +1008,74 @@ class App(QWidget):
         self.view.update()
 
     # --- приближение схемы
-    def zoom_changed(self):
-        """схему приблизили или вернули: кнопки приближения доступны, когда есть куда"""
+    def zoom_changed(self, animate=False):
+        """схему приблизили или вернули: кнопки приближения доступны, когда есть куда;
+        с HIDE_FROM интерфейс уезжает к краям окна"""
         stage = getattr(self, "stage", None)
         if stage is None:
             return
-        k = self.view.k
+        k = self.view.aim()
         stage.zoom_buttons["zoom_in"].setEnabled(k < ZOOM_STEPS[-1])
         stage.zoom_buttons["zoom_out"].setEnabled(k > 1)
         stage.zoom_buttons["zoom_reset"].setEnabled(k > 1)
+        self.set_ui_hidden(k >= HIDE_FROM, animate)
+
+    def sliding(self):
+        """что уезжает при сильном приближении: заголовок - вверх, слои - влево, карточка - вправо;
+        (виджет, виден ли он, когда интерфейс на месте, куда уезжает)"""
+        return ((self.header, True, QPoint(0, -1)), (self.panel, self.mode == "study", QPoint(-1, 0)),
+                (self.card_area, True, QPoint(1, 0)))
+
+    def set_ui_hidden(self, hide, animate=True):
+        """увезти интерфейс за края окна (hide) или вернуть; без animate - сразу"""
+        if hide == self.ui_hidden:
+            return
+        self.ui_hidden = hide
+        animate = animate and self.isVisible()
+        for w, shown, d in self.sliding():
+            if not shown:
+                continue
+            if not animate:
+                w.setVisible(not hide)
+                continue
+            at = w.mapTo(self, QPoint(0, 0))
+            away = QPoint(-w.width() if d.x() < 0 else self.width() if d.x() > 0 else at.x(),
+                          -w.height() if d.y() < 0 else at.y())
+            g, pos = self.ghost(w)
+            w.hide()                                     # пока едет - вместо виджета его картинка
+            slide(g, pos or (at if hide else away), away if hide else at, lambda g=g, w=w: self.landed(g, w))
+        self.stage.place(animate)
+
+    def ghost(self, w):
+        """картинка виджета для выезда; если прошлая ещё едет - новая начинает с её места"""
+        old = self.ghosts.pop(w, None)
+        pos = None
+        if old is not None:
+            pos = old.pos()
+            old._slide.stop()
+            old.deleteLater()
+        g = QLabel(self)
+        g.setAttribute(Qt.WA_TransparentForMouseEvents)
+        d = w.devicePixelRatioF()
+        pm = QPixmap(w.size() * d)                       # без фона: заголовок едет поверх схемы прозрачным
+        pm.setDevicePixelRatio(d)
+        pm.fill(Qt.transparent)
+        w.render(pm, QPoint(), QRegion(), QWidget.DrawChildren)
+        g.setPixmap(pm)
+        g.resize(w.size())
+        g.show()
+        g.raise_()
+        self.ghosts[w] = g
+        return g, pos
+
+    def landed(self, g, w):
+        """картинка доехала: убрать её, а вернувшийся виджет показать"""
+        if self.ghosts.get(w) is not g:
+            return
+        del self.ghosts[w]
+        g.deleteLater()
+        if not self.ui_hidden:
+            self.show_panel() if w is self.panel else w.show()
 
     def mousePressEvent(self, e):
         """боковые кнопки мыши листают историю карточек"""
@@ -1338,7 +1506,10 @@ class App(QWidget):
     def keyPressEvent(self, e):
         """Esc закрывает верхнюю панель; остальное - on_key"""
         if e.key() == Qt.Key_Escape:
-            overlay.close_top(self)
+            if overlay.top(self) is None and self.view.aim() > 1:
+                self.view.reset_zoom()                   # приближенная схема - снова целиком, интерфейс виден
+            else:
+                overlay.close_top(self)
             return
         names = {Qt.Key_Right: "Right", Qt.Key_Left: "Left", Qt.Key_Return: "Return", Qt.Key_Enter: "KP_Enter"}
         self.on_key(names.get(e.key(), ""), e.text())
@@ -1456,6 +1627,12 @@ class App(QWidget):
         self.set_card(lambda: fill_results(self.card, s, on_again=again, on_retry=lambda: again("missed"),
                                            on_setup=lambda: self.set_mode(mode), due=due, streak=streak, new=new,
                                            on_achievements=lambda: show_achievements(self)))
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self.view.setGeometry(self.rect())
+        self.view.reset_zoom(animate=False)              # новый размер окна - схема снова целиком
+        self.stage.place()
 
     def paintEvent(self, _e):
         QPainter(self).fillRect(self.rect(), color("bg"))

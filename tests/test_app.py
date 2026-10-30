@@ -331,21 +331,40 @@ class AppTests(unittest.TestCase):
         self.assertTrue(a.toggles[SKIN].isHidden())
 
     def test_zoom(self):
-        """приближение: точка под курсором остаётся на месте, наведение попадает в тот же орган"""
+        """приближение: точка под курсором остаётся на месте, наведение попадает в тот же орган;
+        схема всегда под всем окном, а при сильном приближении интерфейс уезжает и возвращается"""
         from PySide6.QtCore import QPointF
-        v = self.app.view
+        from organism_atlas.ui.app import HIDE_FROM, ZOOM_STEPS
+        a, v = self.app, self.app.view
+        self.assertEqual(v.geometry(), a.rect())
         x, y = int(210 * Z), int(230 * Z)                   # сердце в пикселях схемы
+        v.zoom_step(1)                                      # чуть приближенная - интерфейс на месте
+        v.finish()
+        self.assertLess(v.k, HIDE_FROM)
+        self.assertFalse(a.ui_hidden)
+        self.assertTrue(a.header.isVisible() and a.card_area.isVisible())
+        v.zoom_to(ZOOM_STEPS[-2])                           # схема выше окна: по высоте у краёв не упирается
+        v.finish()
         at = QPointF(*v.to_screen(x, y))
-        v.zoom_step(2, at)
+        v.zoom_step(1, at)
+        v.finish()
         self.assertGreater(v.k, 1)
         sx, sy = v.to_screen(x, y)
-        self.assertAlmostEqual(sx, at.x(), delta=1)
         self.assertAlmostEqual(sy, at.y(), delta=1)
-        self.assertEqual(self.app.atlas.organ_at(*v.to_scheme(QPointF(sx, sy))), "heart")
-        self.assertTrue(self.app.stage.zoom_buttons["zoom_reset"].isEnabled())
-        self.app.on_key("", "0")
+        # по ширине схема уже окна: не сдвигается за край, пока помещается целиком
+        self.assertTrue(0 <= v.pan.x() <= v.width() - v.scheme.width() * v.k)
+        self.assertEqual(a.atlas.organ_at(*v.to_scheme(QPointF(sx, sy))), "heart")
+        self.assertTrue(a.stage.zoom_buttons["zoom_reset"].isEnabled())
+        self.assertTrue(a.ui_hidden)                        # сильно приближенная - интерфейс уехал
+        self.assertTrue(wait(lambda: not a.ghosts))
+        self.assertFalse(a.header.isVisible() or a.panel.isVisible() or a.card_area.isVisible())
+        a.on_key("", "0")
+        v.finish()
         self.assertEqual(v.k, 1)
-        self.assertFalse(self.app.stage.zoom_buttons["zoom_reset"].isEnabled())
+        self.assertEqual(v.pan, v.home())
+        self.assertFalse(a.stage.zoom_buttons["zoom_reset"].isEnabled())
+        self.assertTrue(wait(lambda: not a.ghosts))
+        self.assertTrue(a.header.isVisible() and a.panel.isVisible() and a.card_area.isVisible())
 
     def test_help_and_search_keys(self):
         from organism_atlas.ui import help, overlay

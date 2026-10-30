@@ -220,7 +220,7 @@
     "skin_opacity": "Skin transparency",
     "zoom_in": "Zoom in (+)",
     "zoom_out": "Zoom out (−)",
-    "zoom_reset": "Reset zoom (0)",
+    "zoom_reset": "Reset zoom (0, Esc)",
     "home_review": "Review",
     "home_due": "Organs due for review: {n}.",
     "home_due_button": "Review now",
