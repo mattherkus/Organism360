@@ -25,7 +25,7 @@ from ..i18n import t
 from ..organs import ORGANS, by_system, fact_of_day, for_body, other_sex, search
 from ..quiz import MODES, NOT_ORGANS
 from ..structures import KINDS, LAYER_OF, STRUCTURES
-from . import overlay, titlebar
+from . import icons, overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
 from .scaling import fit_zoom, pick_zoom, px, set_scale
@@ -40,7 +40,8 @@ from .layers_panel import ORGANS_ALL, SEARCH, SKIN, by_color, fill_layers, filte
 from .quiz_controller import QuizController, timer
 from .stats import show_stats
 from .tour_controller import TourController
-from .widgets import alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card, set_button_bg, vbox
+from .widgets import (alive, color, flat_button, font, hbox, icon_button, label, qimage, retheme, rounded_card,
+                      set_button_bg, vbox)
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
@@ -132,10 +133,10 @@ class App(QWidget):
         self.latin_action.setCheckable(True)
         top.addWidget(self.lang_button, 0, Qt.AlignTop)
         # справочник, достижения и настройки - значками с подсказками
-        self.diseases_button = flat_button("⚕", lambda: show_diseases(self), size=12, padx=10, pady=4)
+        self.diseases_button = icon_button(icons.diseases, lambda: show_diseases(self))
         self.ach_button = flat_button("", lambda: show_achievements(self), padx=10)
         self.settings_button = flat_button("⚙", lambda: show_settings(self), size=12, padx=10, pady=4)
-        self.stats_button = flat_button("▤", lambda: show_stats(self), size=12, padx=10, pady=4)
+        self.stats_button = icon_button(icons.stats, lambda: show_stats(self))
         # новая версия на GitHub (updates.py): кнопка видна, только когда она есть
         self.update_button = flat_button("", self.open_update, bg="accent", padx=10)
         self.update_button.hide()
@@ -145,7 +146,7 @@ class App(QWidget):
         for b in (self.diseases_button, self.stats_button, self.ach_button, self.settings_button):
             top.addSpacing(px(6))
             top.addWidget(b, 0, Qt.AlignTop)
-        for b in (self.diseases_button, self.stats_button, self.settings_button):   # значок крупнее - высота как у соседних
+        for b in (self.diseases_button, self.stats_button, self.settings_button):   # значки - высотой с соседние кнопки
             b.setFixedHeight(self.ach_button.sizeHint().height())
         self.top_bar = top
         self.header = QWidget()                            # заголовок с кнопками и статус - уезжают вместе

@@ -8,7 +8,7 @@ from pathlib import Path
 from organism_atlas import diseases, i18n
 from organism_atlas.organs import ORGANS, fact_of_day
 
-FIELDS = ("name", "desc", "location", "facts", "daily")
+FIELDS = ("name", "desc", "location", "details", "facts", "daily")
 PKG = Path(i18n.__file__).parent
 
 
@@ -46,6 +46,10 @@ class LangFilesTests(unittest.TestCase):
         for key, o in en["organs"].items():
             self.assertEqual(set(o) - {"reviewed"}, set(FIELDS), key)
             self.assertEqual(set(o["facts"]), set(ru["organs"][key]["facts"]), key)    # факты - по ключам
+            self.assertEqual(list(o["details"]), list(ru["organs"][key]["details"]), key)
+            for field, text in o["details"].items():
+                self.assertTrue(text and ru["ui"].get("detail_" + field) and en["ui"].get("detail_" + field),
+                                (key, field))
 
     def test_reviewed_flag(self):
         """reviewed - отметка «факты проверены специалистом»; ставит только специалист"""
@@ -112,6 +116,22 @@ class SwitchTests(unittest.TestCase):
         self.assertEqual((i18n.name("heart"), i18n.base(), i18n.latin()), ("Сердце", "ru", False))
         i18n.set_latin(False)                       # повторное выключение ничего не ломает
         self.assertEqual(i18n.current(), "ru")
+
+    def test_details(self):
+        """подробности карточки - по полям в порядке русского файла, каждое поле откатывается на другой язык само"""
+        ru = i18n._load("ru")["organs"]["heart"]["details"]
+        self.assertEqual([f for f, _ in i18n.details("heart")], list(ru))
+        self.assertEqual(i18n.details("heart")[0][1], ru["functions"])
+        self.assertEqual([f for f, _ in i18n.details("biceps")], ["origin", "insertion", "action", "nerve", "blood"])
+        en = i18n._load("en")
+        saved = en["organs"]["heart"]["details"].pop("size")
+        try:
+            i18n.set_lang("en")
+            got = dict(i18n.details("heart"))
+            self.assertEqual(got["size"], ru["size"])                          # нет перевода - русский текст
+            self.assertEqual(got["blood"], en["organs"]["heart"]["details"]["blood"])
+        finally:
+            en["organs"]["heart"]["details"]["size"] = saved
 
     def test_missing_key_is_visible(self):
         self.assertEqual(i18n.t("no_such_key"), "no_such_key")

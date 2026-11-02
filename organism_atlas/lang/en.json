@@ -247,6 +247,20 @@
     "latin_off": "Off",
     "results_setup": "Change game settings",
     "card_kind": "What it is",
+    "detail_functions": "Functions",
+    "detail_structure": "Structure",
+    "detail_size": "Size",
+    "detail_blood": "Blood supply",
+    "detail_nerves": "Nerves",
+    "detail_flow": "Blood flow",
+    "detail_type": "Bone type",
+    "detail_parts": "Parts",
+    "detail_joints": "Joints",
+    "detail_muscles": "Attached muscles",
+    "detail_origin": "Origin",
+    "detail_insertion": "Insertion",
+    "detail_action": "Action",
+    "detail_nerve": "Nerve supply",
     "kind_bone": "Bone",
     "kind_muscle": "Muscle",
     "mode_body": "Bones and muscles",
@@ -357,6 +371,13 @@
       "name": "Lungs",
       "desc": "Handle gas exchange: take in oxygen and release carbon dioxide.",
       "location": "Chest cavity on both sides of the heart; they rest on the diaphragm",
+      "details": {
+        "functions": "Gas exchange between air and blood. By removing carbon dioxide the lungs keep the blood's acid–base balance; in their capillaries the enzyme ACE converts angiotensin I into angiotensin II, which raises blood pressure.",
+        "structure": "The right lung has 3 lobes and 10 segments, the left 2 lobes and 8–10 segments. The bronchi branch about 23 times down to bronchioles and alveoli; the lungs are covered by the pleura.",
+        "size": "Total lung capacity in an adult is about 4–6 L on average; the alveolar surface area is about 50–75 m².",
+        "blood": "Two circulations: the pulmonary arteries bring venous blood from the right ventricle for gas exchange, while the bronchial arteries (branches of the aorta) nourish the lung tissue itself. Oxygenated blood returns through four pulmonary veins to the left atrium.",
+        "nerves": "Pulmonary plexus: the vagus nerve narrows the bronchi, sympathetic fibres widen them. Lung tissue and the visceral pleura do not feel pain, but the parietal pleura is very sensitive."
+      },
       "facts": {
         "alveoli": "Contain hundreds of millions of alveoli",
         "lobes": "The right lung has three lobes, the left has two",
@@ -374,6 +395,13 @@
       "name": "Liver",
       "desc": "Filters the blood, neutralises harmful substances and produces bile.",
       "location": "Upper right abdomen under the diaphragm; the left lobe crosses the midline",
+      "details": {
+        "functions": "Produces 0.5–1 L of bile a day, makes albumin and most blood clotting factors, stores glycogen, iron and vitamins A, D and B12, turns toxic ammonia into urea and breaks down drugs and hormones.",
+        "structure": "Externally it has right, left, quadrate and caudate lobes; by its vessels it is divided into 8 segments. The tissue is made of 50,000–100,000 lobules — hexagonal plates of liver cells (hepatocytes) around a central vein.",
+        "size": "It weighs about 1.4–1.6 kg in an adult — roughly 2% of body weight.",
+        "blood": "A dual supply: about 75% of its blood comes through the portal vein from the intestines, stomach and spleen, about 25% through the hepatic artery. Blood leaves through the hepatic veins into the inferior vena cava.",
+        "nerves": "Hepatic plexus: sympathetic fibres from the coeliac plexus and branches of the vagus nerve. The liver tissue itself does not feel pain — a stretched capsule does."
+      },
       "facts": {
         "largest_gland": "The largest gland in the body",
         "regrow": "Can regrow after damage",
@@ -391,6 +419,13 @@
       "name": "Gallbladder",
       "desc": "Stores bile made by the liver and releases it into the intestine when you eat.",
       "location": "Under the liver on the right, in a hollow on its lower surface; its tip sticks out below the liver's edge",
+      "details": {
+        "functions": "Stores bile and concentrates it 5–10 times by absorbing water. After a meal the hormone cholecystokinin makes it contract and release bile into the duodenum.",
+        "structure": "Fundus, body and neck; the neck continues into the cystic duct, which joins the common hepatic duct to form the common bile duct. The lining is folded.",
+        "size": "Length 7–10 cm, width 3–4 cm.",
+        "blood": "The cystic artery, usually a branch of the right hepatic artery; the cystic veins drain into branches of the portal vein inside the liver.",
+        "nerves": "Coeliac plexus and vagus nerve. Gallbladder pain often spreads under the right shoulder blade and into the right shoulder."
+      },
       "facts": {
         "pear": "Shaped like a small pear",
         "volume": "Holds about 30–50 mL of bile",
@@ -407,6 +442,13 @@
       "name": "Stomach",
       "desc": "Churns food with gastric juice and starts digesting proteins.",
       "location": "Upper left abdomen, below the diaphragm and the liver",
+      "details": {
+        "functions": "Stores and mixes food for a while, digests proteins with pepsin in an acidic medium (pH 1.5–3.5), kills many microbes and secretes intrinsic factor, without which vitamin B12 cannot be absorbed.",
+        "structure": "Cardia, fundus, body and pylorus with a muscular sphincter. The wall has three muscle layers — longitudinal, circular and oblique; glands in the lining secrete hydrochloric acid, pepsinogen and mucus.",
+        "size": "A full stomach is about 25 cm long; about 2 L of gastric juice is secreted a day.",
+        "blood": "All its arteries come from the coeliac trunk: the left and right gastric arteries along the lesser curvature, the gastro-omental arteries along the greater curvature, the short gastric arteries to the fundus. The veins drain into the portal vein.",
+        "nerves": "The vagus nerves increase acid secretion and stomach movements; sympathetic fibres from the coeliac plexus slow them."
+      },
       "facts": {
         "volume": "Holds about 1–1.5 L",
         "acid": "Its hydrochloric acid is strong, and mucus protects the stomach walls",
@@ -424,6 +466,13 @@
       "name": "Intestines",
       "desc": "Finish digestion and absorb nutrients and water.",
       "location": "Abdominal cavity: the small intestine in the centre, framed by the large intestine",
+      "details": {
+        "functions": "In the small intestine, bile, pancreatic juice and enzymes of the wall finish digestion and most nutrients are absorbed. The large intestine absorbs water and salts and forms faeces, and its bacteria make vitamin K.",
+        "structure": "Small intestine: duodenum, jejunum and ileum. Large intestine: caecum with the appendix, colon (ascending, transverse, descending, sigmoid) and rectum. Folds, villi and microvilli enlarge the absorbing surface of the small intestine about 600 times.",
+        "size": "The small intestine is about 2.5–3 cm across, the large intestine from 7 cm at the caecum to 2.5 cm at the sigmoid colon; the absorbing surface is about 30 m².",
+        "blood": "The superior mesenteric artery supplies the small intestine, caecum, ascending and two thirds of the transverse colon; the inferior mesenteric artery supplies the rest of the colon down to the upper rectum. All blood from the gut flows through the portal vein to the liver.",
+        "nerves": "The wall contains its own enteric nervous system (about 400–600 million neurons) that runs peristalsis by itself. Parasympathetic nerves (vagus and pelvic) stimulate it, sympathetic nerves slow it."
+      },
       "facts": {
         "small_length": "The small intestine is about 6 m long",
         "large_length": "The large intestine is about 1.5 m",
@@ -441,6 +490,13 @@
       "name": "Kidneys",
       "desc": "Clean waste from the blood and regulate the body's water balance.",
       "location": "Against the back wall of the abdomen on either side of the spine, at the level of the lower ribs",
+      "details": {
+        "functions": "Filter about 180 L of primary urine a day and reabsorb about 99% of it; remove urea and drugs, regulate blood pressure (renin), red blood cell production (erythropoietin) and calcium balance (active vitamin D).",
+        "structure": "The outer cortex and inner medulla with 7–18 pyramids; urine collects in minor and major calyces and the renal pelvis. Each kidney has about a million nephrons.",
+        "size": "Length 10–12 cm, width 5–6 cm, thickness 3–4 cm, about 150 g each. The right kidney usually lies a little lower than the left — the liver pushes it down.",
+        "blood": "The renal arteries branch directly from the abdominal aorta; 20–25% of all blood pumped by the heart passes through the kidneys. The renal veins drain into the inferior vena cava; the left one is longer and crosses in front of the aorta.",
+        "nerves": "Renal plexus: sympathetic fibres narrow the vessels and increase renin release. Renal colic spreads to the lower back, groin and thigh."
+      },
       "facts": {
         "fist": "A pair of organs, each about the size of a fist",
         "blood_flow": "About 1.2 L of blood passes through them every minute",
@@ -458,6 +514,13 @@
       "name": "Heart",
       "desc": "A muscular pump that drives blood through the vessels.",
       "location": "Chest cavity between the lungs, about two thirds of it left of the midline",
+      "details": {
+        "functions": "The right side pumps blood to the lungs (pulmonary circulation), the left side to the whole body (systemic circulation). The atria release natriuretic peptide, which helps remove salt and lower blood pressure.",
+        "structure": "Four valves: tricuspid and pulmonary on the right, mitral and aortic on the left. The wall is endocardium, muscular myocardium and epicardium; the heart sits in a sac, the pericardium. The left ventricular wall is 2–3 times thicker than the right.",
+        "size": "An adult heart weighs about 250–350 g and is about 12 cm long. Each ventricle ejects about 70 mL of blood per beat.",
+        "blood": "The heart is fed by the right and left coronary arteries — the first branches of the aorta; the left ventricular muscle receives blood mainly while relaxing. Venous blood collects in the coronary sinus and empties into the right atrium.",
+        "nerves": "The sinus node sets the rhythm; sympathetic nerves speed up and strengthen the beat, the vagus nerve slows it. Pain of cardiac ischaemia often spreads to the left arm, neck and jaw."
+      },
       "facts": {
         "beats": "Beats about 100,000 times a day",
         "fist": "Roughly the size of a fist",
@@ -475,6 +538,13 @@
       "name": "Brain",
       "desc": "Controls the whole body: thinking, memory, movement and the senses.",
       "location": "Inside the skull; it joins the spinal cord through the foramen magnum",
+      "details": {
+        "functions": "The cerebral cortex handles thinking, speech, voluntary movement and perception; the cerebellum balance and precise movement; the brainstem breathing, heart rate and wakefulness; the hypothalamus body temperature, hunger, thirst and hormones.",
+        "structure": "Cerebral hemispheres (frontal, parietal, temporal, occipital and insular lobes), diencephalon, cerebellum and brainstem — midbrain, pons and medulla. Three membranes cover it — dura, arachnoid and pia; cerebrospinal fluid circulates in its ventricles.",
+        "size": "It weighs 1.3–1.4 kg — about 2% of body weight. There is about 150 mL of cerebrospinal fluid, and about 500 mL is produced a day.",
+        "blood": "Two internal carotid and two vertebral arteries join at the base of the brain in the circle of Willis. The brain receives about 15% of the cardiac output; without blood flow consciousness is lost in about 10 seconds. Blood drains through the venous sinuses into the internal jugular veins.",
+        "nerves": "Twelve pairs of cranial nerves leave the brain — to the sense organs, facial muscles, tongue and (the vagus nerve) internal organs. Brain tissue itself does not feel pain — the membranes and vessels do."
+      },
       "facts": {
         "weight": "Weighs about 1.4 kg",
         "neurons": "Contains roughly 86 billion neurons",
@@ -492,6 +562,13 @@
       "name": "Thyroid gland",
       "desc": "Makes hormones that control metabolism, growth and body heat.",
       "location": "Front of the neck, below the thyroid cartilage of the larynx",
+      "details": {
+        "functions": "Thyroxine (T4) and triiodothyronine (T3) speed up metabolism and are needed for growth and brain development in children; C cells release calcitonin, which lowers blood calcium.",
+        "structure": "Two lobes joined by an isthmus over the 2nd–4th tracheal rings; sometimes a pyramidal lobe rises from it. The tissue is made of follicles — small sacs of colloid that store hormones.",
+        "size": "The lobes are 4–6 cm long; on ultrasound the normal volume is up to 18 mL in women and 25 mL in men.",
+        "blood": "One of the most richly supplied tissues: the superior thyroid arteries (from the external carotid) and the inferior thyroid arteries (from the thyrocervical trunks of the subclavian arteries).",
+        "nerves": "Sympathetic fibres from the cervical ganglia and branches of the vagus nerve. Behind the lobes run the recurrent laryngeal nerves that control the vocal folds: injuring them in surgery causes hoarseness."
+      },
       "facts": {
         "butterfly": "Shaped like a butterfly, it sits on the windpipe below the larynx",
         "weight": "Weighs only 15–30 g",
@@ -509,6 +586,13 @@
       "name": "Spleen",
       "desc": "Filters the blood, removes old red blood cells and supports the immune system.",
       "location": "Upper left abdomen behind the stomach, level with ribs 9–11",
+      "details": {
+        "functions": "The red pulp removes and destroys old and damaged red blood cells; the white pulp is lymphoid tissue where lymphocytes respond to microbes in the blood. It stores about a third of the platelets and helps make blood cells in the fetus.",
+        "structure": "Covered by a capsule and peritoneum; inside are the red pulp (about 75% of the volume) and white pulp around the arteries. A healthy spleen cannot be felt below the ribs.",
+        "size": "Length 10–12 cm, width 6–8 cm, thickness 3–4 cm.",
+        "blood": "The splenic artery, the largest branch of the coeliac trunk, winds along the pancreas. The splenic vein joins the superior mesenteric vein to form the portal vein.",
+        "nerves": "Sympathetic fibres from the coeliac plexus reach it along the splenic artery."
+      },
       "facts": {
         "weight": "Weighs about 150–200 g",
         "reserve": "Keeps a reserve of blood and platelets",
@@ -526,6 +610,13 @@
       "name": "Pancreas",
       "desc": "Releases digestive enzymes and the hormones insulin and glucagon.",
       "location": "Behind the stomach, across the abdomen: the head by the duodenum, the tail by the spleen",
+      "details": {
+        "functions": "The exocrine part (about 98% of the mass) secretes juice with trypsin, lipase, amylase and bicarbonate, which neutralises stomach acid. The endocrine part is the islets of Langerhans: beta cells make insulin, alpha cells glucagon, delta cells somatostatin.",
+        "structure": "Head (in the curve of the duodenum), neck, body and tail (at the hilum of the spleen). The main duct opens with the common bile duct into the duodenum at the major papilla.",
+        "size": "It weighs about 70–100 g. There are about a million islets of Langerhans, yet they make up only 1–2% of the gland.",
+        "blood": "Branches of the coeliac trunk (splenic and superior pancreaticoduodenal arteries) and of the superior mesenteric artery. The veins drain into the splenic and superior mesenteric veins — the portal system.",
+        "nerves": "The vagus nerve increases juice and insulin secretion; sympathetic fibres come from the coeliac plexus. Pancreatitis pain is often band-like and spreads to the back."
+      },
       "facts": {
         "juice": "Releases 1–1.5 L of digestive juice a day",
         "islets": "The islets of Langerhans keep track of blood sugar",
@@ -543,6 +634,13 @@
       "name": "Urinary bladder",
       "desc": "Stores urine coming from the kidneys and empties it out of the body.",
       "location": "In the pelvis, just behind the pubic symphysis",
+      "details": {
+        "functions": "Stores urine at low pressure and empties at will: the wall muscle (detrusor) contracts while the sphincters relax.",
+        "structure": "Apex, body, fundus and neck. On the floor is the smooth trigone between the openings of the two ureters and the internal urethral opening. It is lined with stretchy transitional epithelium (urothelium).",
+        "size": "When empty it lies entirely in the pelvis; when full it rises above the pubic bone. An adult passes about 1–2 L of urine a day.",
+        "blood": "The superior and inferior vesical arteries, branches of the internal iliac arteries; the veins form the vesical plexus and drain into the internal iliac veins.",
+        "nerves": "Parasympathetic pelvic nerves (S2–S4) contract the detrusor — emptying; sympathetic nerves (T11–L2) relax it and close the neck — storage. The external sphincter is under voluntary control via the pudendal nerve."
+      },
       "facts": {
         "volume": "Holds about 0.4–0.6 L",
         "urge": "The urge to urinate starts at about 200–300 mL",
@@ -560,6 +658,13 @@
       "name": "Esophagus",
       "desc": "A muscular tube that carries swallowed food and water from the throat to the stomach.",
       "location": "In the neck and chest: behind the trachea and heart, in front of the spine; passes through the diaphragm into the abdomen",
+      "details": {
+        "functions": "Moves food by waves of peristalsis. The upper sphincter keeps air out during breathing, the lower one prevents stomach acid from flowing back.",
+        "structure": "Cervical, thoracic and abdominal parts; three narrowings — at its start, by the aortic arch and left main bronchus, and at the diaphragm. The upper third of the wall is skeletal muscle, the lower third smooth muscle.",
+        "size": "It starts at the level of the 6th cervical vertebra and joins the stomach at the 11th thoracic; from the incisors to the stomach is about 40 cm.",
+        "blood": "The cervical part from the inferior thyroid arteries, the thoracic part from oesophageal branches of the aorta, the abdominal part from the left gastric artery. Veins of the lower part connect with the portal vein: in liver cirrhosis they swell into varices.",
+        "nerves": "The vagus nerves form the oesophageal plexus on it and control the swallowing wave."
+      },
       "facts": {
         "length": "About 25 cm long",
         "peristalsis": "Food travels down it in 5–10 seconds, pushed by waves of contraction called peristalsis",
@@ -577,6 +682,13 @@
       "name": "Trachea",
       "desc": "The windpipe: air travels through it from the larynx to the bronchi and lungs.",
       "location": "Front of the neck and upper chest, in front of the esophagus; at the bottom it splits into the two main bronchi",
+      "details": {
+        "functions": "Conducts and cleans the air: mucus traps dust and microbes, cilia sweep it up to the throat, and the cough reflex expels foreign bodies.",
+        "structure": "Cartilage rings in front and at the sides, a membranous wall with smooth muscle at the back against the oesophagus. At the level of the 4th–5th thoracic vertebrae it divides into the main bronchi; the right one is shorter, wider and steeper, so inhaled objects usually enter it.",
+        "size": "It begins at the larynx at the level of the 6th cervical vertebra; in adults it is about 1.5–2.5 cm across.",
+        "blood": "Branches of the inferior thyroid and bronchial arteries.",
+        "nerves": "Branches of the vagus nerves (including the recurrent laryngeal nerves) and of the sympathetic trunk."
+      },
       "facts": {
         "length": "About 10–12 cm long in an adult",
         "rings": "Its frame is 16–20 C-shaped rings of cartilage, open at the back",
@@ -594,6 +706,13 @@
       "name": "Adrenal glands",
       "desc": "A pair of endocrine glands that make adrenaline, cortisol and aldosterone.",
       "location": "Behind the abdominal cavity (retroperitoneum), on top of the upper poles of the kidneys",
+      "details": {
+        "functions": "Cortisol helps cope with stress, raises blood sugar and suppresses inflammation; aldosterone retains sodium and water and maintains blood pressure; adrenaline and noradrenaline prepare the body for “fight or flight”. The cortex also makes small amounts of androgens.",
+        "structure": "The cortex has three zones: glomerulosa (aldosterone), fasciculata (cortisol) and reticularis (androgens). Inside is the medulla, essentially a modified sympathetic ganglion.",
+        "size": "Height 3–5 cm, thickness about 1 cm, each weighs 4–6 g.",
+        "blood": "Each receives three arteries: superior (from the inferior phrenic), middle (from the aorta) and inferior (from the renal artery). There is a single vein: the right drains straight into the inferior vena cava, the left into the left renal vein.",
+        "nerves": "Sympathetic fibres of the splanchnic nerves go directly to the medulla — that is why adrenaline is released within seconds."
+      },
       "facts": {
         "weight": "Each one weighs about 5 g",
         "layers": "The outer layer (cortex) makes cortisol and aldosterone; the inner layer (medulla) makes adrenaline and noradrenaline",
@@ -611,6 +730,13 @@
       "name": "Appendix",
       "desc": "A worm-like pouch of the cecum: a narrow tube closed at one end, with a lot of lymphoid tissue in its wall.",
       "location": "Lower right abdomen (right iliac region), attached to the cecum",
+      "details": {
+        "functions": "Its lymphoid tissue takes part in the immune defence of the gut, especially when young. One hypothesis is that it keeps a reserve of friendly bacteria to restore the gut flora after infections.",
+        "structure": "It arises from the caecum where its three longitudinal muscle bands (taeniae coli) meet — surgeons use them to find it. It has its own mesentery.",
+        "size": "Its length ranges from 2 to 20 cm, on average 6–10 cm; the lumen is a few millimetres wide.",
+        "blood": "The appendicular artery, a branch of the ileocolic artery (from the superior mesenteric). It is an end artery, so when inflamed and swollen the wall quickly suffers from lack of blood.",
+        "nerves": "Its visceral fibres enter the spinal cord at T10 — that is why appendicitis pain starts around the navel and then moves to the lower right abdomen."
+      },
       "facts": {
         "size": "Usually 7–10 cm long and less than 1 cm thick",
         "position": "Its position varies: it may lie behind the cecum or hang down into the pelvis",
@@ -628,6 +754,13 @@
       "name": "Rectum",
       "desc": "The last part of the large intestine: it stores feces and pushes them out of the body.",
       "location": "In the pelvis, in front of the sacrum and coccyx; behind the bladder in men and behind the uterus in women",
+      "details": {
+        "functions": "Stores faeces: stretching of the ampulla causes the urge, and the voluntary external sphincter lets us postpone defecation.",
+        "structure": "Despite its name it has two bends — sacral and perineal. It continues into the 3–4 cm anal canal; the internal sphincter is smooth muscle (involuntary), the external one skeletal muscle (voluntary).",
+        "size": "It begins at the level of the 3rd sacral vertebra; the ampulla can stretch to several centimetres across.",
+        "blood": "The superior rectal artery (from the inferior mesenteric), middle rectal arteries (from the internal iliacs) and inferior rectal arteries (from the internal pudendals). Upper veins drain to the portal vein, lower ones to the inferior vena cava system.",
+        "nerves": "Above the dentate line the wall senses only stretch; below it the anal canal is very sensitive to pain (inferior rectal nerves, branches of the pudendal)."
+      },
       "facts": {
         "length": "About 12–15 cm long",
         "ampulla": "Its wider lower part is called the ampulla",
@@ -645,6 +778,13 @@
       "name": "Uterus",
       "desc": "A hollow muscular organ of the female reproductive system where a baby grows during pregnancy.",
       "location": "In the pelvis, between the urinary bladder (in front) and the rectum (behind)",
+      "details": {
+        "functions": "Allows implantation and carries the fetus, and in labour contracts to expel it. Without pregnancy the functional layer of the endometrium is shed — menstruation.",
+        "structure": "Fundus, body and cervix; the uterine tubes open at the corners of the fundus. The wall is endometrium, the thick muscular myometrium and perimetrium (peritoneum). It is usually tilted forward and bent at an angle to the cervix.",
+        "size": "It is 4–5 cm wide at the fundus with a 1–2 cm thick wall; by the end of pregnancy the fundus rises almost to the ribs.",
+        "blood": "The uterine arteries, branches of the internal iliacs; near the cervix they cross over the ureters, which matters in surgery. They join with the ovarian arteries.",
+        "nerves": "Uterovaginal plexus: sympathetic fibres from the inferior hypogastric plexus and parasympathetic pelvic nerves (S2–S4)."
+      },
       "facts": {
         "size": "About 7–8 cm long and about 50 g in a woman who has not given birth",
         "pregnancy": "During pregnancy its mass grows to about 1 kg",
@@ -662,6 +802,13 @@
       "name": "Ovaries",
       "desc": "A pair of female sex glands where egg cells mature and the hormones estrogen and progesterone are made.",
       "location": "In the pelvis, on both sides of the uterus, next to the open ends of the fallopian tubes",
+      "details": {
+        "functions": "Usually one follicle matures and releases an egg each month (ovulation); in its place the corpus luteum forms and makes progesterone. The ovaries also make oestrogens, some androgens and inhibin.",
+        "structure": "The outer cortex holds follicles at different stages, the inner medulla holds vessels. The ovary hangs by its own ligament from the uterus and by the suspensory ligament from the pelvic wall.",
+        "size": "Length 2.5–5 cm, weight 5–8 g; they shrink after menopause.",
+        "blood": "The ovarian arteries arise directly from the abdominal aorta just below the renal arteries and run in the suspensory ligament. The right ovarian vein drains into the inferior vena cava, the left into the left renal vein.",
+        "nerves": "The ovarian plexus along the vessels (segments T10–T11); ovarian pain may be felt around the navel and in the lower back."
+      },
       "facts": {
         "size": "Each is about 3–4 cm long, roughly the size and shape of an almond",
         "follicles": "At birth they hold about 1–2 million immature eggs (follicles)",
@@ -679,6 +826,13 @@
       "name": "Prostate",
       "desc": "A male gland that makes part of the seminal fluid; it surrounds the beginning of the urethra.",
       "location": "In the pelvis, below the urinary bladder and in front of the rectum",
+      "details": {
+        "functions": "Secretes fluid with citrate, zinc and the enzyme PSA (prostate-specific antigen), which liquefies semen after ejaculation; its smooth muscle pushes the fluid into the urethra.",
+        "structure": "Its base lies against the bladder, its apex on the pelvic floor muscles. The urethra runs through it, and the ejaculatory ducts open into it. Most cancers arise in the peripheral zone (felt through the rectum), benign enlargement in the transition zone.",
+        "size": "About 4 × 3 × 2 cm, volume 20–25 mL; it often enlarges with age.",
+        "blood": "The inferior vesical and middle rectal arteries (from the internal iliacs). The veins form the prostatic plexus, connected with the veins of the spine — a route for cancer spread to bone.",
+        "nerves": "The inferior hypogastric plexus; the cavernous nerves responsible for erection run close by — surgeons try to spare them."
+      },
       "facts": {
         "chestnut": "About the size and shape of a chestnut",
         "weight": "Weighs about 20 g in an adult man",
@@ -696,6 +850,13 @@
       "name": "Aorta",
       "desc": "The largest artery: it leaves the left ventricle of the heart and carries oxygen-rich blood to the whole body.",
       "location": "Starts at the heart, arches above it and runs down along the spine into the abdomen, where it splits into the two iliac arteries",
+      "details": {
+        "functions": "Carries blood from the left ventricle to all organs. Its elastic wall stretches with each beat and keeps pushing blood between beats. Baroreceptors in the wall of the arch monitor blood pressure.",
+        "structure": "Parts: ascending aorta (gives off the coronary arteries), arch (brachiocephalic trunk, left common carotid and left subclavian arteries), thoracic and abdominal aorta. At the 4th lumbar vertebra it divides into the common iliac arteries. The middle layer of the wall is rich in elastic fibres.",
+        "size": "About 3 cm wide at the root and 1.5–2 cm at the bifurcation; an abdominal aorta wider than 3 cm is considered an aneurysm.",
+        "blood": "The outer layers of the wall are fed by its own tiny vessels (vasa vasorum), the inner layers by blood in the lumen.",
+        "nerves": "Signals from the arch baroreceptors travel along the vagus nerve to the medulla. Large autonomic plexuses — coeliac and aortic — surround the abdominal aorta."
+      },
       "facts": {
         "diameter": "About 2.5–3 cm wide in an adult, roughly the width of a thumb",
         "elastic": "Its elastic wall stretches with every heartbeat and smooths out the surges of blood",
@@ -713,6 +874,12 @@
       "name": "Venae cavae",
       "desc": "The two largest veins, superior and inferior: they collect oxygen-poor blood from the whole body and bring it to the right atrium.",
       "location": "The superior one is in the chest above the heart, to the right of the aorta; the inferior one runs up from the pelvis to the right of the spine, behind the liver, to the heart",
+      "details": {
+        "functions": "The superior vena cava collects blood from the head, neck, arms and chest, the inferior from the legs, pelvis, abdomen and kidneys. Together they return the blood of the whole systemic circulation, except the heart's own, to the right atrium.",
+        "structure": "The superior is formed by the right and left brachiocephalic veins and receives the azygos vein. The inferior is formed by the common iliac veins at the 5th lumbar vertebra, receives the renal and hepatic veins and passes through the diaphragm at the 8th thoracic vertebra.",
+        "size": "The superior vena cava is about 7 cm long and 2 cm wide.",
+        "flow": "Pressure in the venae cavae near the heart is only a few millimetres of mercury. On inhaling the pressure in the chest falls and blood is drawn more strongly towards the heart."
+      },
       "facts": {
         "widest": "The inferior one is the widest vein in the body, about 2–3 cm across",
         "pressure": "Blood pressure inside them is very low: muscle contractions and breathing help push the blood toward the heart",
@@ -730,6 +897,13 @@
       "name": "Spinal cord and nerves",
       "desc": "A cord of nerve tissue inside the spine: it carries signals between the brain and the body and handles simple reflexes. 31 pairs of spinal nerves branch off it.",
       "location": "Inside the vertebral canal, from the base of the skull to the first or second lumbar vertebra; branches spread out to the arms, legs and body wall",
+      "details": {
+        "functions": "Carries ascending (sensory) and descending (motor) pathways, contains the motor neurons of the trunk and limb muscles and autonomic centres, and closes reflexes — the knee jerk, pulling the hand away from heat.",
+        "structure": "Butterfly-shaped grey matter in the centre (motor anterior horns, sensory posterior horns), white matter of nerve tracts outside. The cervical enlargement supplies the arms, the lumbosacral the legs; below the end of the cord the roots run as a bundle — the cauda equina.",
+        "size": "It weighs about 35 g and is about 1 cm thick. It ends at L1–L2, so a lumbar puncture is done lower, between L3 and L5.",
+        "blood": "One anterior and two posterior spinal arteries (from the vertebral arteries) plus segmental branches; the largest is the artery of Adamkiewicz, usually on the left at T9–T12.",
+        "nerves": "Each spinal nerve is formed by an anterior (motor) and a posterior (sensory) root. The nerves interweave into the cervical, brachial, lumbar and sacral plexuses; the largest nerve of the body is the sciatic nerve."
+      },
       "facts": {
         "length": "About 45 cm long and roughly as thick as a little finger",
         "reflex": "The knee-jerk reflex is handled here, without the brain",
@@ -747,6 +921,13 @@
       "name": "Thymus",
       "desc": "An immune-system gland where T cells, the white blood cells that recognize invaders, mature and are 'trained'.",
       "location": "In the chest behind the breastbone, above the heart and in front of the large blood vessels",
+      "details": {
+        "functions": "In the cortex T cells learn to recognise foreign antigens, and in the medulla those that attack the body's own tissues are eliminated; only a few per cent of the cells survive. It releases the hormones thymosin and thymulin.",
+        "structure": "Two lobes in a capsule, divided into lobules; each has a dark cortex and a pale medulla with Hassall's corpuscles.",
+        "size": "10–15 g at birth, largest (30–40 g) at puberty, then gradually replaced by fat.",
+        "blood": "Branches of the internal thoracic arteries; the veins drain into the left brachiocephalic and internal thoracic veins.",
+        "nerves": "Branches of the vagus nerve and the sympathetic trunk."
+      },
       "facts": {
         "childhood": "It works hardest in childhood; by old age it is almost entirely replaced by fat",
         "weight": "Weighs about 30–40 g in a teenager",
@@ -764,6 +945,13 @@
       "name": "Pituitary gland",
       "desc": "A small gland beneath the brain that conducts the hormone orchestra: it controls the thyroid, adrenal glands, sex glands and growth.",
       "location": "In a hollow at the base of the skull called the sella turcica, hanging on a stalk below the hypothalamus",
+      "details": {
+        "functions": "The anterior lobe releases growth hormone, prolactin, TSH, ACTH, FSH and LH; the posterior lobe releases oxytocin and vasopressin (antidiuretic hormone), which are made in the hypothalamus.",
+        "structure": "The anterior lobe develops from an outgrowth of the embryo's mouth, the posterior from the diencephalon. The optic chiasm lies just above, so a pituitary tumour can narrow the visual fields.",
+        "size": "About 1 cm across and 0.5–0.6 g; it enlarges in pregnancy.",
+        "blood": "The superior and inferior hypophyseal arteries from the internal carotids. The pituitary portal system carries hypothalamic releasing hormones straight to the anterior lobe cells.",
+        "nerves": "The posterior lobe consists of nerve fibres from hypothalamic neurons; the anterior lobe is controlled not by nerves but by hypothalamic hormones."
+      },
       "facts": {
         "size": "About the size of a pea; weighs about 0.5 g",
         "lobes": "The front lobe makes hormones; the back lobe stores and releases hormones from the hypothalamus",
@@ -781,6 +969,13 @@
       "name": "Diaphragm",
       "desc": "A dome-shaped muscle that separates the chest cavity from the abdomen and does most of the work of breathing in.",
       "location": "Below the lungs and heart, above the liver, stomach and spleen; attached to the lower ribs, breastbone and spine",
+      "details": {
+        "functions": "The main breathing muscle: it provides most of the volume of a quiet breath. By raising abdominal pressure it helps with coughing, vomiting, childbirth and defecation; its crura help close the entrance to the stomach.",
+        "structure": "Its muscular parts — sternal, costal and lumbar (with two crura) — converge on the central tendon. Openings: for the inferior vena cava (8th thoracic vertebra), oesophagus (10th) and aorta (12th).",
+        "size": "The right dome sits higher than the left (the liver lies beneath it) — at about the 5th rib.",
+        "blood": "The superior and inferior phrenic arteries, branches of the internal thoracic arteries and the lower intercostal arteries.",
+        "nerves": "The phrenic nerves from the cervical plexus (C3–C5), so a spinal cord injury above this level stops independent breathing. Irritation of the diaphragm is felt as pain in the shoulder tip."
+      },
       "facts": {
         "inhale": "When you breathe in it contracts and moves down, and the lungs fill with air",
         "openings": "The esophagus, aorta and inferior vena cava pass through it",
@@ -798,6 +993,12 @@
       "name": "Lymph nodes",
       "desc": "Pea- or bean-sized filters of lymph: they trap germs and cancer cells, and immune cells learn to fight them there.",
       "location": "In clusters along the vessels of the body's drainage system: in the neck, armpits and groin, and also in the chest and abdomen",
+      "details": {
+        "functions": "Filter lymph. In the nodes B cells meet antigens and become antibody-making plasma cells, and T cells multiply for the attack. About 2–4 L of lymph returns to the blood every day.",
+        "structure": "Bean-shaped, in a capsule; lymph enters through several afferent vessels and leaves through one or two efferent vessels at the hilum. The cortex has follicles (B cells), deeper is the paracortex (T cells), and the centre has medullary cords and sinuses.",
+        "size": "Usually 2 mm to 1 cm; a node larger than 1 cm (1.5 cm in the groin) is usually considered enlarged.",
+        "blood": "An artery enters at the hilum. Through special high endothelial venules lymphocytes pass from the blood into the node."
+      },
       "facts": {
         "count": "There are about 500–700 of them in the body",
         "cold": "During a cold the nodes in the neck swell and hurt: an infection is being fought",
@@ -1781,6 +1982,12 @@
       "name": "Skull",
       "desc": "The bony box of the head: it protects the brain and sense organs and shapes the face.",
       "location": "The head; the lower jaw is hinged to it, and the spine joins it from below",
+      "details": {
+        "type": "A set of flat and irregular bones: 8 bones of the cranium and 14 of the face.",
+        "parts": "Cranium: frontal, two parietal, two temporal, occipital, sphenoid and ethmoid bones. Face: maxillae, zygomatic, nasal, lacrimal and palatine bones, inferior nasal conchae, vomer and mandible.",
+        "joints": "The vault bones are joined by sutures (coronal, sagittal, lambdoid); the mandible by the temporomandibular joints; the occipital bone by the atlanto-occipital joint with the first cervical vertebra.",
+        "muscles": "Muscles of chewing (temporalis, masseter, pterygoids), muscles of facial expression, and the sternocleidomastoid and trapezius of the neck."
+      },
       "facts": {
         "bones": "Made of 22 bones, not counting the tiny ear bones",
         "sutures": "The bones of the vault are joined by fixed seams called sutures; a baby has soft spots called fontanelles between them"
@@ -1790,6 +1997,12 @@
       "name": "Lower jaw (mandible)",
       "desc": "The only movable bone of the skull: it holds the lower teeth and moves when you chew and talk.",
       "location": "The lower face; joined to the temporal bones by joints just in front of the ears",
+      "details": {
+        "type": "An unpaired bone of the facial skeleton.",
+        "parts": "A body with an alveolar part for 16 teeth and two rami; each ramus has a coronoid process (for the temporalis) and a condylar process with a head for the joint. The mental nerves exit through the mental foramina.",
+        "joints": "The temporomandibular joints: both heads move together — the jaw opens, protrudes and moves sideways.",
+        "muscles": "The masseter, temporalis and medial pterygoid raise the jaw; the lateral pterygoid protrudes it; the suprahyoid muscles lower it."
+      },
       "facts": {
         "strongest": "The largest and strongest bone of the face",
         "bite": "The chewing muscles can press its teeth together with a force of tens of kilograms"
@@ -1799,6 +2012,12 @@
       "name": "Collarbone (clavicle)",
       "desc": "An S-shaped strut between the breastbone and the shoulder blade that holds the shoulder away from the chest.",
       "location": "Above the first rib at the base of the neck; easy to feel under the skin",
+      "details": {
+        "type": "A long S-shaped bone without a marrow cavity — the only bony link between the arm and the trunk.",
+        "parts": "Sternal end, shaft and acromial end; the medial two thirds curve forward, the lateral third curves back.",
+        "joints": "The sternoclavicular joint with the manubrium and the acromioclavicular joint with the acromion of the scapula.",
+        "muscles": "Sternocleidomastoid, trapezius, deltoid, pectoralis major and subclavius."
+      },
       "facts": {
         "fracture": "One of the most often broken bones, usually in a fall onto the shoulder or an outstretched hand",
         "first": "It starts turning into bone earlier than any other bone, long before birth"
@@ -1808,6 +2027,12 @@
       "name": "Breastbone (sternum)",
       "desc": "A flat bone in the middle of the chest: the ribs attach to it by cartilage, and the collarbones at the top.",
       "location": "In the middle of the front of the chest, in front of the heart",
+      "details": {
+        "type": "A flat spongy bone with red marrow — bone marrow samples can be taken from it.",
+        "parts": "Manubrium, body and xiphoid process. The angle between manubrium and body lies at the level of the 2nd ribs — ribs are counted from it.",
+        "joints": "The sternoclavicular joints with the clavicles and joints with the cartilages of ribs 1–7.",
+        "muscles": "Pectoralis major, sternocleidomastoid, rectus abdominis (to the xiphoid process) and the diaphragm."
+      },
       "facts": {
         "parts": "Made of three parts: the handle, the body and the sword-shaped tip",
         "cpr": "In CPR, rescuers press rhythmically on the lower half of the breastbone"
@@ -1817,6 +2042,12 @@
       "name": "Ribs",
       "desc": "Twelve pairs of curved bones forming the rib cage: they protect the heart and lungs and lift when you breathe in.",
       "location": "The chest: at the back the ribs join the spine; at the front most of them join the breastbone by cartilage",
+      "details": {
+        "type": "Long flat bones containing red marrow.",
+        "parts": "Head, neck, tubercle and shaft with a groove along the lower edge for the intercostal vessels and nerve — which is why the chest wall is punctured along the upper edge of a rib.",
+        "joints": "At the back, joints of the rib heads with the vertebral bodies and costotransverse joints. In front, the cartilages of ribs 1–7 join the sternum, ribs 8–10 join the cartilage above (the costal margin), ribs 11–12 are free.",
+        "muscles": "Intercostal muscles, diaphragm, scalene muscles of the neck (to ribs 1–2), pectoralis major and minor, serratus anterior and abdominal muscles."
+      },
       "facts": {
         "pairs": "7 pairs of true ribs reach the breastbone, 3 pairs are false and 2 pairs are floating",
         "breath": "The muscles between the ribs lift them and help the diaphragm when you breathe in"
@@ -1826,6 +2057,12 @@
       "name": "Spine (vertebral column)",
       "desc": "The body's support, made of vertebrae: it holds up the head and trunk and protects the spinal cord in its canal.",
       "location": "Along the back, from the base of the skull to the sacrum and tailbone",
+      "details": {
+        "type": "The vertebrae are irregular bones of spongy bone.",
+        "parts": "A vertebra has a body, an arch and seven processes — spinous, two transverse and four articular. The vertebral foramina line up into the canal for the spinal cord.",
+        "joints": "Intervertebral discs (annulus fibrosus and nucleus pulposus), facet joints and ligaments; the first two cervical vertebrae — atlas and axis — let the head nod and turn.",
+        "muscles": "Erector spinae, transversospinal muscles, trapezius, latissimus dorsi and psoas major."
+      },
       "facts": {
         "vertebrae": "7 neck, 12 chest and 5 lower-back vertebrae, with the sacrum and tailbone below",
         "curves": "Four curves turn it into a spring that cushions every step",
@@ -1836,6 +2073,12 @@
       "name": "Humerus",
       "desc": "The long bone of the upper arm, from the shoulder joint to the elbow.",
       "location": "The upper arm, between the shoulder blade and the forearm bones",
+      "details": {
+        "type": "A long bone.",
+        "parts": "Head, anatomical and surgical necks (the latter a common fracture site), greater and lesser tubercles, shaft and lower end with the trochlea and capitulum. The ulnar nerve runs behind the medial epicondyle.",
+        "joints": "The shoulder joint with the scapula — the most mobile in the body; the elbow joint with the ulna and radius.",
+        "muscles": "Deltoid, pectoralis major, latissimus dorsi, the rotator cuff (supraspinatus, infraspinatus, teres minor, subscapularis), brachialis, brachioradialis, forearm flexors and extensors."
+      },
       "facts": {
         "funny": "Hitting your 'funny bone' means hitting the ulnar nerve at the lower end of this bone",
         "groove": "The radial nerve winds around its middle in a spiral groove"
@@ -1845,6 +2088,12 @@
       "name": "Ulna",
       "desc": "The forearm bone on the little-finger side; together with the humerus it forms the elbow joint.",
       "location": "The forearm, on the little-finger side",
+      "details": {
+        "type": "A long bone.",
+        "parts": "At the top, the olecranon and coronoid processes with the trochlear notch that grips the humerus; at the bottom, the head and styloid process.",
+        "joints": "The elbow joint and the upper and lower radioulnar joints. It does not join the wrist bones directly — an articular disc lies between them.",
+        "muscles": "Triceps (to the olecranon), brachialis (to the coronoid process), flexor and extensor carpi ulnaris, flexor digitorum profundus."
+      },
       "facts": {
         "elbow": "Its tip is the point of the elbow you lean on",
         "length": "In an adult it is about 25–28 cm long"
@@ -1854,6 +2103,12 @@
       "name": "Radius",
       "desc": "The forearm bone on the thumb side: when you turn your palm over, it crosses over the ulna.",
       "location": "The forearm, on the thumb side",
+      "details": {
+        "type": "A long bone.",
+        "parts": "A head with a shallow cup on top, neck, tuberosity (where the biceps attaches), shaft and a broad lower end with the styloid process.",
+        "joints": "The elbow joint, the radioulnar joints (the head spins in the annular ligament as the palm turns) and the wrist joint with the carpal bones.",
+        "muscles": "Biceps, supinator, pronator teres and quadratus, brachioradialis (to the styloid process) and the long muscles of the thumb."
+      },
       "facts": {
         "pulse": "The pulse at the wrist is felt over the lower end of the radius",
         "fracture": "A break at its lower end is one of the most common fractures from falling on a hand"
@@ -1863,6 +2118,12 @@
       "name": "Bones of the hand",
       "desc": "27 small bones of the wrist, palm and fingers make the hand nimble and precise.",
       "location": "The hand: 8 wrist bones, 5 palm bones and 14 finger bones",
+      "details": {
+        "type": "The carpal bones are short bones; the metacarpals and phalanges are small long bones.",
+        "parts": "Wrist: scaphoid, lunate, triquetrum, pisiform, trapezium, trapezoid, capitate and hamate. The thumb has two phalanges, the other fingers three each.",
+        "joints": "Wrist, intercarpal, carpometacarpal (the saddle joint of the thumb allows opposition), metacarpophalangeal and interphalangeal joints.",
+        "muscles": "Tendons of the forearm flexors and extensors, the thenar and hypothenar muscles, lumbricals and interossei."
+      },
       "facts": {
         "quarter": "The two hands hold more than a quarter of all the bones in the body",
         "thumb": "The thumb can touch each of the other fingers, which lets us pick up small things"
@@ -1872,6 +2133,12 @@
       "name": "Hip bones",
       "desc": "Two large bones that form the pelvis together with the sacrum: they carry the weight of the trunk and protect the pelvic organs.",
       "location": "The bottom of the trunk; the heads of the thigh bones fit into their hip sockets",
+      "details": {
+        "type": "Flat bones. In a child each consists of three bones joined by cartilage in the acetabulum; they fuse by the age of 15–17.",
+        "parts": "The ilium (a wing with the iliac crest and anterior superior spine), pubis and ischium (we sit on the ischial tuberosities); between pubis and ischium is the obturator foramen.",
+        "joints": "The sacroiliac joints with the sacrum, the pubic symphysis in front and the hip joints with the femurs.",
+        "muscles": "Gluteal muscles, iliacus, abdominal muscles (to the crest), adductors, hamstrings (to the ischial tuberosity), sartorius and rectus femoris (to the iliac spines)."
+      },
       "facts": {
         "three": "Each hip bone grows together from three: the ilium, the pubis and the ischium",
         "female": "A woman's pelvis is wider and shallower, which makes childbirth easier"
@@ -1881,6 +2148,12 @@
       "name": "Sacrum",
       "desc": "A triangular bone made of five fused vertebrae that closes the pelvis at the back.",
       "location": "The bottom of the spine, between the hip bones; the tailbone is below it",
+      "details": {
+        "type": "A spongy bone of five fused sacral vertebrae.",
+        "parts": "A base on top with the forward-jutting promontory and an apex below; four pairs of sacral foramina on the front, and inside the sacral canal, a continuation of the vertebral canal.",
+        "joints": "Joints with the 5th lumbar vertebra, the sacroiliac joints with the hip bones and the joint with the coccyx.",
+        "muscles": "Erector spinae, gluteus maximus and piriformis."
+      },
       "facts": {
         "fused": "Five vertebrae fuse into one bone by the age of 20–25",
         "holes": "Nerves to the pelvic organs and legs pass through openings in the sacrum"
@@ -1890,6 +2163,12 @@
       "name": "Thigh bone (femur)",
       "desc": "The longest and strongest bone in the body: it connects the pelvis to the knee.",
       "location": "The thigh; its head fits into the hip joint",
+      "details": {
+        "type": "A long bone — the longest in the body.",
+        "parts": "Head, neck (at about 125–130° to the shaft in adults), greater and lesser trochanters, a shaft with the linea aspera at the back and two condyles below.",
+        "joints": "The hip joint with the acetabulum and the knee joint with the tibia and patella.",
+        "muscles": "Gluteal and iliopsoas muscles (to the trochanters), adductors (to the linea aspera), the vasti (from the shaft) and gastrocnemius (from the condyles)."
+      },
       "facts": {
         "length": "It is about a quarter of a person's height",
         "strength": "It can bear many times the body's weight",
@@ -1900,6 +2179,13 @@
       "name": "Sternocleidomastoid",
       "desc": "A neck muscle running from the bump behind the ear to the breastbone and collarbone: it tilts the head and turns it to the side.",
       "location": "The side of the neck; easy to see when you turn your head",
+      "details": {
+        "origin": "Two heads — from the manubrium of the sternum and the medial third of the clavicle.",
+        "insertion": "The mastoid process of the temporal bone and the superior nuchal line of the occipital bone.",
+        "action": "One muscle tilts the head towards its shoulder and turns the face to the opposite side; both together flex the neck and raise the sternum during deep breathing.",
+        "nerve": "The accessory nerve (cranial nerve XI) and branches of the cervical plexus (C2–C3).",
+        "blood": "Branches of the occipital and superior thyroid arteries."
+      },
       "facts": {
         "turn": "The right muscle turns the head to the left, and the left one to the right",
         "breath": "During hard breathing it helps lift the chest"
@@ -1909,6 +2195,13 @@
       "name": "Trapezius",
       "desc": "A large flat muscle of the back and neck: it raises and pulls together the shoulder blades and supports the head.",
       "location": "The upper back and back of the neck, out to the shoulders",
+      "details": {
+        "origin": "The external occipital protuberance, the nuchal ligament and the spinous processes of C7 and all thoracic vertebrae.",
+        "insertion": "The lateral third of the clavicle, the acromion and the spine of the scapula.",
+        "action": "Upper fibres raise the scapula, middle fibres pull it towards the spine, lower fibres lower it; upper and lower fibres together rotate the scapula to lift the arm above shoulder level.",
+        "nerve": "The accessory nerve (cranial nerve XI) and branches of the cervical plexus (C3–C4).",
+        "blood": "The transverse cervical artery, suprascapular artery and posterior intercostal arteries."
+      },
       "facts": {
         "shape": "Together the two muscles look like a trapezoid, hence the name",
         "shrug": "It is the muscle that lifts your shoulders when you shrug"
@@ -1918,6 +2211,13 @@
       "name": "Deltoid",
       "desc": "The muscle that covers the shoulder joint: it lifts the arm out to the side and up.",
       "location": "The outer side of the shoulder, giving it its rounded shape",
+      "details": {
+        "origin": "The lateral third of the clavicle, the acromion and the spine of the scapula — where the trapezius inserts.",
+        "insertion": "The deltoid tuberosity halfway down the outer side of the humerus.",
+        "action": "The middle part raises the arm sideways to shoulder level (supraspinatus starts the movement); the front part flexes and turns the arm inward, the back part extends and turns it outward.",
+        "nerve": "The axillary nerve (C5–C6); it can be injured by a shoulder dislocation or a fracture of the surgical neck of the humerus.",
+        "blood": "The posterior circumflex humeral artery and the deltoid branch of the thoracoacromial artery."
+      },
       "facts": {
         "delta": "It looks like an upside-down Greek letter delta (Δ)",
         "shot": "Vaccines are often injected here"
@@ -1927,6 +2227,13 @@
       "name": "Pectoralis major",
       "desc": "A fan-shaped chest muscle: it pulls the arm toward the body and turns it inward.",
       "location": "The front of the chest, from the breastbone and collarbone to the humerus",
+      "details": {
+        "origin": "The clavicular part from the medial half of the clavicle, the sternocostal part from the sternum and cartilages of ribs 1–6, the abdominal part from the rectus sheath.",
+        "insertion": "The crest of the greater tubercle of the humerus.",
+        "action": "Pulls the arm towards the body and turns it inward; the clavicular part raises the arm forward. With the arms braced it helps breathing in.",
+        "nerve": "The lateral and medial pectoral nerves from the brachial plexus (C5–T1).",
+        "blood": "Pectoral branches of the thoracoacromial artery, intercostal arteries and perforating branches of the internal thoracic artery."
+      },
       "facts": {
         "pushups": "The main muscle in push-ups and the bench press",
         "armpit": "Its edge forms the front wall of the armpit"
@@ -1936,6 +2243,13 @@
       "name": "Biceps brachii",
       "desc": "The muscle at the front of the upper arm: it bends the elbow and turns the palm up.",
       "location": "The front of the upper arm",
+      "details": {
+        "origin": "The long head from the supraglenoid tubercle of the scapula (its tendon runs through the shoulder joint), the short head from the coracoid process.",
+        "insertion": "The radial tuberosity and, through its aponeurosis, the fascia of the forearm.",
+        "action": "Flexes the elbow, powerfully turns the palm up (supination) and helps raise the arm forward.",
+        "nerve": "The musculocutaneous nerve (C5–C6).",
+        "blood": "Muscular branches of the brachial artery."
+      },
       "facts": {
         "heads": "It starts with two heads, hence the name",
         "partner": "Its opponent is the triceps at the back of the arm, which straightens the elbow"
@@ -1945,6 +2259,13 @@
       "name": "Brachioradialis",
       "desc": "A forearm muscle on the thumb side: it bends the elbow, especially with the palm turned sideways.",
       "location": "The outer forearm, from the humerus to the radius",
+      "details": {
+        "origin": "The lateral supracondylar ridge of the humerus.",
+        "insertion": "The base of the styloid process of the radius.",
+        "action": "Flexes the elbow — most strongly with the palm facing sideways — and returns the forearm to this mid position.",
+        "nerve": "The radial nerve (C5–C6), although the other muscles of this nerve are mostly extensors.",
+        "blood": "The radial recurrent artery and branches of the radial artery."
+      },
       "facts": {
         "hammer": "It works hardest when you hold a hammer or a mug",
         "visible": "It shows clearly under the skin when you bend your arm hard"
@@ -1954,6 +2275,13 @@
       "name": "Forearm flexors",
       "desc": "A group of muscles at the front of the forearm: they bend the wrist and fingers and give the grip its strength.",
       "location": "The front (palm side) of the forearm; their tendons run through the carpal tunnel to the fingers",
+      "details": {
+        "origin": "The superficial ones by a common tendon from the medial epicondyle of the humerus; the deep ones from the front of the radius, ulna and interosseous membrane.",
+        "insertion": "The carpal and metacarpal bones (wrist flexors) and the phalanges (finger flexors).",
+        "action": "Flex the wrist and fingers and help tilt the hand sideways; pronator teres and quadratus turn the palm down.",
+        "nerve": "Mainly the median nerve; flexor carpi ulnaris and part of flexor digitorum profundus (to the 4th and 5th fingers) are supplied by the ulnar nerve.",
+        "blood": "The radial and ulnar arteries and their branches."
+      },
       "facts": {
         "tendons": "The muscles stay in the forearm and send long tendons to the fingers, which is why fingers are slim",
         "grip": "Make a fist and you can see the forearm tighten"
@@ -1963,6 +2291,13 @@
       "name": "Rectus abdominis",
       "desc": "A long muscle of the front abdominal wall: it bends the trunk forward and tightens the abs.",
       "location": "The front of the abdomen from the ribs to the pubic bone, on both sides of the midline",
+      "details": {
+        "origin": "The pubic crest and pubic symphysis.",
+        "insertion": "The cartilages of ribs 5–7 and the xiphoid process of the sternum.",
+        "action": "Flexes the trunk, bringing the chest towards the pelvis; raises abdominal pressure when straining, coughing and breathing out forcefully.",
+        "nerve": "The lower intercostal nerves (T7–T11) and the subcostal nerve (T12).",
+        "blood": "The superior epigastric artery (from the internal thoracic) and the inferior epigastric artery (from the external iliac); they join inside the muscle."
+      },
       "facts": {
         "cubes": "Bands of tendon divide it into the 'six-pack'",
         "cough": "It helps with coughing, straining and forceful breathing out"
@@ -1972,6 +2307,13 @@
       "name": "External oblique",
       "desc": "A broad muscle of the side of the abdomen: it twists and bends the trunk.",
       "location": "The sides of the abdomen, running down and forward from the lower ribs",
+      "details": {
+        "origin": "The outer surface of the lower eight ribs (5–12), by slips that interlock with those of serratus anterior.",
+        "insertion": "Through a broad aponeurosis to the iliac crest and the linea alba; the thickened lower edge of the aponeurosis forms the inguinal ligament.",
+        "action": "One muscle turns the trunk to the opposite side and bends it to its own side; both together flex the trunk and compress the abdomen.",
+        "nerve": "The lower intercostal nerves (T7–T11) and the subcostal nerve (T12).",
+        "blood": "The lower posterior intercostal, subcostal and deep circumflex iliac arteries."
+      },
       "facts": {
         "pockets": "Its fibers run the same way as your fingers when your hands are in your jacket pockets",
         "layers": "Two more muscles lie beneath it: the internal oblique and the transverse abdominis"
@@ -1981,6 +2323,13 @@
       "name": "Sartorius",
       "desc": "The longest muscle in the body: a strap that crosses the thigh diagonally and bends the hip and knee.",
       "location": "The front of the thigh, running diagonally from the pelvis to the inner side of the knee",
+      "details": {
+        "origin": "The anterior superior iliac spine.",
+        "insertion": "The medial surface of the upper tibia — as part of the pes anserinus together with gracilis and semitendinosus.",
+        "action": "Flexes, abducts and turns the thigh outward and bends the knee — as in a tailor sitting cross-legged.",
+        "nerve": "The femoral nerve (L2–L3).",
+        "blood": "Muscular branches of the femoral artery."
+      },
       "facts": {
         "tailor": "It is named after tailors: it helps you sit cross-legged",
         "length": "It is about half a meter long"
@@ -1990,6 +2339,13 @@
       "name": "Rectus femoris",
       "desc": "One of the four heads of the quadriceps: it straightens the knee and bends the hip.",
       "location": "The middle of the front of the thigh",
+      "details": {
+        "origin": "The anterior inferior iliac spine and the edge of the hip bone above the acetabulum.",
+        "insertion": "Through the common quadriceps tendon to the patella and, via the patellar ligament, to the tibial tuberosity.",
+        "action": "Straightens the knee. The only head of the quadriceps that also crosses the hip, so it flexes the thigh as well.",
+        "nerve": "The femoral nerve (L2–L4).",
+        "blood": "The lateral circumflex femoral artery (a branch of the deep femoral artery)."
+      },
       "facts": {
         "kick": "It works when you kick a ball or climb stairs",
         "quads": "The quadriceps is one of the strongest muscles in the body"
@@ -1999,6 +2355,13 @@
       "name": "Vastus lateralis",
       "desc": "The largest head of the quadriceps: it straightens the knee.",
       "location": "The outer side of the thigh",
+      "details": {
+        "origin": "The greater trochanter, intertrochanteric line and lateral lip of the linea aspera of the femur.",
+        "insertion": "Via the quadriceps tendon to the patella and the tibial tuberosity.",
+        "action": "Straightens the knee and keeps it locked when standing and walking.",
+        "nerve": "The femoral nerve (L2–L4).",
+        "blood": "The descending branch of the lateral circumflex femoral artery."
+      },
       "facts": {
         "injection": "Babies get injections and vaccines here",
         "biopsy": "It is the usual place to take a small muscle sample for testing"
@@ -2008,6 +2371,13 @@
       "name": "Thigh adductors",
       "desc": "A group of muscles on the inner thigh: they bring the legs together.",
       "location": "The inner thigh, from the pubic bone to the femur",
+      "details": {
+        "origin": "The pubis and ischium (their rami and the ischial tuberosity).",
+        "insertion": "The whole length of the linea aspera of the femur and the adductor tubercle; gracilis inserts on the tibia.",
+        "action": "Pull the thigh inward and help flex it, while the ischial part of adductor magnus helps extend it; they steady the pelvis when walking.",
+        "nerve": "Mainly the obturator nerve (L2–L4); pectineus is supplied by the femoral nerve and the ischial part of adductor magnus by the sciatic nerve.",
+        "blood": "The deep femoral, obturator and femoral arteries."
+      },
       "facts": {
         "riding": "They work especially hard in horse riders and footballers",
         "groin": "Straining them is a common sports injury of the groin"

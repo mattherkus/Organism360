@@ -38,6 +38,11 @@ class RegistryTests(unittest.TestCase):
         ru, en = i18n._load("ru")["structures"], i18n._load("en")["structures"]
         for key in structures.STRUCTURES:
             self.assertEqual(set(ru[key]["facts"]), set(en[key]["facts"]), key)
+            fields = ("type", "parts", "joints", "muscles") if structures.kind(key) == "bone" else \
+                ("origin", "insertion", "action", "nerve", "blood")
+            for sec in (ru, en):
+                self.assertEqual(tuple(sec[key]["details"]), fields, key)
+                self.assertTrue(all(sec[key]["details"].values()), key)
             self.assertTrue(i18n._load("la")["structures"][key]["name"], key)
         self.assertEqual(i18n.name("femur"), "Бедренная кость")
         self.assertEqual(i18n.subtitle("femur"), "Femur")

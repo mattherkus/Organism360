@@ -176,6 +176,19 @@ def fact(key, fid):
     return ""
 
 
+def details(key):
+    """подробности карточки (функции, строение, кровоснабжение...; у костей и мышц - свои поля):
+    [(поле, текст)] в порядке русского файла, каждое поле с откатом на другие языки отдельно"""
+    out = []
+    for field in _entry(BASE, key).get("details", {}):
+        for code in _chain():
+            text = _entry(code, key).get("details", {}).get(field)
+            if text:
+                out.append((field, text))
+                break
+    return out
+
+
 def fact_in(code, key, fid):
     """текст факта на языке code как есть, без отката ("" - перевода нет)"""
     v = _entry(code, key).get("facts", {})

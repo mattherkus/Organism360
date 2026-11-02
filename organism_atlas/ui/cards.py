@@ -43,17 +43,26 @@ def read_button(lay, on_read, top=12):
 
 
 def card_text(key):
-    """текст карточки органа, кости или мышцы для чтения вслух: название, описание, где находится, факты"""
+    """текст карточки органа, кости или мышцы для чтения вслух: название, описание, где находится, факты, подробности"""
     parts = [i18n.name(key) + ".", i18n.organ(key, "desc"),
              t("card_location") + ": " + i18n.organ(key, "location") + "."]
     facts = i18n.organ(key, "facts")
     if facts:
         parts.append(t("card_facts") + ": " + ". ".join(f.rstrip(".") for f in facts) + ".")
+    parts += [t("detail_" + field) + ": " + text for field, text in i18n.details(key)]
     return " ".join(parts)
 
 
+def details(lay, key, on_link, seen):
+    """подробности карточки: у органа - функции, строение, размеры, кровоснабжение, нервы; у кости - тип, части,
+    соединения, мышцы; у мышцы - начало, прикрепление, действие, иннервация, кровоснабжение"""
+    for field, text in i18n.details(key):
+        section(lay, t("detail_" + field), text, on_link, seen)
+
+
 def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None):
-    """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
+    """карточка органа; compact - без подробностей, заболеваний и факта дня (для 3D-просмотра, где мало места
+    по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
     а заболевания органа - ссылками на статьи справочника болезней;
@@ -79,6 +88,7 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     for f in i18n.organ(key, "facts"):
         put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
     if not compact:
+        details(lay, key, on_link, seen)
         heading(lay, t("card_diseases"))
         put(lay, rich_label(joined(on_card(key), "  ·  "), on_link))   # ссылки на статьи справочника
         day = rounded_card(fill="day_bg", border=c, radius=10)
@@ -98,7 +108,8 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
 
 
 def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
-    """карточка кости или мышцы: название, латынь, что это, где находится, факты; ссылки и история - как у органа"""
+    """карточка кости или мышцы: название, латынь, что это, где находится, факты, подробности; ссылки и история -
+    как у органа"""
     lay = card.lay
     clear(lay)
     seen = {key}
@@ -113,6 +124,7 @@ def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
     heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
         put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
+    details(lay, key, on_link, seen)
     if on_read:
         read_button(lay, on_read)
     if back:

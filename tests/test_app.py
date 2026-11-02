@@ -396,6 +396,16 @@ class AppTests(unittest.TestCase):
         self.assertTrue(wait(lambda: not a.ghosts))
         self.assertTrue(a.header.isVisible() and a.panel.isVisible() and a.card_area.isVisible())
 
+    def test_zoom_buttons_at_scheme_edge(self):
+        """кнопки «+ − ⟲» - у правого края схемы уже при первом запуске (схема ещё без размера, когда окно
+        впервые расставляет кнопки), а не посередине поверх неё"""
+        from organism_atlas.ui.scaling import px
+        a = self.app
+        right = a.view.home().x() + min(a.view.scheme.width(), a.stage.width())      # шире места - у его края
+        for i, b in enumerate(a.stage.zoom_buttons.values()):
+            self.assertAlmostEqual(b.x(), right - px(38), delta=1)
+            self.assertEqual(b.y() - a.stage.zoom_buttons["zoom_in"].y(), i * px(36))
+
     def test_help_and_search_keys(self):
         from organism_atlas.ui import help, overlay
         from organism_atlas.ui.layers_panel import SEARCH
@@ -466,35 +476,44 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.card.findChildren(QWidget), before)
 
     def test_panels_inside_window(self):
-        """настройки, 3D и справочник болезней - панели внутри главного окна, а не отдельные окна;
-        Esc закрывает верхнюю"""
+        """настройки, 3D, справочник болезней и статистика - панели внутри главного окна, а не отдельные окна;
+        открыта всегда одна: новая заменяет прежнюю, Esc закрывает её"""
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
 
-        from organism_atlas.ui import overlay, settings_window, viewer3d
+        from organism_atlas.ui import overlay, settings_window, stats, viewer3d
         from organism_atlas.ui.diseases import show_diseases
-        settings_window.show_settings(self.app)
-        viewer3d.show_3d(self.app, "heart")
-        guide = show_diseases(self.app)
-        pump()
-        self.assertEqual([w for w in self.qt.topLevelWidgets() if w.isVisible()], [self.app])
-        for panel in (settings_window._window.win, viewer3d._viewer.win, guide):
+        from organism_atlas.ui.widgets import alive
+        opened = []
+        for show in (lambda: settings_window.show_settings(self.app) or settings_window._window.win,
+                     lambda: viewer3d.show_3d(self.app, "heart").win,
+                     lambda: show_diseases(self.app),
+                     lambda: stats.show_stats(self.app),
+                     lambda: show_diseases(self.app)):
+            panel = show()
+            pump()
+            self.assertEqual([w for w in self.qt.topLevelWidgets() if w.isVisible()], [self.app])
             self.assertIsInstance(panel, overlay.Panel)
             self.assertIs(panel.parent(), self.app)
             self.assertTrue(panel.isVisible())
             self.assertTrue(self.app.rect().contains(panel.geometry().center()))
+            self.assertEqual(overlay.stack(self.app), [panel])                # прежняя панель закрылась
+            self.assertFalse(any(alive(p) and p.isVisible() for p in opened))
+            opened.append(panel)
+        self.assertIsNone(settings_window._window)
+        self.assertIsNone(viewer3d._viewer)
+        guide = opened[-1]
         self.app.set_mode("name")                                          # цифры не уходят викторине за панелью
         self.assertNotIn(guide, overlay.stack(self.app))                   # справочник в викторине закрывается
+        settings_window.show_settings(self.app)
         self.app.quiz.start()
         self.app.on_key("", "1")
         self.assertEqual(self.app.quiz.session.errors + self.app.quiz.session.i, 0)
         self.assertFalse(self.app.quiz.next_timer.isActive())
-        for left in (1, 0):
-            QTest.keyClick(self.app, Qt.Key_Escape)
-            pump()
-            self.assertEqual(len(overlay.stack(self.app)), left)
+        QTest.keyClick(self.app, Qt.Key_Escape)
+        pump()
+        self.assertEqual(overlay.stack(self.app), [])
         self.assertIsNone(settings_window._window)
-        self.assertIsNone(viewer3d._viewer)
 
     def test_button_fade(self):
         """наведение меняет цвет кнопки плавно и доходит до цвета состояния"""
