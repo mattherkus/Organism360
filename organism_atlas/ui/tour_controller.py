@@ -6,6 +6,7 @@ TourController хранит, какая экскурсия идёт и на ка
 from .. import i18n, tours
 from ..i18n import t
 from ..organs import ORGANS
+from ..structures import STRUCTURES
 from .cards import fill_tour
 from .viewer3d import show_3d
 
@@ -102,7 +103,8 @@ class TourController:
                       [back, (t("tour_finish"), self.end, "accent", True)], extra)
         else:
             key = keys[i - 1]
+            extra = [(t("card_3d"), lambda: show_3d(app, key))] if key in ORGANS else []   # у костей и мышц 3D нет
             fill_tour(app.card, t("tour_progress", title=tours.title(name), n=i, total=n), i18n.name(key),
-                      i18n.subtitle(key), tours.story(name, key), ORGANS[key]["color"],
+                      i18n.subtitle(key), tours.story(name, key), (ORGANS.get(key) or STRUCTURES[key])["color"],
                       [back, (t("tour_next") if i < n else t("tour_last"), lambda: self.go(1), "accent", True)],
-                      [(t("card_3d"), lambda: show_3d(app, key)), (t("tour_exit"), self.end)])
+                      extra + [(t("tour_exit"), self.end)])

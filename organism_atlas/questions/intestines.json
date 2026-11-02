@@ -38,6 +38,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "С чего начинается тонкая кишка?",
+      "en": "Where does the small intestine begin?",
+      "answer": {
+        "ru": "С двенадцатиперстной кишки",
+        "en": "The duodenum"
+      },
+      "wrong": {
+        "ru": [
+          "С прямой кишки",
+          "С пищевода",
+          "С аппендикса"
+        ],
+        "en": [
+          "The rectum",
+          "The esophagus",
+          "The appendix"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Брюшная полость: длинная узкая извитая трубка в центре, а более широкая обрамляет её рамкой",
       "en": "Abdominal cavity: a long narrow coiled tube in the centre, framed by a wider one"
@@ -81,6 +102,26 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Сюда поджелудочная железа и печень выпускают свои соки.",
+      "en": "The pancreas and liver release their juices into it."
+    },
+    {
+      "level": "medium",
+      "ru": "Его бактерии делают витамин K.",
+      "en": "Its bacteria make vitamin K."
+    },
+    {
+      "level": "medium",
+      "ru": "Тощая и подвздошная — части его тонкого отдела.",
+      "en": "The jejunum and the ileum are parts of its small section."
+    },
+    {
+      "level": "medium",
+      "ru": "Витамин B12 всасывается в самом конце его тонкого отдела.",
+      "en": "Vitamin B12 is absorbed at the very end of its small section."
+    },
+    {
       "level": "hard",
       "ru": "Ворсинки и складки увеличивают площадь всасывания примерно до 30 м²",
       "en": "Villi and folds expand the absorbing surface to about 30 m²"
@@ -94,6 +135,42 @@
       "level": "hard",
       "ru": "По одной из гипотез аппендикс хранит запас полезных бактерий",
       "en": "One hypothesis says the appendix keeps a reserve of helpful bacteria"
+    },
+    {
+      "level": "hard",
+      "ru": "Целиакия — непереносимость глютена — повреждает ворсинки его тонкого отдела.",
+      "en": "Coeliac disease, an intolerance of gluten, damages the villi of its small section."
+    },
+    {
+      "level": "hard",
+      "ru": "Заслонка между его тонким и толстым отделами не даёт содержимому вернуться назад.",
+      "en": "A valve between its small and large sections keeps the contents from flowing back."
+    },
+    {
+      "level": "hard",
+      "ru": "В его стенке так много нервных клеток, что её называют «вторым мозгом».",
+      "en": "Its wall holds so many nerve cells that it is called the “second brain”."
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько примерно длится путь пищи через толстую кишку?",
+      "en": "About how long does food take to pass through the large intestine?",
+      "answer": {
+        "ru": "1–3 суток",
+        "en": "1–3 days"
+      },
+      "wrong": {
+        "ru": [
+          "10 минут",
+          "2 часа",
+          "2 недели"
+        ],
+        "en": [
+          "10 minutes",
+          "2 hours",
+          "2 weeks"
+        ]
+      }
     }
   ]
 }

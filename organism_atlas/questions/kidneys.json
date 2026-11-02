@@ -38,6 +38,22 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Их работу проверяют по анализу мочи.",
+      "en": "Their work is checked with a urine test."
+    },
+    {
+      "level": "easy",
+      "ru": "Сколько у человека почек?",
+      "en": "How many kidneys does a person have?",
+      "answer": "2",
+      "wrong": [
+        "1",
+        "3",
+        "4"
+      ]
+    },
+    {
       "level": "medium",
       "ru": "У задней стенки живота по бокам от позвоночника, на уровне нижних рёбер",
       "en": "Against the back wall of the abdomen on either side of the spine, at the level of the lower ribs"
@@ -56,6 +72,26 @@
       "level": "medium",
       "ru": "Образуют мочу: по мочеточникам она стекает в мочевой пузырь",
       "en": "They make urine, which flows down the ureters into the bladder"
+    },
+    {
+      "level": "medium",
+      "ru": "Правая лежит чуть ниже левой: над ней печень.",
+      "en": "The right one sits a little lower than the left because the liver is above it."
+    },
+    {
+      "level": "medium",
+      "ru": "Их гормон ренин помогает поднимать давление крови.",
+      "en": "Their hormone renin helps raise blood pressure."
+    },
+    {
+      "level": "medium",
+      "ru": "Когда они отказывают, кровь очищают аппаратом диализа.",
+      "en": "When they fail, the blood is cleaned by a dialysis machine."
+    },
+    {
+      "level": "medium",
+      "ru": "Переводят витамин D в активную форму, нужную костям.",
+      "en": "They turn vitamin D into its active form, which bones need."
     },
     {
       "level": "hard",
@@ -89,6 +125,42 @@
           "Villi",
           "Hepatocytes",
           "Red blood cells"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "В каждой — около миллиона крошечных фильтров.",
+      "en": "Each holds about a million tiny filters."
+    },
+    {
+      "level": "hard",
+      "ru": "Получают около пятой части всей крови, которую выбрасывает сердце.",
+      "en": "They receive about a fifth of all the blood the heart pumps out."
+    },
+    {
+      "level": "hard",
+      "ru": "Скорость клубочковой фильтрации — главный показатель их работы.",
+      "en": "The glomerular filtration rate is the main measure of how well they work."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называется воронка, из которой моча уходит в мочеточник?",
+      "en": "What is the funnel that drains urine into the ureter?",
+      "answer": {
+        "ru": "Почечная лоханка",
+        "en": "The renal pelvis"
+      },
+      "wrong": {
+        "ru": [
+          "Ампула",
+          "Кардия",
+          "Привратник"
+        ],
+        "en": [
+          "The ampulla",
+          "The cardia",
+          "The pylorus"
         ]
       }
     }

@@ -1,6 +1,9 @@
 """Главное окно (Qt): схема тела, наведение, карточка органа, панель слоёв с поиском органа, режим «Изучать»
 и викторина. Игру ведёт QuizController (quiz_controller.py), экскурсии - TourController (tour_controller.py),
-историю карточек - CardHistory (history.py); окно даёт им карточку справа и подсветку органов на схеме.
+флеш-карточки - FlashController (flash_controller.py), историю карточек - CardHistory (history.py), подсветку
+на схеме - Marks (marks.py), выбор органа стрелками - KeyboardChoice (keyboard.py), чтение вслух - CardReader
+(reader.py), кнопку новой версии - UpdateCheck (update_check.py), выезд интерфейса при приближении - UiSlide
+(sliding.py); окно даёт им карточку справа и схему.
 Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя.
 Схема рисуется в пикселях экрана: на экране с масштабом 150 % она в полтора раза подробнее, а не растянута.
 Новая карточка справа проявляется плавно, а в итогах викторины органы-ошибки отмечены на схеме."""
@@ -13,11 +16,11 @@ import traceback
 from datetime import date
 
 from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRect, QSize, Qt, QTimer
-from PySide6.QtGui import QActionGroup, QImage, QKeySequence, QPainter, QPixmap, QRegion, QShortcut
-from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QMenu, QScrollArea,
-                               QWidget)
+from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QShortcut
+from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QLineEdit, QMenu, QPlainTextEdit,
+                               QScrollArea, QWidget)
 
-from .. import achievements, i18n, progress, settings, speech, stats, theme, tours, updates
+from .. import achievements, i18n, progress, settings, stats, theme, tours
 from ..colors import hex2rgb
 from ..config import STATUS
 from ..atlas import Atlas
@@ -31,24 +34,30 @@ from . import overlay, titlebar, toast
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
 from .scaling import fit_zoom, pick_zoom, px, set_scale
-from .scheme_view import HIDE_FROM, ZOOM_STEPS, SchemeView, Stage, slide
+from .scheme_view import HIDE_FROM, ZOOM_STEPS, SchemeView, Stage
 from . import settings_window
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .help import show_help as open_help
-from .cards import card_text, fill_card, fill_start
+from .cards import fill_card, fill_start
+from .flash_controller import FlashController
 from .history import CardHistory
+from .keyboard import KeyboardChoice
 from .layers_panel import (ORGANS_ALL, SEARCH, SKIN, by_color, count_organs, fill_layers, filter_organs,
                            show_all_button)
+from .marks import Marks
+from .notes_ui import CardNotes
 from .quiz_controller import QuizController, timer
+from .reader import CardReader
+from .sliding import UiSlide
 from .stats import show_stats
 from .tour_controller import TourController
+from .update_check import UpdateCheck
 from .widgets import (TabButton, alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card,
                       set_button_bg, vbox)
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
-REVEAL_MS = 500                # сколько на лёгком уровне видна подсказка «верный орган здесь» после ошибки
 REBUILD_WAIT = 5                # сколько секунд ждать, пока пересобранное окно нарисует схему (смена масштаба)
 CRUMBS = 2                      # сколько прежних карточек показывать «крошками» над карточкой органа
 CARD_FADE_MS = 180              # новая карточка справа проявляется за столько миллисекунд
@@ -72,16 +81,21 @@ class App(QWidget):
         saved = settings.load()
         self.quiz = QuizController(self)       # игра: настройки, вопросы, таймер, итоги
         self.tours = TourController(self)      # экскурсии в режиме «Изучать»
+        self.flash = FlashController(self)     # флеш-карточки в режиме «Изучать»
+        self.notes = CardNotes(self)           # заметки и закладки на карточках
         self.cards = CardHistory()             # просмотренные карточки органов: «назад», «вперёд»
+        self.marks = Marks(self)               # подсветка на схеме: под курсором, вопрос, верно/ошибка, итоги
+        self.kb = KeyboardChoice(self)         # орган (кость, мышца), выбранный стрелками ↑ ↓ - без мыши
+        self.reader = CardReader(self)         # чтение карточки вслух
+        self.update_check = UpdateCheck(self)  # кнопка «Новая версия», если на GitHub есть выпуск новее
+        self.slide = UiSlide(self)             # интерфейс уезжает к краям при сильном приближении схемы
         self.quiz_mode = settings.get(saved, "quiz_mode")     # вид викторины, который открывает кнопка «Викторина»
         self.layers_open = settings.get(saved, "layers_panel") == "open"   # раздел «Слои» развёрнут
         self.folded = set(PANEL_SYSTEMS)       # свёрнутые системы в списке органов (сначала - все)
-        self.missed = ()                       # органы-ошибки, отмеченные на схеме в итогах викторины
         self.skin_clear = 0                    # прозрачность кожи, % (ползунок под строкой «Кожа»)
         self.body = settings.get(saved, "body")   # схема тела: female или male (органы малого таза)
         self.animation = settings.get(saved, "animation")      # on - сердце бьётся, лёгкие дышат
         self.atlas, self.cur = None, None
-        self.photos = {}                       # {(орган, вид подсветки): (QImage, (x, y))}
         # что сейчас в карточке и в строке статуса: функции, чтобы перерисовать их на другом языке
         self.card_fn = self.status_fn = None
         self.built = queue.Queue()
@@ -92,25 +106,15 @@ class App(QWidget):
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
         self.knowledge = False                 # карта знаний на схеме (органы в цвете уровня знания)
         self.levels = {}                       # {орган: уровень знания} для карты знаний и подсказки у курсора
-        self.kb_key = None                     # орган (кость, мышца), выбранный стрелками ↑ ↓ - без мыши
-        self.reading = None                    # ключ карточки, которую сейчас читают вслух
         self.toggles = {}
         # отложенные действия
-        self.flash_timer = timer(self, self.unflash, 500)
-        self.reveal_timer = timer(self, self.unreveal, REVEAL_MS)
         self.skin_timer = timer(self, self.apply_skin, 40)
         self.resize_timer = timer(self, self.start_build, 400)
-        self.read_timer = timer(self, self.update_read_button)
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.poll_updates)
-        self.update_queue = None
         self.anim_timer = timer(self, self.animate)
         self.build_timer = QTimer(self)
         self.build_timer.timeout.connect(self.poll_build)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAutoFillBackground(False)
-        self.ui_hidden = False                 # схема приближена сильно: заголовок, слои и карточка уехали
-        self.ghosts = {}                       # {виджет: его картинка, которая сейчас уезжает или возвращается}
 
         root = vbox(self, margins=(24, 18, 24, 0))
         top = hbox()
@@ -152,11 +156,7 @@ class App(QWidget):
         self.latin_action.setCheckable(True)
         top.addWidget(self.lang_button, 0, Qt.AlignTop)
         self.ach_button = flat_button("", lambda: show_achievements(self), padx=10)
-        # новая версия на GitHub (updates.py): кнопка видна, только когда она есть
-        self.update_button = flat_button("", self.open_update, bg="accent", padx=10)
-        self.update_button.hide()
-        self.update_info = None
-        for b in (self.update_button, self.ach_button):
+        for b in (self.update_check.button, self.ach_button):
             top.addSpacing(px(6))
             top.addWidget(b, 0, Qt.AlignTop)
         self.top_bar = top
@@ -255,8 +255,8 @@ class App(QWidget):
 
     def showEvent(self, e):
         super().showEvent(e)
-        if App.main is self and self.update_queue is None:   # проверка обновлений - один раз за запуск окна
-            QTimer.singleShot(3000, self.check_updates)
+        if App.main is self and self.update_check.queue is None:   # проверка обновлений - один раз за запуск окна
+            QTimer.singleShot(3000, self.update_check.check)
         titlebar.paint(self)
         self.setFocus()
         self.on_resize()                                 # схема начинает рисоваться, когда окно на экране
@@ -295,39 +295,20 @@ class App(QWidget):
         """проверять ли обновления (раз в день, в фоне)"""
         settings.save(updates=value)
         if value == "on":
-            self.check_updates()
-
-    def check_updates(self):
-        """раз в день спросить GitHub о новой версии - в фоновом потоке; ответ заберёт poll_updates"""
-        if not updates.due():
-            return
-        result = queue.Queue()
-        threading.Thread(target=lambda: result.put(updates.check()), daemon=True).start()
-        self.update_queue = result
-        self.update_timer.start(500)
-
-    def poll_updates(self):
-        try:
-            info = self.update_queue.get_nowait()
-        except queue.Empty:
-            return
-        self.update_timer.stop()
-        if info:
-            self.update_info = info
-            self.update_button.show()
-            self.retranslate()
-
-    def open_update(self):
-        if self.update_info:
-            from PySide6.QtCore import QUrl
-            from PySide6.QtGui import QDesktopServices
-            QDesktopServices.openUrl(QUrl(self.update_info["url"]))
+            self.update_check.check()
 
     def set_animation(self, value):
         self.animation = value
         settings.save(animation=value)
         if value != "on":
             self.view.show_layer("anim", None)
+
+    def show_tips(self):
+        """кнопка в настройках: подсказки по интерфейсу ещё раз - поверх схемы, а не страницы настроек"""
+        from . import onboarding
+        while overlay.close_top(self):
+            pass
+        onboarding.start(self)
 
     def organs(self):
         """органы на схеме: без органов другого пола"""
@@ -341,6 +322,7 @@ class App(QWidget):
         settings.save(body=value)
         self.hidden -= other_sex(value)
         self.tours.reset()                              # маршрут экскурсии зависит от схемы тела
+        self.flash.reset()                              # и колоды флеш-карточек - тоже
         self.set_spot(None)
         self.render_layers()
         self.apply_view()
@@ -371,7 +353,7 @@ class App(QWidget):
         new.render_layers()
         if self.mode != "study":
             new.set_mode(self.mode)
-        elif self.cards.current is not None and self.card_fn not in (self.empty_card, self.tours.card):
+        elif self.cards.current is not None and self.card_fn not in (self.empty_card, self.tours.card, self.flash.card):
             new.cards = self.cards.upto_current()
             new.show_info(self.cards.current, record=False)
         new.setWindowOpacity(0.0)                       # заголовок красится в showEvent, пока окно невидимо
@@ -405,9 +387,7 @@ class App(QWidget):
         for name, b in self.panel_tabs.items():
             b.setText(t("tab_" + name))
             b.setToolTip(t(name + "_hint"))
-        if self.update_info:
-            self.update_button.setText(t("update_button", version=self.update_info["version"]))
-            self.update_button.setToolTip(t("update_hint"))
+        self.update_check.retranslate()
         self.ach_button.setText(achievements_text())
         self.ach_button.setToolTip(t("ach_hint"))
         self.lang_button.setToolTip(t("lang_hint"))
@@ -467,8 +447,14 @@ class App(QWidget):
 
     def empty_card(self):
         fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
-                   [("➜  " + tours.title(name), lambda n=name: self.tours.start(n)) for name in tours.available(self.body)],
-                   review=self.review_block(), organ=self.organ_block(), knowledge=self.knowledge_block())
+                   [("➜  " + tours.title(name), lambda n=name: self.start_tour(n)) for name in tours.available(self.body)],
+                   review=self.review_block(), organ=self.organ_block(), knowledge=self.knowledge_block(),
+                   flash=self.flash.block(), starred=self.notes.home_block())
+
+    def start_tour(self, name):
+        """экскурсия со стартовой карточки: начатый подход флеш-карточек заканчивается"""
+        self.flash.reset()
+        self.tours.start(name)
 
     def review_block(self):
         """раздел «Повторение» на стартовой карточке: сколько органов пора повторить (в том виде викторины,
@@ -566,7 +552,7 @@ class App(QWidget):
             return                                      # под новый размер не вышло: остаётся растянутая
         if self.atlas is not None:
             self.atlas.stop_warm()
-            self.drop_photos()                          # подсветка прежнего масштаба больше не подходит
+            self.marks.drop()                           # подсветка прежнего масштаба больше не подходит
         self.atlas = res
         self.apply_look(self.atlas, self.look())        # обычно картинка уже собрана потоком с тем же видом
         self.show_base()
@@ -576,9 +562,9 @@ class App(QWidget):
             return
         self.view.message = None
         self.view.update()
-        self.show_target()                              # если режим включили, пока схема строилась
+        self.marks.show_target()                        # если режим включили, пока схема строилась
         self.refresh_knowledge()
-        self.show_missed(self.missed)
+        self.marks.show_missed(self.marks.missed)
         self.atlas.warm()                               # подсветка под курсором - заранее, в фоне
 
     def look(self):
@@ -652,7 +638,7 @@ class App(QWidget):
         self.view.set_labels([])
         if self.ready():                                # вернули прежний размер, пока рисовалась другая
             self.view.message = None
-            self.show_target()
+            self.marks.show_target()
         else:
             self.view.message = (t("rescaling"), True)
         self.view.update()
@@ -765,7 +751,7 @@ class App(QWidget):
         if key is not None and key in self.hidden:
             self.hidden.discard(key)
             self.apply_view()
-        self.show_target()
+        self.marks.show_target()
         if look and key is not None and self.ready():
             self.view.look_at(*self.atlas.center(key))
 
@@ -784,7 +770,7 @@ class App(QWidget):
     def show_panel(self):
         """панель слоёв - только в режиме «Изучать». В викторине её место остаётся пустым,
         чтобы схема не меняла масштаб (и не перерисовывалась) при каждой смене режима"""
-        self.panel.setVisible(self.mode == "study" and not self.ui_hidden)
+        self.panel.setVisible(self.mode == "study" and not self.slide.hidden)
 
     def toggle_all_organs(self):
         self.hidden = set() if self.hidden == set(self.organs()) else set(self.organs())
@@ -810,59 +796,14 @@ class App(QWidget):
             hidden = frozenset(self.hidden_now())
             if hidden != self.atlas.hidden:
                 self.atlas.set_hidden(hidden)
-                self.drop_photos()                      # подсветка зависит от того, кто кого закрывает
+                self.marks.drop()                       # подсветка зависит от того, кто кого закрывает
                 self.on_leave()
                 self.atlas.warm()
             self.show_base()
-            self.show_target()                          # подсветка органа поиска или экскурсии - заново
+            self.marks.show_target()                    # подсветка органа поиска или экскурсии - заново
             self.refresh_knowledge()
 
     # --- наведение и клики
-    def drop_photos(self):
-        """забыть картинки подсветки"""
-        for name in ("target", "hover", "flash", "reveal", "missed"):
-            self.view.show_layer(name, None)
-        self.view.set_pin(None)
-        self.view.set_labels([])
-        self.photos.clear()
-
-    def show_missed(self, keys):
-        """итоги викторины: органы (кости, мышцы), на которых ошибались, - красным на схеме и с подписью;
-        пустой keys - снять отметки"""
-        self.missed = tuple(k for k in keys if k in ORGANS or k in STRUCTURES)
-        if not (self.missed and self.ready()):
-            self.view.show_layer("missed", None)
-            self.view.set_labels([])
-            return
-        hidden = self.hidden_now()
-        shown = [k for k in self.missed if k not in hidden]
-        items = [self.photo(k, "bad") for k in shown]
-        if not items:
-            self.view.show_layer("missed", None)
-            self.view.set_labels([])
-            return
-        box = QRect()
-        for im, (x, y) in items:
-            box = box.united(QRect(int(x), int(y), im.width(), im.height()))
-        out = QImage(box.size(), QImage.Format_ARGB32_Premultiplied)
-        out.fill(Qt.transparent)
-        p = QPainter(out)
-        for im, (x, y) in items:
-            p.drawImage(int(x) - box.x(), int(y) - box.y(), im)
-        p.end()
-        self.view.show_layer("missed", (out, (box.x(), box.y())))
-        self.view.set_labels([(*self.atlas.center(k), i18n.name(k)) for k in shown])
-
-    def photo(self, key, kind):
-        if (key, kind) not in self.photos:
-            im, pos = self.atlas.overlay(key, kind)
-            self.photos[(key, kind)] = (qimage(im), pos)
-        return self.photos[(key, kind)]
-
-    def set_hover(self, key):
-        self.view.show_layer("hover", None if key is None else self.photo(key, "hover"))
-        self.view.setCursor(Qt.ArrowCursor if key is None else Qt.PointingHandCursor)
-
     def kind(self):
         """тип текущего вопроса (quiz.KINDS); без игры - режим: study или режим викторины"""
         return self.quiz.kind() or self.mode
@@ -875,10 +816,10 @@ class App(QWidget):
         if self.kind() != "study" and s and (s.level == "hard" or self.quiz.exam()):
             return                                      # на сложном уровне и в экзамене подсветки под курсором нет
         key = self.thing_at(x, y)
-        self.kb_key = None                              # мышь снова главная: выбор стрелками сброшен
+        self.kb.key = None                              # мышь снова главная: выбор стрелками сброшен
         if key != self.cur:
             self.cur = key
-            self.set_hover(key)
+            self.marks.hover(key)
         # в викторине - без названия; при карте знаний - и уровень знания
         name = i18n.name(key) if key else ""
         if key and self.knowledge and key in self.levels:
@@ -898,7 +839,7 @@ class App(QWidget):
         if self.atlas is None:
             return
         self.cur = None
-        self.set_hover(None)
+        self.marks.hover(None)
         self.view.set_tip(None)
 
     # --- приближение схемы
@@ -912,64 +853,7 @@ class App(QWidget):
         stage.zoom_buttons["zoom_in"].setEnabled(k < ZOOM_STEPS[-1])
         stage.zoom_buttons["zoom_out"].setEnabled(k > 1)
         stage.zoom_buttons["zoom_reset"].setEnabled(k > 1)
-        self.set_ui_hidden(k >= HIDE_FROM, animate)
-
-    def sliding(self):
-        """что уезжает при сильном приближении: заголовок - вверх, слои - влево, карточка - вправо;
-        (виджет, виден ли он, когда интерфейс на месте, куда уезжает)"""
-        return ((self.header, True, QPoint(0, -1)), (self.panel, self.mode == "study", QPoint(-1, 0)),
-                (self.card_area, True, QPoint(1, 0)))
-
-    def set_ui_hidden(self, hide, animate=True):
-        """увезти интерфейс за края окна (hide) или вернуть; без animate - сразу"""
-        if hide == self.ui_hidden:
-            return
-        self.ui_hidden = hide
-        animate = animate and self.isVisible()
-        for w, shown, d in self.sliding():
-            if not shown:
-                continue
-            if not animate:
-                w.setVisible(not hide)
-                continue
-            at = w.mapTo(self, QPoint(0, 0))
-            away = QPoint(-w.width() if d.x() < 0 else self.width() if d.x() > 0 else at.x(),
-                          -w.height() if d.y() < 0 else at.y())
-            g, pos = self.ghost(w)
-            w.hide()                                     # пока едет - вместо виджета его картинка
-            slide(g, pos or (at if hide else away), away if hide else at, lambda g=g, w=w: self.landed(g, w))
-        self.stage.place(animate)
-
-    def ghost(self, w):
-        """картинка виджета для выезда; если прошлая ещё едет - новая начинает с её места"""
-        old = self.ghosts.pop(w, None)
-        pos = None
-        if old is not None:
-            pos = old.pos()
-            old._slide.stop()
-            old.deleteLater()
-        g = QLabel(self)
-        g.setAttribute(Qt.WA_TransparentForMouseEvents)
-        d = w.devicePixelRatioF()
-        pm = QPixmap(w.size() * d)                       # без фона: заголовок едет поверх схемы прозрачным
-        pm.setDevicePixelRatio(d)
-        pm.fill(Qt.transparent)
-        w.render(pm, QPoint(), QRegion(), QWidget.DrawChildren)
-        g.setPixmap(pm)
-        g.resize(w.size())
-        g.show()
-        g.raise_()
-        self.ghosts[w] = g
-        return g, pos
-
-    def landed(self, g, w):
-        """картинка доехала: убрать её, а вернувшийся виджет показать"""
-        if self.ghosts.get(w) is not g:
-            return
-        del self.ghosts[w]
-        g.deleteLater()
-        if not self.ui_hidden:
-            self.show_panel() if w is self.panel else w.show()
+        self.slide.set_hidden(k >= HIDE_FROM, animate)
 
     def mousePressEvent(self, e):
         """боковые кнопки мыши листают историю карточек"""
@@ -1017,8 +901,10 @@ class App(QWidget):
                     crumbs, lambda ref: self.go_history(int(ref[1:]) - h.pos))
 
         on_3d = (lambda: show_3d(self, key)) if key in ORGANS else None          # у костей и мышц 3D нет
-        self.set_card(lambda: fill_card(self.card, key, on_3d=on_3d, back=self.tours.back_button(),
-                                        on_link=self.open_link, nav=nav(), on_read=self.read_action(key)), fade=True)
+        back = self.flash.back_button() or self.tours.back_button()     # вернуться к флеш-карточкам или экскурсии
+        self.set_card(lambda: fill_card(self.card, key, on_3d=on_3d, back=back,
+                                        on_link=self.open_link, nav=nav(), on_read=self.reader.action(key),
+                                        note=self.notes.block(key)), fade=True)
 
     def go_history(self, step):
         """на step карточек назад (step < 0) или вперёд по истории просмотра (Alt+стрелки, кнопки над карточкой)"""
@@ -1122,12 +1008,11 @@ class App(QWidget):
             self.quiz_mode = mode
             settings.save(quiz_mode=mode)
         self.tours.reset()
+        self.flash.reset()
         self.cards.clear()
-        self.kb_key = None
-        if self.reading:                                # чтение карточки - только в «Изучать»
-            speech.stop()
-            self.reading = None
-        self.unreveal()
+        self.kb.key = None
+        self.reader.stop()                              # чтение карточки - только в «Изучать»
+        self.marks.unreveal()
         if SEARCH in self.toggles:
             self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
         self.spot = None
@@ -1143,42 +1028,6 @@ class App(QWidget):
             return
         self.set_status(lambda: t("setup_status"))
         self.set_card(self.quiz.render_setup, fade=True)
-
-    # --- подсветка на схеме: вопрос, верно/ошибка, подсказка
-    def show_target(self):
-        """подсветить орган текущего вопроса «Угадай название», а в «Изучать» - орган поиска или экскурсии;
-        у вопроса другого типа подсветки нет"""
-        if not self.ready():
-            return
-        key = self.quiz.target() if self.mode != "study" else self.spot
-        if key is None or key in self.hidden_now():
-            self.view.show_layer("target", None)
-            return
-        self.view.show_layer("target", self.photo(key, "target"))
-
-    def flash(self, key, kind):
-        """на полсекунды закрасить орган зелёным (верно) или красным (ошибка)"""
-        if not self.ready():
-            return
-        self.view.show_layer("flash", self.photo(key, kind))
-        self.flash_timer.start()
-
-    def unflash(self):
-        self.flash_timer.stop()
-        self.view.show_layer("flash", None)
-
-    def reveal(self, key):
-        """лёгкий уровень: после ошибки ненадолго показать на схеме, где верный орган, и подписать его"""
-        if not self.ready() or (key not in ORGANS and key not in STRUCTURES) or key in self.hidden_now():
-            return
-        self.view.show_layer("reveal", self.photo(key, "ok"))
-        self.view.set_pin((*self.atlas.anchor(key), i18n.name(key)))
-        self.reveal_timer.start()
-
-    def unreveal(self):
-        self.reveal_timer.stop()
-        self.view.show_layer("reveal", None)
-        self.view.set_pin(None)
 
     def keyPressEvent(self, e):
         """Esc закрывает верхнюю панель; остальное - on_key"""
@@ -1196,8 +1045,8 @@ class App(QWidget):
         """цифры выбирают вариант ответа, Enter на карточке настройки начинает игру, стрелки листают экскурсию,
         + и − приближают схему, 0 возвращает её целиком, ? - справка о клавишах
         (но не тогда, когда поверх открыта панель: настройки, болезни или 3D, и не при наборе в поиске)"""
-        if overlay.top(self) is not None or isinstance(QApplication.focusWidget(), QLineEdit):
-            return
+        if overlay.top(self) is not None or isinstance(QApplication.focusWidget(), (QLineEdit, QPlainTextEdit)):
+            return                                      # набирают в поиске или в заметке
         if char in ("+", "=", "-", "−", "0"):
             if char == "0":
                 self.view.reset_zoom()
@@ -1207,93 +1056,27 @@ class App(QWidget):
         if char == "?":
             self.show_help()
             return
-        if keysym in ("Up", "Down") and self.kb_keys():
-            self.kb_move(-1 if keysym == "Up" else 1)
+        if keysym in ("Up", "Down") and self.kb.keys():
+            self.kb.move(-1 if keysym == "Up" else 1)
             return
-        if keysym in ("Return", "KP_Enter") and self.kb_key is not None and self.kb_choose():
+        if keysym in ("Return", "KP_Enter") and self.kb.choose():
             return
         if self.mode == "study":
             if char in ("k", "K", "л", "Л"):             # K (и та же клавиша в русской раскладке)
                 self.set_knowledge(not self.knowledge)
                 return
             if char in ("r", "R", "к", "К") and self.cards.current is not None:   # R - прочитать карточку вслух
-                self.read_card(self.cards.current)
+                self.reader.toggle(self.cards.current)
+                return
+            if self.flash.on_key(keysym, char):        # флеш-карточка: пробел - ответ, 1 / 2 - не знал / знал
                 return
             self.tours.on_key(keysym)
             return
         self.quiz.on_key(keysym, char)
 
-    # --- без мыши: стрелки выбирают орган на схеме, Enter - как щелчок по нему
-    def kb_keys(self):
-        """что можно выбрать стрелками: в «Изучать» - видимые органы по порядку панели, в «Найди орган»
-        и «Расставь по порядку» - органы схемы, в «Кости и мышцы» - кости и мышцы темы"""
-        kind = self.kind()
-        if not self.ready() or kind not in ("study", "find", "body", "order"):
-            return []
-        if kind == "body":
-            from ..structures import keys as structure_keys
-            return structure_keys(self.quiz.body_topic())
-        hidden = self.hidden_now()
-        return [k for _system, ks in self.groups() for k in ks if k not in hidden]
-
-    def kb_move(self, step):
-        """выбрать следующий (step = 1) или предыдущий орган: подсветка, а в «Изучать» - и название рядом"""
-        keys = self.kb_keys()
-        i = keys.index(self.kb_key) if self.kb_key in keys else (-1 if step > 0 else 0)
-        key = self.kb_key = keys[(i + step) % len(keys)]
-        self.cur = key
-        self.set_hover(key)
-        name = i18n.name(key)
-        if self.mode == "study":                        # в викторине название выдало бы ответ
-            self.view.set_tip((*self.view.to_screen(*self.atlas.anchor(key)), name))
-            self.set_status(lambda: t("kb_status", name=name))
-        self.view.setAccessibleName(name if self.mode == "study" else t("kb_selected"))
-
-    def kb_choose(self):
-        """Enter: выбранный стрелками орган - как щелчок по нему (карточка или ответ); True - обработано"""
-        key, kind = self.kb_key, self.kind()
-        if kind == "study":
-            if self.tours.tour is not None:             # Enter листает экскурсию
-                return False
-            self.tours.pause()
-            self.show_info(key)
-            self.set_spot(key)
-            return True
-        if kind in ("find", "body", "order"):
-            self.quiz.answer(key)
-            return True
-        return False
-
-    # --- чтение вслух
-    def read_action(self, key):
-        """кнопка «Прочитать вслух» для карточки key или None, если читать нечем"""
-        if not speech.available():
-            return None
-        return (t("card_read_stop") if self.reading == key and speech.speaking() else t("card_read"),
-                lambda: self.read_card(key))
-
-    def read_card(self, key):
-        """прочитать карточку вслух; если её уже читают - остановить"""
-        if not speech.available():
-            return
-        if self.reading == key and speech.speaking():
-            speech.stop()
-            self.reading = None
-        else:
-            self.reading = key if speech.speak(card_text(key), i18n.base()) else None
-        self.update_read_button()
-        if self.reading:
-            self.read_timer.start(400)
-
-    def update_read_button(self):
-        """подпись кнопки чтения: пока читают - «Остановить», потом снова «Прочитать вслух»"""
-        b = getattr(self.card, "read_button", None)
-        if self.reading and not speech.speaking():
-            self.reading = None
-        if alive(b):
-            b.setText(t("card_read_stop") if self.reading else t("card_read"))
-        if self.reading:
-            self.read_timer.start(400)
+    def closeEvent(self, e):
+        self.notes.flush()                              # недописанная заметка - в файл
+        super().closeEvent(e)
 
     def resizeEvent(self, e):
         super().resizeEvent(e)

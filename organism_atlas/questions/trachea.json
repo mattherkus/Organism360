@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Через неё проходит каждый вдох.",
+      "en": "Every breath passes through it."
+    },
+    {
+      "level": "easy",
+      "ru": "Что лежит над трахеей?",
+      "en": "What lies above the trachea?",
+      "answer": {
+        "ru": "Гортань",
+        "en": "The larynx"
+      },
+      "wrong": {
+        "ru": [
+          "Желудок",
+          "Пищевод",
+          "Сердце"
+        ],
+        "en": [
+          "The stomach",
+          "The esophagus",
+          "The heart"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Внизу делится на два главных бронха.",
       "en": "At the bottom it splits into the two main bronchi."
@@ -59,6 +85,37 @@
       ]
     },
     {
+      "level": "medium",
+      "ru": "Кашель выбрасывает из неё слизь и попавшие частицы.",
+      "en": "Coughing clears mucus and particles out of it."
+    },
+    {
+      "level": "medium",
+      "ru": "Как называется операция, при которой в трахее на шее делают отверстие для дыхания?",
+      "en": "What is the operation that makes a breathing opening in the trachea at the neck?",
+      "answer": {
+        "ru": "Трахеостомия",
+        "en": "Tracheostomy"
+      },
+      "wrong": {
+        "ru": [
+          "Гастростомия",
+          "Колостомия",
+          "Торакотомия"
+        ],
+        "en": [
+          "Gastrostomy",
+          "Colostomy",
+          "Thoracotomy"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Её поперечник у взрослого — около 2 см.",
+      "en": "In an adult it is about 2 cm across."
+    },
+    {
       "level": "hard",
       "ru": "Место её деления на бронхи называют кариной.",
       "en": "The point where it splits into bronchi is called the carina."
@@ -72,6 +129,21 @@
       "level": "hard",
       "ru": "Задняя стенка без хряща позволяет пищеводу расширяться при глотании.",
       "en": "Its back wall has no cartilage, so the esophagus can widen when you swallow."
+    },
+    {
+      "level": "hard",
+      "ru": "Правый главный бронх отходит от неё круче, поэтому вдохнутые предметы чаще попадают вправо.",
+      "en": "The right main bronchus leaves it more steeply, so inhaled objects more often go to the right."
+    },
+    {
+      "level": "hard",
+      "ru": "При вдохе она немного удлиняется, при выдохе — укорачивается.",
+      "en": "It lengthens slightly when you breathe in and shortens when you breathe out."
+    },
+    {
+      "level": "hard",
+      "ru": "Если человек подавился, приём Хеймлиха выталкивает застрявший предмет из неё.",
+      "en": "When someone chokes, the Heimlich manoeuvre pushes the stuck object out of it."
     }
   ]
 }

@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Как называется ежемесячное отторжение слизистой матки?",
+      "en": "What is the monthly shedding of the uterine lining called?",
+      "answer": {
+        "ru": "Менструация",
+        "en": "Menstruation"
+      },
+      "wrong": {
+        "ru": [
+          "Овуляция",
+          "Оплодотворение",
+          "Имплантация"
+        ],
+        "en": [
+          "Ovulation",
+          "Fertilisation",
+          "Implantation"
+        ]
+      }
+    },
+    {
+      "level": "easy",
+      "ru": "По форме похожа на перевёрнутую грушу.",
+      "en": "Shaped like an upside-down pear."
+    },
+    {
       "level": "medium",
       "ru": "Её внутренний слой, эндометрий, обновляется в каждом менструальном цикле.",
       "en": "Its inner lining, the endometrium, renews itself in every menstrual cycle."
@@ -69,6 +95,21 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Её стенка состоит из трёх слоёв: эндометрия, миометрия и периметрия.",
+      "en": "Its wall has three layers: endometrium, myometrium and perimetrium."
+    },
+    {
+      "level": "medium",
+      "ru": "Оплодотворённая яйцеклетка прикрепляется к её слизистой.",
+      "en": "A fertilised egg implants in its lining."
+    },
+    {
+      "level": "medium",
+      "ru": "Окситоцин усиливает сокращения её мышцы.",
+      "en": "Oxytocin strengthens the contractions of its muscle."
+    },
+    {
       "level": "hard",
       "ru": "За беременность её масса вырастает с 50 г примерно до 1 кг.",
       "en": "During pregnancy its mass grows from 50 g to about 1 kg."
@@ -82,6 +123,26 @@
       "level": "hard",
       "ru": "Фаллопиевы трубы соединяют её полость с брюшной полостью.",
       "en": "The fallopian tubes connect its cavity with the abdominal cavity."
+    },
+    {
+      "level": "hard",
+      "ru": "Эндометриоз — разрастание ткани, похожей на её слизистую, за её пределами.",
+      "en": "Endometriosis is tissue like its lining growing outside it."
+    },
+    {
+      "level": "hard",
+      "ru": "Рак её шейки во многом предотвращает прививка от ВПЧ.",
+      "en": "The HPV vaccine largely prevents cancer of its cervix."
+    },
+    {
+      "level": "hard",
+      "ru": "Её удаление называют гистерэктомией.",
+      "en": "Removing it is called a hysterectomy."
+    },
+    {
+      "level": "hard",
+      "ru": "Обычно наклонена вперёд и лежит над мочевым пузырём.",
+      "en": "It usually tilts forward and lies over the bladder."
     }
   ]
 }

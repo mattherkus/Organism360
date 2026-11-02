@@ -28,6 +28,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "В нём могут образоваться камни.",
+      "en": "Stones can form inside it."
+    },
+    {
+      "level": "easy",
+      "ru": "Какого цвета жёлчь?",
+      "en": "What colour is bile?",
+      "answer": {
+        "ru": "Жёлто-зелёная",
+        "en": "Yellow-green"
+      },
+      "wrong": {
+        "ru": [
+          "Красная",
+          "Белая",
+          "Голубая"
+        ],
+        "en": [
+          "Red",
+          "White",
+          "Blue"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Небольшой мешочек на нижней поверхности печени.",
       "en": "A small sac on the lower surface of the liver."
@@ -59,6 +85,47 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Вмещает около 30–50 мл.",
+      "en": "Holds about 30–50 mL."
+    },
+    {
+      "level": "medium",
+      "ru": "Его воспаление называется холециститом.",
+      "en": "Its inflammation is called cholecystitis."
+    },
+    {
+      "level": "medium",
+      "ru": "Без него можно жить: после удаления жёлчь течёт из печени прямо в кишку.",
+      "en": "You can live without it: after removal, bile flows from the liver straight into the gut."
+    },
+    {
+      "level": "medium",
+      "ru": "Его проток сливается с печёночным и образует общий проток.",
+      "en": "Its duct joins the hepatic duct to form the common bile duct."
+    },
+    {
+      "level": "medium",
+      "ru": "Из чего чаще всего состоят камни жёлчного пузыря?",
+      "en": "What are gallstones most often made of?",
+      "answer": {
+        "ru": "Из холестерина",
+        "en": "Cholesterol"
+      },
+      "wrong": {
+        "ru": [
+          "Из мочевой кислоты",
+          "Из железа",
+          "Из белка"
+        ],
+        "en": [
+          "Uric acid",
+          "Iron",
+          "Protein"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Здесь жёлчь сгущается: из неё всасывается вода",
       "en": "Here bile gets thicker as water is absorbed from it"
@@ -67,6 +134,47 @@
       "level": "hard",
       "ru": "После жирной еды сокращается и выталкивает своё содержимое в двенадцатиперстную кишку",
       "en": "After a fatty meal it contracts and pushes its contents into the duodenum"
+    },
+    {
+      "level": "hard",
+      "ru": "Сокращаться его заставляет гормон холецистокинин из двенадцатиперстной кишки.",
+      "en": "The hormone cholecystokinin from the duodenum makes it contract."
+    },
+    {
+      "level": "hard",
+      "ru": "Резкая боль под правыми рёбрами после жирной еды — частый признак его камней.",
+      "en": "Sharp pain under the right ribs after a fatty meal is a common sign of stones in it."
+    },
+    {
+      "level": "hard",
+      "ru": "Его удаление через проколы — одна из самых частых операций в мире.",
+      "en": "Removing it through keyhole incisions is one of the most common operations in the world."
+    },
+    {
+      "level": "hard",
+      "ru": "Симптом Мёрфи: при нажатии под правой рёберной дугой человек обрывает вдох от боли.",
+      "en": "Murphy's sign: pressing under the right ribs makes the person stop breathing in from pain."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называется операция по удалению жёлчного пузыря?",
+      "en": "What is the operation to remove the gallbladder called?",
+      "answer": {
+        "ru": "Холецистэктомия",
+        "en": "Cholecystectomy"
+      },
+      "wrong": {
+        "ru": [
+          "Аппендэктомия",
+          "Спленэктомия",
+          "Тиреоидэктомия"
+        ],
+        "en": [
+          "Appendectomy",
+          "Splenectomy",
+          "Thyroidectomy"
+        ]
+      }
     }
   ]
 }

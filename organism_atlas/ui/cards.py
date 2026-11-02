@@ -1,5 +1,5 @@
 """Содержимое карточки справа: карточка органа (со строкой «назад - вперёд»), стартовая карточка
-с экскурсиями, шаг экскурсии, вопрос викторины и карточка настройки викторины. Строятся из общих
+с экскурсиями и флеш-карточками, шаг экскурсии, флеш-карточка, вопрос викторины и карточка настройки викторины. Строятся из общих
 виджетов (widgets.py) и складываются столбиком через put().
 
 Карточка органа, кости или мышцы сложена как статья атласа: над заголовком - система органов (значок её цвета),
@@ -79,17 +79,27 @@ def system_color(key):
     return SYSTEM_COLORS[ORGANS[key]["systems"][0]]
 
 
-def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None):
+def note_block(card, lay, note):
+    """«Моя заметка» и кнопка закладки под карточкой; note - (в закладках ли, переключить, текст, при правке)"""
+    from .notes_ui import NoteBox, star_text
+    starred, on_star, text, on_edit = note
+    heading(lay, t("card_note"))
+    card.note_box = put(lay, NoteBox(text, t("card_note_hint"), on_edit), top=4)
+    card.star_button = put(lay, flat_button(star_text(starred), on_star, anchor="w", size=9, pady=3), top=8,
+                           align="left")
+
+
+def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None, note=None):
     """карточка органа; compact - без подробностей, заболеваний и факта дня (для 3D-просмотра, где мало места
     по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
     а заболевания органа - ссылками на статьи справочника болезней;
-    nav - история просмотренных карточек (см. nav_row); on_read - (текст, функция) кнопки «Прочитать вслух».
-    Кость или мышца (structures.py) - своя карточка"""
-    card.read_button = None
+    nav - история просмотренных карточек (см. nav_row); on_read - (текст, функция) кнопки «Прочитать вслух»;
+    note - заметка и закладка (см. note_block). Кость или мышца (structures.py) - своя карточка"""
+    card.read_button = card.note_box = card.star_button = None
     if key in STRUCTURES:
-        fill_structure(card, key, back=back, on_link=on_link, nav=nav, on_read=on_read)
+        fill_structure(card, key, back=back, on_link=on_link, nav=nav, on_read=on_read, note=note)
         return
     lay = card.lay
     clear(lay)
@@ -110,8 +120,10 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
         put(day.lay, linked(fact_of_day(key), on_link, seen, serif=True), bottom=8, x=10)
         put(lay, day, top=12)
+    if note:
+        note_block(card, lay, note)
     if on_read:
-        read_button(lay, on_read)
+        read_button(lay, on_read, top=8 if note else 12)
     if on_3d:
         put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=8 if on_read else 12, bottom=0 if back else 14,
             align="left")
@@ -122,7 +134,7 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
         spacer(lay, 10)
 
 
-def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
+def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None, note=None):
     """карточка кости или мышцы: название, латынь, что это, где находится, факты, подробности; ссылки и история -
     как у органа"""
     lay = card.lay
@@ -137,17 +149,23 @@ def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
     for f in i18n.organ(key, "facts"):
         put(lay, linked("•  " + f, on_link, seen, serif=True), top=2, bottom=2)
     details(lay, key, on_link, seen)
+    if note:
+        note_block(card, lay, note)
     if on_read:
-        read_button(lay, on_read)
+        read_button(lay, on_read, top=8 if note else 12)
     if back:
-        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_read else 12, bottom=14, align="left")
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_read or note else 12, bottom=14,
+            align="left")
     else:
         spacer(lay, 10)
 
 
-def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, knowledge=None):
-    """карточка режима «Изучать», пока орган не выбран: подсказка, кнопки экскурсий, повторение и орган дня.
-    tours - [(текст кнопки, функция)];
+def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, knowledge=None, flash=None,
+               starred=None):
+    """карточка режима «Изучать», пока орган не выбран: подсказка, кнопки экскурсий, флеш-карточки, закладки,
+    повторение и орган дня. tours - [(текст кнопки, функция)];
+    flash - (заголовок, подсказка, [(текст кнопки, функция)]): колоды флеш-карточек;
+    starred - (заголовок, [(название, открыть карточку)], кнопка (текст, функция)): закладки и викторина по ним;
     review - (заголовок, [(текст, роль цвета)], кнопка (текст, функция) или None): сколько пора повторить, серия дней;
     organ - (заголовок, ключ органа, факт, кнопка (текст, функция)): орган дня;
     knowledge - (кнопка (текст, функция), уровни для легенды или None): карта знаний на схеме"""
@@ -159,6 +177,18 @@ def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, k
         heading(lay, tours_title)
         for text, command in tours:
             put(lay, flat_button(text, command, anchor="w", pady=4), top=3)
+    if flash:
+        head, flash_hint, decks = flash
+        heading(lay, head, top=12)
+        put(lay, label(flash_hint, "muted", 9), bottom=2)
+        for text, command in decks:
+            put(lay, flat_button(text, command, anchor="w", pady=4), top=3)
+    if starred:
+        head, links, button = starred
+        heading(lay, head, top=12)
+        put(lay, rich_label(joined([(name, "#%d" % i) for i, (name, _) in enumerate(links)], "   "),
+                            lambda ref: links[int(ref[1:])][1](), size=10), top=2)
+        put(lay, flat_button(button[0], button[1], pady=4, size=9), top=8, align="left")
     if review:
         head, lines, button = review
         heading(lay, head, top=12)
@@ -204,6 +234,34 @@ def fill_tour(card, progress, title, subtitle, text, c, buttons, extra=(), hint=
         b = flat_button(txt, command, bg=bg)
         b.setEnabled(enabled)
         row.addWidget(b, 0, i)
+        row.setColumnStretch(i, 1)
+    put(lay, row)
+    for txt, command in extra:
+        put(lay, flat_button(txt, command, anchor="w"), top=6)
+    if hint:
+        put(lay, label(hint, "muted", 9), top=8)
+    spacer(lay, 14)
+
+
+def fill_flash(card, progress, title, prompt, answer, c, buttons, extra=(), hint=None):
+    """флеш-карточка. progress - «Латинские названия · карточка 3 из 10»; title и prompt - лицевая сторона,
+    answer - оборот (None - ещё не открыт), в рамке цвета c; buttons - [(текст, функция, роль фона)] в строку
+    («Показать ответ» или «Не знал» / «Знал»); extra - [(текст, функция)] столбиком; hint - мелкая подсказка"""
+    lay = card.lay
+    clear(lay)
+    bar(lay, c)
+    put(lay, label(progress, "muted", 10, bold=True), top=12)
+    put(lay, label(title, size=TITLE, bold=True, serif=True), top=4)
+    put(lay, label(prompt, serif=True), top=6, bottom=10)
+    if answer is not None:
+        box = rounded_card(fill="day_bg", border=c, radius=10)
+        put(box.lay, label(answer, size=11, serif=True), top=10, bottom=10, x=12)
+        put(lay, box, bottom=12)
+    row = QGridLayout()
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setHorizontalSpacing(px(6))
+    for i, (txt, command, bg) in enumerate(buttons):
+        row.addWidget(flat_button(txt, command, bg=bg), 0, i)
         row.setColumnStretch(i, 1)
     put(lay, row)
     for txt, command in extra:

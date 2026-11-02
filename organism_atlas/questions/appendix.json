@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Маленький «червячок», отходящий от толстой кишки.",
+      "en": "A small worm-like tube hanging off the large intestine."
+    },
+    {
+      "level": "easy",
+      "ru": "Как называют операцию по удалению аппендикса?",
+      "en": "What is the operation to remove the appendix called?",
+      "answer": {
+        "ru": "Аппендэктомия",
+        "en": "Appendectomy"
+      },
+      "wrong": {
+        "ru": [
+          "Холецистэктомия",
+          "Тонзиллэктомия",
+          "Спленэктомия"
+        ],
+        "en": [
+          "Cholecystectomy",
+          "Tonsillectomy",
+          "Splenectomy"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Узкий слепой вырост в начале толстой кишки длиной 7–10 см.",
       "en": "A worm-shaped pouch of the cecum, 7–10 cm long."
@@ -64,6 +90,42 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Его латинское название значит «похожий на червя».",
+      "en": "Its Latin name means “worm-like”."
+    },
+    {
+      "level": "medium",
+      "ru": "Если его воспаление не лечить, он может лопнуть и вызвать перитонит.",
+      "en": "If its inflammation is not treated, it can burst and cause peritonitis."
+    },
+    {
+      "level": "medium",
+      "ru": "Его просвет шириной всего несколько миллиметров, поэтому легко закупоривается.",
+      "en": "Its channel is only a few millimetres wide, so it blocks easily."
+    },
+    {
+      "level": "medium",
+      "ru": "В каком возрасте чаще всего бывает аппендицит?",
+      "en": "At what age is appendicitis most common?",
+      "answer": {
+        "ru": "У подростков и молодых взрослых",
+        "en": "Teenagers and young adults"
+      },
+      "wrong": {
+        "ru": [
+          "У новорождённых",
+          "У пожилых",
+          "Во всех возрастах одинаково"
+        ],
+        "en": [
+          "Newborns",
+          "Elderly people",
+          "Equally at every age"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "В стенке много лимфоидной ткани, которая участвует в иммунной защите кишечника.",
       "en": "Its wall has a lot of lymphoid tissue that helps protect the gut from infection."
@@ -77,6 +139,26 @@
       "level": "hard",
       "ru": "Может лежать за слепой кишкой или свисать в малый таз — у всех по-разному.",
       "en": "It may lie behind the cecum or hang down into the pelvis, depending on the person."
+    },
+    {
+      "level": "hard",
+      "ru": "Его просвет может закупорить твёрдый комочек кала — копролит.",
+      "en": "A hard lump of stool, a fecalith, can block its channel."
+    },
+    {
+      "level": "hard",
+      "ru": "Точка Мак-Бурнея на животе показывает, где обычно лежит его основание.",
+      "en": "McBurney's point on the abdomen marks where its base usually lies."
+    },
+    {
+      "level": "hard",
+      "ru": "Его воспаление иногда лечат антибиотиками, без операции.",
+      "en": "Its inflammation is sometimes treated with antibiotics instead of surgery."
+    },
+    {
+      "level": "hard",
+      "ru": "Отходит там, где сходятся три продольные мышечные ленты толстой кишки.",
+      "en": "It arises where the three longitudinal muscle bands of the colon meet."
     }
   ]
 }

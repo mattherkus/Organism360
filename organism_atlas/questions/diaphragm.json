@@ -17,6 +17,16 @@
       "en": "Its sudden contractions cause hiccups."
     },
     {
+      "level": "easy",
+      "ru": "При выдохе расслабляется и поднимается куполом вверх.",
+      "en": "When you breathe out it relaxes and rises back into a dome."
+    },
+    {
+      "level": "easy",
+      "ru": "Мышечная перегородка под лёгкими и сердцем.",
+      "en": "A muscular sheet beneath the lungs and heart."
+    },
+    {
       "level": "medium",
       "ru": "Куполообразная мышца: правый купол выше, потому что под ним печень.",
       "en": "A dome-shaped muscle; its right dome sits higher because the liver is beneath it."
@@ -46,6 +56,42 @@
       "en": "The esophagus, aorta and inferior vena cava pass through it."
     },
     {
+      "level": "medium",
+      "ru": "Как называется нерв, который управляет диафрагмой?",
+      "en": "What is the nerve that controls the diaphragm?",
+      "answer": {
+        "ru": "Диафрагмальный",
+        "en": "The phrenic nerve"
+      },
+      "wrong": {
+        "ru": [
+          "Блуждающий",
+          "Лицевой",
+          "Седалищный"
+        ],
+        "en": [
+          "The vagus nerve",
+          "The facial nerve",
+          "The sciatic nerve"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Певцы и музыканты-духовики учатся управлять этой мышцей, чтобы дышать глубже.",
+      "en": "Singers and wind players learn to control this muscle to breathe more deeply."
+    },
+    {
+      "level": "medium",
+      "ru": "Сверху на ней лежат лёгкие и сердце, снизу к ней прилегают печень, желудок и селезёнка.",
+      "en": "The lungs and heart rest on top of it; the liver, stomach and spleen lie beneath it."
+    },
+    {
+      "level": "medium",
+      "ru": "Когда она сокращается, грудная клетка увеличивается и воздух втягивается внутрь.",
+      "en": "When it contracts, the chest gets bigger and air is drawn in."
+    },
+    {
       "level": "hard",
       "ru": "Ей командует нерв, который начинается в шее, от III–V шейных сегментов.",
       "en": "It is driven by a nerve that starts in the neck, at the 3rd to 5th cervical segments."
@@ -59,6 +105,42 @@
       "level": "hard",
       "ru": "При глубоком вдохе её купол опускается до 10 см.",
       "en": "In a deep breath its dome drops by up to 10 cm."
+    },
+    {
+      "level": "hard",
+      "ru": "Через её расширенное отверстие часть желудка может уйти в грудь — это грыжа.",
+      "en": "Part of the stomach can slip up through its widened opening into the chest — a hernia."
+    },
+    {
+      "level": "hard",
+      "ru": "Её ножки прикрепляются к поясничным позвонкам.",
+      "en": "Its crura attach to the lumbar vertebrae."
+    },
+    {
+      "level": "hard",
+      "ru": "Боль от её раздражения может отдавать в плечо: её нерв выходит из тех же сегментов шеи.",
+      "en": "Pain from irritating it can be felt in the shoulder, because its nerve comes from the same neck segments."
+    },
+    {
+      "level": "hard",
+      "ru": "Какую долю спокойного вдоха обеспечивает диафрагма?",
+      "en": "What share of a quiet breath in does the diaphragm provide?",
+      "answer": {
+        "ru": "Около 75%",
+        "en": "About 75%"
+      },
+      "wrong": {
+        "ru": [
+          "Около 5%",
+          "Около 10%",
+          "Около 30%"
+        ],
+        "en": [
+          "About 5%",
+          "About 10%",
+          "About 30%"
+        ]
+      }
     }
   ]
 }

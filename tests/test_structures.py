@@ -11,9 +11,13 @@ from organism_atlas.organs import ORGANS
 
 Z = 0.7
 POINTS = {"humerus": (CX + 82, 245), "skull": (CX, 30), "femur": (CX + 40, 440), "sternum": (CX, 200),
-          "ribs": (CX - 55, 226), "hand": (CX + 104, 386)}
+          "ribs": (CX - 55, 226), "carpals": (CX + 103, 381), "metacarpals": (CX + 105, 408),
+          "phalanges": (CX + 111, 440), "scapula": (CX + 61, 200), "patella": (CX - 27, 514),
+          "tibia": (CX + 26, 600), "fibula": (CX - 35, 610), "foot": (CX + 24, 695)}
 MUSCLE_POINTS = {"biceps": (CX + 82, 245), "rectus_abdominis": (CX + 12, 330), "deltoid": (CX + 84, 172),
-                 "sartorius": (CX + 40, 432)}
+                 "sartorius": (CX + 40, 432), "tibialis_anterior": (CX + 32, 590), "gastrocnemius": (CX - 10, 590),
+                 "fibularis_longus": (CX + 41, 600), "vastus_medialis": (CX + 14, 488), "scalenes": (CX + 21, 136),
+                 "intercostals": (CX + 58, 210)}
 
 
 class RegistryTests(unittest.TestCase):

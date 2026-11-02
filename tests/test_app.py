@@ -64,13 +64,13 @@ class AppTests(unittest.TestCase):
     def test_hide_organ_after_hover(self):
         """подсветка показывалась, потом орган скрыли: подсветка убирается, наведение работает дальше"""
         self.hover_heart()
-        self.app.flash("heart", "ok")
+        self.app.marks.flash("heart", "ok")
         self.app.toggle_organ("lungs")
         self.assertIsNone(self.app.view.layers["hover"])
         self.app.on_leave()
         self.hover_heart()
         self.app.show_all()
-        self.app.unflash()
+        self.app.marks.unflash()
         pump()
         self.assertEqual(self.app.atlas.hidden, self.other)
 
@@ -125,7 +125,8 @@ class AppTests(unittest.TestCase):
         panel = panel_mod.show_diseases(self.app, "spinal_injury")
         self.assertIn(i18n.t("diseases_disclaimer"), panel.warn.text())
         texts = [w.text() for w in panel.card.findChildren(QLabel)]
-        self.assertIn(i18n.t("disease_more").upper(), texts)
+        self.assertIn(i18n.t("disease_sources").upper(), texts)            # свои источники статьи
+        self.assertIn(i18n.t("disease_more").upper(), texts)               # и общие сайты под ними
         self.assertIn(i18n.t("disease_unreviewed"), texts)
         urls = [w for w in panel.card.findChildren(QLabel) if 'href="https://' in w.text()]
         self.assertTrue(urls)
@@ -211,7 +212,7 @@ class AppTests(unittest.TestCase):
                 self.app.quiz.choices[s.correct()].click()               # как щелчок по кнопке
                 self.assertTrue(self.app.quiz.next_timer.isActive())
                 self.app.quiz.next_question()
-        self.app.unflash()
+        self.app.marks.unflash()
         self.app.quiz.results_timer.stop()
         return s
 
@@ -261,7 +262,7 @@ class AppTests(unittest.TestCase):
         self.app.quiz.answer(next(k for k in self.app.organs() if k != asked))
         self.assertIsNotNone(self.app.view.layers["reveal"])
         self.assertEqual(self.app.view.pin[2], i18n.name(asked))
-        self.assertTrue(self.app.reveal_timer.isActive())
+        self.assertTrue(self.app.marks.reveal_timer.isActive())
         self.app.quiz.answer(asked)
         self.assertIsNone(self.app.view.pin)
         self.app.set_mode("find")
@@ -374,7 +375,7 @@ class AppTests(unittest.TestCase):
         v.zoom_step(1)                                      # чуть приближенная - интерфейс на месте
         v.finish()
         self.assertLess(v.k, HIDE_FROM)
-        self.assertFalse(a.ui_hidden)
+        self.assertFalse(a.slide.hidden)
         self.assertTrue(a.header.isVisible() and a.card_area.isVisible())
         v.zoom_to(ZOOM_STEPS[-2])                           # схема выше окна: по высоте у краёв не упирается
         v.finish()
@@ -388,15 +389,15 @@ class AppTests(unittest.TestCase):
         self.assertTrue(0 <= v.pan.x() <= v.width() - v.scheme.width() * v.k)
         self.assertEqual(a.atlas.organ_at(*v.to_scheme(QPointF(sx, sy))), "heart")
         self.assertTrue(a.stage.zoom_buttons["zoom_reset"].isEnabled())
-        self.assertTrue(a.ui_hidden)                        # сильно приближенная - интерфейс уехал
-        self.assertTrue(wait(lambda: not a.ghosts))
+        self.assertTrue(a.slide.hidden)                        # сильно приближенная - интерфейс уехал
+        self.assertTrue(wait(lambda: not a.slide.ghosts))
         self.assertFalse(a.header.isVisible() or a.panel.isVisible() or a.card_area.isVisible())
         a.on_key("", "0")
         v.finish()
         self.assertEqual(v.k, 1)
         self.assertEqual(v.pan, v.home())
         self.assertFalse(a.stage.zoom_buttons["zoom_reset"].isEnabled())
-        self.assertTrue(wait(lambda: not a.ghosts))
+        self.assertTrue(wait(lambda: not a.slide.ghosts))
         self.assertTrue(a.header.isVisible() and a.panel.isVisible() and a.card_area.isVisible())
 
     def test_zoom_buttons_at_scheme_edge(self):
@@ -709,21 +710,21 @@ class AppTests(unittest.TestCase):
         в «Найди орган» Enter отвечает выбранным органом, а названия рядом нет"""
         a = self.app
         a.on_key("Down", "")
-        first = a.kb_keys()[0]
-        self.assertEqual((a.kb_key, a.cur), (first, first))
+        first = a.kb.keys()[0]
+        self.assertEqual((a.kb.key, a.cur), (first, first))
         self.assertIsNotNone(a.view.layers["hover"])
         self.assertEqual(a.view.tip[2], i18n.name(first))
         a.on_key("Up", "")
-        self.assertEqual(a.kb_key, a.kb_keys()[-1])                    # по кругу
+        self.assertEqual(a.kb.key, a.kb.keys()[-1])                    # по кругу
         a.on_key("Return", "")
-        self.assertEqual(a.cards.current, a.kb_key)
+        self.assertEqual(a.cards.current, a.kb.key)
         a.toggle_organ("heart")
-        self.assertNotIn("heart", a.kb_keys())                          # скрытые органы не выбираются
+        self.assertNotIn("heart", a.kb.keys())                          # скрытые органы не выбираются
         a.set_mode("find")
         a.quiz.start()
         s = a.quiz.session
         target = s.current
-        while a.kb_key != target:
+        while a.kb.key != target:
             a.on_key("Down", "")
         self.assertIsNone(a.view.tip)
         a.on_key("Return", "")
@@ -759,14 +760,14 @@ class AppTests(unittest.TestCase):
         from organism_atlas import updates
         info = {"version": "9.9.9", "url": "https://github.com/%s/releases/tag/v9.9.9" % updates.REPO}
         a = self.app
-        self.assertTrue(a.update_button.isHidden())
+        self.assertTrue(a.update_check.button.isHidden())
         with mock.patch.object(updates, "due", return_value=True), \
                 mock.patch.object(updates, "check", return_value=info):
-            a.check_updates()
-            self.assertTrue(wait(lambda: not a.update_button.isHidden(), 5))
-        self.assertEqual(a.update_button.text(), i18n.t("update_button", version="9.9.9"))
+            a.update_check.check()
+            self.assertTrue(wait(lambda: not a.update_check.button.isHidden(), 5))
+        self.assertEqual(a.update_check.button.text(), i18n.t("update_button", version="9.9.9"))
         with mock.patch("PySide6.QtGui.QDesktopServices.openUrl") as open_url:
-            a.update_button.invoke()
+            a.update_check.button.invoke()
             pump(0.1)
             self.assertEqual(open_url.call_args[0][0].toString(), info["url"])
 
@@ -853,6 +854,114 @@ class AppTests(unittest.TestCase):
         self.app.tours.end()
         self.app.on_click(int(210 * Z), int(230 * Z))       # без экскурсии - к списку
         self.assertIn(i18n.t("tours_back"), self.button_texts())
+
+    def test_tour_with_bones_and_muscles(self):
+        """в маршруте экскурсии бывают кость и мышца: они подсвечиваются, а кнопки 3D у них нет"""
+        from organism_atlas import tours
+        self.assertEqual(tours.steps("nerve", self.app.body), ["phalanges", "spinal_cord", "brain", "biceps"])
+        self.app.tours.start("nerve")
+        self.app.tours.go(1)
+        self.assertEqual(self.app.spot, "phalanges")
+        self.assertIsNotNone(self.app.view.layers["target"])
+        self.assertNotIn(i18n.t("card_3d"), self.button_texts())
+        self.app.tours.go(1)                                  # спинной мозг - орган: 3D есть
+        self.assertIn(i18n.t("card_3d"), self.button_texts())
+
+    def test_flashcards(self):
+        """флеш-карточки: колоды на стартовой карточке, пробел открывает ответ, 2 - «помню»; карточка органа
+        во время подхода - с кнопкой вернуться к нему; в конце - итог и снова колоды"""
+        from organism_atlas import progress
+        deck_button = "▤  " + i18n.t("flash_deck_latin")
+        self.assertIn(deck_button, self.button_texts())
+        self.app.flash.start("latin")
+        s = self.app.flash.session
+        key = s.current
+        self.assertEqual(self.app.spot, key)                  # латинские названия: орган подсвечен сразу
+        self.assertIn(i18n.t("flash_show"), self.button_texts())
+        self.app.on_key("", " ")                              # пробел - ответ
+        self.assertTrue(s.shown)
+        self.assertIn(i18n.t("flash_knew"), self.button_texts())
+        self.app.on_key("", "2")                              # 2 - «помню»
+        self.assertEqual(s.i, 1)
+        self.assertEqual(progress.load()["cards"]["flash_latin:" + key]["box"], 1)
+        self.app.on_click(int(210 * Z), int(230 * Z))         # щелчок по сердцу - его карточка
+        self.assertEqual(self.app.cards.current, "heart")
+        self.assertIn(i18n.t("flash_resume"), self.button_texts())
+        self.app.flash.resume()
+        self.assertEqual(self.app.card_fn, self.app.flash.card)
+        while not s.finished:
+            self.app.flash.reveal()
+            self.app.flash.answer(False)
+        self.assertIn(i18n.t("flash_again"), self.button_texts())
+        self.assertEqual(self.app.spot, None)
+        self.app.flash.end()
+        self.assertIsNone(self.app.flash.session)
+        self.assertIn(deck_button + "  ·  " + i18n.t("flash_due", n=len(s.keys) - 1), self.button_texts())
+
+    def test_notes_and_bookmarks(self):
+        """заметка под карточкой сохраняется сама, буквы в ней не нажимают горячие клавиши; закладка - на стартовой
+        карточке и в наборе вопросов викторины"""
+        from organism_atlas import notes
+        a = self.app
+        a.show_info("heart")
+        box = a.card.note_box
+        self.assertIsNotNone(box)
+        a.activateWindow()
+        box.setFocus()
+        pump()
+        box.setPlainText("Четыре камеры")
+        a.on_key("", "k")                                    # набирают в заметке - карта знаний не включается
+        self.assertFalse(a.knowledge)
+        self.assertTrue(a.notes.timer.isActive())
+        a.notes.flush()
+        self.assertEqual(notes.note("heart"), "Четыре камеры")
+        a.show_info("liver")
+        a.show_info("heart")                                 # заметка снова на месте
+        self.assertEqual(a.card.note_box.toPlainText(), "Четыре камеры")
+        a.card.star_button.invoke()
+        pump(0.1)
+        self.assertEqual(a.card.star_button.text(), i18n.t("card_star_on"))
+        self.assertEqual(notes.starred(), ["heart"])
+        a.set_card(a.empty_card)                             # на стартовой карточке - закладки и викторина по ним
+        self.assertIn(i18n.t("home_starred_quiz"), self.button_texts())
+        a.notes.quiz()
+        self.assertEqual((a.mode, a.quiz.qset), ("mix", "starred"))
+        self.assertEqual(a.quiz.session.q, ["heart"])
+        a.set_mode("find")
+        a.quiz.set_cfg("set", "starred")
+        self.assertIn(i18n.t("set_starred", n=1), self.button_texts())
+
+    def test_onboarding(self):
+        """подсказки первого запуска: пять шагов в рамках вокруг частей окна, клавиши листают, в конце -
+        больше сами не показываются; из настроек - снова"""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        from organism_atlas import settings
+        from organism_atlas.ui import onboarding
+        onboarding.maybe_start(self.app)
+        coach = self.app.coach
+        self.assertIsNotNone(coach)
+        self.assertEqual(coach.geometry(), self.app.rect())
+        self.assertIsNotNone(coach.hole())                    # схема - в рамке
+        self.assertFalse(coach.bubble.geometry().intersects(coach.hole()))
+        QTest.keyClick(coach, Qt.Key_Right)
+        QTest.keyClick(coach, Qt.Key_Left)
+        self.assertEqual(coach.i, 0)
+        for _ in onboarding.STEPS[:-1]:
+            QTest.keyClick(coach, Qt.Key_Return)
+        self.assertIsNone(coach.hole())                       # последний шаг - по центру окна
+        QTest.keyClick(coach, Qt.Key_Return)
+        pump()
+        self.assertIsNone(self.app.coach)
+        self.assertEqual(settings.get(settings.load(), "onboarding"), "done")
+        onboarding.maybe_start(self.app)                      # уже видели - сами не показываются
+        self.assertIsNone(getattr(self.app, "coach", None))
+        self.app.show_tips()                                  # кнопка в настройках
+        self.assertIsNotNone(self.app.coach)
+        QTest.keyClick(self.app.coach, Qt.Key_Escape)
+        pump()
+        self.assertIsNone(self.app.coach)
 
     def button_texts(self):
         """надписи кнопок в карточке справа"""

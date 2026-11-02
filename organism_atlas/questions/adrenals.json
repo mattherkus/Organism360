@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Их гормон заставляет сердце биться чаще, когда мы пугаемся.",
+      "en": "Their hormone makes the heart race when we get scared."
+    },
+    {
+      "level": "easy",
+      "ru": "Где находятся надпочечники?",
+      "en": "Where are the adrenal glands?",
+      "answer": {
+        "ru": "Над почками",
+        "en": "Above the kidneys"
+      },
+      "wrong": {
+        "ru": [
+          "Под печенью",
+          "На шее",
+          "За грудиной"
+        ],
+        "en": [
+          "Below the liver",
+          "In the neck",
+          "Behind the breastbone"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Вырабатывают кортизол — гормон стресса.",
       "en": "They make cortisol, the stress hormone."
@@ -69,6 +95,42 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Их гормоны помогают организму в реакции «бей или беги».",
+      "en": "Their hormones power the body's fight-or-flight response."
+    },
+    {
+      "level": "medium",
+      "ru": "Каждый из них состоит из коры и мозгового вещества.",
+      "en": "Each of them is made of a cortex and a medulla."
+    },
+    {
+      "level": "medium",
+      "ru": "Вырабатывают немного мужских половых гормонов — андрогенов — у людей обоего пола.",
+      "en": "They make small amounts of male sex hormones (androgens) in both sexes."
+    },
+    {
+      "level": "medium",
+      "ru": "Какой гормон надпочечников называют гормоном стресса?",
+      "en": "Which adrenal hormone is called the stress hormone?",
+      "answer": {
+        "ru": "Кортизол",
+        "en": "Cortisol"
+      },
+      "wrong": {
+        "ru": [
+          "Инсулин",
+          "Мелатонин",
+          "Тироксин"
+        ],
+        "en": [
+          "Insulin",
+          "Melatonin",
+          "Thyroxine"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Кора делает кортизол, а мозговое вещество — адреналин и норадреналин.",
       "en": "The cortex makes cortisol, and the medulla makes epinephrine and norepinephrine."
@@ -82,6 +144,38 @@
       "level": "hard",
       "ru": "Опухоль феохромоцитома выбрасывает из них в кровь избыток адреналина.",
       "en": "A pheochromocytoma tumor releases too much epinephrine from them into the blood."
+    },
+    {
+      "level": "hard",
+      "ru": "Работу их коры направляет АКТГ — гормон гипофиза.",
+      "en": "Their cortex is directed by ACTH, a hormone of the pituitary."
+    },
+    {
+      "level": "hard",
+      "ru": "Кора делится на три зоны: клубочковую, пучковую и сетчатую.",
+      "en": "The cortex has three zones: glomerulosa, fasciculata and reticularis."
+    },
+    {
+      "level": "hard",
+      "ru": "Синдром Кушинга — избыток гормона их коры, кортизола.",
+      "en": "Cushing's syndrome is an excess of cortisol, a hormone of their cortex."
+    },
+    {
+      "level": "hard",
+      "ru": "Их мозговое вещество по происхождению — видоизменённая нервная ткань.",
+      "en": "Their medulla is, by origin, modified nervous tissue."
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько зон в коре надпочечника?",
+      "en": "How many zones does the adrenal cortex have?",
+      "answer": "3",
+      "wrong": [
+        "2",
+        "4",
+        "5",
+        "6"
+      ]
     }
   ]
 }

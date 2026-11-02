@@ -17,6 +17,7 @@ KEYS = (
     ("K", "help_knowledge"),
     ("↑ ↓  Enter", "help_updown"),
     ("R", "help_read"),
+    ("␣  1  2", "help_flash"),
     ("+  −", "help_zoom"),
     ("0  Esc", "help_zoom_reset"),
     (None, "help_pan"),

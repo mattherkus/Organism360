@@ -33,6 +33,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Какую кровь несут полые вены?",
+      "en": "What kind of blood do the venae cavae carry?",
+      "answer": {
+        "ru": "Бедную кислородом",
+        "en": "Low in oxygen"
+      },
+      "wrong": {
+        "ru": [
+          "Богатую кислородом",
+          "Только лимфу",
+          "Только плазму"
+        ],
+        "en": [
+          "Rich in oxygen",
+          "Only lymph",
+          "Only plasma"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Верхний из этих сосудов собирает кровь от головы, шеи и рук.",
       "en": "The upper of these vessels drains the head, neck and arms."
@@ -54,6 +75,26 @@
       ]
     },
     {
+      "level": "medium",
+      "ru": "Нижняя из них — самая крупная вена тела, около 2,5 см в поперечнике.",
+      "en": "The lower one is the largest vein in the body, about 2.5 cm across."
+    },
+    {
+      "level": "medium",
+      "ru": "Верхнюю из них образуют два плечеголовных сосуда.",
+      "en": "The upper one is formed by two brachiocephalic veins."
+    },
+    {
+      "level": "medium",
+      "ru": "В нижнюю из них впадают сосуды от почек и печени.",
+      "en": "Vessels from the kidneys and liver drain into the lower one."
+    },
+    {
+      "level": "medium",
+      "ru": "Конец катетера для лекарств часто ставят в верхнюю из них.",
+      "en": "The tip of a catheter for medicines is often placed in the upper one."
+    },
+    {
       "level": "hard",
       "ru": "Внутри них нет клапанов, а давление крови очень низкое.",
       "en": "They have no valves inside, and the blood pressure in them is very low."
@@ -67,6 +108,40 @@
       "level": "hard",
       "ru": "На вдохе давление в груди падает, и кровь по ним быстрее притекает к сердцу.",
       "en": "When you breathe in, chest pressure drops and blood flows through them to the heart faster."
+    },
+    {
+      "level": "hard",
+      "ru": "У беременной, лежащей на спине, матка может придавить нижнюю из них — и падает давление.",
+      "en": "In late pregnancy, lying on the back lets the uterus press on the lower one, and blood pressure drops."
+    },
+    {
+      "level": "hard",
+      "ru": "Опухоль в груди может сдавить верхнюю из них — тогда отекают лицо и шея.",
+      "en": "A tumour in the chest can squeeze the upper one, making the face and neck swell."
+    },
+    {
+      "level": "hard",
+      "ru": "Нижняя из них лежит справа от аорты.",
+      "en": "The lower one lies to the right of the aorta."
+    },
+    {
+      "level": "hard",
+      "ru": "Какая из полых вен длиннее?",
+      "en": "Which vena cava is longer?",
+      "answer": {
+        "ru": "Нижняя",
+        "en": "The inferior"
+      },
+      "wrong": {
+        "ru": [
+          "Верхняя",
+          "Они одинаковые"
+        ],
+        "en": [
+          "The superior",
+          "They are the same"
+        ]
+      }
     }
   ]
 }

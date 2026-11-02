@@ -246,7 +246,10 @@ class DiseaseTests(unittest.TestCase):
                     self.assertTrue(item.get("url", "").startswith("https://"), (code, key))
                 if "reviewed" in art:
                     self.assertIs(art["reviewed"], False, (code, key))
-        self.assertEqual(diseases.sources("cirrhosis"), [])
+        for key in diseases.KEYS:                                   # у каждой статьи - свои источники
+            own = diseases.sources(key)
+            self.assertTrue(own, key)
+            self.assertTrue(all(name and url.startswith("https://") for name, url in own), key)
         self.assertTrue(diseases.general_sources())
         self.assertFalse(diseases.reviewed("cirrhosis"))
 

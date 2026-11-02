@@ -31,6 +31,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "К какой системе органов относится тимус?",
+      "en": "Which body system does the thymus belong to?",
+      "answer": {
+        "ru": "Иммунной",
+        "en": "Immune"
+      },
+      "wrong": {
+        "ru": [
+          "Пищеварительной",
+          "Дыхательной",
+          "Мочевыделительной"
+        ],
+        "en": [
+          "Digestive",
+          "Respiratory",
+          "Urinary"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Лежит в груди за грудиной, над сердцем.",
       "en": "Lies in the chest behind the breastbone, above the heart."
@@ -62,6 +83,37 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Лежит в верхнем средостении, впереди крупных сосудов.",
+      "en": "It lies in the upper mediastinum, in front of the great vessels."
+    },
+    {
+      "level": "medium",
+      "ru": "Без него у детей плохо формируется иммунитет.",
+      "en": "Without it, children's immunity develops poorly."
+    },
+    {
+      "level": "medium",
+      "ru": "В каком возрасте тимус начинает уменьшаться?",
+      "en": "At what age does the thymus start to shrink?",
+      "answer": {
+        "ru": "После полового созревания",
+        "en": "After puberty"
+      },
+      "wrong": {
+        "ru": [
+          "Сразу после рождения",
+          "После 70 лет",
+          "Никогда"
+        ],
+        "en": [
+          "Right after birth",
+          "After 70",
+          "Never"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Выделяет тимозины — гормоны, которые помогают созревать иммунным клеткам.",
       "en": "Releases hormones that help immune cells mature."
@@ -75,6 +127,31 @@
       "level": "hard",
       "ru": "Состоит из двух долей, похожих на зубцы вилки.",
       "en": "Has two lobes shaped like the prongs of a fork."
+    },
+    {
+      "level": "hard",
+      "ru": "В его мозговом веществе есть тельца Гассаля — завитки из клеток.",
+      "en": "Its medulla contains Hassall's corpuscles, whorls of cells."
+    },
+    {
+      "level": "hard",
+      "ru": "Синдром Ди Джорджи — врождённое отсутствие или недоразвитие этого органа.",
+      "en": "DiGeorge syndrome means being born without it or with it underdeveloped."
+    },
+    {
+      "level": "hard",
+      "ru": "Наибольшей массы — около 30–40 г — достигает к половому созреванию.",
+      "en": "It reaches its greatest weight, about 30–40 g, at puberty."
+    },
+    {
+      "level": "hard",
+      "ru": "Его удаление иногда помогает при миастении.",
+      "en": "Removing it sometimes helps in myasthenia gravis."
+    },
+    {
+      "level": "hard",
+      "ru": "У новорождённых его тень на рентгене иногда принимают за опухоль.",
+      "en": "In newborns its shadow on an X-ray is sometimes mistaken for a tumour."
     }
   ]
 }

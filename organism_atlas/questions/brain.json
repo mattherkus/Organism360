@@ -17,6 +17,16 @@
       "en": "Protected by the bones of the skull."
     },
     {
+      "level": "easy",
+      "ru": "Получает сигналы от глаз, ушей, кожи и всех органов чувств.",
+      "en": "Receives signals from the eyes, ears, skin and every sense organ."
+    },
+    {
+      "level": "easy",
+      "ru": "Даже во сне продолжает работать: разбирает впечатления дня и укрепляет память.",
+      "en": "Keeps working even in sleep, sorting the day's impressions and strengthening memory."
+    },
+    {
       "level": "medium",
       "ru": "Весит около 1,4 кг",
       "en": "Weighs about 1.4 kg"
@@ -55,6 +65,42 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Покрыт извилинами и бороздами — так его кора помещается в черепе.",
+      "en": "Covered with folds and grooves, which let its cortex fit inside the skull."
+    },
+    {
+      "level": "medium",
+      "ru": "Плавает в прозрачной жидкости, которая смягчает удары.",
+      "en": "Floats in a clear fluid that cushions blows."
+    },
+    {
+      "level": "medium",
+      "ru": "Состоит из двух полушарий, соединённых мозолистым телом.",
+      "en": "Has two hemispheres joined by the corpus callosum."
+    },
+    {
+      "level": "medium",
+      "ru": "Какая доля мозга отвечает за зрение?",
+      "en": "Which lobe of the brain handles vision?",
+      "answer": {
+        "ru": "Затылочная",
+        "en": "Occipital"
+      },
+      "wrong": {
+        "ru": [
+          "Лобная",
+          "Височная",
+          "Теменная"
+        ],
+        "en": [
+          "Frontal",
+          "Temporal",
+          "Parietal"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Левое полушарие управляет правой половиной тела, и наоборот",
       "en": "The left hemisphere controls the right side of the body, and vice versa"
@@ -81,6 +127,47 @@
           "Medulla oblongata",
           "Thalamus",
           "Hypothalamus"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Особый барьер не пускает к нему многие вещества из крови.",
+      "en": "A special barrier keeps many substances in the blood from reaching it."
+    },
+    {
+      "level": "hard",
+      "ru": "Речь у большинства людей связана с левым полушарием — зонами Брока и Вернике.",
+      "en": "In most people speech is based in the left hemisphere, in Broca's and Wernicke's areas."
+    },
+    {
+      "level": "hard",
+      "ru": "Гиппокамп в глубине височной доли нужен, чтобы запоминать новое.",
+      "en": "The hippocampus deep in the temporal lobe is needed to form new memories."
+    },
+    {
+      "level": "hard",
+      "ru": "Его ствол управляет дыханием и сердцебиением без участия сознания.",
+      "en": "Its stem controls breathing and heartbeat without our awareness."
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько примерно спинномозговой жидкости образуется за сутки?",
+      "en": "About how much cerebrospinal fluid is made each day?",
+      "answer": {
+        "ru": "Около 0,5 л",
+        "en": "About 0.5 L"
+      },
+      "wrong": {
+        "ru": [
+          "Около 5 мл",
+          "Около 5 л",
+          "Около 50 л"
+        ],
+        "en": [
+          "About 5 mL",
+          "About 5 L",
+          "About 50 L"
         ]
       }
     }

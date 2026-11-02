@@ -182,7 +182,7 @@
     "tour_last": "Finish →",
     "tour_progress": "{title}  ·  step {n} of {total}",
     "tour_done": "Tour complete!",
-    "tour_done_text": "Organs on the route: {n}. You can take it again or pick another tour.",
+    "tour_done_text": "Steps on the route: {n}. You can take it again or pick another tour.",
     "tour_finish": "Done",
     "tour_quiz": "Test yourself: a quiz on this topic",
     "parts_title": "Model parts",
@@ -196,6 +196,36 @@
     "parts_done": "Done! On the first try: {right} of {total}.",
     "tour_resume": "←  Back to the tour “{title}”",
     "tours_back": "←  Back to tours",
+    "flash_title": "Flashcards",
+    "flash_hint": "Read the question, recall the answer, then turn the card. What you couldn't recall comes back today; what you recalled comes back in a few days.",
+    "flash_deck_organs": "Organs and what they do",
+    "flash_deck_latin": "Latin names",
+    "flash_deck_facts": "Guess the organ from a fact",
+    "flash_deck_diseases": "Diseases and organs",
+    "flash_due": "due: {n}",
+    "flash_q_organs": "What does this organ do, and where is it?",
+    "flash_q_latin": "What is its Latin name?",
+    "flash_q_facts": "Which organ is this?",
+    "flash_q_question": "Question",
+    "flash_q_diseases": "Which organs does this disease affect, and what is it?",
+    "flash_progress": "{title}  ·  card {n} of {total}",
+    "flash_show": "Show the answer",
+    "flash_knew": "Got it ✓",
+    "flash_unknew": "Not yet",
+    "flash_keys_front": "Space or Enter shows the answer.",
+    "flash_keys_back": "1 or ← — not yet, 2 or → — got it.",
+    "flash_exit": "Finish",
+    "flash_done": "Round complete!",
+    "flash_done_text": "You recalled {knew} of {n}. What you couldn't recall comes back today; what you recalled comes back in a few days.",
+    "flash_again": "More cards",
+    "flash_resume": "←  Back to flashcards",
+    "card_note": "My note",
+    "card_note_hint": "Write down what you want to remember — the note saves itself.",
+    "card_star_off": "☆  Bookmark",
+    "card_star_on": "★  Bookmarked",
+    "home_starred": "Bookmarks",
+    "home_starred_quiz": "Quiz on bookmarks",
+    "set_starred": "Bookmarks ({n})",
     "diseases_button": "Diseases",
     "diseases_title": "Disease guide",
     "diseases_search": "Find a disease or organ",
@@ -359,10 +389,27 @@
     "card_read_stop": "Stop reading",
     "help_updown": "Select an organ on the diagram without the mouse; Enter opens its card, or answers with it in a quiz",
     "help_read": "Read the open card aloud (press again to stop)",
+    "help_flash": "Flashcard: Space shows the answer, 1 — not yet, 2 — got it",
     "settings_updates": "Check for updates",
     "updates_on": "Once a day",
     "updates_off": "No",
     "settings_updates_hint": "The app asks GitHub whether a new version is out (an anonymous request; nothing about you is sent).",
+    "settings_tips": "Tips",
+    "tips_again": "Show again",
+    "settings_tips_hint": "A short tour of the window: the body map, layers, the card and the tabs.",
+    "tip_skip": "Skip",
+    "tip_next": "Next →",
+    "tip_done": "Let's go!",
+    "tip_scheme_title": "The body map",
+    "tip_scheme": "Hover over an organ to highlight it, and click to open its card on the right. The mouse wheel zooms the map; when zoomed in, drag it with the mouse.",
+    "tip_panel_title": "Layers and search",
+    "tip_panel": "Here you can hide the skin, bones, vessels or single organs and show the muscles. The search box finds an organ by its name in any language.",
+    "tip_card_title": "The card",
+    "tip_card": "Until you pick an organ, this holds tours, flashcards, bookmarks and the organ of the day. An organ's card tells how it works, what it is made of, its diseases, its 3D model and your note.",
+    "tip_tabs_title": "Tabs",
+    "tip_tabs": "“Quiz” has nine kinds of games, “Diseases” is a reference, “Statistics” shows your progress and knowledge map, and “Settings” sets the theme, language and body map.",
+    "tip_keys_title": "All set!",
+    "tip_keys": "F1 shows all the keyboard shortcuts, and you can open these tips again in the settings. Enjoy exploring!",
     "update_button": "New version {version}",
     "update_hint": "Open the release page to download the installer",
     "layers_fold_hint": "Collapse or expand the organs of this system",
@@ -1174,6 +1221,50 @@
         "spleen": "The spleen filters the blood itself: it removes old red blood cells and bacteria and keeps a reserve of immune cells.",
         "appendix": "The wall of the appendix is full of lymphoid tissue: it helps guard the gut and may keep a reserve of helpful bacteria."
       }
+    },
+    "nerve": {
+      "title": "The path of a nerve signal",
+      "intro": "You accidentally touch a hot kettle. What happens in the split second before your hand jerks away? Let's follow the signal from a finger to the brain and back to a muscle.",
+      "steps": {
+        "phalanges": "It all starts in a finger: the skin over the finger bones holds thousands of nerve endings. They sense the heat and turn it into an electrical signal that runs along a sensory nerve of the arm to the spinal cord.",
+        "spinal_cord": "In the spinal cord the signal is passed straight to motor neurons — this is a reflex arc. The command “pull the hand away!” goes back to the muscles before you even feel pain: the reflex works without the brain.",
+        "brain": "At the same time the signal climbs the tracts of the spinal cord to the brain. Only when it reaches the cerebral cortex do you feel the pain, understand what happened and decide what to do next — for example, hold the finger under cold water.",
+        "biceps": "The command from the spinal cord travels along a motor nerve to the muscles of the arm. The biceps contracts and bends the elbow — the hand is already away from the kettle. The whole trip takes a fraction of a second."
+      }
+    },
+    "cold": {
+      "title": "How the body beats a cold",
+      "intro": "A virus has got into the airways. Let's follow the immune response step by step, from the first line of defence to the fever that helps fight the infection.",
+      "steps": {
+        "trachea": "The first barrier is the lining of the airways. Mucus traps viruses and dust, and the cilia of the trachea sweep them up to the throat. If a virus still gets into cells, they release signalling substances, interferons, to warn their neighbours.",
+        "lymph_nodes": "Immune cells carry “samples” of the virus to the nearest lymph nodes, in the neck. There B cells multiply and start making antibodies, which is why the nodes swell and hurt during a cold.",
+        "spleen": "The spleen filters the blood the way lymph nodes filter lymph. If germs get into the blood, its immune cells catch and destroy them.",
+        "thymus": "The T cells that find and destroy infected cells were once “trained” in the thymus, where they were checked so that they would not attack the body's own cells. Thanks to this school they recognise what is foreign.",
+        "brain": "Substances released by immune cells reach the hypothalamus, the brain's temperature centre. It raises body temperature: viruses multiply less easily in the heat, and immunity works faster. After the illness memory cells remain, so meeting the same virus again goes more easily."
+      }
+    },
+    "sugar": {
+      "title": "Blood sugar",
+      "intro": "Glucose is the main fuel of the cells. There must be neither too much nor too little of it in the blood. Let's see who keeps blood sugar in check after a meal, between meals and in a moment of danger.",
+      "steps": {
+        "intestines": "Bread, cereals and sweets are broken down into glucose in the small intestine. It is absorbed through the villi into the blood, and blood sugar rises after a meal.",
+        "liver": "Blood from the gut first goes through the portal vein to the liver. The liver stores spare glucose as glycogen and, between meals and at night, slowly releases it back into the blood.",
+        "pancreas": "The islets of the pancreas watch blood sugar all the time. When it rises, beta cells release insulin and the cells take glucose out of the blood. When it falls, alpha cells release glucagon and the liver gives up its store. In diabetes there is too little insulin or the cells respond to it poorly.",
+        "adrenals": "In a moment of danger the adrenal glands release adrenaline, and during long stress, cortisol. Both raise blood sugar: muscles and the brain need fuel to run or fight.",
+        "brain": "The brain uses about a fifth of all the body's energy and depends almost entirely on glucose. That is why thinking suffers first when blood sugar is too low: weakness, shakiness and confusion appear.",
+        "kidneys": "The kidneys filter glucose along with water but normally return all of it to the blood. If blood sugar is too high — above about 10 mmol/L (180 mg/dL) — they can't keep up, and glucose spills into the urine. Sugar in the urine is one of the signs of diabetes."
+      }
+    },
+    "bile": {
+      "title": "The path of bile",
+      "intro": "Bile is needed to digest fats, and the body also uses it to get rid of waste. Let's follow it from the liver, where it is made, to the gut — and back.",
+      "steps": {
+        "liver": "Liver cells make bile all the time — 0.5–1 L a day. It contains bile acids, cholesterol and bilirubin, a yellow-green pigment left over from old red blood cells.",
+        "gallbladder": "Between meals bile is stored in the gallbladder and thickens as its wall absorbs water. If bile holds too much cholesterol, stones can form in it.",
+        "pancreas": "The common bile duct runs through the head of the pancreas and usually joins the pancreatic duct right at the entrance to the gut. That is why a stone stuck there can cause both jaundice and pancreatitis.",
+        "intestines": "In the duodenum bile breaks fat into tiny droplets, so pancreatic enzymes digest it faster. Most bile acids are absorbed at the end of the small intestine and return to the liver through the portal vein, making this round trip several times a day.",
+        "rectum": "What doesn't return moves on. Bacteria in the large intestine turn bilirubin into pigments that colour stool brown. If bile doesn't reach the gut, stool turns pale — a reason to see a doctor right away."
+      }
     }
   },
   "diseases": {
@@ -1183,665 +1274,1707 @@
       "desc": "An infection of the lung tissue: the alveoli fill with fluid and pus and pass less oxygen into the blood.",
       "symptoms": "Cough with phlegm, high fever, shortness of breath, chest pain when breathing, weakness.",
       "causes": "Usually bacteria (pneumococcus), less often viruses or fungi. The risk is higher in older people, smokers, after flu and with COPD.",
-      "treatment": "Bacterial pneumonia is treated with antibiotics, severe cases in hospital with oxygen. Vaccines protect against pneumococcus and flu."
+      "treatment": "Bacterial pneumonia is treated with antibiotics, severe cases in hospital with oxygen. Vaccines protect against pneumococcus and flu.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Pneumonia",
+          "url": "https://medlineplus.gov/pneumonia.html"
+        },
+        {
+          "name": "NHS: Pneumonia",
+          "url": "https://www.nhs.uk/conditions/pneumonia/"
+        },
+        {
+          "name": "WHO fact sheet: Pneumonia in children",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/pneumonia"
+        }
+      ]
     },
     "asthma": {
       "name": "Asthma",
       "desc": "Long-term inflammation of the airways: in response to triggers they narrow, swell and fill with mucus.",
       "symptoms": "Attacks of breathlessness, wheezing, coughing (often at night), a tight feeling in the chest.",
       "causes": "An inherited tendency and allergies. Attacks are triggered by dust, pollen, pet hair, cold air, exercise and smoke.",
-      "treatment": "Inhalers: steroid ones every day to calm the inflammation and reliever ones to open the airways during an attack. Avoiding triggers matters."
+      "treatment": "Inhalers: steroid ones every day to calm the inflammation and reliever ones to open the airways during an attack. Avoiding triggers matters.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Asthma",
+          "url": "https://medlineplus.gov/asthma.html"
+        },
+        {
+          "name": "NHS: Asthma",
+          "url": "https://www.nhs.uk/conditions/asthma/"
+        },
+        {
+          "name": "WHO fact sheet: Asthma",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/asthma"
+        }
+      ]
     },
     "copd": {
       "name": "COPD",
       "desc": "Chronic obstructive pulmonary disease: the airways slowly and permanently narrow and the alveoli break down (emphysema).",
       "symptoms": "Breathlessness that grows over years, a long-lasting cough with phlegm, frequent chest infections.",
       "causes": "Mostly smoking; less often years of breathing smoke, dust and fumes at work or at home.",
-      "treatment": "Quitting smoking slows it down. Inhalers open the airways; breathing exercises and flu and pneumococcal vaccines help."
+      "treatment": "Quitting smoking slows it down. Inhalers open the airways; breathing exercises and flu and pneumococcal vaccines help.",
+      "sources": [
+        {
+          "name": "MedlinePlus: COPD",
+          "url": "https://medlineplus.gov/copd.html"
+        },
+        {
+          "name": "NHS: Chronic obstructive pulmonary disease (COPD)",
+          "url": "https://www.nhs.uk/conditions/chronic-obstructive-pulmonary-disease-copd/"
+        },
+        {
+          "name": "WHO fact sheet: Chronic obstructive pulmonary disease (COPD)",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/chronic-obstructive-pulmonary-disease-(copd)"
+        }
+      ]
     },
     "lung_cancer": {
       "name": "Lung cancer",
       "desc": "A malignant tumour of the cells of the bronchi or lung tissue; one of the deadliest cancers worldwide.",
       "symptoms": "Few signs for a long time. Later: a persistent cough, blood in phlegm, breathlessness, chest pain, weight loss.",
       "causes": "About 85% of cases are linked to smoking. Second-hand smoke, radon, asbestos and air pollution add to the risk.",
-      "treatment": "Surgery, radiotherapy, chemotherapy, targeted drugs and immunotherapy, depending on the type and stage."
+      "treatment": "Surgery, radiotherapy, chemotherapy, targeted drugs and immunotherapy, depending on the type and stage.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Lung Cancer",
+          "url": "https://medlineplus.gov/lungcancer.html"
+        },
+        {
+          "name": "NHS: Lung cancer",
+          "url": "https://www.nhs.uk/conditions/lung-cancer/"
+        },
+        {
+          "name": "WHO fact sheet: Lung cancer",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/lung-cancer"
+        }
+      ]
     },
     "hepatitis": {
       "name": "Viral hepatitis",
       "desc": "Inflammation of the liver caused by hepatitis viruses A, B, C, D or E. B and C can become chronic.",
       "symptoms": "Tiredness, nausea, dark urine, jaundice. Chronic hepatitis often goes unnoticed for years.",
       "causes": "A and E spread through dirty water and food; B, C and D through blood, shared needles and sex.",
-      "treatment": "Hepatitis C is cured with antiviral pills, B is kept under control with them. There are vaccines against hepatitis A and B."
+      "treatment": "Hepatitis C is cured with antiviral pills, B is kept under control with them. There are vaccines against hepatitis A and B.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hepatitis",
+          "url": "https://medlineplus.gov/hepatitis.html"
+        },
+        {
+          "name": "NHS: Hepatitis",
+          "url": "https://www.nhs.uk/conditions/hepatitis/"
+        },
+        {
+          "name": "WHO fact sheet: Hepatitis B",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/hepatitis-b"
+        },
+        {
+          "name": "WHO fact sheet: Hepatitis C",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/hepatitis-c"
+        }
+      ]
     },
     "fatty_liver": {
       "name": "Fatty liver disease",
       "desc": "Fat builds up in the liver cells. Over time inflammation can follow, and then cirrhosis.",
       "symptoms": "Usually none; sometimes heaviness under the right ribs and tiredness. It is often found by chance on an ultrasound.",
       "causes": "Excess weight, type 2 diabetes, lack of exercise, and alcohol.",
-      "treatment": "Losing 7–10% of body weight, exercise, avoiding alcohol and treating diabetes. In the early stages the liver recovers."
+      "treatment": "Losing 7–10% of body weight, exercise, avoiding alcohol and treating diabetes. In the early stages the liver recovers.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Steatotic Liver Disease",
+          "url": "https://medlineplus.gov/steatoticliverdisease.html"
+        },
+        {
+          "name": "NHS: Non-alcoholic fatty liver disease (NAFLD)",
+          "url": "https://www.nhs.uk/conditions/non-alcoholic-fatty-liver-disease/"
+        }
+      ]
     },
     "cirrhosis": {
       "name": "Cirrhosis",
       "desc": "The end stage of many liver diseases: the tissue is replaced by scars and the liver can no longer do its job.",
       "symptoms": "Weakness, jaundice, swelling and fluid in the abdomen, bleeding from swollen veins in the esophagus, confusion.",
       "causes": "Most often years of heavy drinking, chronic hepatitis B and C, and fatty liver disease.",
-      "treatment": "Stopping the cause (virus, alcohol) and treating complications. A liver transplant saves lives in severe cases."
+      "treatment": "Stopping the cause (virus, alcohol) and treating complications. A liver transplant saves lives in severe cases.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Cirrhosis",
+          "url": "https://medlineplus.gov/cirrhosis.html"
+        },
+        {
+          "name": "NHS: Cirrhosis",
+          "url": "https://www.nhs.uk/conditions/cirrhosis/"
+        }
+      ]
     },
     "liver_cancer": {
       "name": "Liver cancer",
       "desc": "A malignant tumour of the liver cells (hepatocellular carcinoma). It usually develops in a liver with cirrhosis.",
       "symptoms": "Heaviness and pain under the right ribs, weight loss, jaundice; almost no signs early on.",
       "causes": "Cirrhosis, chronic hepatitis B and C, alcohol, fatty liver disease.",
-      "treatment": "Removing part of the liver, a transplant, destroying the tumour from inside, medicines. People with cirrhosis are checked regularly to catch it early."
+      "treatment": "Removing part of the liver, a transplant, destroying the tumour from inside, medicines. People with cirrhosis are checked regularly to catch it early.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Liver Cancer",
+          "url": "https://medlineplus.gov/livercancer.html"
+        },
+        {
+          "name": "NHS: Liver cancer",
+          "url": "https://www.nhs.uk/conditions/liver-cancer/"
+        }
+      ]
     },
     "gallstones": {
       "name": "Gallstones",
       "desc": "Stones form in the gallbladder from parts of bile, most often cholesterol.",
       "symptoms": "Often none. If a stone blocks the duct: biliary colic, severe pain under the right ribs after a fatty meal.",
       "causes": "Too much cholesterol in bile, excess weight, rapid weight loss, pregnancy; more common in women over 40.",
-      "treatment": "Stones that cause no trouble are usually left alone. With attacks of colic the gallbladder is removed, usually through small cuts."
+      "treatment": "Stones that cause no trouble are usually left alone. With attacks of colic the gallbladder is removed, usually through small cuts.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Gallstones",
+          "url": "https://medlineplus.gov/gallstones.html"
+        },
+        {
+          "name": "NHS: Gallstones",
+          "url": "https://www.nhs.uk/conditions/gallstones/"
+        }
+      ]
     },
     "cholecystitis": {
       "name": "Cholecystitis",
       "desc": "Inflammation of the gallbladder, usually because a stone has blocked its outlet.",
       "symptoms": "Severe constant pain under the right ribs, fever, nausea and vomiting.",
       "causes": "Gallstones in 9 cases out of 10: bile gets trapped and becomes infected.",
-      "treatment": "Fasting, pain relief and antibiotics in hospital, then removal of the gallbladder."
+      "treatment": "Fasting, pain relief and antibiotics in hospital, then removal of the gallbladder.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Acute cholecystitis",
+          "url": "https://medlineplus.gov/ency/article/000264.htm"
+        },
+        {
+          "name": "NHS: Acute cholecystitis",
+          "url": "https://www.nhs.uk/conditions/acute-cholecystitis/"
+        }
+      ]
     },
     "gastritis": {
       "name": "Gastritis",
       "desc": "Inflammation of the stomach lining, sudden or long-lasting.",
       "symptoms": "Pain and burning in the upper abdomen, heaviness after meals, nausea; chronic gastritis often causes no symptoms.",
       "causes": "The bacterium Helicobacter pylori, painkillers such as ibuprofen and aspirin, alcohol, and less often autoimmune causes.",
-      "treatment": "Antibiotics to clear Helicobacter, acid-reducing medicines, avoiding alcohol and the pills that harm the stomach."
+      "treatment": "Antibiotics to clear Helicobacter, acid-reducing medicines, avoiding alcohol and the pills that harm the stomach.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Gastritis",
+          "url": "https://medlineplus.gov/ency/article/001150.htm"
+        },
+        {
+          "name": "NHS: Gastritis",
+          "url": "https://www.nhs.uk/conditions/gastritis/"
+        }
+      ]
     },
     "peptic_ulcer": {
       "name": "Peptic ulcer",
       "desc": "A deep sore in the lining of the stomach or duodenum.",
       "symptoms": "Upper abdominal pain on an empty stomach or after eating, heartburn. Dangerous complications are bleeding and perforation.",
       "causes": "Mostly Helicobacter pylori and anti-inflammatory painkillers; smoking slows healing.",
-      "treatment": "Antibiotics against Helicobacter and acid-suppressing drugs; the ulcer usually heals within a few weeks."
+      "treatment": "Antibiotics against Helicobacter and acid-suppressing drugs; the ulcer usually heals within a few weeks.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Stomach Ulcer",
+          "url": "https://medlineplus.gov/pepticulcer.html"
+        },
+        {
+          "name": "NHS: Stomach ulcer",
+          "url": "https://www.nhs.uk/conditions/stomach-ulcer/"
+        }
+      ]
     },
     "gerd": {
       "name": "Gastroesophageal reflux disease (GERD)",
       "desc": "Acidic stomach contents regularly flow back into the esophagus and irritate its wall.",
       "symptoms": "Heartburn, sour burps, pain behind the breastbone, sometimes cough and hoarseness, especially lying down and after meals.",
       "causes": "A weak lower esophageal sphincter, excess weight, overeating, a hiatal hernia, smoking.",
-      "treatment": "No food before bed, a raised head of the bed, weight loss, and acid-reducing medicines. Untreated, it can lead to esophagitis and Barrett's esophagus."
+      "treatment": "No food before bed, a raised head of the bed, weight loss, and acid-reducing medicines. Untreated, it can lead to esophagitis and Barrett's esophagus.",
+      "sources": [
+        {
+          "name": "MedlinePlus: GERD",
+          "url": "https://medlineplus.gov/gerd.html"
+        },
+        {
+          "name": "NHS: Heartburn and acid reflux",
+          "url": "https://www.nhs.uk/conditions/heartburn-and-acid-reflux/"
+        }
+      ]
     },
     "stomach_cancer": {
       "name": "Stomach cancer",
       "desc": "A malignant tumour of the cells of the stomach lining.",
       "symptoms": "At first, vague discomfort in the abdomen and feeling full quickly. Later, weight loss, anaemia, vomiting, black stools.",
       "causes": "Long-term Helicobacter pylori infection, smoking, a lot of salty and smoked food, family history.",
-      "treatment": "Surgery to remove part or all of the stomach, chemotherapy. Early tumours can sometimes be removed through a gastroscope."
+      "treatment": "Surgery to remove part or all of the stomach, chemotherapy. Early tumours can sometimes be removed through a gastroscope.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Stomach Cancer",
+          "url": "https://medlineplus.gov/stomachcancer.html"
+        },
+        {
+          "name": "NHS: Stomach cancer",
+          "url": "https://www.nhs.uk/conditions/stomach-cancer/"
+        }
+      ]
     },
     "ibs": {
       "name": "Irritable bowel syndrome",
       "desc": "A problem with how the bowel works, with no visible damage: the gut becomes oversensitive.",
       "symptoms": "Abdominal pain and bloating that ease after a bowel movement; diarrhoea, constipation or both in turn.",
       "causes": "Disturbed signalling between the gut and the nervous system, stress, a past gut infection.",
-      "treatment": "Adjusting the diet (for example fewer fermentable carbohydrates), medicines for cramps, diarrhoea or constipation, managing stress."
+      "treatment": "Adjusting the diet (for example fewer fermentable carbohydrates), medicines for cramps, diarrhoea or constipation, managing stress.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Irritable Bowel Syndrome",
+          "url": "https://medlineplus.gov/irritablebowelsyndrome.html"
+        },
+        {
+          "name": "NHS: Irritable bowel syndrome (IBS)",
+          "url": "https://www.nhs.uk/conditions/irritable-bowel-syndrome-ibs/"
+        }
+      ]
     },
     "ibd": {
       "name": "Crohn's disease and ulcerative colitis",
       "desc": "Inflammatory bowel diseases: the immune system attacks the wall of the gut. Ulcerative colitis affects the large intestine, Crohn's disease any part of the gut.",
       "symptoms": "Diarrhoea, often with blood, abdominal pain, weight loss, fever; flare-ups alternate with calm periods.",
       "causes": "A mix of genes, a faulty immune response and gut bacteria; smoking makes Crohn's disease worse.",
-      "treatment": "Anti-inflammatory and immune-suppressing drugs, biologic medicines, sometimes surgery."
+      "treatment": "Anti-inflammatory and immune-suppressing drugs, biologic medicines, sometimes surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Crohn's Disease",
+          "url": "https://medlineplus.gov/crohnsdisease.html"
+        },
+        {
+          "name": "MedlinePlus: Ulcerative Colitis",
+          "url": "https://medlineplus.gov/ulcerativecolitis.html"
+        },
+        {
+          "name": "NHS: Inflammatory bowel disease (IBD)",
+          "url": "https://www.nhs.uk/conditions/inflammatory-bowel-disease/"
+        }
+      ]
     },
     "appendicitis": {
       "name": "Appendicitis",
       "desc": "Sudden inflammation of the appendix, the worm-like pouch of the cecum.",
       "symptoms": "Pain starts around the navel and moves to the lower right within a few hours; nausea, fever.",
       "causes": "The opening of the appendix gets blocked (by a lump of stool or swollen lymphoid tissue) and bacteria multiply inside.",
-      "treatment": "Urgent surgery to remove the appendix. Without it the appendix can burst and cause peritonitis."
+      "treatment": "Urgent surgery to remove the appendix. Without it the appendix can burst and cause peritonitis.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Appendicitis",
+          "url": "https://medlineplus.gov/appendicitis.html"
+        },
+        {
+          "name": "NHS: Appendicitis",
+          "url": "https://www.nhs.uk/conditions/appendicitis/"
+        }
+      ]
     },
     "colorectal_cancer": {
       "name": "Colorectal cancer",
       "desc": "A malignant tumour of the large intestine or rectum; it usually grows over years from a harmless polyp.",
       "symptoms": "Blood in the stool, a change in bowel habits, abdominal pain, tiredness from anaemia, weight loss.",
       "causes": "Age over 50, family history, a lot of red and processed meat, little fibre, smoking, excess weight.",
-      "treatment": "Surgery, chemotherapy and radiotherapy. A colonoscopy finds polyps and removes them before they turn into cancer."
+      "treatment": "Surgery, chemotherapy and radiotherapy. A colonoscopy finds polyps and removes them before they turn into cancer.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Colorectal Cancer",
+          "url": "https://medlineplus.gov/colorectalcancer.html"
+        },
+        {
+          "name": "NHS: Bowel cancer",
+          "url": "https://www.nhs.uk/conditions/bowel-cancer/"
+        },
+        {
+          "name": "WHO fact sheet: Colorectal cancer",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/colorectal-cancer"
+        }
+      ]
     },
     "kidney_stones": {
       "name": "Kidney stones",
       "desc": "Stones form in the kidneys from salts in the urine and can slip into the ureter.",
       "symptoms": "Renal colic: sudden, extreme pain in the lower back spreading to the groin, blood in the urine, nausea.",
       "causes": "Too little water, a lot of salt and animal protein, metabolic disorders, family history.",
-      "treatment": "Small stones pass on their own with plenty of fluids and pain relief; large ones are broken up with shock waves or removed with a scope."
+      "treatment": "Small stones pass on their own with plenty of fluids and pain relief; large ones are broken up with shock waves or removed with a scope.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Kidney Stones",
+          "url": "https://medlineplus.gov/kidneystones.html"
+        },
+        {
+          "name": "NHS: Kidney stones",
+          "url": "https://www.nhs.uk/conditions/kidney-stones/"
+        }
+      ]
     },
     "pyelonephritis": {
       "name": "Pyelonephritis",
       "desc": "A bacterial infection of the kidney and its pelvis.",
       "symptoms": "High fever with chills, pain in the lower back on one side, frequent painful urination.",
       "causes": "Usually bacteria travel up the ureter from the bladder; the risk is higher with stones, in pregnancy and in women.",
-      "treatment": "Antibiotics; severe cases are treated in hospital."
+      "treatment": "Antibiotics; severe cases are treated in hospital.",
+      "sources": [
+        {
+          "name": "NHS: Kidney infection",
+          "url": "https://www.nhs.uk/conditions/kidney-infection/"
+        },
+        {
+          "name": "MedlinePlus: Urinary Tract Infections",
+          "url": "https://medlineplus.gov/urinarytractinfections.html"
+        }
+      ]
     },
     "glomerulonephritis": {
       "name": "Glomerulonephritis",
       "desc": "Inflammation of the glomeruli, the tiny filters of the kidney, usually caused by a mistake of the immune system.",
       "symptoms": "Dark, cola-coloured urine, puffy face in the morning, high blood pressure, protein in the urine.",
       "causes": "An immune reaction after a strep throat or another infection, autoimmune diseases.",
-      "treatment": "Drugs that calm the immune inflammation, blood pressure control, less salt."
+      "treatment": "Drugs that calm the immune inflammation, blood pressure control, less salt.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Glomerulonephritis",
+          "url": "https://medlineplus.gov/ency/article/000484.htm"
+        },
+        {
+          "name": "NHS: Glomerulonephritis",
+          "url": "https://www.nhs.uk/conditions/glomerulonephritis/"
+        }
+      ]
     },
     "ckd": {
       "name": "Chronic kidney disease",
       "desc": "Over years the kidneys slowly lose their ability to filter the blood.",
       "symptoms": "Unnoticed for a long time. Later: swelling, weakness, nausea, itching, high blood pressure, anaemia.",
       "causes": "Most often diabetes and high blood pressure, less often glomerulonephritis and inherited diseases.",
-      "treatment": "Controlling blood sugar and blood pressure slows it down. In the final stage, dialysis or a kidney transplant is needed."
+      "treatment": "Controlling blood sugar and blood pressure slows it down. In the final stage, dialysis or a kidney transplant is needed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Chronic Kidney Disease",
+          "url": "https://medlineplus.gov/chronickidneydisease.html"
+        },
+        {
+          "name": "NHS: Chronic kidney disease",
+          "url": "https://www.nhs.uk/conditions/kidney-disease/"
+        }
+      ]
     },
     "ihd": {
       "name": "Coronary heart disease",
       "desc": "The heart muscle does not get enough blood because the coronary arteries are narrowed by fatty plaques.",
       "symptoms": "Pressing chest pain during exertion (angina). If a plaque ruptures and blocks the vessel, it is a heart attack.",
       "causes": "Atherosclerosis caused by high cholesterol, smoking, high blood pressure, diabetes and lack of exercise.",
-      "treatment": "Medicines (against clotting, to lower cholesterol), a stent or bypass surgery. Quitting smoking and staying active."
+      "treatment": "Medicines (against clotting, to lower cholesterol), a stent or bypass surgery. Quitting smoking and staying active.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Coronary Artery Disease",
+          "url": "https://medlineplus.gov/coronaryarterydisease.html"
+        },
+        {
+          "name": "NHS: Coronary heart disease",
+          "url": "https://www.nhs.uk/conditions/coronary-heart-disease/"
+        },
+        {
+          "name": "WHO fact sheet: Cardiovascular diseases (CVDs)",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)"
+        }
+      ]
     },
     "hypertension": {
       "name": "High blood pressure",
       "desc": "Blood pressure that stays at 140/90 mmHg or higher.",
       "symptoms": "Often none, which is why it is called a \"silent killer\"; sometimes headaches or ringing in the ears.",
       "causes": "Family history, too much salt, excess weight, alcohol, lack of exercise, stress, age.",
-      "treatment": "Less salt, exercise, weight loss and medicines. Untreated, it raises the risk of stroke, heart attack, heart failure and chronic kidney disease."
+      "treatment": "Less salt, exercise, weight loss and medicines. Untreated, it raises the risk of stroke, heart attack, heart failure and chronic kidney disease.",
+      "sources": [
+        {
+          "name": "MedlinePlus: High Blood Pressure",
+          "url": "https://medlineplus.gov/highbloodpressure.html"
+        },
+        {
+          "name": "NHS: High blood pressure",
+          "url": "https://www.nhs.uk/conditions/high-blood-pressure/"
+        },
+        {
+          "name": "WHO fact sheet: Hypertension",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/hypertension"
+        }
+      ]
     },
     "arrhythmia": {
       "name": "Arrhythmias",
       "desc": "Heart rhythm disorders: the heart beats too fast, too slowly or irregularly.",
       "symptoms": "Skipped beats and fluttering in the chest, palpitations, dizziness, fainting.",
       "causes": "Heart disease, thyroid hormones, caffeine, alcohol, imbalanced salts in the blood. The most common one is atrial fibrillation.",
-      "treatment": "Medicines, destroying the faulty spot through a catheter, a pacemaker. With atrial fibrillation, blood thinners help prevent a stroke."
+      "treatment": "Medicines, destroying the faulty spot through a catheter, a pacemaker. With atrial fibrillation, blood thinners help prevent a stroke.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Arrhythmia",
+          "url": "https://medlineplus.gov/arrhythmia.html"
+        },
+        {
+          "name": "NHS: Heart rhythm problems (arrhythmia)",
+          "url": "https://www.nhs.uk/conditions/arrhythmia/"
+        }
+      ]
     },
     "heart_failure": {
       "name": "Heart failure",
       "desc": "The heart cannot pump as much blood as the body needs.",
       "symptoms": "Breathlessness on exertion and lying flat, swollen legs, getting tired quickly.",
       "causes": "A past heart attack, coronary heart disease, high blood pressure, valve disease.",
-      "treatment": "Medicines that ease the heart's workload and remove extra fluid, less salt, sometimes special pacemakers."
+      "treatment": "Medicines that ease the heart's workload and remove extra fluid, less salt, sometimes special pacemakers.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Heart Failure",
+          "url": "https://medlineplus.gov/heartfailure.html"
+        },
+        {
+          "name": "NHS: Heart failure",
+          "url": "https://www.nhs.uk/conditions/heart-failure/"
+        }
+      ]
     },
     "stroke": {
       "name": "Stroke",
       "desc": "A sudden loss of blood flow in the brain: a vessel is blocked by a clot or bursts.",
       "symptoms": "A suddenly drooping face, weakness of an arm or leg on one side, slurred speech. Call an ambulance at once.",
       "causes": "High blood pressure, atrial fibrillation, atherosclerosis, smoking, diabetes.",
-      "treatment": "In the first hours the clot is dissolved with a drug or removed through a catheter. Then come rehabilitation and preventing another stroke."
+      "treatment": "In the first hours the clot is dissolved with a drug or removed through a catheter. Then come rehabilitation and preventing another stroke.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Stroke",
+          "url": "https://medlineplus.gov/stroke.html"
+        },
+        {
+          "name": "NHS: Stroke",
+          "url": "https://www.nhs.uk/conditions/stroke/"
+        }
+      ]
     },
     "migraine": {
       "name": "Migraine",
       "desc": "Attacks of strong throbbing headache, often on one side of the head.",
       "symptoms": "Pain for 4–72 hours, nausea, sensitivity to light and sound; some people get an aura (flashes, zigzags) beforehand.",
       "causes": "An inherited feature of the brain. Attacks are triggered by lack of sleep, stress, hunger, alcohol and hormone changes.",
-      "treatment": "Painkillers and special drugs (triptans) at the start of an attack; preventive medicines for frequent attacks."
+      "treatment": "Painkillers and special drugs (triptans) at the start of an attack; preventive medicines for frequent attacks.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Migraine",
+          "url": "https://medlineplus.gov/migraine.html"
+        },
+        {
+          "name": "NHS: Migraine",
+          "url": "https://www.nhs.uk/conditions/migraine/"
+        },
+        {
+          "name": "WHO fact sheet: Migraine and other headache disorders",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/headache-disorders"
+        }
+      ]
     },
     "epilepsy": {
       "name": "Epilepsy",
       "desc": "A tendency to repeated seizures caused by sudden bursts of activity in the brain's nerve cells.",
       "symptoms": "Convulsions with loss of consciousness, brief blank spells, strange sensations or movements.",
       "causes": "Brain injuries and tumours, stroke, conditions present from birth, genes; often no cause is found.",
-      "treatment": "Anti-seizure medicines work for most people; sometimes surgery."
+      "treatment": "Anti-seizure medicines work for most people; sometimes surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Epilepsy",
+          "url": "https://medlineplus.gov/epilepsy.html"
+        },
+        {
+          "name": "NHS: Epilepsy",
+          "url": "https://www.nhs.uk/conditions/epilepsy/"
+        },
+        {
+          "name": "WHO fact sheet: Epilepsy",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/epilepsy"
+        }
+      ]
     },
     "alzheimer": {
       "name": "Alzheimer's disease",
       "desc": "A slow loss of nerve cells in the brain; the most common cause of dementia.",
       "symptoms": "First recent events are forgotten, then speech, orientation and the ability to look after oneself decline.",
       "causes": "Proteins (beta-amyloid and tau) building up in the brain, age, genes.",
-      "treatment": "There is no cure. Medicines slightly slow the symptoms; care, activity and support from family matter."
+      "treatment": "There is no cure. Medicines slightly slow the symptoms; care, activity and support from family matter.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Alzheimer's Disease",
+          "url": "https://medlineplus.gov/alzheimersdisease.html"
+        },
+        {
+          "name": "NHS: Alzheimer's disease",
+          "url": "https://www.nhs.uk/conditions/alzheimers-disease/"
+        },
+        {
+          "name": "WHO fact sheet: Dementia",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/dementia"
+        }
+      ]
     },
     "hypothyroidism": {
       "name": "Hypothyroidism",
       "desc": "The thyroid gland makes too little hormone and metabolism slows down.",
       "symptoms": "Tiredness, feeling cold, weight gain, dry skin, constipation, low mood.",
       "causes": "Most often Hashimoto's thyroiditis, also removal of the gland and lack of iodine.",
-      "treatment": "A daily thyroxine tablet that replaces the missing hormone."
+      "treatment": "A daily thyroxine tablet that replaces the missing hormone.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hypothyroidism",
+          "url": "https://medlineplus.gov/hypothyroidism.html"
+        },
+        {
+          "name": "NHS: Underactive thyroid (hypothyroidism)",
+          "url": "https://www.nhs.uk/conditions/underactive-thyroid-hypothyroidism/"
+        }
+      ]
     },
     "hyperthyroidism": {
       "name": "Hyperthyroidism (Graves' disease)",
       "desc": "The thyroid gland makes too much hormone and metabolism speeds up. A common cause is Graves' disease.",
       "symptoms": "Fast heartbeat, weight loss despite a good appetite, sweating, trembling, irritability, sometimes bulging eyes.",
       "causes": "In Graves' disease antibodies make the gland work non-stop; less often hormone-producing nodules.",
-      "treatment": "Medicines that slow the gland, radioactive iodine or surgery."
+      "treatment": "Medicines that slow the gland, radioactive iodine or surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hyperthyroidism",
+          "url": "https://medlineplus.gov/hyperthyroidism.html"
+        },
+        {
+          "name": "NHS: Overactive thyroid (hyperthyroidism)",
+          "url": "https://www.nhs.uk/conditions/overactive-thyroid-hyperthyroidism/"
+        }
+      ]
     },
     "thyroiditis": {
       "name": "Hashimoto's thyroiditis",
       "desc": "The immune system attacks the thyroid gland.",
       "symptoms": "Unnoticed for a long time; gradually the signs of hypothyroidism appear, and sometimes the gland gets bigger.",
       "causes": "An inherited tendency; it is much more common in women.",
-      "treatment": "The inflammation itself is not treated; when hormone levels fall, thyroxine is taken."
+      "treatment": "The inflammation itself is not treated; when hormone levels fall, thyroxine is taken.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Chronic thyroiditis (Hashimoto disease)",
+          "url": "https://medlineplus.gov/ency/article/000371.htm"
+        },
+        {
+          "name": "MedlinePlus: Thyroid Diseases",
+          "url": "https://medlineplus.gov/thyroiddiseases.html"
+        },
+        {
+          "name": "NHS: Underactive thyroid (hypothyroidism)",
+          "url": "https://www.nhs.uk/conditions/underactive-thyroid-hypothyroidism/"
+        }
+      ]
     },
     "goiter": {
       "name": "Thyroid nodules",
       "desc": "Lumps form in the thyroid gland; the vast majority are benign.",
       "symptoms": "Usually none; a large nodule can be seen on the neck and may make swallowing harder.",
       "causes": "Lack of iodine, age, family history.",
-      "treatment": "Ultrasound check-ups; a suspicious nodule is tested with a needle. Large or dangerous ones are removed."
+      "treatment": "Ultrasound check-ups; a suspicious nodule is tested with a needle. Large or dangerous ones are removed.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Simple goiter",
+          "url": "https://medlineplus.gov/ency/article/001178.htm"
+        },
+        {
+          "name": "NHS: Goitre",
+          "url": "https://www.nhs.uk/conditions/goitre/"
+        }
+      ]
     },
     "splenomegaly": {
       "name": "Enlarged spleen (splenomegaly)",
       "desc": "The spleen grows larger than normal; it is a sign of another illness rather than a disease of its own.",
       "symptoms": "Heaviness under the left ribs, feeling full quickly; often found only during an examination.",
       "causes": "Infections (mononucleosis, malaria), cirrhosis of the liver, blood disorders, lymphomas.",
-      "treatment": "The cause is treated. An enlarged spleen ruptures easily, so blows to the abdomen should be avoided."
+      "treatment": "The cause is treated. An enlarged spleen ruptures easily, so blows to the abdomen should be avoided.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Splenomegaly",
+          "url": "https://medlineplus.gov/ency/article/003276.htm"
+        },
+        {
+          "name": "NHS: Spleen problems and spleen removal",
+          "url": "https://www.nhs.uk/tests-and-treatments/spleen-problems-and-spleen-removal/"
+        }
+      ]
     },
     "spleen_rupture": {
       "name": "Ruptured spleen after an abdominal injury",
       "desc": "The spleen is full of blood vessels, and a blow can tear it and cause heavy internal bleeding.",
       "symptoms": "Pain under the left ribs spreading to the left shoulder, pale skin, weakness, falling blood pressure.",
       "causes": "A blow to the abdomen or left side: a crash, a fall, sport. An enlarged spleen tears more easily.",
-      "treatment": "Small tears sometimes heal under observation; with heavy bleeding the spleen is removed."
+      "treatment": "Small tears sometimes heal under observation; with heavy bleeding the spleen is removed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Spleen Diseases",
+          "url": "https://medlineplus.gov/spleendiseases.html"
+        },
+        {
+          "name": "NHS: Spleen problems and spleen removal",
+          "url": "https://www.nhs.uk/tests-and-treatments/spleen-problems-and-spleen-removal/"
+        }
+      ]
     },
     "spleen_infarction": {
       "name": "Splenic infarction",
       "desc": "Part of the spleen dies because the artery feeding it is blocked.",
       "symptoms": "Sudden pain under the left ribs, sometimes fever; it can also cause no symptoms.",
       "causes": "Clots in heart and blood disorders, sickle cell disease, a greatly enlarged spleen.",
-      "treatment": "Pain relief and treating the cause; surgery is rarely needed."
+      "treatment": "Pain relief and treating the cause; surgery is rarely needed.",
+      "sources": [
+        {
+          "name": "Cleveland Clinic: Splenic Infarction",
+          "url": "https://my.clevelandclinic.org/health/diseases/splenic-infarction"
+        },
+        {
+          "name": "MedlinePlus: Spleen Diseases",
+          "url": "https://medlineplus.gov/spleendiseases.html"
+        }
+      ]
     },
     "hypersplenism": {
       "name": "Hypersplenism",
       "desc": "An enlarged spleen traps and destroys too many blood cells.",
       "symptoms": "Signs of low blood counts: weakness (anaemia), easy bruising and bleeding, frequent infections.",
       "causes": "Any cause of splenomegaly, most often cirrhosis of the liver with blood backing up.",
-      "treatment": "Treating the underlying disease; sometimes the spleen or part of it is removed."
+      "treatment": "Treating the underlying disease; sometimes the spleen or part of it is removed.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Hypersplenism",
+          "url": "https://medlineplus.gov/ency/article/001314.htm"
+        },
+        {
+          "name": "MedlinePlus: Spleen Diseases",
+          "url": "https://medlineplus.gov/spleendiseases.html"
+        }
+      ]
     },
     "pancreatitis": {
       "name": "Pancreatitis",
       "desc": "Inflammation of the pancreas: its enzymes start digesting the gland itself.",
       "symptoms": "Acute: severe upper abdominal pain spreading to the back, vomiting. Chronic: pain after meals, fatty stools, weight loss.",
       "causes": "Mostly alcohol and gallstones blocking the duct outlet.",
-      "treatment": "Acute pancreatitis is treated in hospital with fasting, drips and pain relief. Chronic: no alcohol, enzyme tablets."
+      "treatment": "Acute pancreatitis is treated in hospital with fasting, drips and pain relief. Chronic: no alcohol, enzyme tablets.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Pancreatitis",
+          "url": "https://medlineplus.gov/pancreatitis.html"
+        },
+        {
+          "name": "NHS: Acute pancreatitis",
+          "url": "https://www.nhs.uk/conditions/acute-pancreatitis/"
+        },
+        {
+          "name": "NHS: Chronic pancreatitis",
+          "url": "https://www.nhs.uk/conditions/chronic-pancreatitis/"
+        }
+      ]
     },
     "diabetes": {
       "name": "Diabetes",
       "desc": "Blood sugar stays high: there is not enough insulin (type 1) or the cells respond poorly to it (type 2).",
       "symptoms": "Thirst, frequent urination, weakness, weight loss (in type 1); type 2 can go unnoticed for a long time.",
       "causes": "Type 1: the immune system destroys the cells of the islets of Langerhans. Type 2: excess weight, lack of exercise, family history.",
-      "treatment": "Type 1: insulin injections. Type 2: diet, exercise, tablets, sometimes insulin. Uncontrolled, it damages the kidneys, eyes, nerves and heart vessels."
+      "treatment": "Type 1: insulin injections. Type 2: diet, exercise, tablets, sometimes insulin. Uncontrolled, it damages the kidneys, eyes, nerves and heart vessels.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Diabetes",
+          "url": "https://medlineplus.gov/diabetes.html"
+        },
+        {
+          "name": "NHS: Diabetes",
+          "url": "https://www.nhs.uk/conditions/diabetes/"
+        },
+        {
+          "name": "WHO fact sheet: Diabetes",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/diabetes"
+        }
+      ]
     },
     "pancreatic_cancer": {
       "name": "Pancreatic cancer",
       "desc": "A malignant tumour of the pancreas, usually from the cells of its ducts.",
       "symptoms": "Usually found late: jaundice, pain in the upper abdomen and back, weight loss, newly appearing diabetes.",
       "causes": "Smoking, age, chronic pancreatitis, obesity, family history.",
-      "treatment": "Surgery if the tumour can be removed, otherwise chemotherapy and relief of symptoms."
+      "treatment": "Surgery if the tumour can be removed, otherwise chemotherapy and relief of symptoms.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Pancreatic Cancer",
+          "url": "https://medlineplus.gov/pancreaticcancer.html"
+        },
+        {
+          "name": "NHS: Pancreatic cancer",
+          "url": "https://www.nhs.uk/conditions/pancreatic-cancer/"
+        }
+      ]
     },
     "cystic_fibrosis": {
       "name": "Cystic fibrosis",
       "desc": "An inherited disease in which the mucus in many organs becomes thick and sticky.",
       "symptoms": "Blocked ducts of the pancreas cause poor digestion and fatty stools; in the lungs, a persistent cough and infections.",
       "causes": "A faulty CFTR gene inherited from both parents.",
-      "treatment": "Enzyme tablets, airway clearance, antibiotics; newer drugs correct how the CFTR protein works."
+      "treatment": "Enzyme tablets, airway clearance, antibiotics; newer drugs correct how the CFTR protein works.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Cystic Fibrosis",
+          "url": "https://medlineplus.gov/cysticfibrosis.html"
+        },
+        {
+          "name": "NHS: Cystic fibrosis",
+          "url": "https://www.nhs.uk/conditions/cystic-fibrosis/"
+        }
+      ]
     },
     "cystitis": {
       "name": "Cystitis",
       "desc": "Inflammation of the urinary bladder, usually from a bacterial infection.",
       "symptoms": "Frequent painful urges, burning when passing urine, lower abdominal pain, cloudy urine.",
       "causes": "Bacteria from the gut get into the urethra; women have a shorter urethra, so they get cystitis more often.",
-      "treatment": "Antibiotics and plenty of fluids. Untreated, the infection can spread up to the kidneys (pyelonephritis)."
+      "treatment": "Antibiotics and plenty of fluids. Untreated, the infection can spread up to the kidneys (pyelonephritis).",
+      "sources": [
+        {
+          "name": "MedlinePlus: Urinary Tract Infections",
+          "url": "https://medlineplus.gov/urinarytractinfections.html"
+        },
+        {
+          "name": "NHS: Urinary tract infections (UTIs)",
+          "url": "https://www.nhs.uk/conditions/urinary-tract-infections-utis/"
+        }
+      ]
     },
     "overactive_bladder": {
       "name": "Overactive bladder",
       "desc": "The muscle of the bladder wall contracts before the bladder is full.",
       "symptoms": "Sudden strong urges, frequent urination day and night, sometimes leaking.",
       "causes": "Often no clear cause; it can come with nervous system diseases and with age.",
-      "treatment": "Bladder training, pelvic floor exercises, medicines that relax the bladder wall."
+      "treatment": "Bladder training, pelvic floor exercises, medicines that relax the bladder wall.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Urge incontinence",
+          "url": "https://medlineplus.gov/ency/article/001270.htm"
+        },
+        {
+          "name": "NHS: Urinary incontinence",
+          "url": "https://www.nhs.uk/conditions/urinary-incontinence/"
+        }
+      ]
     },
     "bladder_stones": {
       "name": "Bladder stones",
       "desc": "Stones form in the bladder itself when urine stays in it too long.",
       "symptoms": "Lower abdominal pain, a stop-start stream, blood in the urine, frequent urges.",
       "causes": "Incomplete emptying of the bladder, in men most often due to an enlarged prostate; stones coming down from the kidneys.",
-      "treatment": "Breaking up and removing them with a scope, and treating the cause of urine retention."
+      "treatment": "Breaking up and removing them with a scope, and treating the cause of urine retention.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Bladder stones",
+          "url": "https://medlineplus.gov/ency/article/001275.htm"
+        },
+        {
+          "name": "NHS: Bladder stones",
+          "url": "https://www.nhs.uk/conditions/bladder-stones/"
+        }
+      ]
     },
     "incontinence": {
       "name": "Urinary incontinence",
       "desc": "Involuntary leaking of urine.",
       "symptoms": "Leaking when coughing, laughing or exercising (stress incontinence), or with a sudden strong urge (urge incontinence).",
       "causes": "Weak pelvic floor muscles after childbirth and with age, overactive bladder, prostate and nervous system diseases.",
-      "treatment": "Pelvic floor exercises, medicines, surgery; it can be treated, and there is no need to feel embarrassed seeing a doctor."
+      "treatment": "Pelvic floor exercises, medicines, surgery; it can be treated, and there is no need to feel embarrassed seeing a doctor.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Urinary Incontinence",
+          "url": "https://medlineplus.gov/urinaryincontinence.html"
+        },
+        {
+          "name": "NHS: Urinary incontinence",
+          "url": "https://www.nhs.uk/conditions/urinary-incontinence/"
+        }
+      ]
     },
     "esophagitis": {
       "name": "Esophagitis",
       "desc": "Inflammation of the lining of the esophagus.",
       "symptoms": "Heartburn, pain behind the breastbone, pain and difficulty when swallowing.",
       "causes": "Most often GERD; also infections, allergy (eosinophilic esophagitis), tablets that get stuck in the esophagus.",
-      "treatment": "Treating the cause: lowering stomach acid, antifungal drugs, a special diet for allergy."
+      "treatment": "Treating the cause: lowering stomach acid, antifungal drugs, a special diet for allergy.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Esophagitis",
+          "url": "https://medlineplus.gov/ency/article/001153.htm"
+        },
+        {
+          "name": "MedlinePlus: Esophagus Disorders",
+          "url": "https://medlineplus.gov/esophagusdisorders.html"
+        }
+      ]
     },
     "barrett": {
       "name": "Barrett's esophagus",
       "desc": "Under the effect of acid, the lining of the lower esophagus changes and comes to look like the lining of the intestine.",
       "symptoms": "No signs of its own, only long-lasting heartburn from GERD.",
       "causes": "Years of stomach contents flowing back; more common in men over 50 with excess weight.",
-      "treatment": "Controlling GERD and regular gastroscopy: the changes raise the risk of esophageal cancer and can be removed through a scope."
+      "treatment": "Controlling GERD and regular gastroscopy: the changes raise the risk of esophageal cancer and can be removed through a scope.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Barrett esophagus",
+          "url": "https://medlineplus.gov/ency/article/001143.htm"
+        },
+        {
+          "name": "MedlinePlus: Esophagus Disorders",
+          "url": "https://medlineplus.gov/esophagusdisorders.html"
+        }
+      ]
     },
     "hiatal_hernia": {
       "name": "Hiatal hernia",
       "desc": "Part of the stomach slides through the opening in the diaphragm from the abdomen into the chest.",
       "symptoms": "Often none; otherwise heartburn, burping, pain behind the breastbone, especially lying down.",
       "causes": "Tissues weakening with age, raised pressure in the abdomen: excess weight, pregnancy, straining.",
-      "treatment": "Treating reflux; large hernias are repaired with surgery."
+      "treatment": "Treating reflux; large hernias are repaired with surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hiatal Hernia",
+          "url": "https://medlineplus.gov/hiatalhernia.html"
+        },
+        {
+          "name": "NHS: Hiatus hernia",
+          "url": "https://www.nhs.uk/conditions/hiatus-hernia/"
+        }
+      ]
     },
     "tracheitis": {
       "name": "Tracheitis",
       "desc": "Inflammation of the lining of the trachea, usually together with laryngitis or bronchitis.",
       "symptoms": "A dry, tiring cough, a raw feeling behind the breastbone, fever.",
       "causes": "Most often cold and flu viruses, less often bacteria; irritation from smoke and cold air.",
-      "treatment": "It usually clears up on its own: warm drinks, humid air; antibiotics for a bacterial infection."
+      "treatment": "It usually clears up on its own: warm drinks, humid air; antibiotics for a bacterial infection.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Tracheitis",
+          "url": "https://medlineplus.gov/ency/article/000988.htm"
+        },
+        {
+          "name": "MedlinePlus: Tracheal Disorders",
+          "url": "https://medlineplus.gov/trachealdisorders.html"
+        }
+      ]
     },
     "tracheal_stenosis": {
       "name": "Tracheal stenosis",
       "desc": "The trachea narrows because of a scar or a tumour, and air passes through it with difficulty.",
       "symptoms": "Breathlessness and noisy, whistling breathing (stridor) that slowly get worse.",
       "causes": "Most often scarring after a long time on a ventilator or after a tracheostomy, less often tumours.",
-      "treatment": "Widening the narrow part through a bronchoscope, a stent, or removing that section of the trachea."
+      "treatment": "Widening the narrow part through a bronchoscope, a stent, or removing that section of the trachea.",
+      "sources": [
+        {
+          "name": "Merck Manual Consumer Version: Laryngotracheal Stenosis",
+          "url": "https://www.merckmanuals.com/home/ear-nose-and-throat-disorders/laryngeal-disorders/laryngotracheal-stenosis"
+        },
+        {
+          "name": "MedlinePlus: Tracheal Disorders",
+          "url": "https://medlineplus.gov/trachealdisorders.html"
+        }
+      ]
     },
     "foreign_body": {
       "name": "Inhaled foreign body",
       "desc": "An object or piece of food gets into the larynx, trachea or bronchi.",
       "symptoms": "Sudden coughing, choking, being unable to speak; if the object moves into a bronchus, a long-lasting cough and pneumonia.",
       "causes": "More common in small children (nuts, small toys) and older people; talking and laughing while eating.",
-      "treatment": "For choking, the Heimlich manoeuvre (thrusts into the upper abdomen). A stuck object is removed with a bronchoscope."
+      "treatment": "For choking, the Heimlich manoeuvre (thrusts into the upper abdomen). A stuck object is removed with a bronchoscope.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Foreign object - inhaled",
+          "url": "https://medlineplus.gov/ency/article/007738.htm"
+        },
+        {
+          "name": "MedlinePlus: Choking",
+          "url": "https://medlineplus.gov/choking.html"
+        }
+      ]
     },
     "tracheomalacia": {
       "name": "Tracheomalacia",
       "desc": "The cartilage of the trachea is too soft, so the tube collapses when breathing out or coughing.",
       "symptoms": "Noisy breathing, a barking cough, frequent chest infections; in babies from the first weeks of life.",
       "causes": "Immature cartilage from birth; in adults, after a long intubation or pressure from a tumour or goitre.",
-      "treatment": "In children it usually goes away by age 2–3; severe cases need stents or surgery."
+      "treatment": "In children it usually goes away by age 2–3; severe cases need stents or surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Tracheomalacia - congenital",
+          "url": "https://medlineplus.gov/ency/article/001084.htm"
+        },
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Tracheomalacia - acquired",
+          "url": "https://medlineplus.gov/ency/article/007310.htm"
+        },
+        {
+          "name": "MedlinePlus: Tracheal Disorders",
+          "url": "https://medlineplus.gov/trachealdisorders.html"
+        }
+      ]
     },
     "addison": {
       "name": "Adrenal insufficiency (Addison's disease)",
       "desc": "The adrenal cortex makes too little cortisol and aldosterone.",
       "symptoms": "Weakness, weight loss, low blood pressure, craving salt, darkening of the skin.",
       "causes": "Most often the immune system destroys the adrenal cortex; less often tuberculosis.",
-      "treatment": "Lifelong hormone tablets to replace the missing ones; the dose is raised during stress and illness."
+      "treatment": "Lifelong hormone tablets to replace the missing ones; the dose is raised during stress and illness.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Addison Disease",
+          "url": "https://medlineplus.gov/addisondisease.html"
+        },
+        {
+          "name": "NHS: Addison's disease",
+          "url": "https://www.nhs.uk/conditions/addisons-disease/"
+        }
+      ]
     },
     "cushing": {
       "name": "Cushing's syndrome",
       "desc": "There is too much cortisol in the body.",
       "symptoms": "A round face, belly fat with thin arms and legs, purple stretch marks, high blood pressure, weak muscles, diabetes.",
       "causes": "Most often long-term use of steroid medicines; less often a tumour of the pituitary or an adrenal gland.",
-      "treatment": "Gradually stopping the steroids if possible, or removing the tumour."
+      "treatment": "Gradually stopping the steroids if possible, or removing the tumour.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Cushing Syndrome",
+          "url": "https://medlineplus.gov/cushingsyndrome.html"
+        },
+        {
+          "name": "NHS: Cushing's syndrome",
+          "url": "https://www.nhs.uk/conditions/cushings-syndrome/"
+        }
+      ]
     },
     "pheochromocytoma": {
       "name": "Pheochromocytoma",
       "desc": "A tumour of the adrenal medulla that releases adrenaline and noradrenaline into the blood.",
       "symptoms": "Episodes of a sharp rise in blood pressure, pounding heartbeat, headache, sweating, pale skin.",
       "causes": "Usually no clear cause; some cases are inherited.",
-      "treatment": "Removing the tumour after preparation with medicines that lower blood pressure."
+      "treatment": "Removing the tumour after preparation with medicines that lower blood pressure.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Pheochromocytoma",
+          "url": "https://medlineplus.gov/ency/article/000340.htm"
+        },
+        {
+          "name": "NHS: Phaeochromocytoma",
+          "url": "https://www.nhs.uk/conditions/phaeochromocytoma/"
+        }
+      ]
     },
     "conn": {
       "name": "Primary aldosteronism (Conn's syndrome)",
       "desc": "The adrenal glands make too much aldosterone.",
       "symptoms": "Persistent high blood pressure that is hard to treat; low potassium causing weakness and cramps.",
       "causes": "A small benign tumour of one adrenal gland or overgrowth of both adrenal glands.",
-      "treatment": "Removing the adrenal gland with the tumour, or medicines that block aldosterone."
+      "treatment": "Removing the adrenal gland with the tumour, or medicines that block aldosterone.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Primary and secondary hyperaldosteronism",
+          "url": "https://medlineplus.gov/ency/article/000330.htm"
+        },
+        {
+          "name": "MedlinePlus: Adrenal Gland Disorders",
+          "url": "https://medlineplus.gov/adrenalglanddisorders.html"
+        }
+      ]
     },
     "appendix_tumors": {
       "name": "Appendiceal tumors",
       "desc": "Rare tumours of the appendix; the most common is a neuroendocrine tumour, usually small and harmless.",
       "symptoms": "Usually none; they are often found by chance after the appendix is removed.",
       "causes": "The causes are unknown.",
-      "treatment": "Removing the appendix, and for large tumours part of the large intestine."
+      "treatment": "Removing the appendix, and for large tumours part of the large intestine.",
+      "sources": [
+        {
+          "name": "National Cancer Institute: Gastrointestinal Neuroendocrine Tumors Treatment",
+          "url": "https://www.cancer.gov/types/gi-neuroendocrine-tumors/patient/gi-neuroendocrine-treatment-pdq"
+        },
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Carcinoid syndrome",
+          "url": "https://medlineplus.gov/ency/article/000347.htm"
+        }
+      ]
     },
     "mucocele": {
       "name": "Appendiceal mucocele",
       "desc": "The appendix becomes swollen with mucus trapped inside it.",
       "symptoms": "Usually none; sometimes pain in the lower right abdomen, like appendicitis.",
       "causes": "A blocked opening or a mucus-producing tumour.",
-      "treatment": "Careful removal: if the mucocele bursts, the mucus can spread through the abdominal cavity."
+      "treatment": "Careful removal: if the mucocele bursts, the mucus can spread through the abdominal cavity.",
+      "sources": [
+        {
+          "name": "PubMed Central: Mucocele of the appendix: case report of a rare disease with changing diagnostic-therapeutic behavior",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11149460/"
+        }
+      ]
     },
     "hemorrhoids": {
       "name": "Hemorrhoids",
       "desc": "Clusters of blood vessels in the lower rectum swell, become inflamed and can prolapse.",
       "symptoms": "Bright red blood on the paper after a bowel movement, itching, lumps that come out, pain if a lump clots.",
       "causes": "Constipation and straining, long sitting, pregnancy, too little fibre.",
-      "treatment": "Fibre and water, suppositories and creams; lumps can be banded with rubber rings or removed."
+      "treatment": "Fibre and water, suppositories and creams; lumps can be banded with rubber rings or removed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hemorrhoids",
+          "url": "https://medlineplus.gov/hemorrhoids.html"
+        },
+        {
+          "name": "NHS: Piles (haemorrhoids)",
+          "url": "https://www.nhs.uk/conditions/piles-haemorrhoids/"
+        }
+      ]
     },
     "anal_fissure": {
       "name": "Anal fissure",
       "desc": "A small tear in the lining of the anus.",
       "symptoms": "Sharp pain during and after a bowel movement, a little bright red blood.",
       "causes": "Hard stools and constipation, less often diarrhoea.",
-      "treatment": "Soft stools thanks to fibre, warm baths, creams that relax the sphincter; surgery is rarely needed."
+      "treatment": "Soft stools thanks to fibre, warm baths, creams that relax the sphincter; surgery is rarely needed.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Anal fissure",
+          "url": "https://medlineplus.gov/ency/article/001130.htm"
+        },
+        {
+          "name": "NHS: Anal fissure",
+          "url": "https://www.nhs.uk/conditions/anal-fissure/"
+        }
+      ]
     },
     "proctitis": {
       "name": "Proctitis",
       "desc": "Inflammation of the lining of the rectum.",
       "symptoms": "Frequent false urges, mucus and blood in the stool, pain in the anus.",
       "causes": "Ulcerative colitis and Crohn's disease, infections, radiotherapy to the pelvis.",
-      "treatment": "Treating the cause: anti-inflammatory suppositories and enemas, antibiotics for infections."
+      "treatment": "Treating the cause: anti-inflammatory suppositories and enemas, antibiotics for infections.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Proctitis",
+          "url": "https://medlineplus.gov/ency/article/001139.htm"
+        },
+        {
+          "name": "MedlinePlus: Rectal Disorders",
+          "url": "https://medlineplus.gov/rectaldisorders.html"
+        }
+      ]
     },
     "fibroids": {
       "name": "Uterine fibroids",
       "desc": "Benign tumours of the uterine muscle; very common, many women have them by age 50.",
       "symptoms": "Often none; otherwise heavy, long periods, pelvic heaviness, frequent urges from pressure on the bladder.",
       "causes": "They grow under the influence of estrogen; family history matters.",
-      "treatment": "Watching, hormone medicines, removing the fibroids or blocking the arteries that feed them. After menopause they usually shrink."
+      "treatment": "Watching, hormone medicines, removing the fibroids or blocking the arteries that feed them. After menopause they usually shrink.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Uterine Fibroids",
+          "url": "https://medlineplus.gov/uterinefibroids.html"
+        },
+        {
+          "name": "NHS: Fibroids",
+          "url": "https://www.nhs.uk/conditions/fibroids/"
+        }
+      ]
     },
     "endometriosis": {
       "name": "Endometriosis",
       "desc": "Tissue similar to the endometrium grows outside the uterus: on the ovaries, the lining of the abdomen, the bowel.",
       "symptoms": "Very painful periods, pelvic pain, difficulty getting pregnant.",
       "causes": "The exact cause is unknown; one theory is menstrual blood flowing back through the fallopian tubes.",
-      "treatment": "Painkillers, hormone medicines, removing the patches during laparoscopy."
+      "treatment": "Painkillers, hormone medicines, removing the patches during laparoscopy.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Endometriosis",
+          "url": "https://medlineplus.gov/endometriosis.html"
+        },
+        {
+          "name": "NHS: Endometriosis",
+          "url": "https://www.nhs.uk/conditions/endometriosis/"
+        },
+        {
+          "name": "WHO fact sheet: Endometriosis",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/endometriosis"
+        }
+      ]
     },
     "cervical_cancer": {
       "name": "Cervical cancer",
       "desc": "A malignant tumour of the cervix; it is almost always caused by the human papillomavirus (HPV).",
       "symptoms": "No signs early on; later, bleeding after sex or between periods.",
       "causes": "Long-term infection with high-risk HPV types, smoking.",
-      "treatment": "The HPV vaccine and regular smear tests prevent most cases. Treatment: surgery, radiotherapy and chemotherapy."
+      "treatment": "The HPV vaccine and regular smear tests prevent most cases. Treatment: surgery, radiotherapy and chemotherapy.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Cervical Cancer",
+          "url": "https://medlineplus.gov/cervicalcancer.html"
+        },
+        {
+          "name": "NHS: Cervical cancer",
+          "url": "https://www.nhs.uk/conditions/cervical-cancer/"
+        },
+        {
+          "name": "WHO fact sheet: Cervical cancer",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/cervical-cancer"
+        }
+      ]
     },
     "endometritis": {
       "name": "Endometritis",
       "desc": "Inflammation of the inner lining of the uterus, the endometrium.",
       "symptoms": "Lower abdominal pain, fever, unusual discharge.",
       "causes": "Infection after childbirth, abortion or procedures inside the uterus, sexually transmitted infections.",
-      "treatment": "Antibiotics."
+      "treatment": "Antibiotics.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Endometritis",
+          "url": "https://medlineplus.gov/ency/article/001484.htm"
+        },
+        {
+          "name": "NHS: Pelvic inflammatory disease",
+          "url": "https://www.nhs.uk/conditions/pelvic-inflammatory-disease-pid/"
+        }
+      ]
     },
     "pcos": {
       "name": "Polycystic ovary syndrome",
       "desc": "A hormonal disorder: the ovaries have many immature follicles and ovulation is rare.",
       "symptoms": "Irregular or infrequent periods, acne, excess hair growth, weight gain, difficulty getting pregnant.",
       "causes": "Excess male hormones and insulin resistance; family history.",
-      "treatment": "Weight loss, hormone medicines, drugs for insulin resistance, ovulation induction."
+      "treatment": "Weight loss, hormone medicines, drugs for insulin resistance, ovulation induction.",
+      "sources": [
+        {
+          "name": "MedlinePlus: PCOS",
+          "url": "https://medlineplus.gov/polycysticovarysyndrome.html"
+        },
+        {
+          "name": "NHS: Polyendocrine metabolic ovarian syndrome (PMOS)",
+          "url": "https://www.nhs.uk/conditions/polyendocrine-metabolic-ovarian-syndrome-pmos/"
+        },
+        {
+          "name": "WHO fact sheet: Polycystic ovary syndrome",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/polycystic-ovary-syndrome"
+        }
+      ]
     },
     "ovarian_cyst": {
       "name": "Ovarian cyst",
       "desc": "A fluid-filled sac in an ovary; most often a functional cyst from a follicle or the corpus luteum.",
       "symptoms": "Usually none; a large cyst causes heaviness and pelvic pain.",
       "causes": "A follicle did not burst at ovulation or the corpus luteum filled with fluid; less often endometriosis or tumours.",
-      "treatment": "Functional cysts go away on their own within 1–3 cycles; persistent and large ones are removed."
+      "treatment": "Functional cysts go away on their own within 1–3 cycles; persistent and large ones are removed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Ovarian Cysts",
+          "url": "https://medlineplus.gov/ovariancysts.html"
+        },
+        {
+          "name": "NHS: Ovarian cyst",
+          "url": "https://www.nhs.uk/conditions/ovarian-cyst/"
+        }
+      ]
     },
     "ovarian_cancer": {
       "name": "Ovarian cancer",
       "desc": "A malignant tumour of the ovary; it is often found late.",
       "symptoms": "Vague signs: bloating and a growing belly, feeling full quickly, pelvic pain.",
       "causes": "Age, family history (BRCA gene mutations), endometriosis.",
-      "treatment": "Surgery and chemotherapy; carriers of BRCA mutations sometimes have the ovaries and tubes removed as a precaution."
+      "treatment": "Surgery and chemotherapy; carriers of BRCA mutations sometimes have the ovaries and tubes removed as a precaution.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Ovarian Cancer",
+          "url": "https://medlineplus.gov/ovariancancer.html"
+        },
+        {
+          "name": "NHS: Ovarian cancer",
+          "url": "https://www.nhs.uk/conditions/ovarian-cancer/"
+        }
+      ]
     },
     "ovarian_apoplexy": {
       "name": "Ovarian apoplexy",
       "desc": "A sudden rupture of an ovary with bleeding, usually at ovulation or from the corpus luteum.",
       "symptoms": "Sharp pain on one side of the lower abdomen, weakness, dizziness with heavy bleeding.",
       "causes": "A burst vessel in a follicle or the corpus luteum, sometimes after exercise or sex.",
-      "treatment": "Observation for light bleeding; surgery that saves the ovary for heavy bleeding."
+      "treatment": "Observation for light bleeding; surgery that saves the ovary for heavy bleeding.",
+      "sources": [
+        {
+          "name": "PubMed Central: Hemorrhagic corpus luteum: Clinical management update",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7731611/"
+        },
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Ovarian cysts",
+          "url": "https://medlineplus.gov/ency/article/001504.htm"
+        },
+        {
+          "name": "NHS: Ovarian cyst",
+          "url": "https://www.nhs.uk/conditions/ovarian-cyst/"
+        }
+      ]
     },
     "prostatitis": {
       "name": "Prostatitis",
       "desc": "Inflammation of the prostate, either an acute bacterial infection or a long-lasting condition.",
       "symptoms": "Pain between the legs and in the lower abdomen, frequent painful urination, fever in acute cases.",
       "causes": "Bacteria; in the chronic form the cause is often unclear.",
-      "treatment": "Antibiotics for bacterial prostatitis; painkillers, relaxing medicines and physiotherapy for the chronic form."
+      "treatment": "Antibiotics for bacterial prostatitis; painkillers, relaxing medicines and physiotherapy for the chronic form.",
+      "sources": [
+        {
+          "name": "NHS: Prostatitis",
+          "url": "https://www.nhs.uk/conditions/prostatitis/"
+        },
+        {
+          "name": "MedlinePlus: Prostate Diseases",
+          "url": "https://medlineplus.gov/prostatediseases.html"
+        }
+      ]
     },
     "bph": {
       "name": "Benign prostatic hyperplasia",
       "desc": "With age the prostate grows and squeezes the urethra.",
       "symptoms": "A weak, stop-start stream, frequent urges, especially at night, a feeling that the bladder is not empty.",
       "causes": "Age and male hormones: most men over 60 have it.",
-      "treatment": "Medicines that relax the bladder neck or shrink the gland; surgery if the squeezing is severe."
+      "treatment": "Medicines that relax the bladder neck or shrink the gland; surgery if the squeezing is severe.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Enlarged Prostate",
+          "url": "https://medlineplus.gov/enlargedprostatebph.html"
+        },
+        {
+          "name": "NHS: Enlarged prostate",
+          "url": "https://www.nhs.uk/conditions/enlarged-prostate/"
+        }
+      ]
     },
     "prostate_cancer": {
       "name": "Prostate cancer",
       "desc": "A malignant tumour of the prostate; it often grows very slowly.",
       "symptoms": "No signs in the early stages; later, difficulty urinating and bone pain.",
       "causes": "Age, family history, African ancestry.",
-      "treatment": "A PSA blood test and MRI help find it early. Slow tumours are watched, others are treated with surgery, radiotherapy or hormones."
+      "treatment": "A PSA blood test and MRI help find it early. Slow tumours are watched, others are treated with surgery, radiotherapy or hormones.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Prostate Cancer",
+          "url": "https://medlineplus.gov/prostatecancer.html"
+        },
+        {
+          "name": "NHS: Prostate cancer",
+          "url": "https://www.nhs.uk/conditions/prostate-cancer/"
+        }
+      ]
     },
     "aortic_aneurysm": {
       "name": "Aortic aneurysm",
       "desc": "The aortic wall weakens and bulges out like a balloon. A large aneurysm can burst, causing life-threatening bleeding.",
       "symptoms": "Often none; it is found on an ultrasound. Sometimes a pulsing lump in the abdomen or pain in the belly or back.",
       "causes": "Atherosclerosis, high blood pressure, smoking, older age, inherited connective-tissue disorders.",
-      "treatment": "A small one is watched with ultrasound and blood pressure is treated; a large one is replaced with a graft, by surgery or a stent-graft put in through an artery."
+      "treatment": "A small one is watched with ultrasound and blood pressure is treated; a large one is replaced with a graft, by surgery or a stent-graft put in through an artery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Aortic Aneurysm",
+          "url": "https://medlineplus.gov/aorticaneurysm.html"
+        },
+        {
+          "name": "NHS: Abdominal aortic aneurysm",
+          "url": "https://www.nhs.uk/conditions/abdominal-aortic-aneurysm/"
+        }
+      ]
     },
     "aortic_dissection": {
       "name": "Aortic dissection",
       "desc": "Blood forces its way through a tear in the inner layer of the aorta and splits its wall apart. A medical emergency.",
       "symptoms": "Sudden tearing pain in the chest or back that may move; weakness, fainting, different blood pressure in the two arms.",
       "causes": "High blood pressure, atherosclerosis, inherited connective-tissue disorders (Marfan syndrome), injury.",
-      "treatment": "Emergency care: blood pressure and heart rate are lowered; if the ascending part is affected, urgent surgery."
+      "treatment": "Emergency care: blood pressure and heart rate are lowered; if the ascending part is affected, urgent surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Aortic dissection",
+          "url": "https://medlineplus.gov/ency/article/000181.htm"
+        },
+        {
+          "name": "MedlinePlus: Aortic Aneurysm",
+          "url": "https://medlineplus.gov/aorticaneurysm.html"
+        }
+      ]
     },
     "atherosclerosis": {
       "name": "Atherosclerosis",
       "desc": "Plaques of fat and cholesterol build up in artery walls: the channel narrows and blood flow weakens.",
       "symptoms": "Unnoticed for a long time. Later it depends on where the narrowing is: chest pain on exertion, leg pain when walking, signs of stroke.",
       "causes": "Smoking, high cholesterol, high blood pressure, diabetes, excess weight, inactivity, age.",
-      "treatment": "Quitting smoking, exercise, less animal fat in the diet; medicines for cholesterol and blood pressure; a stent or bypass for severe narrowing."
+      "treatment": "Quitting smoking, exercise, less animal fat in the diet; medicines for cholesterol and blood pressure; a stent or bypass for severe narrowing.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Atherosclerosis",
+          "url": "https://medlineplus.gov/atherosclerosis.html"
+        },
+        {
+          "name": "NHS: Atherosclerosis",
+          "url": "https://www.nhs.uk/conditions/atherosclerosis/"
+        }
+      ]
     },
     "coarctation": {
       "name": "Coarctation of the aorta",
       "desc": "A narrowing of the aorta present from birth, usually just after the arch: pressure is high above it and low below it.",
       "symptoms": "High blood pressure in the arms and a weak pulse in the legs, headaches, cold feet; in babies, fast breathing and poor weight gain.",
       "causes": "The vessel develops abnormally before birth; it often comes with other heart defects.",
-      "treatment": "The narrowing is widened with a balloon and stent or removed by surgery; blood pressure is then checked for life."
+      "treatment": "The narrowing is widened with a balloon and stent or removed by surgery; blood pressure is then checked for life.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Coarctation of the aorta",
+          "url": "https://medlineplus.gov/ency/article/000191.htm"
+        },
+        {
+          "name": "NHS: Congenital heart disease",
+          "url": "https://www.nhs.uk/conditions/congenital-heart-disease/"
+        }
+      ]
     },
     "svc_syndrome": {
       "name": "Superior vena cava syndrome",
       "desc": "The superior vena cava is squeezed or blocked, so blood from the head, neck and arms cannot drain properly to the heart.",
       "symptoms": "Swelling of the face, neck and arms, bulging veins on the neck and chest, shortness of breath, cough, headache, worse when lying down.",
       "causes": "Most often a tumor in the chest (lung cancer, lymphoma); less often a clot around a catheter or pacemaker lead.",
-      "treatment": "The cause is treated (chemotherapy or radiotherapy for a tumor), clots are dissolved with medicines; the vein can be opened with a stent."
+      "treatment": "The cause is treated (chemotherapy or radiotherapy for a tumor), clots are dissolved with medicines; the vein can be opened with a stent.",
+      "sources": [
+        {
+          "name": "Cleveland Clinic: Superior Vena Cava Syndrome (SVCS)",
+          "url": "https://my.clevelandclinic.org/health/diseases/23304-superior-vena-cava-syndrome"
+        },
+        {
+          "name": "National Cancer Institute: Cardiopulmonary Syndromes",
+          "url": "https://www.cancer.gov/about-cancer/treatment/side-effects/cardiopulmonary-pdq"
+        }
+      ]
     },
     "ivc_thrombosis": {
       "name": "Inferior vena cava thrombosis",
       "desc": "A blood clot partly or fully blocks the inferior vena cava; it often spreads up from clots in the leg or pelvic veins.",
       "symptoms": "Swelling and heaviness in both legs, enlarged veins on the belly, lower back pain; a piece of clot can break off and reach the lungs.",
       "causes": "Long immobility, surgery, tumors, pregnancy, blood that clots too easily, a filter placed in the vein.",
-      "treatment": "Medicines that stop blood from clotting (anticoagulants); sometimes the clot is dissolved or removed through a catheter."
+      "treatment": "Medicines that stop blood from clotting (anticoagulants); sometimes the clot is dissolved or removed through a catheter.",
+      "sources": [
+        {
+          "name": "StatPearls, NCBI Bookshelf: Inferior vena cava syndrome",
+          "url": "https://www.ncbi.nlm.nih.gov/books/NBK560885/"
+        },
+        {
+          "name": "MedlinePlus: Deep Vein Thrombosis",
+          "url": "https://medlineplus.gov/deepveinthrombosis.html"
+        },
+        {
+          "name": "NHS: DVT (deep vein thrombosis)",
+          "url": "https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/"
+        }
+      ]
     },
     "spinal_injury": {
       "name": "Spinal cord injury",
       "desc": "Damage to the spinal cord when the spine is injured: signals below the injury stop getting through.",
       "symptoms": "Weakness or paralysis and loss of feeling below the level of injury, problems with breathing (neck injuries), bowels and bladder.",
       "causes": "Road accidents, falls from height, diving into shallow water, sports injuries, wounds.",
-      "treatment": "Keeping the spine still right after the injury, urgent surgery, then long rehabilitation. A person who may have a spinal injury should not be moved unless necessary."
+      "treatment": "Keeping the spine still right after the injury, urgent surgery, then long rehabilitation. A person who may have a spinal injury should not be moved unless necessary.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Spinal Cord Injury",
+          "url": "https://medlineplus.gov/spinalcordinjuries.html"
+        },
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Spinal cord trauma",
+          "url": "https://medlineplus.gov/ency/article/001066.htm"
+        }
+      ]
     },
     "herniated_disc": {
       "name": "Herniated disc",
       "desc": "The jelly-like core of a disc between vertebrae bulges out through a crack and presses on a nerve root.",
       "symptoms": "Pain in the lower back or neck that spreads into a leg or arm, numbness, tingling, muscle weakness.",
       "causes": "Wear of the discs with age, lifting heavy things while bending, excess weight, sitting a lot, injury.",
-      "treatment": "Usually gets better without surgery: painkillers, exercises, physiotherapy; surgery if a nerve is badly compressed."
+      "treatment": "Usually gets better without surgery: painkillers, exercises, physiotherapy; surgery if a nerve is badly compressed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Slipped Disc",
+          "url": "https://medlineplus.gov/herniateddisk.html"
+        },
+        {
+          "name": "NHS: Slipped disc",
+          "url": "https://www.nhs.uk/conditions/slipped-disc/"
+        }
+      ]
     },
     "multiple_sclerosis": {
       "name": "Multiple sclerosis",
       "desc": "The immune system damages the coating of nerve fibers in the brain and spinal cord, so signals pass less well.",
       "symptoms": "Episodes of blurred vision, numbness, weakness in the arms and legs, unsteadiness, severe tiredness; it may improve between episodes.",
       "causes": "An autoimmune disease; the risk rises with family history, low vitamin D, smoking and past Epstein–Barr virus infection.",
-      "treatment": "There is no cure yet, but medicines reduce flare-ups and slow the disease; steroids for flare-ups, rehabilitation."
+      "treatment": "There is no cure yet, but medicines reduce flare-ups and slow the disease; steroids for flare-ups, rehabilitation.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Multiple Sclerosis",
+          "url": "https://medlineplus.gov/multiplesclerosis.html"
+        },
+        {
+          "name": "NHS: Multiple sclerosis",
+          "url": "https://www.nhs.uk/conditions/multiple-sclerosis/"
+        },
+        {
+          "name": "WHO fact sheet: Multiple sclerosis",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/multiple-sclerosis"
+        }
+      ]
     },
     "carpal_tunnel": {
       "name": "Carpal tunnel syndrome",
       "desc": "The median nerve is squeezed in a narrow tunnel in the wrist.",
       "symptoms": "Numbness and tingling in the thumb, index and middle fingers, especially at night; weakness of the hand.",
       "causes": "Repetitive hand movements, pregnancy, diabetes, an underactive thyroid, rheumatoid arthritis, wrist injuries.",
-      "treatment": "A wrist splint at night, breaks from work, sometimes steroid injections; if that fails, surgery to free the nerve."
+      "treatment": "A wrist splint at night, breaks from work, sometimes steroid injections; if that fails, surgery to free the nerve.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Carpal Tunnel Syndrome",
+          "url": "https://medlineplus.gov/carpaltunnelsyndrome.html"
+        },
+        {
+          "name": "NHS: Carpal tunnel syndrome",
+          "url": "https://www.nhs.uk/conditions/carpal-tunnel-syndrome/"
+        }
+      ]
     },
     "myasthenia": {
       "name": "Myasthenia gravis",
       "desc": "The immune system makes antibodies that block nerves from passing commands to muscles. It is often linked to the thymus.",
       "symptoms": "Muscle weakness that gets worse in the evening and after effort: drooping eyelids, double vision, trouble chewing and swallowing.",
       "causes": "An autoimmune disease; many patients have an enlarged thymus or a thymus tumor (thymoma).",
-      "treatment": "Medicines that boost signal transmission and drugs that calm the immune system; the thymus is often removed by surgery."
+      "treatment": "Medicines that boost signal transmission and drugs that calm the immune system; the thymus is often removed by surgery.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Myasthenia Gravis",
+          "url": "https://medlineplus.gov/myastheniagravis.html"
+        },
+        {
+          "name": "NHS: Myasthenia gravis",
+          "url": "https://www.nhs.uk/conditions/myasthenia-gravis/"
+        }
+      ]
     },
     "thymoma": {
       "name": "Thymoma",
       "desc": "A tumor of thymus cells that usually grows slowly.",
       "symptoms": "Often none; it is found on a chest scan. Sometimes cough, pain behind the breastbone, shortness of breath or signs of myasthenia gravis.",
       "causes": "The cause is unknown; it is most common at 40–60 years of age.",
-      "treatment": "Removal of the thymus together with the tumor, plus radiotherapy or chemotherapy if needed."
+      "treatment": "Removal of the thymus together with the tumor, plus radiotherapy or chemotherapy if needed.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Thymus Cancer",
+          "url": "https://medlineplus.gov/thymuscancer.html"
+        },
+        {
+          "name": "National Cancer Institute: Thymoma and Thymic Carcinoma",
+          "url": "https://www.cancer.gov/types/thymus-cancer/thymoma-thymic-carcinoma"
+        }
+      ]
     },
     "pituitary_adenoma": {
       "name": "Pituitary adenoma",
       "desc": "A benign tumor of the pituitary. It may release extra hormones or press on nearby nerves.",
       "symptoms": "Depends on the hormone: menstrual changes and nipple discharge, signs of acromegaly or Cushing's; a large tumor causes headaches and loss of side vision.",
       "causes": "Usually unknown; rarely inherited syndromes.",
-      "treatment": "Some tumors shrink with medicines; others are removed by surgery through the nose, sometimes followed by radiotherapy."
+      "treatment": "Some tumors shrink with medicines; others are removed by surgery through the nose, sometimes followed by radiotherapy.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Pituitary Tumor",
+          "url": "https://medlineplus.gov/pituitarytumors.html"
+        },
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Pituitary tumor",
+          "url": "https://medlineplus.gov/ency/article/000704.htm"
+        }
+      ]
     },
     "acromegaly": {
       "name": "Acromegaly",
       "desc": "An adult has too much growth hormone: the hands, feet, nose, jaw and internal organs get bigger.",
       "symptoms": "Rings and shoes get tight, facial features coarsen, gaps appear between the teeth, sweating, joint pain; in childhood the excess causes gigantism.",
       "causes": "Almost always a pituitary adenoma that releases growth hormone.",
-      "treatment": "Surgery to remove the adenoma, medicines that block growth hormone, sometimes radiotherapy."
+      "treatment": "Surgery to remove the adenoma, medicines that block growth hormone, sometimes radiotherapy.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Acromegaly",
+          "url": "https://medlineplus.gov/ency/article/000321.htm"
+        },
+        {
+          "name": "NHS: Acromegaly",
+          "url": "https://www.nhs.uk/conditions/acromegaly/"
+        }
+      ]
     },
     "hypopituitarism": {
       "name": "Hypopituitarism",
       "desc": "The pituitary releases too little of one or more hormones, so the glands it controls work less.",
       "symptoms": "Weakness, tiredness, feeling cold, low sex drive, menstrual changes; poor growth in children.",
       "causes": "Pituitary tumors and surgery, head injury, radiotherapy, bleeding into the pituitary.",
-      "treatment": "Lifelong replacement of the missing hormones: thyroid, adrenal and sex hormones, growth hormone."
+      "treatment": "Lifelong replacement of the missing hormones: thyroid, adrenal and sex hormones, growth hormone.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Hypopituitarism",
+          "url": "https://medlineplus.gov/ency/article/000343.htm"
+        },
+        {
+          "name": "MedlinePlus: Pituitary Disorders",
+          "url": "https://medlineplus.gov/pituitarydisorders.html"
+        }
+      ]
     },
     "diabetes_insipidus": {
       "name": "Diabetes insipidus",
       "desc": "There is not enough of the hormone vasopressin (or the kidneys do not respond to it), so the kidneys cannot hold on to water.",
       "symptoms": "A lot of pale urine, up to 10–20 liters a day, strong thirst, waking at night to urinate.",
       "causes": "Tumors and injuries around the pituitary and hypothalamus, surgery; less often inherited causes or kidney disease.",
-      "treatment": "A vasopressin substitute (desmopressin) as tablets or nasal spray, drinking to thirst."
+      "treatment": "A vasopressin substitute (desmopressin) as tablets or nasal spray, drinking to thirst.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Diabetes Insipidus",
+          "url": "https://medlineplus.gov/diabetesinsipidus.html"
+        },
+        {
+          "name": "NHS: Diabetes insipidus",
+          "url": "https://www.nhs.uk/conditions/diabetes-insipidus/"
+        }
+      ]
     },
     "diaphragmatic_hernia": {
       "name": "Congenital diaphragmatic hernia",
       "desc": "A baby is born with a hole in the diaphragm, and abdominal organs move into the chest and keep the lungs from growing.",
       "symptoms": "Severe breathing trouble right after birth, bluish skin, a sunken belly.",
       "causes": "The diaphragm does not close completely while the baby develops; the exact cause is usually unknown.",
-      "treatment": "Intensive breathing support after birth, then surgery to close the hole. It is often found on an ultrasound during pregnancy."
+      "treatment": "Intensive breathing support after birth, then surgery to close the hole. It is often found on an ultrasound during pregnancy.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Diaphragmatic hernia",
+          "url": "https://medlineplus.gov/ency/article/001135.htm"
+        },
+        {
+          "name": "MedlinePlus: Hernia",
+          "url": "https://medlineplus.gov/hernia.html"
+        }
+      ]
     },
     "diaphragm_paralysis": {
       "name": "Diaphragm paralysis",
       "desc": "The diaphragm, or half of it, stops contracting because the phrenic nerve is damaged.",
       "symptoms": "Shortness of breath on exertion and when lying flat, poor sleep; paralysis of one side sometimes causes no symptoms.",
       "causes": "Heart and neck surgery, injuries, chest tumors, viral infections, nerve and muscle diseases.",
-      "treatment": "It often recovers on its own over months; breathing machines at night help, sometimes surgery or a nerve stimulator."
+      "treatment": "It often recovers on its own over months; breathing machines at night help, sometimes surgery or a nerve stimulator.",
+      "sources": [
+        {
+          "name": "PubMed Central: Diaphragmatic Palsy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5871962/"
+        },
+        {
+          "name": "Cleveland Clinic: Diaphragm",
+          "url": "https://my.clevelandclinic.org/health/body/21578-diaphragm"
+        }
+      ]
     },
     "hiccups": {
       "name": "Persistent hiccups",
       "desc": "Hiccups are sudden involuntary contractions of the diaphragm, each followed by the vocal cords snapping shut. They usually stop within minutes; persistent hiccups last more than two days.",
       "symptoms": "Repeated 'hic' sounds that get in the way of eating, talking and sleeping.",
       "causes": "Ordinary hiccups: overeating, fizzy drinks, alcohol, excitement; persistent ones may come with reflux, nervous-system or kidney disease, or some medicines.",
-      "treatment": "Ordinary hiccups stop on their own or after holding your breath or sipping cold water; persistent ones are investigated and the cause treated, sometimes with medicines."
+      "treatment": "Ordinary hiccups stop on their own or after holding your breath or sipping cold water; persistent ones are investigated and the cause treated, sometimes with medicines.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Hiccups",
+          "url": "https://medlineplus.gov/hiccups.html"
+        },
+        {
+          "name": "NHS: Hiccups",
+          "url": "https://www.nhs.uk/symptoms/hiccups/"
+        }
+      ]
     },
     "lymphadenitis": {
       "name": "Lymphadenitis",
       "desc": "Inflammation of a lymph node, usually caused by an infection nearby.",
       "symptoms": "The node is swollen and tender, the skin over it may turn red; fever, weakness.",
       "causes": "Sore throat, bad teeth, cuts and boils on the skin, childhood infections, less often tuberculosis or cat-scratch disease.",
-      "treatment": "The source of infection is treated, with antibiotics for bacterial inflammation; a node full of pus is drained by a surgeon."
+      "treatment": "The source of infection is treated, with antibiotics for bacterial inflammation; a node full of pus is drained by a surgeon.",
+      "sources": [
+        {
+          "name": "MedlinePlus Medical Encyclopedia: Lymphadenitis",
+          "url": "https://medlineplus.gov/ency/article/001301.htm"
+        },
+        {
+          "name": "NHS: Swollen glands",
+          "url": "https://www.nhs.uk/symptoms/swollen-glands/"
+        }
+      ]
     },
     "lymphoma": {
       "name": "Lymphoma",
       "desc": "A cancer of immune cells called lymphocytes. It grows in the lymph nodes, spleen and other organs.",
       "symptoms": "Painless swollen nodes in the neck, armpits or groin, night sweats, unexplained fever, weight loss, itchy skin.",
       "causes": "Usually unknown; the risk is higher with a weakened immune system and some viral infections.",
-      "treatment": "Chemotherapy, immunotherapy, radiotherapy; many lymphomas can be cured."
+      "treatment": "Chemotherapy, immunotherapy, radiotherapy; many lymphomas can be cured.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Lymphoma",
+          "url": "https://medlineplus.gov/lymphoma.html"
+        },
+        {
+          "name": "NHS: Non-Hodgkin lymphoma",
+          "url": "https://www.nhs.uk/conditions/non-hodgkin-lymphoma/"
+        },
+        {
+          "name": "NHS: Hodgkin lymphoma",
+          "url": "https://www.nhs.uk/conditions/hodgkin-lymphoma/"
+        }
+      ]
     },
     "lymphedema": {
       "name": "Lymphedema",
       "desc": "Lymph does not drain well and builds up in the tissues, usually in an arm or leg.",
       "symptoms": "Lasting swelling, heaviness and tight skin; over time the skin hardens.",
       "causes": "Removal or radiotherapy of lymph nodes during cancer treatment, infections, injuries, lymphatic vessels that did not develop properly.",
-      "treatment": "Hard to cure completely: lymphatic drainage massage, compression garments, exercises and skin care help."
+      "treatment": "Hard to cure completely: lymphatic drainage massage, compression garments, exercises and skin care help.",
+      "sources": [
+        {
+          "name": "MedlinePlus: Lymphedema",
+          "url": "https://medlineplus.gov/lymphedema.html"
+        },
+        {
+          "name": "NHS: Lymphoedema",
+          "url": "https://www.nhs.uk/conditions/lymphoedema/"
+        }
+      ]
     }
   },
   "links": {
@@ -1977,29 +3110,45 @@
       "skull": ["skull"],
       "mandible": ["lower jaw", "mandible"],
       "clavicle": ["collarbone", "clavicle"],
+      "scapula": ["shoulder blade", "scapula"],
       "sternum": ["breastbone", "sternum"],
       "ribs": ["rib cage", "ribs"],
       "spine": ["spine", "backbone", "vertebral column"],
       "humerus": ["humerus"],
       "ulna": ["ulna"],
       "radius": ["radius"],
-      "hand": ["bones of the hand"],
+      "carpals": ["wrist bones", "carpal bones"],
+      "metacarpals": ["metacarpal"],
+      "phalanges": ["finger bones"],
       "pelvis": ["hip bone"],
       "sacrum": ["sacrum"],
       "femur": ["femur", "thigh bone"],
+      "patella": ["kneecap", "patella"],
+      "tibia": ["shinbone", "tibia"],
+      "fibula": ["fibula"],
+      "foot": ["bones of the foot"],
       "sternocleidomastoid": ["sternocleidomastoid"],
+      "scalenes": ["scalene"],
+      "sternohyoid": ["sternohyoid"],
       "trapezius": ["trapezius"],
       "deltoid": ["deltoid"],
       "pectoralis": ["pectoralis"],
+      "intercostals": ["intercostal muscle", "intercostals"],
       "biceps": ["biceps"],
       "brachioradialis": ["brachioradialis"],
-      "forearm_flexors": ["forearm flexor"],
+      "pronator_teres": ["pronator teres"],
+      "flexor_carpi_radialis": ["flexor carpi radialis"],
+      "flexor_carpi_ulnaris": ["flexor carpi ulnaris"],
       "rectus_abdominis": ["rectus abdominis"],
       "external_oblique": ["external oblique"],
       "sartorius": ["sartorius"],
       "rectus_femoris": ["rectus femoris"],
       "vastus_lateralis": ["vastus lateralis"],
-      "adductors": ["adductor"]
+      "vastus_medialis": ["vastus medialis"],
+      "adductors": ["adductor"],
+      "tibialis_anterior": ["tibialis anterior"],
+      "gastrocnemius": ["gastrocnemius", "calf muscle"],
+      "fibularis_longus": ["fibularis longus", "peroneus longus"]
     }
   },
   "structures": {
@@ -2046,6 +3195,21 @@
       "facts": {
         "fracture": "One of the most often broken bones, usually in a fall onto the shoulder or an outstretched hand",
         "first": "It starts turning into bone earlier than any other bone, long before birth"
+      }
+    },
+    "scapula": {
+      "name": "Shoulder blade (scapula)",
+      "desc": "A flat triangular bone on the back of the rib cage that links the arm to the trunk.",
+      "location": "The back of the rib cage, from the 2nd to the 7th rib; from the front it shows at the shoulder, behind the ribs",
+      "details": {
+        "type": "Flat triangular bone.",
+        "parts": "Three borders and three angles; at the back the spine of the scapula ends in the acromion, at the front is the coracoid process, and at the outer angle the glenoid cavity for the head of the humerus.",
+        "joints": "The shoulder joint with the humerus and the acromioclavicular joint with the clavicle; there is no joint with the ribs — the scapula glides over the chest on muscles.",
+        "muscles": "Trapezius, deltoid, the rotator cuff (supraspinatus, infraspinatus, teres minor, subscapularis), serratus anterior, the rhomboids, both heads of the biceps and the long head of the triceps."
+      },
+      "facts": {
+        "rib": "Only muscles tie it to the rib cage, which is why the shoulder moves so freely",
+        "wing": "When serratus anterior is weak, the shoulder blade lifts off the back like a wing"
       }
     },
     "sternum": {
@@ -2139,19 +3303,49 @@
         "fracture": "A break at its lower end is one of the most common fractures from falling on a hand"
       }
     },
-    "hand": {
-      "name": "Bones of the hand",
-      "desc": "27 small bones of the wrist, palm and fingers make the hand nimble and precise.",
-      "location": "The hand: 8 wrist bones, 5 palm bones and 14 finger bones",
+    "carpals": {
+      "name": "Wrist bones (carpals)",
+      "desc": "Eight small bones in two rows between the forearm and the palm that make the wrist flexible.",
+      "location": "The wrist, at the base of the hand just below the radius and ulna",
       "details": {
-        "type": "The carpal bones are short bones; the metacarpals and phalanges are small long bones.",
-        "parts": "Wrist: scaphoid, lunate, triquetrum, pisiform, trapezium, trapezoid, capitate and hamate. The thumb has two phalanges, the other fingers three each.",
-        "joints": "Wrist, intercarpal, carpometacarpal (the saddle joint of the thumb allows opposition), metacarpophalangeal and interphalangeal joints.",
-        "muscles": "Tendons of the forearm flexors and extensors, the thenar and hypothenar muscles, lumbricals and interossei."
+        "type": "Short spongy bones.",
+        "parts": "Upper row: scaphoid, lunate, triquetrum and pisiform; lower row: trapezium, trapezoid, capitate and hamate. Together they form a trough — the carpal tunnel.",
+        "joints": "The wrist joint with the radius, the intercarpal joints and the carpometacarpal joints; the saddle joint at the base of the thumb lets it oppose the other fingers.",
+        "muscles": "Tendons of the wrist flexors and extensors (flexor carpi ulnaris attaches to the pisiform) and the short muscles of the thumb and little-finger pads."
       },
       "facts": {
-        "quarter": "The two hands hold more than a quarter of all the bones in the body",
-        "thumb": "The thumb can touch each of the other fingers, which lets us pick up small things"
+        "scaphoid": "The scaphoid breaks most often — in a fall on an outstretched hand",
+        "tunnel": "The finger flexor tendons and the median nerve run through the carpal tunnel; squeezing them causes carpal tunnel syndrome"
+      }
+    },
+    "metacarpals": {
+      "name": "Palm bones (metacarpals)",
+      "desc": "Five slender bones of the palm running from the wrist to the fingers.",
+      "location": "The palm, between the wrist and the fingers; their heads are the knuckles of a fist",
+      "details": {
+        "type": "Small long bones.",
+        "parts": "Each has a base (towards the wrist), a shaft and a head (towards the finger); the first metacarpal, of the thumb, is the shortest and thickest.",
+        "joints": "Carpometacarpal joints with the wrist bones and metacarpophalangeal joints with the first phalanges of the fingers.",
+        "muscles": "The interossei (between the metacarpals), the opponens muscles of the thumb and little finger, and the tendons of flexor carpi radialis and the wrist extensors (to their bases)."
+      },
+      "facts": {
+        "knuckles": "The knuckles of a clenched fist are the heads of the metacarpals",
+        "boxer": "A break of the neck of the 5th metacarpal is called a “boxer's fracture”"
+      }
+    },
+    "phalanges": {
+      "name": "Finger bones (phalanges)",
+      "desc": "Fourteen small bones of the fingers: three in each finger and two in the thumb.",
+      "location": "The fingers",
+      "details": {
+        "type": "Small long bones.",
+        "parts": "Proximal, middle and distal phalanges; the thumb has no middle one. The distal phalanx has a rough tuberosity under the fingertip pad.",
+        "joints": "Metacarpophalangeal joints with the metacarpals and interphalangeal joints — hinge joints, so the fingers only bend and straighten in them.",
+        "muscles": "Tendons of the deep and superficial finger flexors (to the distal and middle phalanges), the finger extensors, the lumbricals and the interossei."
+      },
+      "facts": {
+        "quarter": "The two hands hold 54 bones — more than a quarter of all the bones in the body",
+        "thumb": "The thumb has only two phalanges, yet its saddle joint lets it touch each of the other fingers"
       }
     },
     "pelvis": {
@@ -2200,6 +3394,66 @@
         "neck": "A broken hip, a fracture of its neck, is a common injury in older people"
       }
     },
+    "patella": {
+      "name": "Kneecap (patella)",
+      "desc": "A flat little bone at the front of the knee that shields the joint and helps the quadriceps straighten the leg.",
+      "location": "The front of the knee — easy to feel under the skin",
+      "details": {
+        "type": "A sesamoid bone — the largest in the body: it sits inside the quadriceps tendon.",
+        "parts": "Base (top), apex (bottom), a smooth back joint surface with thick cartilage, and a rough front.",
+        "joints": "The patellofemoral joint with the condyles of the femur — part of the knee joint.",
+        "muscles": "From above, the quadriceps tendon (rectus femoris and the three vasti); from the apex the patellar ligament runs down to the tibia."
+      },
+      "facts": {
+        "lever": "Like a pulley, it lengthens the lever of the quadriceps, so straightening the knee is easier",
+        "baby": "In a newborn the kneecap is cartilage; it turns to bone only at about 3–6 years"
+      }
+    },
+    "tibia": {
+      "name": "Shinbone (tibia)",
+      "desc": "The main bone of the lower leg, carrying almost all the body weight from the knee to the foot.",
+      "location": "The lower leg, on the big-toe side; its sharp front edge can be felt under the skin",
+      "details": {
+        "type": "Long bone — the second longest in the body.",
+        "parts": "Medial and lateral condyles at the top, the tuberosity for the patellar ligament, a triangular shaft with a sharp front edge, and the medial malleolus at the bottom.",
+        "joints": "The knee joint with the femur, the tibiofibular joints with the fibula and the ankle joint with the talus.",
+        "muscles": "Tibialis anterior (on its outer surface), sartorius, gracilis and semitendinosus (the pes anserinus), the quadriceps through the patellar ligament, and soleus and tibialis posterior at the back."
+      },
+      "facts": {
+        "shin": "Its front edge is hardly covered by muscle, which is why a knock on the shin hurts so much",
+        "weight": "It takes almost all the load of the lower leg: the fibula carries only about a sixth of the weight"
+      }
+    },
+    "fibula": {
+      "name": "Fibula",
+      "desc": "The thin outer bone of the lower leg: it anchors muscles and forms the outer ankle.",
+      "location": "The outer side of the lower leg, beside the tibia",
+      "details": {
+        "type": "Long bone — slender and carrying little weight.",
+        "parts": "The head at the top, a thin shaft and the lateral malleolus at the bottom; the interosseous membrane joins it to the tibia along its length.",
+        "joints": "The superior tibiofibular joint above and the tibiofibular syndesmosis below; the lateral malleolus is part of the ankle joint.",
+        "muscles": "Fibularis longus and brevis, extensor digitorum longus, soleus and biceps femoris (to the head)."
+      },
+      "facts": {
+        "graft": "A piece of it can be taken to rebuild bone elsewhere — the leg manages without it",
+        "ankle": "The outer ankle bump is the lower end of the fibula"
+      }
+    },
+    "foot": {
+      "name": "Bones of the foot",
+      "desc": "26 bones of the tarsus, metatarsus and toes that hold the body up on an arch and spring with every step.",
+      "location": "The foot: 7 tarsal bones, 5 metatarsals and 14 toe bones",
+      "details": {
+        "type": "The tarsal bones are short spongy bones; the metatarsals and toe phalanges are small long bones.",
+        "parts": "Tarsus: talus, calcaneus, navicular, cuboid and three cuneiforms; metatarsus: five metatarsals; the toes have three phalanges each, the big toe two. Together they form the longitudinal and transverse arches.",
+        "joints": "The ankle joint (talus with the tibia and fibula), the subtalar, intertarsal, tarsometatarsal, metatarsophalangeal and interphalangeal joints.",
+        "muscles": "The Achilles tendon of gastrocnemius and soleus (to the calcaneus), tibialis anterior and fibularis longus (to the 1st metatarsal), the toe extensors and flexors and the short muscles of the sole."
+      },
+      "facts": {
+        "arch": "The arch of the foot works like a spring: it flattens slightly and recoils with every step",
+        "heel": "The heel bone is the largest bone of the foot and takes the impact of every step"
+      }
+    },
     "sternocleidomastoid": {
       "name": "Sternocleidomastoid",
       "desc": "A neck muscle running from the bump behind the ear to the breastbone and collarbone: it tilts the head and turns it to the side.",
@@ -2214,6 +3468,38 @@
       "facts": {
         "turn": "The right muscle turns the head to the left, and the left one to the right",
         "breath": "During hard breathing it helps lift the chest"
+      }
+    },
+    "scalenes": {
+      "name": "Scalenes",
+      "desc": "Three muscles on the side of the neck that bend it and lift the first ribs in a deep breath.",
+      "location": "The side of the neck, deeper than the sternocleidomastoid — from the cervical vertebrae to the 1st and 2nd ribs",
+      "details": {
+        "origin": "Transverse processes of the cervical vertebrae (C2–C7).",
+        "insertion": "Anterior and middle — the 1st rib; posterior — the 2nd rib.",
+        "action": "Bend the neck to their side, and both sides together flex it forward; with the neck still they raise the 1st and 2nd ribs and help breathing in.",
+        "nerve": "Anterior rami of the cervical spinal nerves (C3–C8).",
+        "blood": "The ascending cervical and inferior thyroid arteries (from the thyrocervical trunk)."
+      },
+      "facts": {
+        "gap": "The subclavian artery and the brachial plexus pass between the anterior and middle scalenes",
+        "breath": "When you are out of breath they work as extra muscles of breathing in"
+      }
+    },
+    "sternohyoid": {
+      "name": "Sternohyoid",
+      "desc": "A thin strap at the front of the neck that pulls the hyoid bone and larynx down after swallowing.",
+      "location": "The front of the neck on either side of the midline — from the breastbone to the hyoid bone",
+      "details": {
+        "origin": "The back of the manubrium of the sternum and the sternal end of the clavicle.",
+        "insertion": "The body of the hyoid bone.",
+        "action": "Lowers the hyoid bone, and the larynx with it, after swallowing and in speech; steadies the hyoid when the mouth opens.",
+        "nerve": "The ansa cervicalis (C1–C3).",
+        "blood": "The superior thyroid artery."
+      },
+      "facts": {
+        "straps": "One of the four “strap” muscles of the neck below the hyoid bone",
+        "thyroid": "It lies right in front of the thyroid gland — surgeons part these muscles to reach it"
       }
     },
     "trapezius": {
@@ -2264,6 +3550,22 @@
         "armpit": "Its edge forms the front wall of the armpit"
       }
     },
+    "intercostals": {
+      "name": "Intercostal muscles",
+      "desc": "Thin muscles between the ribs that raise and lower them in breathing and close the gaps in the chest wall.",
+      "location": "The spaces between the ribs, in several layers",
+      "details": {
+        "origin": "The lower border of the rib above.",
+        "insertion": "The upper border of the rib below (external fibres run down and forward, internal ones down and back).",
+        "action": "The external ones raise the ribs in breathing in, the internal ones lower them in forced breathing out; together they stiffen the chest wall.",
+        "nerve": "The intercostal nerves (T1–T11).",
+        "blood": "Intercostal arteries: posterior ones from the aorta, anterior ones from the internal thoracic artery."
+      },
+      "facts": {
+        "layers": "Three layers: external, internal and innermost intercostals",
+        "groove": "The intercostal vessels and nerve run along the lower edge of each rib, sheltered by its groove"
+      }
+    },
     "biceps": {
       "name": "Biceps brachii",
       "desc": "The muscle at the front of the upper arm: it bends the elbow and turns the palm up.",
@@ -2296,20 +3598,52 @@
         "visible": "It shows clearly under the skin when you bend your arm hard"
       }
     },
-    "forearm_flexors": {
-      "name": "Forearm flexors",
-      "desc": "A group of muscles at the front of the forearm: they bend the wrist and fingers and give the grip its strength.",
-      "location": "The front (palm side) of the forearm; their tendons run through the carpal tunnel to the fingers",
+    "pronator_teres": {
+      "name": "Pronator teres",
+      "desc": "A short muscle near the elbow that turns the palm down and helps bend the arm.",
+      "location": "The top of the front of the forearm — diagonally from the inner epicondyle of the humerus to the middle of the radius",
       "details": {
-        "origin": "The superficial ones by a common tendon from the medial epicondyle of the humerus; the deep ones from the front of the radius, ulna and interosseous membrane.",
-        "insertion": "The carpal and metacarpal bones (wrist flexors) and the phalanges (finger flexors).",
-        "action": "Flex the wrist and fingers and help tilt the hand sideways; pronator teres and quadratus turn the palm down.",
-        "nerve": "Mainly the median nerve; flexor carpi ulnaris and part of flexor digitorum profundus (to the 4th and 5th fingers) are supplied by the ulnar nerve.",
-        "blood": "The radial and ulnar arteries and their branches."
+        "origin": "Humeral head — the medial epicondyle of the humerus; ulnar head — the coronoid process of the ulna.",
+        "insertion": "The middle of the outer surface of the radius.",
+        "action": "Turns the forearm palm-down (pronation) and helps bend the elbow.",
+        "nerve": "The median nerve (C6–C7).",
+        "blood": "The ulnar and radial arteries and their recurrent branches."
       },
       "facts": {
-        "tendons": "The muscles stay in the forearm and send long tendons to the fingers, which is why fingers are slim",
-        "grip": "Make a fist and you can see the forearm tighten"
+        "nerve": "The median nerve passes between its two heads and can be squeezed there",
+        "key": "It works when you turn a key in a lock or pour water from a jug"
+      }
+    },
+    "flexor_carpi_radialis": {
+      "name": "Flexor carpi radialis",
+      "desc": "A muscle on the front of the forearm that bends the hand at the wrist and tilts it towards the thumb.",
+      "location": "The middle of the front (palm side) of the forearm; its tendon lies at the wrist on the thumb side",
+      "details": {
+        "origin": "The medial epicondyle of the humerus (the common flexor tendon).",
+        "insertion": "The bases of the 2nd and 3rd metacarpals.",
+        "action": "Bends the hand at the wrist and tilts it towards the thumb; helps bend the elbow.",
+        "nerve": "The median nerve (C6–C7).",
+        "blood": "The radial artery."
+      },
+      "facts": {
+        "pulse": "The wrist pulse is felt just outside its tendon, where the radial artery runs",
+        "tendon": "Its tendon stands out at the wrist when you bend the hand against resistance"
+      }
+    },
+    "flexor_carpi_ulnaris": {
+      "name": "Flexor carpi ulnaris",
+      "desc": "A muscle along the inner edge of the forearm that bends the hand at the wrist and tilts it towards the little finger.",
+      "location": "The front of the forearm along the ulna, on the little-finger side",
+      "details": {
+        "origin": "The medial epicondyle of the humerus and the back border of the ulna.",
+        "insertion": "The pisiform, the hook of the hamate and the base of the 5th metacarpal.",
+        "action": "Bends the hand at the wrist and tilts it towards the little finger — as when striking with a hammer.",
+        "nerve": "The ulnar nerve (C7–C8).",
+        "blood": "The ulnar artery."
+      },
+      "facts": {
+        "nerve": "It is the only wrist flexor supplied by the ulnar nerve",
+        "pisiform": "The pisiform sits inside its tendon, like the kneecap in the quadriceps tendon"
       }
     },
     "rectus_abdominis": {
@@ -2392,6 +3726,22 @@
         "biopsy": "It is the usual place to take a small muscle sample for testing"
       }
     },
+    "vastus_medialis": {
+      "name": "Vastus medialis",
+      "desc": "The teardrop-shaped muscle above the inner knee that straightens the leg and keeps the kneecap on track.",
+      "location": "The inner side of the thigh above the knee",
+      "details": {
+        "origin": "The intertrochanteric line and the medial lip of the linea aspera of the femur.",
+        "insertion": "Through the quadriceps tendon — the patella, and through the patellar ligament — the tibial tuberosity.",
+        "action": "Straightens the knee; its lower oblique fibres pull the kneecap inward and keep it from slipping outward.",
+        "nerve": "The femoral nerve (L2–L4).",
+        "blood": "The femoral and deep femoral arteries."
+      },
+      "facts": {
+        "drop": "Its shape above the knee earned it the nickname “teardrop”",
+        "rehab": "After knee injuries it is one of the first muscles to train — it weakens quickly"
+      }
+    },
     "adductors": {
       "name": "Thigh adductors",
       "desc": "A group of muscles on the inner thigh: they bring the legs together.",
@@ -2406,6 +3756,54 @@
       "facts": {
         "riding": "They work especially hard in horse riders and footballers",
         "groin": "Straining them is a common sports injury of the groin"
+      }
+    },
+    "tibialis_anterior": {
+      "name": "Tibialis anterior",
+      "desc": "The muscle on the front of the shin that lifts the foot with every step.",
+      "location": "The front of the lower leg, just outside the sharp edge of the tibia",
+      "details": {
+        "origin": "The lateral condyle and upper two thirds of the outer surface of the tibia, and the interosseous membrane.",
+        "insertion": "The medial cuneiform and the base of the 1st metatarsal.",
+        "action": "Lifts the foot (dorsiflexion) and turns the sole inward; in walking it keeps the toes from catching the ground.",
+        "nerve": "The deep fibular nerve (L4–L5).",
+        "blood": "The anterior tibial artery."
+      },
+      "facts": {
+        "drop": "When it is paralysed, the foot slaps and the toes drag — a “foot drop”",
+        "shin": "Overloading it in running is one cause of shin pain"
+      }
+    },
+    "gastrocnemius": {
+      "name": "Gastrocnemius",
+      "desc": "The powerful calf muscle that lifts the heel and drives the push-off in walking, running and jumping.",
+      "location": "The back of the lower leg — the calf; from the front its inner head shows at the edge of the leg",
+      "details": {
+        "origin": "Medial and lateral heads — from the condyles of the femur.",
+        "insertion": "Through the Achilles (calcaneal) tendon — the tuberosity of the heel bone.",
+        "action": "Points the foot — rises onto tiptoe — and helps bend the knee.",
+        "nerve": "The tibial nerve (S1–S2).",
+        "blood": "The sural arteries from the popliteal artery."
+      },
+      "facts": {
+        "achilles": "Its Achilles tendon is the thickest and strongest tendon in the body",
+        "triceps": "Together with soleus it forms the triceps surae, the three-headed calf muscle"
+      }
+    },
+    "fibularis_longus": {
+      "name": "Fibularis (peroneus) longus",
+      "desc": "A muscle on the outside of the lower leg that turns the sole outward and supports the arch of the foot.",
+      "location": "The outer side of the lower leg along the fibula; its tendon curves behind the outer ankle",
+      "details": {
+        "origin": "The head and upper two thirds of the outer surface of the fibula.",
+        "insertion": "Under the sole — the medial cuneiform and the base of the 1st metatarsal.",
+        "action": "Turns the sole outward (eversion), points the foot and, with tibialis anterior, holds up the transverse arch like a stirrup.",
+        "nerve": "The superficial fibular nerve (L5–S1).",
+        "blood": "The fibular and anterior tibial arteries."
+      },
+      "facts": {
+        "stirrup": "It attaches to the same bones as tibialis anterior, only from the other side — together they sling the arch of the foot like a stirrup",
+        "sprain": "It catches the foot when the ankle rolls; its tendons are often hurt in ankle sprains"
       }
     }
   },

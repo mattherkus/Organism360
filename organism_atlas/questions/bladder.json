@@ -38,6 +38,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "По какому каналу моча выходит из мочевого пузыря наружу?",
+      "en": "Through which channel does urine leave the bladder?",
+      "answer": {
+        "ru": "По мочеиспускательному каналу",
+        "en": "The urethra"
+      },
+      "wrong": {
+        "ru": [
+          "По мочеточнику",
+          "По пищеводу",
+          "По жёлчному протоку"
+        ],
+        "en": [
+          "The ureter",
+          "The esophagus",
+          "The bile duct"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Малый таз, сразу за лобковым сочленением",
       "en": "In the pelvis, just behind the pubic symphysis"
@@ -79,6 +100,42 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Как называется воспаление мочевого пузыря?",
+      "en": "What is inflammation of the bladder called?",
+      "answer": {
+        "ru": "Цистит",
+        "en": "Cystitis"
+      },
+      "wrong": {
+        "ru": [
+          "Нефрит",
+          "Уретрит",
+          "Колит"
+        ],
+        "en": [
+          "Nephritis",
+          "Urethritis",
+          "Colitis"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Треугольник на его дне между устьями мочеточников и выходом всегда остаётся гладким.",
+      "en": "A triangle on its floor between the ureter openings and the outlet always stays smooth."
+    },
+    {
+      "level": "medium",
+      "ru": "Наполняясь, поднимается над лобковой костью — там его можно прощупать.",
+      "en": "When full, it rises above the pubic bone, where it can be felt."
+    },
+    {
+      "level": "medium",
+      "ru": "Маленькие дети учатся управлять его опорожнением к 2–4 годам.",
+      "en": "Young children learn to control its emptying by the age of 2–4."
+    },
+    {
       "level": "hard",
       "ru": "Изнутри выстлан особым эпителием, который растягивается без разрывов",
       "en": "It is lined with a special epithelium that stretches without tearing"
@@ -97,6 +154,21 @@
       "level": "hard",
       "ru": "Мышцу стенки называют детрузором, от латинского «выталкивать»",
       "en": "The muscle of its wall is called the detrusor, from Latin for “to push out”"
+    },
+    {
+      "level": "hard",
+      "ru": "Его опорожнение — рефлекс, которым управляют центры спинного мозга и моста.",
+      "en": "Its emptying is a reflex run by centres in the spinal cord and the pons."
+    },
+    {
+      "level": "hard",
+      "ru": "Внутренний сфинктер на его выходе работает сам, а наружным мы управляем по желанию.",
+      "en": "The inner sphincter at its outlet works on its own, but we control the outer one at will."
+    },
+    {
+      "level": "hard",
+      "ru": "Цистоскопия — осмотр его изнутри тонкой трубкой с камерой.",
+      "en": "Cystoscopy is looking inside it through a thin tube with a camera."
     }
   ]
 }

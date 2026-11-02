@@ -12,12 +12,13 @@ from .config import BONE_C, MUSCLE_C
 from .geometry import H, W
 from .render2d.layers import Layer
 
-# порядок в карточках, панели и викторине
-BONES = ("skull", "mandible", "clavicle", "sternum", "ribs", "spine", "humerus", "ulna", "radius", "hand",
-         "pelvis", "sacrum", "femur")
-MUSCLES = ("sternocleidomastoid", "trapezius", "deltoid", "pectoralis", "biceps", "brachioradialis",
-           "forearm_flexors", "rectus_abdominis", "external_oblique", "sartorius", "rectus_femoris",
-           "vastus_lateralis", "adductors")
+# порядок в карточках, панели и викторине: сверху вниз
+BONES = ("skull", "mandible", "clavicle", "scapula", "sternum", "ribs", "spine", "humerus", "ulna", "radius",
+         "carpals", "metacarpals", "phalanges", "pelvis", "sacrum", "femur", "patella", "tibia", "fibula", "foot")
+MUSCLES = ("sternocleidomastoid", "scalenes", "sternohyoid", "trapezius", "deltoid", "pectoralis", "intercostals",
+           "biceps", "brachioradialis", "pronator_teres", "flexor_carpi_radialis", "flexor_carpi_ulnaris",
+           "rectus_abdominis", "external_oblique", "sartorius", "rectus_femoris", "vastus_lateralis",
+           "vastus_medialis", "adductors", "tibialis_anterior", "gastrocnemius", "fibularis_longus")
 KINDS = {"bone": BONES, "muscle": MUSCLES}
 LAYER_OF = {"bone": "skeleton", "muscle": "muscles"}                  # слой тела, на котором они нарисованы
 COLOR = {"bone": BONE_C, "muscle": MUSCLE_C}
@@ -26,11 +27,13 @@ COLOR = {"bone": BONE_C, "muscle": MUSCLE_C}
 STRUCTURES = {k: {"kind": kind, "color": COLOR[kind]} for kind, keys in KINDS.items() for k in keys}
 
 # кто первым ловит клик, если части перекрываются (мелкие и лежащие сверху - первыми)
-HIT_ORDER = ("hand", "mandible", "sternum", "clavicle", "sacrum", "femur", "ulna", "radius", "humerus", "spine",
-             "pelvis", "ribs", "skull",
-             "sternocleidomastoid", "deltoid", "biceps", "brachioradialis", "forearm_flexors", "pectoralis",
-             "trapezius", "rectus_abdominis", "external_oblique", "sartorius", "rectus_femoris", "vastus_lateralis",
-             "adductors")
+HIT_ORDER = ("phalanges", "metacarpals", "carpals", "patella", "foot", "mandible", "sternum", "clavicle", "sacrum",
+             "fibula", "tibia", "femur", "ulna", "radius", "humerus", "spine", "pelvis", "ribs", "scapula", "skull",
+             "sternohyoid", "scalenes", "sternocleidomastoid", "deltoid", "biceps", "pronator_teres",
+             "flexor_carpi_radialis", "flexor_carpi_ulnaris", "brachioradialis", "pectoralis", "trapezius",
+             "rectus_abdominis", "external_oblique", "sartorius", "vastus_medialis", "rectus_femoris",
+             "vastus_lateralis", "adductors", "tibialis_anterior", "fibularis_longus", "gastrocnemius",
+             "intercostals")
 PAD = 3.0                                       # запас к рамке части: сглаженный контур выходит за опорные точки
 
 

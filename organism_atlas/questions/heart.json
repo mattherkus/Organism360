@@ -38,6 +38,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Его удары можно почувствовать, приложив руку к груди слева.",
+      "en": "You can feel it beating by putting your hand on the left side of your chest."
+    },
+    {
+      "level": "easy",
+      "ru": "Как называется прибор, который записывает работу сердца?",
+      "en": "What is the device that records the heart's activity?",
+      "answer": {
+        "ru": "Электрокардиограф",
+        "en": "Electrocardiograph"
+      },
+      "wrong": {
+        "ru": [
+          "Термометр",
+          "Тонометр",
+          "Микроскоп"
+        ],
+        "en": [
+          "Thermometer",
+          "Blood pressure monitor",
+          "Microscope"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Грудная полость между лёгкими, на две трети левее середины тела",
       "en": "Chest cavity between the lungs, about two thirds of it left of the midline"
@@ -62,6 +88,26 @@
         "3",
         "6"
       ]
+    },
+    {
+      "level": "medium",
+      "ru": "Его правая половина гонит кровь в лёгкие, левая — ко всему телу.",
+      "en": "Its right half pumps blood to the lungs, its left half to the whole body."
+    },
+    {
+      "level": "medium",
+      "ru": "Его стенку питают собственные венечные артерии.",
+      "en": "Its wall is fed by its own coronary arteries."
+    },
+    {
+      "level": "medium",
+      "ru": "Лежит в защитном мешке — перикарде.",
+      "en": "It sits in a protective sac, the pericardium."
+    },
+    {
+      "level": "medium",
+      "ru": "Его толстая мышечная стенка называется миокардом.",
+      "en": "Its thick muscular wall is called the myocardium."
     },
     {
       "level": "hard",
@@ -100,6 +146,42 @@
           "1,000,000",
           "10,000,000",
           "500"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Левый желудочек толще правого: ему нужно гнать кровь по всему телу.",
+      "en": "The left ventricle is thicker than the right because it pumps blood around the whole body."
+    },
+    {
+      "level": "hard",
+      "ru": "Тромб в одной из его артерий вызывает инфаркт миокарда.",
+      "en": "A clot in one of its arteries causes a myocardial infarction."
+    },
+    {
+      "level": "hard",
+      "ru": "Его верхние камеры выделяют гормон, который помогает выводить натрий и воду.",
+      "en": "Its upper chambers release a hormone that helps the body get rid of sodium and water."
+    },
+    {
+      "level": "hard",
+      "ru": "Какой клапан стоит между левым предсердием и левым желудочком?",
+      "en": "Which valve lies between the left atrium and the left ventricle?",
+      "answer": {
+        "ru": "Митральный",
+        "en": "Mitral"
+      },
+      "wrong": {
+        "ru": [
+          "Трёхстворчатый",
+          "Аортальный",
+          "Лёгочный"
+        ],
+        "en": [
+          "Tricuspid",
+          "Aortic",
+          "Pulmonary"
         ]
       }
     }

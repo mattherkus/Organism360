@@ -38,6 +38,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Где находится щитовидная железа?",
+      "en": "Where is the thyroid gland?",
+      "answer": {
+        "ru": "Спереди на шее",
+        "en": "At the front of the neck"
+      },
+      "wrong": {
+        "ru": [
+          "В груди",
+          "В животе",
+          "В голове"
+        ],
+        "en": [
+          "In the chest",
+          "In the belly",
+          "In the head"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Похожа на бабочку и лежит на трахее под гортанью",
       "en": "Shaped like a butterfly, it sits on the windpipe below the larynx"
@@ -74,6 +95,21 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Когда её гормонов мало, человек мёрзнет, быстро устаёт и набирает вес.",
+      "en": "When its hormones are low, a person feels cold, tires easily and gains weight."
+    },
+    {
+      "level": "medium",
+      "ru": "Когда её гормонов много, сердце частит, человек худеет и нервничает.",
+      "en": "When its hormones are high, the heart races and the person loses weight and feels jittery."
+    },
+    {
+      "level": "medium",
+      "ru": "Поднимается вверх при глотании.",
+      "en": "It moves up when you swallow."
+    },
+    {
       "level": "hard",
       "ru": "Йодированную соль ввели, чтобы бороться с зобом из-за нехватки йода",
       "en": "Iodised salt was introduced to fight goitre caused by iodine deficiency"
@@ -92,6 +128,47 @@
       "level": "hard",
       "ru": "У женщин её болезни встречаются в несколько раз чаще, чем у мужчин",
       "en": "Its disorders are several times more common in women than in men"
+    },
+    {
+      "level": "hard",
+      "ru": "Её доли соединены перешейком.",
+      "en": "Its lobes are joined by an isthmus."
+    },
+    {
+      "level": "hard",
+      "ru": "Сзади к ней прилегают четыре крошечных «соседа» размером с рисовое зерно — они регулируют кальций.",
+      "en": "Four tiny neighbours the size of a grain of rice sit against its back and regulate calcium."
+    },
+    {
+      "level": "hard",
+      "ru": "Болезнь Хашимото — частая причина нехватки её гормонов.",
+      "en": "Hashimoto's disease is a common cause of too few of its hormones."
+    },
+    {
+      "level": "hard",
+      "ru": "Состоит из фолликулов, заполненных коллоидом.",
+      "en": "It is made of follicles filled with colloid."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называется увеличение щитовидной железы?",
+      "en": "What is an enlarged thyroid called?",
+      "answer": {
+        "ru": "Зоб",
+        "en": "Goitre"
+      },
+      "wrong": {
+        "ru": [
+          "Отёк",
+          "Грыжа",
+          "Киста"
+        ],
+        "en": [
+          "Oedema",
+          "Hernia",
+          "Cyst"
+        ]
+      }
     }
   ]
 }

@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Проглоченная еда проходит по нему за несколько секунд.",
+      "en": "Swallowed food passes through it in a few seconds."
+    },
+    {
+      "level": "easy",
+      "ru": "Что лежит перед пищеводом на шее?",
+      "en": "What lies in front of the esophagus in the neck?",
+      "answer": {
+        "ru": "Трахея",
+        "en": "The trachea"
+      },
+      "wrong": {
+        "ru": [
+          "Позвоночник",
+          "Аорта",
+          "Желудок"
+        ],
+        "en": [
+          "The spine",
+          "The aorta",
+          "The stomach"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Длина около 25 см; лежит позади трахеи и сердца.",
       "en": "About 25 cm long; lies behind the trachea and heart."
@@ -69,6 +95,21 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Пища движется по нему, даже если человек стоит на голове.",
+      "en": "Food moves along it even if you stand on your head."
+    },
+    {
+      "level": "medium",
+      "ru": "Его верхний и нижний концы замыкают мышечные кольца — сфинктеры.",
+      "en": "Muscular rings, sphincters, close its upper and lower ends."
+    },
+    {
+      "level": "medium",
+      "ru": "Затруднённое глотание называют дисфагией.",
+      "en": "Difficulty swallowing is called dysphagia."
+    },
+    {
       "level": "hard",
       "ru": "Вверху стенка из скелетных мышц, внизу — из гладких.",
       "en": "The upper part of its wall is skeletal muscle and the lower part is smooth muscle."
@@ -82,6 +123,47 @@
       "level": "hard",
       "ru": "При болезни Барретта меняется слизистая нижней части этого органа.",
       "en": "In Barrett’s disease the lining of the lower part of this organ changes."
+    },
+    {
+      "level": "hard",
+      "ru": "Изнутри он выстлан многослойным плоским эпителием, как полость рта.",
+      "en": "It is lined with stratified squamous epithelium, like the mouth."
+    },
+    {
+      "level": "hard",
+      "ru": "При ахалазии его нижний сфинктер не раскрывается, и пища застревает.",
+      "en": "In achalasia its lower sphincter fails to open and food gets stuck."
+    },
+    {
+      "level": "hard",
+      "ru": "Расширенные вены его нижней части при циррозе могут сильно кровоточить.",
+      "en": "In cirrhosis, swollen veins in its lower part can bleed heavily."
+    },
+    {
+      "level": "hard",
+      "ru": "Лежит прямо за левым предсердием, поэтому через него делают УЗИ сердца изнутри.",
+      "en": "It lies right behind the left atrium, so the heart can be scanned with ultrasound from inside it."
+    },
+    {
+      "level": "hard",
+      "ru": "На уровне какого позвонка начинается пищевод?",
+      "en": "At the level of which vertebra does the esophagus begin?",
+      "answer": {
+        "ru": "VI шейного",
+        "en": "6th cervical"
+      },
+      "wrong": {
+        "ru": [
+          "I шейного",
+          "XII грудного",
+          "III поясничного"
+        ],
+        "en": [
+          "1st cervical",
+          "12th thoracic",
+          "3rd lumbar"
+        ]
+      }
     }
   ]
 }

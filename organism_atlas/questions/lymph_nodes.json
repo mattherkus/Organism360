@@ -17,6 +17,32 @@
       "en": "Doctors feel for them in the neck, armpits and groin."
     },
     {
+      "level": "easy",
+      "ru": "Какую жидкость фильтруют лимфоузлы?",
+      "en": "Which fluid do the lymph nodes filter?",
+      "answer": {
+        "ru": "Лимфу",
+        "en": "Lymph"
+      },
+      "wrong": {
+        "ru": [
+          "Кровь",
+          "Мочу",
+          "Жёлчь"
+        ],
+        "en": [
+          "Blood",
+          "Urine",
+          "Bile"
+        ]
+      }
+    },
+    {
+      "level": "easy",
+      "ru": "Часть иммунной системы — маленькие сторожевые посты по всему телу.",
+      "en": "Part of the immune system: little guard posts all over the body."
+    },
+    {
       "level": "medium",
       "ru": "В них задерживаются микробы и опухолевые клетки.",
       "en": "Germs and cancer cells get trapped in them."
@@ -38,6 +64,42 @@
       "en": "Here B cells start making antibodies against germs."
     },
     {
+      "level": "medium",
+      "ru": "Жидкость входит в них по нескольким сосудам, а выходит по одному.",
+      "en": "Fluid enters them through several vessels and leaves through one."
+    },
+    {
+      "level": "medium",
+      "ru": "Расположены группами по ходу сосудов, несущих лимфу.",
+      "en": "They sit in clusters along the vessels that drain tissue fluid."
+    },
+    {
+      "level": "medium",
+      "ru": "Какие клетки крови живут в лимфоузлах?",
+      "en": "Which blood cells live in the lymph nodes?",
+      "answer": {
+        "ru": "Лимфоциты",
+        "en": "Lymphocytes"
+      },
+      "wrong": {
+        "ru": [
+          "Эритроциты",
+          "Тромбоциты",
+          "Нейроны"
+        ],
+        "en": [
+          "Red blood cells",
+          "Platelets",
+          "Neurons"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "После удаления многих из них в подмышке рука может отекать.",
+      "en": "After many of them are removed from the armpit, the arm may swell."
+    },
+    {
       "level": "hard",
       "ru": "Лимфа течёт через них без насоса — её двигают сокращения мышц.",
       "en": "Fluid flows through them without a pump: muscle contractions move it along."
@@ -51,6 +113,26 @@
       "level": "hard",
       "ru": "Каждый собирает жидкость из своей области тела, поэтому по увеличенному ищут инфекцию рядом.",
       "en": "Each one drains its own area of the body, so a swollen one points to an infection nearby."
+    },
+    {
+      "level": "hard",
+      "ru": "Первый из них на пути жидкости от опухоли называют сторожевым.",
+      "en": "The first of them to receive fluid from a tumour is called the sentinel one."
+    },
+    {
+      "level": "hard",
+      "ru": "Один из видов рака крови чаще всего начинается в них.",
+      "en": "One kind of blood cancer most often starts in them."
+    },
+    {
+      "level": "hard",
+      "ru": "Паракортекс — их зона, где собираются T-лимфоциты.",
+      "en": "The paracortex is their zone where T cells gather."
+    },
+    {
+      "level": "hard",
+      "ru": "Рак, который распространяется с лимфой, обычно сначала появляется в них.",
+      "en": "Cancer spreading through the fluid they filter usually shows up in them first."
     }
   ]
 }

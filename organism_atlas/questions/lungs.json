@@ -38,6 +38,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Курение вредит им сильнее, чем любому другому органу.",
+      "en": "Smoking harms them more than any other organ."
+    },
+    {
+      "level": "easy",
+      "ru": "Какой газ лёгкие выводят из крови?",
+      "en": "Which gas do the lungs remove from the blood?",
+      "answer": {
+        "ru": "Углекислый газ",
+        "en": "Carbon dioxide"
+      },
+      "wrong": {
+        "ru": [
+          "Кислород",
+          "Азот",
+          "Водород"
+        ],
+        "en": [
+          "Oxygen",
+          "Nitrogen",
+          "Hydrogen"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Грудная полость по обе стороны от сердца; снизу лежат на диафрагме",
       "en": "Chest cavity on both sides of the heart; they rest on the diaphragm"
@@ -65,6 +91,21 @@
       ]
     },
     {
+      "level": "medium",
+      "ru": "Покрыты гладкой оболочкой — плеврой, — которая даёт им скользить при дыхании.",
+      "en": "They are covered by a smooth membrane, the pleura, that lets them glide as you breathe."
+    },
+    {
+      "level": "medium",
+      "ru": "Воздух попадает в них по бронхам, которые ветвятся, как дерево.",
+      "en": "Air reaches them through bronchi that branch like a tree."
+    },
+    {
+      "level": "medium",
+      "ru": "Левое меньше правого: часть места занимает сердце.",
+      "en": "The left one is smaller than the right because the heart takes up some room."
+    },
+    {
       "level": "hard",
       "ru": "Общая площадь альвеол 50–75 м², как у небольшой квартиры",
       "en": "The alveoli add up to 50–75 m², about the floor area of a small flat"
@@ -73,6 +114,47 @@
       "level": "hard",
       "ru": "В покое за один вдох проходит около 0,5 л воздуха",
       "en": "At rest, each breath moves about 0.5 L of air"
+    },
+    {
+      "level": "hard",
+      "ru": "Сурфактант не даёт их альвеолам слипаться при выдохе.",
+      "en": "Surfactant keeps their alveoli from collapsing as you breathe out."
+    },
+    {
+      "level": "hard",
+      "ru": "Их жизненная ёмкость у взрослого — около 3,5–5 л.",
+      "en": "In an adult their vital capacity is about 3.5–5 L."
+    },
+    {
+      "level": "hard",
+      "ru": "Вся кровь из правого желудочка проходит через них, прежде чем попасть к телу.",
+      "en": "All the blood from the right ventricle passes through them before it reaches the body."
+    },
+    {
+      "level": "hard",
+      "ru": "Тромб, застрявший в их артерии, — тромбоэмболия — опасен для жизни.",
+      "en": "A clot lodged in their artery, an embolism, is life-threatening."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называются крошечные пузырьки, где кровь получает кислород?",
+      "en": "What are the tiny air sacs where blood picks up oxygen called?",
+      "answer": {
+        "ru": "Альвеолы",
+        "en": "Alveoli"
+      },
+      "wrong": {
+        "ru": [
+          "Нефроны",
+          "Ворсинки",
+          "Бронхиолы"
+        ],
+        "en": [
+          "Nephrons",
+          "Villi",
+          "Bronchioles"
+        ]
+      }
     }
   ]
 }

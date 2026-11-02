@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Из какой камеры сердца выходит аорта?",
+      "en": "Which chamber of the heart does the aorta leave from?",
+      "answer": {
+        "ru": "Из левого желудочка",
+        "en": "The left ventricle"
+      },
+      "wrong": {
+        "ru": [
+          "Из правого желудочка",
+          "Из левого предсердия",
+          "Из правого предсердия"
+        ],
+        "en": [
+          "The right ventricle",
+          "The left atrium",
+          "The right atrium"
+        ]
+      }
+    },
+    {
+      "level": "easy",
+      "ru": "Самый толстый кровеносный сосуд: кровь в нём течёт под самым высоким давлением.",
+      "en": "The thickest blood vessel, carrying blood at the highest pressure."
+    },
+    {
       "level": "medium",
       "ru": "Дугой поднимается над сердцем, а потом спускается вдоль позвоночника.",
       "en": "Arches over the heart and then runs down along the spine."
@@ -69,6 +95,26 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Её первые ветви — венечные артерии, которые питают само сердце.",
+      "en": "Its first branches are the coronary arteries that feed the heart itself."
+    },
+    {
+      "level": "medium",
+      "ru": "В ней различают восходящую часть, дугу, грудную и брюшную части.",
+      "en": "It has an ascending part, an arch, a thoracic part and an abdominal part."
+    },
+    {
+      "level": "medium",
+      "ru": "Клапан на выходе из левого желудочка не даёт крови вернуться из неё обратно в сердце.",
+      "en": "The valve at the exit of the left ventricle stops blood flowing back from it into the heart."
+    },
+    {
+      "level": "medium",
+      "ru": "Её брюшная часть отдаёт артерии к почкам, кишечнику, печени и желудку.",
+      "en": "Its abdominal part sends arteries to the kidneys, intestines, liver and stomach."
+    },
+    {
       "level": "hard",
       "ru": "Упругая стенка растягивается при каждом ударе сердца и сглаживает толчки крови.",
       "en": "Its elastic wall stretches with each heartbeat and smooths out the surges of blood."
@@ -82,6 +128,49 @@
       "level": "hard",
       "ru": "Надрыв её внутреннего слоя вызывает внезапную раздирающую боль в груди и спине.",
       "en": "A tear in its inner layer causes sudden tearing pain in the chest and back."
+    },
+    {
+      "level": "hard",
+      "ru": "Расширение её брюшной части — аневризма — может годами ничем себя не выдавать.",
+      "en": "A widening of its abdominal part, an aneurysm, can give no sign for years."
+    },
+    {
+      "level": "hard",
+      "ru": "Её стенка в основном из эластических волокон: это артерия эластического типа.",
+      "en": "Its wall is mostly elastic fibres: it is an elastic-type artery."
+    },
+    {
+      "level": "hard",
+      "ru": "Врождённое сужение её перешейка повышает давление в руках и ослабляет пульс на ногах.",
+      "en": "A congenital narrowing of its isthmus raises blood pressure in the arms and weakens the pulse in the legs."
+    },
+    {
+      "level": "hard",
+      "ru": "Её дуга перекидывается через левый главный бронх.",
+      "en": "Its arch hooks over the left main bronchus."
+    },
+    {
+      "level": "hard",
+      "ru": "На уровне какого позвонка аорта делится на подвздошные артерии?",
+      "en": "At the level of which vertebra does the aorta split into the iliac arteries?",
+      "answer": {
+        "ru": "IV поясничного",
+        "en": "4th lumbar"
+      },
+      "wrong": {
+        "ru": [
+          "XII грудного",
+          "II поясничного",
+          "I крестцового",
+          "VII шейного"
+        ],
+        "en": [
+          "12th thoracic",
+          "2nd lumbar",
+          "1st sacral",
+          "7th cervical"
+        ]
+      }
     }
   ]
 }

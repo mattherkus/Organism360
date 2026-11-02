@@ -71,10 +71,13 @@ def fill_disease(card, key, on_link):
     if others:
         heading(lay, t("disease_related"))
         put(lay, rich_label(joined([(diseases.text(d, "name"), d) for d in others], "  ·  "), on_link))
-    own = diseases.sources(key)
-    heading(lay, t("disease_sources") if own else t("disease_more"))
-    for name, url in own or diseases.general_sources():
-        put(lay, rich_label([("•  ", None), (name, url)], open_url, size=10), top=1)
+    # источники статьи, а под ними - авторитетные сайты «Где узнать больше» (по-русски там и клинические рекомендации)
+    for title, items in ((t("disease_sources"), diseases.sources(key)), (t("disease_more"), diseases.general_sources())):
+        if not items:
+            continue
+        heading(lay, title)
+        for name, url in items:
+            put(lay, rich_label([("•  ", None), (name, url)], open_url, size=10), top=1)
     put(lay, label(t("disease_reviewed") if diseases.reviewed(key) else t("disease_unreviewed"), "muted", 9), top=10)
     put(lay, label(t("disease_note"), "muted", 9), top=2)
     spacer(lay, 14)

@@ -94,6 +94,9 @@
     "clavicle": {
       "name": "Clavicula"
     },
+    "scapula": {
+      "name": "Scapula"
+    },
     "sternum": {
       "name": "Sternum"
     },
@@ -112,8 +115,14 @@
     "radius": {
       "name": "Radius"
     },
-    "hand": {
-      "name": "Ossa manus"
+    "carpals": {
+      "name": "Ossa carpi"
+    },
+    "metacarpals": {
+      "name": "Ossa metacarpi"
+    },
+    "phalanges": {
+      "name": "Phalanges digitorum manus"
     },
     "pelvis": {
       "name": "Ossa coxae"
@@ -124,8 +133,26 @@
     "femur": {
       "name": "Femur"
     },
+    "patella": {
+      "name": "Patella"
+    },
+    "tibia": {
+      "name": "Tibia"
+    },
+    "fibula": {
+      "name": "Fibula"
+    },
+    "foot": {
+      "name": "Ossa pedis"
+    },
     "sternocleidomastoid": {
       "name": "Musculus sternocleidomastoideus"
+    },
+    "scalenes": {
+      "name": "Musculi scaleni"
+    },
+    "sternohyoid": {
+      "name": "Musculus sternohyoideus"
     },
     "trapezius": {
       "name": "Musculus trapezius"
@@ -136,14 +163,23 @@
     "pectoralis": {
       "name": "Musculus pectoralis major"
     },
+    "intercostals": {
+      "name": "Musculi intercostales"
+    },
     "biceps": {
       "name": "Musculus biceps brachii"
     },
     "brachioradialis": {
       "name": "Musculus brachioradialis"
     },
-    "forearm_flexors": {
-      "name": "Musculi flexores antebrachii"
+    "pronator_teres": {
+      "name": "Musculus pronator teres"
+    },
+    "flexor_carpi_radialis": {
+      "name": "Musculus flexor carpi radialis"
+    },
+    "flexor_carpi_ulnaris": {
+      "name": "Musculus flexor carpi ulnaris"
     },
     "rectus_abdominis": {
       "name": "Musculus rectus abdominis"
@@ -160,8 +196,20 @@
     "vastus_lateralis": {
       "name": "Musculus vastus lateralis"
     },
+    "vastus_medialis": {
+      "name": "Musculus vastus medialis"
+    },
     "adductors": {
       "name": "Musculi adductores"
+    },
+    "tibialis_anterior": {
+      "name": "Musculus tibialis anterior"
+    },
+    "gastrocnemius": {
+      "name": "Musculus gastrocnemius"
+    },
+    "fibularis_longus": {
+      "name": "Musculus fibularis longus"
     }
   },
   "parts": {

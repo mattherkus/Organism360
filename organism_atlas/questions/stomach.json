@@ -17,6 +17,32 @@
       "en": "Produces acidic juice that kills many germs in food."
     },
     {
+      "level": "easy",
+      "ru": "Что вырабатывает желудок?",
+      "en": "What does the stomach produce?",
+      "answer": {
+        "ru": "Желудочный сок",
+        "en": "Gastric juice"
+      },
+      "wrong": {
+        "ru": [
+          "Жёлчь",
+          "Инсулин",
+          "Слюну"
+        ],
+        "en": [
+          "Bile",
+          "Insulin",
+          "Saliva"
+        ]
+      }
+    },
+    {
+      "level": "easy",
+      "ru": "Когда он пуст, мы чувствуем голод.",
+      "en": "When it is empty we feel hungry."
+    },
+    {
       "level": "medium",
       "ru": "Верхняя часть живота слева, под диафрагмой и печенью",
       "en": "Upper left abdomen, below the diaphragm and the liver"
@@ -74,6 +100,21 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Его слизистая собрана в складки, которые расправляются, когда он наполняется.",
+      "en": "Its lining has folds that flatten out as it fills."
+    },
+    {
+      "level": "medium",
+      "ru": "Его выход в кишку закрывает мышечное кольцо — привратник.",
+      "en": "Its exit to the gut is closed by a muscular ring, the pylorus."
+    },
+    {
+      "level": "medium",
+      "ru": "Фермент пепсин в его соке расщепляет белки.",
+      "en": "The enzyme pepsin in its juice breaks down proteins."
+    },
+    {
       "level": "hard",
       "ru": "Поверхностный слой слизистой обновляется каждые 3–5 дней",
       "en": "The surface layer of its lining renews every 3–5 days"
@@ -87,6 +128,42 @@
       "level": "hard",
       "ru": "Урчание в животе: это газ и жидкость, которые двигаются при сокращениях стенок",
       "en": "A rumbling tummy is gas and fluid moving as this organ's walls contract"
+    },
+    {
+      "level": "hard",
+      "ru": "Его клетки выделяют внутренний фактор, без которого не всасывается витамин B12.",
+      "en": "Its cells release intrinsic factor, without which vitamin B12 can't be absorbed."
+    },
+    {
+      "level": "hard",
+      "ru": "Гормон голода грелин выделяет в основном его стенка.",
+      "en": "The hunger hormone ghrelin is made mainly by its wall."
+    },
+    {
+      "level": "hard",
+      "ru": "Слизь на его стенке защищает её от собственной кислоты.",
+      "en": "Mucus on its wall protects it from its own acid."
+    },
+    {
+      "level": "hard",
+      "ru": "Какая среда в желудке?",
+      "en": "What is the environment in the stomach like?",
+      "answer": {
+        "ru": "Сильно кислая",
+        "en": "Strongly acidic"
+      },
+      "wrong": {
+        "ru": [
+          "Щелочная",
+          "Нейтральная",
+          "Слабощелочная"
+        ],
+        "en": [
+          "Alkaline",
+          "Neutral",
+          "Slightly alkaline"
+        ]
+      }
     }
   ]
 }

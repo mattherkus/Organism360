@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Самый конец кишечника.",
+      "en": "The very last part of the gut."
+    },
+    {
+      "level": "easy",
+      "ru": "Через какое отверстие выходит содержимое прямой кишки?",
+      "en": "Through which opening does the rectum empty?",
+      "answer": {
+        "ru": "Через задний проход",
+        "en": "The anus"
+      },
+      "wrong": {
+        "ru": [
+          "Через рот",
+          "Через пупок",
+          "Через мочеиспускательный канал"
+        ],
+        "en": [
+          "The mouth",
+          "The navel",
+          "The urethra"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Её нижняя расширенная часть называется ампулой.",
       "en": "Its wider lower part is called the ampulla."
@@ -69,6 +95,16 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Растяжение её стенки вызывает позыв сходить в туалет.",
+      "en": "Stretching its wall triggers the urge to empty the bowels."
+    },
+    {
+      "level": "medium",
+      "ru": "Начинается там, где кончается сигмовидная часть толстого кишечника.",
+      "en": "It begins where the sigmoid colon ends."
+    },
+    {
       "level": "hard",
       "ru": "Несмотря на название, изогнута по форме крестца.",
       "en": "Despite its name, it curves along the sacrum."
@@ -82,6 +118,26 @@
       "level": "hard",
       "ru": "Геморрой — расширение вен в нижней части этого органа.",
       "en": "Hemorrhoids are swollen veins in the lowest part of this organ."
+    },
+    {
+      "level": "hard",
+      "ru": "Её рак часто находят при обследовании после 45–50 лет.",
+      "en": "Cancer of it is often found by screening after the age of 45–50."
+    },
+    {
+      "level": "hard",
+      "ru": "Кровь от её нижней части оттекает и в воротную вену, и в нижнюю полую.",
+      "en": "Blood from its lower part drains into both the portal vein and the inferior vena cava."
+    },
+    {
+      "level": "hard",
+      "ru": "Осмотреть её изнутри можно ректоскопом.",
+      "en": "A doctor can look inside it with a proctoscope."
+    },
+    {
+      "level": "hard",
+      "ru": "У выхода её слизистая собрана в продольные складки — анальные столбы.",
+      "en": "Near the outlet its lining forms long folds, the anal columns."
     }
   ]
 }

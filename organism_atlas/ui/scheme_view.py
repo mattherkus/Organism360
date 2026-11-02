@@ -397,7 +397,7 @@ class Stage(QWidget):
 
     def place(self, animate=False):
         """кнопки приближения - на своё место (плавно, если интерфейс уезжает или возвращается)"""
-        to = self.buttons_at(self.app.ui_hidden)
+        to = self.buttons_at(self.app.slide.hidden)
         for i, b in enumerate(self.zoom_buttons.values()):
             b.raise_()
             end = to + QPoint(0, i * px(36))

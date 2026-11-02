@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Его называют «главной железой», хотя сам он подчиняется мозгу.",
+      "en": "It is called the “master” of the hormone system, although it takes orders from the brain."
+    },
+    {
+      "level": "easy",
+      "ru": "Где находится гипофиз?",
+      "en": "Where is the pituitary gland?",
+      "answer": {
+        "ru": "Под мозгом, в основании черепа",
+        "en": "Under the brain, at the base of the skull"
+      },
+      "wrong": {
+        "ru": [
+          "На шее",
+          "В груди",
+          "Над почками"
+        ],
+        "en": [
+          "In the neck",
+          "In the chest",
+          "Above the kidneys"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Лежит в углублении основания черепа — турецком седле.",
       "en": "Sits in a hollow at the base of the skull called the sella turcica."
@@ -46,6 +72,21 @@
       "level": "medium",
       "ru": "Его гормон пролактин запускает выработку грудного молока.",
       "en": "Its hormone prolactin starts the production of breast milk."
+    },
+    {
+      "level": "medium",
+      "ru": "Его гормон АКТГ подстёгивает кору надпочечников.",
+      "en": "Its hormone ACTH spurs on the adrenal cortex."
+    },
+    {
+      "level": "medium",
+      "ru": "Его гормоны ФСГ и ЛГ управляют половыми железами.",
+      "en": "Its hormones FSH and LH control the reproductive organs."
+    },
+    {
+      "level": "medium",
+      "ru": "Состоит из передней и задней долей.",
+      "en": "It has a front lobe and a back lobe."
     },
     {
       "level": "hard",
@@ -77,6 +118,31 @@
           "Insulin"
         ]
       }
+    },
+    {
+      "level": "hard",
+      "ru": "Избыток его гормона роста у взрослых вызывает акромегалию — увеличение кистей, стоп и черт лица.",
+      "en": "Too much of its growth hormone in adults causes acromegaly: enlarged hands, feet and facial features."
+    },
+    {
+      "level": "hard",
+      "ru": "Нехватка его гормона роста в детстве приводит к низкорослости.",
+      "en": "Too little of its growth hormone in childhood leads to short stature."
+    },
+    {
+      "level": "hard",
+      "ru": "Его опухоль — аденома — обычно доброкачественная.",
+      "en": "A tumour of it, an adenoma, is usually benign."
+    },
+    {
+      "level": "hard",
+      "ru": "Вазопрессин из его задней доли помогает почкам удерживать воду.",
+      "en": "Vasopressin from its back lobe helps the kidneys hold on to water."
+    },
+    {
+      "level": "hard",
+      "ru": "Весит всего около 0,5 г.",
+      "en": "It weighs only about 0.5 g."
     }
   ]
 }

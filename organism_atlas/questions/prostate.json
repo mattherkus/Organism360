@@ -33,6 +33,32 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Под каким органом лежит предстательная железа?",
+      "en": "Which organ does the prostate lie below?",
+      "answer": {
+        "ru": "Под мочевым пузырём",
+        "en": "The bladder"
+      },
+      "wrong": {
+        "ru": [
+          "Под печенью",
+          "Под желудком",
+          "Под сердцем"
+        ],
+        "en": [
+          "The liver",
+          "The stomach",
+          "The heart"
+        ]
+      }
+    },
+    {
+      "level": "easy",
+      "ru": "Её секрет помогает сперматозоидам оставаться подвижными.",
+      "en": "Its fluid helps sperm stay active."
+    },
+    {
       "level": "medium",
       "ru": "Охватывает начало мочеиспускательного канала.",
       "en": "It surrounds the beginning of the urethra."
@@ -69,6 +95,37 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Её доброкачественное увеличение с возрастом называют гиперплазией.",
+      "en": "Its benign enlargement with age is called hyperplasia."
+    },
+    {
+      "level": "medium",
+      "ru": "Через неё проходят семявыбрасывающие протоки.",
+      "en": "The ejaculatory ducts pass through it."
+    },
+    {
+      "level": "medium",
+      "ru": "Как называется воспаление предстательной железы?",
+      "en": "What is inflammation of the prostate called?",
+      "answer": {
+        "ru": "Простатит",
+        "en": "Prostatitis"
+      },
+      "wrong": {
+        "ru": [
+          "Цистит",
+          "Уретрит",
+          "Нефрит"
+        ],
+        "en": [
+          "Cystitis",
+          "Urethritis",
+          "Nephritis"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Анализ крови на ПСА помогает выявлять болезни этого органа.",
       "en": "A PSA blood test helps detect diseases of this organ."
@@ -82,6 +139,21 @@
       "level": "hard",
       "ru": "Ферменты его секрета разжижают семенную жидкость.",
       "en": "Enzymes in its secretion make seminal fluid more liquid."
+    },
+    {
+      "level": "hard",
+      "ru": "Её рак — один из самых частых видов рака у мужчин.",
+      "en": "Cancer of it is one of the most common cancers in men."
+    },
+    {
+      "level": "hard",
+      "ru": "Её рост поддерживают мужские гормоны, поэтому некоторые её опухоли лечат, снижая тестостерон.",
+      "en": "Male hormones drive its growth, so some of its tumours are treated by lowering testosterone."
+    },
+    {
+      "level": "hard",
+      "ru": "В ней различают зоны: рак чаще растёт в периферической, доброкачественное увеличение — в переходной.",
+      "en": "It has zones: cancer usually grows in the peripheral zone, benign enlargement in the transition zone."
     }
   ]
 }

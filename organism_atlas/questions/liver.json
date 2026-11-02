@@ -17,6 +17,27 @@
       "en": "Breaks down alcohol and many medicines."
     },
     {
+      "level": "easy",
+      "ru": "С какой стороны живота лежит печень?",
+      "en": "On which side of the belly is the liver?",
+      "answer": {
+        "ru": "Справа, под рёбрами",
+        "en": "On the right, under the ribs"
+      },
+      "wrong": {
+        "ru": [
+          "Слева, под рёбрами",
+          "Посередине внизу",
+          "За позвоночником"
+        ],
+        "en": [
+          "On the left, under the ribs",
+          "Low in the middle",
+          "Behind the spine"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "Правое подреберье под диафрагмой; левая доля заходит за середину тела",
       "en": "Upper right abdomen under the diaphragm; the left lobe crosses the midline"
@@ -56,6 +77,21 @@
           "Hydrochloric acid"
         ]
       }
+    },
+    {
+      "level": "medium",
+      "ru": "Делает белки крови, в том числе нужные для её свёртывания.",
+      "en": "Makes blood proteins, including those needed for clotting."
+    },
+    {
+      "level": "medium",
+      "ru": "Получает кровь двумя путями: по артерии и по воротной вене от кишечника.",
+      "en": "It gets blood two ways: through an artery and through the portal vein from the gut."
+    },
+    {
+      "level": "medium",
+      "ru": "Желтуха бывает, когда она не справляется с билирубином.",
+      "en": "Jaundice appears when it can't keep up with bilirubin."
     },
     {
       "level": "hard",
@@ -99,6 +135,42 @@
           "3 kg",
           "5 kg",
           "100 g"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Её дольки — шестигранные блоки с центральной веной посередине.",
+      "en": "Its lobules are six-sided blocks with a central vein in the middle."
+    },
+    {
+      "level": "hard",
+      "ru": "Делится на восемь сегментов, и хирург может удалить один из них.",
+      "en": "It is divided into eight segments, and a surgeon can remove just one of them."
+    },
+    {
+      "level": "hard",
+      "ru": "Её купферовские клетки поедают бактерии и старые клетки крови.",
+      "en": "Its Kupffer cells eat bacteria and old blood cells."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называется замещение ткани печени рубцами?",
+      "en": "What is the replacement of liver tissue by scar called?",
+      "answer": {
+        "ru": "Цирроз",
+        "en": "Cirrhosis"
+      },
+      "wrong": {
+        "ru": [
+          "Гастрит",
+          "Нефрит",
+          "Плеврит"
+        ],
+        "en": [
+          "Gastritis",
+          "Nephritis",
+          "Pleurisy"
         ]
       }
     }

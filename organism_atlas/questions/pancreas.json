@@ -38,6 +38,27 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Какая болезнь бывает, когда поджелудочная железа делает мало инсулина?",
+      "en": "Which disease develops when the pancreas makes too little insulin?",
+      "answer": {
+        "ru": "Сахарный диабет",
+        "en": "Diabetes"
+      },
+      "wrong": {
+        "ru": [
+          "Гипертония",
+          "Астма",
+          "Анемия"
+        ],
+        "en": [
+          "High blood pressure",
+          "Asthma",
+          "Anaemia"
+        ]
+      }
+    },
+    {
       "level": "medium",
       "ru": "За желудком поперёк живота: головка у двенадцатиперстной кишки, хвост у селезёнки",
       "en": "Behind the stomach, across the abdomen: the head by the duodenum, the tail by the spleen"
@@ -79,6 +100,37 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Её ферменты расщепляют белки, жиры и углеводы.",
+      "en": "Its enzymes break down proteins, fats and carbohydrates."
+    },
+    {
+      "level": "medium",
+      "ru": "Глюкагон — её гормон, который повышает сахар в крови.",
+      "en": "Glucagon, one of its hormones, raises blood sugar."
+    },
+    {
+      "level": "medium",
+      "ru": "Как называется воспаление поджелудочной железы?",
+      "en": "What is inflammation of the pancreas called?",
+      "answer": {
+        "ru": "Панкреатит",
+        "en": "Pancreatitis"
+      },
+      "wrong": {
+        "ru": [
+          "Гастрит",
+          "Гепатит",
+          "Колит"
+        ],
+        "en": [
+          "Gastritis",
+          "Hepatitis",
+          "Colitis"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Название с греческого: «вся из мяса»",
       "en": "The name comes from Greek for “all flesh”"
@@ -97,6 +149,26 @@
       "level": "hard",
       "ru": "Её сок щелочной: он нейтрализует кислоту, пришедшую из желудка",
       "en": "Its juice is alkaline: it neutralises the acid coming from the stomach"
+    },
+    {
+      "level": "hard",
+      "ru": "Её проток обычно открывается в кишку вместе с общим жёлчным протоком.",
+      "en": "Its duct usually opens into the gut together with the common bile duct."
+    },
+    {
+      "level": "hard",
+      "ru": "Бета-клетки её островков делают инсулин, альфа-клетки — глюкагон.",
+      "en": "Beta cells of its islets make insulin, alpha cells make glucagon."
+    },
+    {
+      "level": "hard",
+      "ru": "Её рак часто находят поздно: он долго не даёт признаков.",
+      "en": "Cancer of it is often found late because it gives few early signs."
+    },
+    {
+      "level": "hard",
+      "ru": "Её ферменты выходят в неактивном виде, чтобы не переварить её саму.",
+      "en": "Its enzymes are released inactive so they don't digest the organ itself."
     }
   ]
 }

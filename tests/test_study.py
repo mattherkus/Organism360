@@ -39,9 +39,12 @@ class TourTests(unittest.TestCase):
         i18n._current = i18n._previous = i18n.BASE
 
     def test_routes_use_known_organs(self):
+        """шаги маршрута - органы, а где нужно - кости и мышцы («Путь нервного сигнала»: палец и бицепс)"""
+        from organism_atlas.structures import STRUCTURES
         for name, keys in tours.TOURS.items():
-            self.assertTrue(set(keys) <= set(ORGANS), name)
+            self.assertTrue(set(keys) <= set(ORGANS) | set(STRUCTURES), name)
             self.assertEqual(len(keys), len(set(keys)), name)
+        self.assertEqual([k for k in tours.TOURS["nerve"] if k in STRUCTURES], ["phalanges", "biceps"])
 
     def test_body_filters_route(self):
         self.assertEqual(tours.steps("water", "male"), ["kidneys", "bladder", "prostate"])

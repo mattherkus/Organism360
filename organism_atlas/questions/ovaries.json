@@ -33,6 +33,22 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Сколько яичников у женщины?",
+      "en": "How many ovaries does a woman have?",
+      "answer": "2",
+      "wrong": [
+        "1",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "level": "easy",
+      "ru": "Здесь хранится запас будущих яйцеклеток, заложенный ещё до рождения.",
+      "en": "They hold a store of future eggs laid down even before birth."
+    },
+    {
       "level": "medium",
       "ru": "Парные, размером с миндальный орех, лежат по бокам от матки.",
       "en": "Paired, about the size of an almond, they lie on both sides of the uterus."
@@ -64,6 +80,21 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Вышедшую из них яйцеклетку подхватывает маточная труба.",
+      "en": "An egg leaving them is caught by the fallopian tube."
+    },
+    {
+      "level": "medium",
+      "ru": "Их гормоны управляют менструальным циклом.",
+      "en": "Their hormones control the menstrual cycle."
+    },
+    {
+      "level": "medium",
+      "ru": "Синдром поликистоза — частое нарушение их работы, из-за которого сбивается цикл.",
+      "en": "Polycystic syndrome is a common disorder of their work that upsets the cycle."
+    },
+    {
       "level": "hard",
       "ru": "При рождении в них около 1–2 миллионов фолликулов, а созревают за жизнь лишь 400–500.",
       "en": "At birth they hold 1–2 million follicles, but only 400–500 mature over a lifetime."
@@ -77,6 +108,47 @@
       "level": "hard",
       "ru": "В менопаузу они перестают выпускать яйцеклетки.",
       "en": "At menopause they stop releasing eggs."
+    },
+    {
+      "level": "hard",
+      "ru": "Ими управляют гормоны гипофиза — ФСГ и ЛГ.",
+      "en": "They are controlled by the pituitary hormones FSH and LH."
+    },
+    {
+      "level": "hard",
+      "ru": "Каждый месяц в них начинают расти несколько фолликулов, но обычно созревает только один.",
+      "en": "Each month several follicles start to grow in them, but usually only one matures."
+    },
+    {
+      "level": "hard",
+      "ru": "Кисты в них чаще всего функциональные и проходят сами.",
+      "en": "Most cysts in them are functional and go away on their own."
+    },
+    {
+      "level": "hard",
+      "ru": "Кровь к ним приносят артерии, отходящие прямо от аорты.",
+      "en": "They are supplied by arteries that branch straight off the aorta."
+    },
+    {
+      "level": "hard",
+      "ru": "Как называется пузырёк, в котором созревает яйцеклетка?",
+      "en": "What is the sac in which an egg matures called?",
+      "answer": {
+        "ru": "Фолликул",
+        "en": "Follicle"
+      },
+      "wrong": {
+        "ru": [
+          "Альвеола",
+          "Нефрон",
+          "Ацинус"
+        ],
+        "en": [
+          "Alveolus",
+          "Nephron",
+          "Acinus"
+        ]
+      }
     }
   ]
 }

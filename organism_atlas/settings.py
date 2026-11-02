@@ -25,10 +25,11 @@ CHOICES = {
     "quiz_mode": ("find", "name", "facts", "mix", "model", "body", "order", "exam", "daily"),
     "layers_panel": ("open", "closed"),          # раздел «Слои» в панели слева развёрнут или свёрнут
     "updates": ("on", "off"),                    # раз в день спрашивать GitHub о новой версии (updates.py)
+    "onboarding": ("show", "done"),              # подсказки при первом запуске (ui/onboarding.py): ещё не видели
 }
 DEFAULTS = {"theme": "paper", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,
             "quiz_length": 10, "body": "male", "animation": "on",
-            "quiz_mode": "find", "layers_panel": "open", "updates": "on"}
+            "quiz_mode": "find", "layers_panel": "open", "updates": "on", "onboarding": "show"}
 
 
 def path():

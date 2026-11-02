@@ -1,4 +1,4 @@
-"""Настройки - страница-вкладка: тема, качество 3D, масштаб интерфейса, схема тела, анимация и язык.
+"""Настройки - страница-вкладка: тема, качество 3D, масштаб интерфейса, схема тела, анимация, язык и подсказки.
 Назад к схеме ведут вкладки «Изучать» и «Викторина» (и Esc)."""
 
 from PySide6.QtWidgets import QSizePolicy
@@ -61,6 +61,8 @@ class SettingsWindow:
              i18n.latin(), app.set_latin, (t("latin_hint"), "muted")),
             (t("settings_updates"), [(t("updates_" + v), v) for v in settings.CHOICES["updates"]],
              settings.get(settings.load(), "updates"), app.set_updates, (t("settings_updates_hint"), "muted")),
+            (t("settings_tips"), [(t("tips_again"), "again")], None, lambda _v: app.show_tips(),
+             (t("settings_tips_hint"), "muted")),
         ]
 
     def refresh(self):

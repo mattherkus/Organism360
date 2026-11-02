@@ -9,7 +9,7 @@ import traceback
 
 from PySide6.QtCore import QTimer
 
-from .. import achievements, i18n, order, progress, settings, structures
+from .. import achievements, i18n, notes, order, progress, settings, structures
 from ..i18n import t
 from ..organs import ORGANS, SYSTEMS, in_system
 from ..quiz import (EXAM_SECONDS, LENGTHS, LEVELS, MODES, NO_CARDS, NOT_ORGANS, TIMERS, QuizSession, daily_session,
@@ -25,6 +25,7 @@ from .widgets import alive
 
 NEXT_MS = 700                   # пауза после верного ответа перед следующим вопросом
 ROUTE_MS = 1300                 # «Расставь по порядку»: сколько видна пройденная цепочка
+QSETS = ("all", "missed", "due", "starred")   # наборы вопросов: все, ошибки прошлой игры, пора повторить, закладки
 
 
 def timer(parent, fn, ms=None):
@@ -85,8 +86,8 @@ class QuizController:
         if self.frames:
             self.frames[1].stop()
             self.frames = None
-        self.app.unreveal()
-        self.app.show_missed(())                        # отметки ошибок прошлой игры
+        self.app.marks.unreveal()
+        self.app.marks.show_missed(())                        # отметки ошибок прошлой игры
         self.session = None
         self.choices = {}
         if self.app.atlas:
@@ -109,12 +110,15 @@ class QuizController:
         return self.cfg["topic"] if self.mode in NOT_ORGANS and self.cfg["topic"] in structures.KINDS else None
 
     def question_keys(self, qset, data=None):
-        """органы набора вопросов qset (all, missed, due) в выбранной теме"""
+        """органы набора вопросов qset (all, missed, due, starred - закладки) в выбранной теме"""
         keys = self.mode_keys(topic=self.cfg["topic"])
         if qset == "missed":
             return progress.last_missed(self.mode, keys, data)
         if qset == "due":
             return progress.due(self.mode, keys, data)
+        if qset == "starred":
+            starred = set(notes.starred())
+            return [k for k in keys if k in starred]
         return keys
 
     def topics(self):
@@ -137,7 +141,7 @@ class QuizController:
         topics = self.topics()
         if self.cfg["topic"] not in dict(topics):
             self.cfg["topic"] = None
-        counts = {q: len(self.question_keys(q, data)) for q in ("all", "missed", "due")}
+        counts = {q: len(self.question_keys(q, data)) for q in QSETS}
         if not counts.get(self.cfg["set"]):
             self.cfg["set"] = "all"
         n = counts[self.cfg["set"]]
@@ -159,8 +163,7 @@ class QuizController:
                 rows.append((t("setup_topic"), [(self.topic_text(name, k), name, True) for name, k in topics],
                              self.cfg["topic"], lambda v: self.set_cfg("topic", v), None, 2))
             if mode not in NO_CARDS:
-                rows.append((t("setup_set"), [(t("set_" + q, n=counts[q]), q, counts[q] > 0)
-                                              for q in ("all", "missed", "due")],
+                rows.append((t("setup_set"), [(t("set_" + q, n=counts[q]), q, counts[q] > 0) for q in QSETS],
                              self.cfg["set"], lambda v: self.set_cfg("set", v), t("setup_set_hint"), True))
         history = [t("history_line", date=short_date(r.get("date")), level=t("level_" + r.get("level", "medium")),
                      right=r.get("first_try", 0), total=r.get("total", 0), time=format_time(r.get("seconds", 0)))
@@ -290,7 +293,7 @@ class QuizController:
             self.progress, self.choices = fill_question(
                 card, self.progress_state(), t("find_title", name=i18n.name(s.current)),
                 hint, fb, give_up=give_up)
-            self.app.show_target()                      # во «Вперемешку» прячет подсветку прошлого вопроса
+            self.app.marks.show_target()                      # во «Вперемешку» прячет подсветку прошлого вопроса
             return
         opts = s.options()
         if s.kind == "facts" and s.custom():             # вопрос со своими вариантами ответа
@@ -318,7 +321,7 @@ class QuizController:
             give_up=give_up, extra=self.turntable() if s.kind == "model" else None)
         for k in self.wrong:
             mark(self.choices[k], "wrong_bg")
-        self.app.show_target()
+        self.app.marks.show_target()
 
     def turntable(self):
         """вращающаяся 3D-модель органа текущего вопроса «Угадай по 3D» (кадры считаются в фоне один раз)"""
@@ -386,12 +389,12 @@ class QuizController:
         i - номер вопроса, если ответ на него - не орган (тогда отзыв называет ответ словами);
         text - ключ отзыва (с «_answer» - для такого вопроса); reveal - ещё и подписать орган на схеме"""
         s = self.session
-        self.app.unreveal()
+        self.app.marks.unreveal()
         if key in ORGANS or key in STRUCTURES:          # маршрут на схеме не подсвечивается
             if not self.exam():                         # в экзамене - без подсказок
-                self.app.flash(key, "ok")
+                self.app.marks.flash(key, "ok")
             if reveal and not self.exam():
-                self.app.reveal(key)
+                self.app.marks.reveal(key)
         if s.finished:
             self.finish(key)
             return
@@ -402,7 +405,7 @@ class QuizController:
         s = self.session
         if s is not None and not s.finished and s.level == "easy" and not self.exam() and (
                 s.correct() in ORGANS or s.correct() in STRUCTURES):
-            self.app.reveal(s.correct())
+            self.app.marks.reveal(s.correct())
 
     def answer(self, key):
         """клик по органу в режиме «Найди орган»"""
@@ -417,12 +420,12 @@ class QuizController:
             self.accepted(key)
             return
         right = s.answer(key)
-        self.app.flash(key, "ok" if right else "bad")
+        self.app.marks.flash(key, "ok" if right else "bad")
         if not right:
             self.ask(("answer_wrong", key, "bad"))
             self.hint_wrong()
             return
-        self.app.unreveal()
+        self.app.marks.unreveal()
         if s.finished:
             self.finish(key)
             return
@@ -450,9 +453,9 @@ class QuizController:
             self.update_progress()
             self.hint_wrong()
             return
-        self.app.unreveal()
+        self.app.marks.unreveal()
         mark(btn, "right_bg")
-        self.app.flash(asked, "ok")
+        self.app.marks.flash(asked, "ok")
         self.next_timer.start(NEXT_MS)
 
     def accepted(self, key):
@@ -472,7 +475,7 @@ class QuizController:
         route = s.current
         result = s.step(key)
         if key in ORGANS:
-            self.app.flash(key, "bad" if result == "wrong" else "ok")
+            self.app.marks.flash(key, "bad" if result == "wrong" else "ok")
         if result == "wrong":
             self.feedback = ("order_wrong", route, "bad")
             self.app.set_card(self.render_question)
@@ -482,7 +485,7 @@ class QuizController:
             self.feedback = None
             self.app.set_card(self.render_question)
             return
-        self.app.unreveal()                             # маршрут пройден: показать его целиком, потом дальше
+        self.app.marks.unreveal()                             # маршрут пройден: показать его целиком, потом дальше
         self.feedback = ("order_done", route, "ok")
         self.app.set_card(lambda: self.render_done(route), fade=True)
         self.next_timer.start(ROUTE_MS)
@@ -554,12 +557,12 @@ class QuizController:
         grade = s.grade if mode == "exam" else None
         review = self.review_lines() if mode == "exam" else ()
         retry = (lambda: again("missed")) if mode not in NO_CARDS else None
-        app.show_missed(s.missed)                       # ошибки - красным на схеме, с подписями
+        app.marks.show_missed(s.missed)                       # ошибки - красным на схеме, с подписями
         # итоги - в карточке справа, на месте карточки последнего органа
         app.set_card(lambda: fill_results(app.card, s, on_again=again, on_retry=retry,
                                           on_setup=lambda: app.set_mode(mode), due=due, streak=streak, new=new,
                                           on_achievements=lambda: show_achievements(app), name_of=self.name_of,
-                                          grade=grade, review=review, on_scheme=bool(app.missed)), fade=True)
+                                          grade=grade, review=review, on_scheme=bool(app.marks.missed)), fade=True)
 
     def review_lines(self):
         """разбор ошибок экзамена: [(вопрос, верный ответ, что ответили)]"""

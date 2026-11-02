@@ -36,6 +36,11 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Сильный удар в левый бок может её разорвать.",
+      "en": "A hard blow to the left side can rupture it."
+    },
+    {
       "level": "medium",
       "ru": "Левое подреберье за желудком, на уровне IX–XI рёбер",
       "en": "Upper left abdomen behind the stomach, level with ribs 9–11"
@@ -77,6 +82,37 @@
       }
     },
     {
+      "level": "medium",
+      "ru": "Увеличивается при некоторых инфекциях, например при мононуклеозе.",
+      "en": "It swells in some infections, such as mononucleosis."
+    },
+    {
+      "level": "medium",
+      "ru": "Сильно увеличенную, её прощупывают под левыми рёбрами.",
+      "en": "When greatly enlarged, it can be felt under the left ribs."
+    },
+    {
+      "level": "medium",
+      "ru": "Какого цвета селезёнка?",
+      "en": "What colour is the spleen?",
+      "answer": {
+        "ru": "Тёмно-красная",
+        "en": "Dark red"
+      },
+      "wrong": {
+        "ru": [
+          "Жёлтая",
+          "Белая",
+          "Зелёная"
+        ],
+        "en": [
+          "Yellow",
+          "White",
+          "Green"
+        ]
+      }
+    },
+    {
       "level": "hard",
       "ru": "Длина около 12 см, примерно как у кулака",
       "en": "About 12 cm long, roughly the size of a fist"
@@ -85,6 +121,26 @@
       "level": "hard",
       "ru": "Белая пульпа отвечает за иммунитет, красная фильтрует кровь",
       "en": "The white pulp works for immunity, the red pulp filters the blood"
+    },
+    {
+      "level": "hard",
+      "ru": "После её удаления делают прививки от пневмококка и других бактерий.",
+      "en": "After it is removed, people are vaccinated against pneumococcus and other bacteria."
+    },
+    {
+      "level": "hard",
+      "ru": "У плода она — одно из мест, где образуются клетки крови.",
+      "en": "In the fetus it is one of the places where blood cells are made."
+    },
+    {
+      "level": "hard",
+      "ru": "Кровь к ней приносит артерия, отходящая от чревного ствола.",
+      "en": "Blood reaches it through an artery branching from the celiac trunk."
+    },
+    {
+      "level": "hard",
+      "ru": "Примерно у каждого десятого есть маленькая добавочная — лишняя — такая же.",
+      "en": "About one person in ten has a small extra one, an accessory."
     }
   ]
 }

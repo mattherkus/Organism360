@@ -33,6 +33,16 @@
       }
     },
     {
+      "level": "easy",
+      "ru": "Тянется от основания черепа вниз внутри спины, как толстый кабель.",
+      "en": "Runs down from the base of the skull inside the back like a thick cable."
+    },
+    {
+      "level": "easy",
+      "ru": "По нему боль от пальца бежит к голове.",
+      "en": "Pain from a finger travels up it to the head."
+    },
+    {
       "level": "medium",
       "ru": "Коленный рефлекс замыкается здесь, и думать о нём не нужно.",
       "en": "The knee-jerk reflex is completed here, without you having to think about it."
@@ -54,6 +64,21 @@
       ]
     },
     {
+      "level": "medium",
+      "ru": "Покрыт тремя оболочками, между которыми есть жидкость.",
+      "en": "It is wrapped in three membranes with fluid between them."
+    },
+    {
+      "level": "medium",
+      "ru": "Люмбальную пункцию делают ниже его конца, чтобы его не задеть.",
+      "en": "A lumbar puncture is done below its end so as not to injure it."
+    },
+    {
+      "level": "medium",
+      "ru": "Серое вещество в нём на поперечном срезе похоже на бабочку.",
+      "en": "In cross-section its grey matter looks like a butterfly."
+    },
+    {
       "level": "hard",
       "ru": "Заканчивается на уровне первого-второго поясничного позвонка, ниже — «конский хвост».",
       "en": "Ends at the first or second lumbar vertebra; below it lies the 'horse's tail'."
@@ -67,6 +92,37 @@
       "level": "hard",
       "ru": "Его повреждение в шее может парализовать и руки, и ноги.",
       "en": "An injury to it in the neck can paralyze both the arms and the legs."
+    },
+    {
+      "level": "hard",
+      "ru": "Задние корешки несут в него чувствительность, передние — команды из него к мышцам.",
+      "en": "Its back roots bring in sensation; its front roots carry commands out to the muscles."
+    },
+    {
+      "level": "hard",
+      "ru": "Его утолщения в шее и пояснице управляют руками и ногами.",
+      "en": "Its swellings in the neck and lower back serve the arms and legs."
+    },
+    {
+      "level": "hard",
+      "ru": "Его повреждение в груди может парализовать ноги, но не руки.",
+      "en": "An injury to it in the chest can paralyse the legs but not the arms."
+    },
+    {
+      "level": "hard",
+      "ru": "Его белое вещество — это проводящие пути, идущие вверх и вниз.",
+      "en": "Its white matter is made of tracts running up and down."
+    },
+    {
+      "level": "hard",
+      "ru": "Сколько сегментов в шейном отделе спинного мозга?",
+      "en": "How many segments does the cervical spinal cord have?",
+      "answer": "8",
+      "wrong": [
+        "5",
+        "7",
+        "12"
+      ]
     }
   ]
 }

@@ -77,14 +77,31 @@ def record(session, question_set="all", today=None, now=None):
     })
     data["results"] = data["results"][-KEEP:]
     for key, ok in (session.results.items() if session.mode not in NO_CARDS else ()):   # экзамен, испытание дня - без карточек
-        c = data["cards"].setdefault("%s:%s" % (session.mode, key), {"box": 0, "seen": 0, "wrong": 0})
-        box = c.get("box", 0) if isinstance(c.get("box"), int) else 0
-        c["box"] = min(box + 1, MAX_BOX) if ok else 1
-        c["due"] = (today + datetime.timedelta(days=INTERVALS[c["box"]] if ok else 0)).isoformat()
-        c["seen"] = c.get("seen", 0) + 1
-        c["wrong"] = c.get("wrong", 0) + (0 if ok else 1)
-        c["last"] = today.isoformat()
+        _bump(data["cards"], "%s:%s" % (session.mode, key), ok, today)
     from . import achievements                   # полученные достижения - запомнить, чтобы не пропали
+    achievements.remember(data, today)
+    save(data)
+    return data
+
+
+def _bump(cards, card_key, ok, today):
+    """ответ на карточку: верный переносит её в следующую коробку, ошибка возвращает в первую"""
+    c = cards.setdefault(card_key, {"box": 0, "seen": 0, "wrong": 0})
+    box = c.get("box", 0) if isinstance(c.get("box"), int) else 0
+    c["box"] = min(box + 1, MAX_BOX) if ok else 1
+    c["due"] = (today + datetime.timedelta(days=INTERVALS[c["box"]] if ok else 0)).isoformat()
+    c["seen"] = c.get("seen", 0) + 1
+    c["wrong"] = c.get("wrong", 0) + (0 if ok else 1)
+    c["last"] = today.isoformat()
+
+
+def mark(mode, key, ok, today=None):
+    """ответ на одну карточку вне игры (флеш-карточки, flashcards.py): «знал» - ok. Сохраняется сразу,
+    чтобы прерванный подход не пропал. Возвращает данные"""
+    today = today or datetime.date.today()
+    data = load()
+    _bump(data["cards"], "%s:%s" % (mode, key), ok, today)
+    from . import achievements
     achievements.remember(data, today)
     save(data)
     return data
