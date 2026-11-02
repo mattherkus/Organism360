@@ -1,7 +1,6 @@
 # Body Atlas
 
-**[Русская версия](README.md)** · **[Project page](https://mattherkus.github.io/igra/)** ·
-**[Download](https://github.com/mattherkus/igra/releases/latest)**
+**[Русская версия](README.md)** · **[Download](https://github.com/mattherkus/igra/releases/latest)**
 
 An interactive atlas of the human body for learning anatomy: a full-height body map you can hover and click,
 cards for 27 organs and 42 bones and muscles, guided tours, flashcards, nine kinds of quiz, a reference of
@@ -74,7 +73,8 @@ Build a standalone program with PyInstaller (`pip install -r requirements-dev.tx
 `python tools/build_exe.py`), or the Windows installer with Inno Setup (`python tools/build_setup.py`); GitHub
 Actions builds all three platforms and publishes a release for a `v*` tag.
 
-Screenshots and the GIF on the project page are made by `python tools/screenshots.py` (off-screen, in a
+Screenshots and the GIF for the project page (`docs/index.html`, published to GitHub Pages by a manual run of
+the *Сайт* workflow) are made by `python tools/screenshots.py` (off-screen, in a
 temporary folder, so your settings and progress are untouched).
 
 ## Where things live

@@ -1,7 +1,6 @@
 # Атлас организма
 
-**[English version](README.en.md)** · **[Страница проекта](https://mattherkus.github.io/igra/)** ·
-**[Скачать](https://github.com/mattherkus/igra/releases/latest)**
+**[English version](README.en.md)** · **[Скачать](https://github.com/mattherkus/igra/releases/latest)**
 
 Интерактивная схема тела: наведение и клик по органам, режим «Изучать», экскурсии, флеш-карточки, девять видов
 викторины, статистика с картой знаний и 3D-просмотр органов.
@@ -577,8 +576,10 @@ python tools/make_golden.py --force                  # перезаписать 
 ## Страница проекта и скриншоты
 
 Страница для GitHub Pages — `docs/index.html` (на английском) со скриншотами из `docs/screenshots/` и GIF
-`docs/heart.gif`. Публикует её `.github/workflows/pages.yml` при изменении `docs/` в `main`; один раз включить:
-Settings → Pages → Build and deployment → Source: GitHub Actions. Адрес — https://mattherkus.github.io/igra/.
+`docs/heart.gif`. Публикует её `.github/workflows/pages.yml` — только ручным запуском (Actions → «Сайт» →
+Run workflow): у приватного репозитория на бесплатном тарифе GitHub Pages нет. Когда они станут доступны
+(публичный репозиторий или платный тариф), один раз включить: Settings → Pages → Build and deployment →
+Source: GitHub Actions, — и запустить публикацию; адрес будет https://mattherkus.github.io/igra/.
 
 Скриншоты и GIF пересоздаются из программы (окно без экрана, настройки и прогресс — во временной папке):
 

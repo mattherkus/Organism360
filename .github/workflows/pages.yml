@@ -1,13 +1,12 @@
 # Страница проекта на GitHub Pages: содержимое папки docs/ (index.html, скриншоты, GIF).
-# Публикуется при изменении docs/ в main и ручным запуском (Actions → «Сайт» → Run workflow).
-# Один раз включить: Settings → Pages → Build and deployment → Source: GitHub Actions.
+# Публикуется только ручным запуском (Actions → «Сайт» → Run workflow): у приватного репозитория на бесплатном
+# тарифе Pages нет, и запуск при каждом пуше падал бы. Когда Pages станут доступны (публичный репозиторий или
+# платный тариф): Settings → Pages → Build and deployment → Source: GitHub Actions, затем запустить вручную;
+# публикацию при изменении docs/ можно вернуть, добавив в on: push с branches: [main] и paths: ["docs/**"].
 # Скриншоты и GIF пересоздаёт python tools/screenshots.py.
 name: Сайт
 
 on:
-  push:
-    branches: [main]
-    paths: ["docs/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
