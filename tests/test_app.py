@@ -166,24 +166,24 @@ class AppTests(unittest.TestCase):
         self.assertIn("uterus", self.app.toggles)
         self.assertNotIn("prostate", self.app.toggles)
         self.app.set_mode("mix")
-        self.app.start_quiz()
-        self.assertNotIn("prostate", self.app.session.q)
+        self.app.quiz.start()
+        self.assertNotIn("prostate", self.app.quiz.session.q)
         self.app.set_body("male")
-        self.assertIsNone(self.app.session)             # игра началась заново с карточки настройки
+        self.assertIsNone(self.app.quiz.session)             # игра началась заново с карточки настройки
 
     def play(self):
         """пройти начатую игру до конца, отвечая верно: кликом по схеме или кнопкой"""
-        s = self.app.session
+        s = self.app.quiz.session
         while not s.finished:
             if s.kind == "find":
-                self.app.answer(s.current)
+                self.app.quiz.answer(s.current)
             else:
-                self.assertEqual(set(self.app.choices), set(s.options()))
-                self.app.choices[s.correct()].click()               # как щелчок по кнопке
-                self.assertTrue(self.app.next_timer.isActive())
-                self.app.next_question()
+                self.assertEqual(set(self.app.quiz.choices), set(s.options()))
+                self.app.quiz.choices[s.correct()].click()               # как щелчок по кнопке
+                self.assertTrue(self.app.quiz.next_timer.isActive())
+                self.app.quiz.next_question()
         self.app.unflash()
-        self.app.results_timer.stop()
+        self.app.quiz.results_timer.stop()
         return s
 
     def test_quiz_length_and_topic(self):
@@ -191,70 +191,70 @@ class AppTests(unittest.TestCase):
         for mode in ("find", "name", "facts", "mix"):
             self.app.set_mode(mode)
             for length in (5, 10, 0):
-                self.app.set_cfg("length", length)
-                self.app.start_quiz()
+                self.app.quiz.set_cfg("length", length)
+                self.app.quiz.start()
                 s = self.play()
                 self.assertEqual(s.total, length or len(self.app.organs()), (mode, length))
                 self.assertEqual(s.first_try, s.total)
                 self.app.set_mode(mode)
-        self.app.set_cfg("topic", "digestive")
-        self.app.set_cfg("length", 15)
-        self.app.start_quiz()
-        self.assertTrue(all("digestive" in ORGANS[k]["systems"] for k in self.app.session.q))
-        self.assertEqual(self.app.session.total, 8)       # органов в теме меньше 15 - спрашиваем про все
+        self.app.quiz.set_cfg("topic", "digestive")
+        self.app.quiz.set_cfg("length", 15)
+        self.app.quiz.start()
+        self.assertTrue(all("digestive" in ORGANS[k]["systems"] for k in self.app.quiz.session.q))
+        self.assertEqual(self.app.quiz.session.total, 8)       # органов в теме меньше 15 - спрашиваем про все
         self.play()
 
     def test_wrong_answer_and_digits(self):
         """неверный вариант краснеет и больше не нажимается; цифра на клавиатуре выбирает вариант"""
         self.app.set_mode("name")
         self.app.on_key("Return", "")                       # Enter на карточке настройки - начать игру
-        s = self.app.session
+        s = self.app.quiz.session
         self.assertIsNotNone(s)
         wrong = next(k for k in s.options() if k != s.correct())
-        b = self.app.choices[wrong]
-        self.app.pick(wrong)
+        b = self.app.quiz.choices[wrong]
+        self.app.quiz.pick(wrong)
         self.assertFalse(b.isEnabled())
         self.assertEqual(b.role, "wrong_bg")
         self.assertEqual(s.errors, 1)
         right = s.correct()
-        self.app.on_key("", str(list(self.app.choices).index(right) + 1))
-        self.assertTrue(self.app.next_timer.isActive())
-        self.assertEqual(self.app.choices[right].role, "right_bg")
+        self.app.on_key("", str(list(self.app.quiz.choices).index(right) + 1))
+        self.assertTrue(self.app.quiz.next_timer.isActive())
+        self.assertEqual(self.app.quiz.choices[right].role, "right_bg")
 
     def test_easy_reveal(self):
         """лёгкий уровень: после ошибки верный орган подсвечен и подписан, верный ответ подсказку убирает;
         на среднем уровне подсказки нет"""
         self.app.set_mode("find")
-        self.app.set_cfg("level", "easy")
-        self.app.start_quiz()
-        s = self.app.session
+        self.app.quiz.set_cfg("level", "easy")
+        self.app.quiz.start()
+        s = self.app.quiz.session
         asked = s.current
-        self.app.answer(next(k for k in self.app.organs() if k != asked))
+        self.app.quiz.answer(next(k for k in self.app.organs() if k != asked))
         self.assertIsNotNone(self.app.view.layers["reveal"])
         self.assertEqual(self.app.view.pin[2], i18n.name(asked))
         self.assertTrue(self.app.reveal_timer.isActive())
-        self.app.answer(asked)
+        self.app.quiz.answer(asked)
         self.assertIsNone(self.app.view.pin)
         self.app.set_mode("find")
-        self.app.set_cfg("level", "medium")
-        self.app.start_quiz()
-        s = self.app.session
-        self.app.answer(next(k for k in self.app.organs() if k != s.current))
+        self.app.quiz.set_cfg("level", "medium")
+        self.app.quiz.start()
+        s = self.app.quiz.session
+        self.app.quiz.answer(next(k for k in self.app.organs() if k != s.current))
         self.assertIsNone(self.app.view.pin)
 
     def test_give_up(self):
         """«Сдаться»: ошибка засчитана, верный орган подписан на схеме, игра сразу заканчивается - итоги"""
         self.app.set_mode("find")
-        self.app.set_cfg("length", 5)
-        self.app.start_quiz()
-        s = self.app.session
-        self.app.answer(s.current)                          # первый вопрос - верно
+        self.app.quiz.set_cfg("length", 5)
+        self.app.quiz.start()
+        s = self.app.quiz.session
+        self.app.quiz.answer(s.current)                          # первый вопрос - верно
         asked = s.current
         next(b for b in self.buttons(self.app.card) if b.text() == i18n.t("give_up")).invoke()
         self.assertTrue(s.finished)
         self.assertEqual((s.total, s.planned, s.errors, s.first_try, s.missed), (2, 5, 1, 1, [asked]))
         self.assertEqual(self.app.view.pin[2], i18n.name(asked))
-        self.app.show_results()
+        self.app.quiz.show_results()
         self.assertIn(i18n.t("results_gave_up", n=2, total=5), self.label_texts())
 
     def label_texts(self):
@@ -264,18 +264,18 @@ class AppTests(unittest.TestCase):
     def test_quiz_progress_bars(self):
         """шапка вопроса: шкала пройденных вопросов и шкала таймера; цифра - значок на кнопке варианта"""
         self.app.set_mode("name")
-        self.app.set_cfg("timer", 10)
-        self.app.start_quiz()
-        p = self.app.progress
+        self.app.quiz.set_cfg("timer", 10)
+        self.app.quiz.start()
+        p = self.app.quiz.progress
         self.assertEqual(p.done.value, 0)
         self.assertFalse(p.time.isHidden())
         self.assertGreater(p.time.value, 0.5)
-        self.assertEqual([b.key_hint for b in self.app.choices.values()],
-                         [str(i + 1) for i in range(len(self.app.choices))])
-        s = self.app.session
-        self.app.pick(s.correct())
-        self.app.next_question()
-        self.assertAlmostEqual(self.app.progress.done.value, 1 / s.total)
+        self.assertEqual([b.key_hint for b in self.app.quiz.choices.values()],
+                         [str(i + 1) for i in range(len(self.app.quiz.choices))])
+        s = self.app.quiz.session
+        self.app.quiz.pick(s.correct())
+        self.app.quiz.next_question()
+        self.assertAlmostEqual(self.app.quiz.progress.done.value, 1 / s.total)
 
     def test_quiz_mode_on_setup_card(self):
         """вид викторины выбирается на карточке настройки и запоминается для кнопки «Викторина»"""
@@ -294,19 +294,19 @@ class AppTests(unittest.TestCase):
         a = self.app
         for key in ("heart", "lungs", "liver"):
             a.open_link(key)
-        self.assertEqual((a.history, a.hpos), (["heart", "lungs", "liver"], 2))
+        self.assertEqual((a.cards.items, a.cards.pos), (["heart", "lungs", "liver"], 2))
         a.go_history(-1)
-        self.assertEqual((a.hpos, a.spot), (1, "lungs"))
+        self.assertEqual((a.cards.pos, a.spot), (1, "lungs"))
         a.go_history(-1)
         a.go_history(-1)                                    # дальше назад некуда
-        self.assertEqual(a.hpos, 0)
+        self.assertEqual(a.cards.pos, 0)
         a.go_history(1)
-        self.assertEqual(a.history[a.hpos], "lungs")
+        self.assertEqual(a.cards.items[a.cards.pos], "lungs")
         a.open_link("brain")
-        self.assertEqual(a.history, ["heart", "lungs", "brain"])
+        self.assertEqual(a.cards.items, ["heart", "lungs", "brain"])
         self.assertIn("←", self.button_texts())
         a.set_mode("find")
-        self.assertEqual(a.history, [])
+        self.assertEqual(a.cards.items, [])
 
     def test_system_toggle_and_layers_fold(self):
         """щелчок по системе скрывает и показывает её органы; раздел «Слои» сворачивается и это запоминается"""
@@ -384,7 +384,7 @@ class AppTests(unittest.TestCase):
         texts = self.button_texts()
         opener = next(t for t in texts if t.startswith(i18n.t("home_organ_open", name="")))
         next(b for b in self.buttons(self.app.card) if b.text() == opener).invoke()
-        self.assertEqual(len(self.app.history), 1)
+        self.assertEqual(len(self.app.cards.items), 1)
 
     def test_hide_all_organs(self):
         """кнопка в заголовке органов скрывает все органы, повторно - возвращает"""
@@ -433,8 +433,8 @@ class AppTests(unittest.TestCase):
         press(i18n.t("level_hard"))
         press(i18n.t("timer_sec", sec=10))
         press("5")
-        self.assertEqual((self.app.cfg["level"], self.app.cfg["timer"], self.app.cfg["length"]), ("hard", 10, 5))
-        self.assertEqual(self.app.cfg["set"], "all")
+        self.assertEqual((self.app.quiz.cfg["level"], self.app.quiz.cfg["timer"], self.app.quiz.cfg["length"]), ("hard", 10, 5))
+        self.assertEqual(self.app.quiz.cfg["set"], "all")
         self.assertEqual(self.app.card.findChildren(QWidget), before)       # обновлена на месте: не мигает
         self.app.set_mode("facts")                                          # другой режим - та же раскладка
         self.assertEqual(self.app.card.findChildren(QWidget), before)
@@ -459,10 +459,10 @@ class AppTests(unittest.TestCase):
             self.assertTrue(self.app.rect().contains(panel.geometry().center()))
         self.app.set_mode("name")                                          # цифры не уходят викторине за панелью
         self.assertNotIn(guide, overlay.stack(self.app))                   # справочник в викторине закрывается
-        self.app.start_quiz()
+        self.app.quiz.start()
         self.app.on_key("", "1")
-        self.assertEqual(self.app.session.errors + self.app.session.i, 0)
-        self.assertFalse(self.app.next_timer.isActive())
+        self.assertEqual(self.app.quiz.session.errors + self.app.quiz.session.i, 0)
+        self.assertFalse(self.app.quiz.next_timer.isActive())
         for left in (1, 0):
             QTest.keyClick(self.app, Qt.Key_Escape)
             pump()
@@ -527,16 +527,16 @@ class AppTests(unittest.TestCase):
         from PySide6.QtTest import QTest
 
         from organism_atlas.ui.layers_panel import SEARCH
-        self.app.start_tour("food")
+        self.app.tours.start("food")
         box = self.app.toggles[SEARCH]
         self.app.activateWindow()
         box.setFocus()
         pump()
         QTest.keyClicks(box, "hear")
         QTest.keyClick(box, Qt.Key_Right)                   # курсор в строке, а не шаг экскурсии
-        self.assertEqual(self.app.tour, ("food", 0))
+        self.assertEqual(self.app.tours.tour, ("food", 0))
         QTest.keyClick(box, Qt.Key_Return)                  # Enter - карточка найденного органа, экскурсия на паузе
-        self.assertEqual(self.app.paused, ("food", 0))
+        self.assertEqual(self.app.tours.paused, ("food", 0))
         self.assertEqual(self.app.spot, "heart")
         QTest.keyClick(box, Qt.Key_Escape)
         self.assertEqual(box.text(), "")
@@ -545,33 +545,33 @@ class AppTests(unittest.TestCase):
         """экскурсия: вступление, шаги с подсветкой органа, стрелки, конец и викторина по теме"""
         from organism_atlas import tours
         keys = tours.steps("food", self.app.body)
-        self.app.start_tour("food")
+        self.app.tours.start("food")
         self.assertIsNone(self.app.spot)
         self.app.on_key("Right", "")
         self.assertEqual(self.app.spot, keys[0])
         self.assertIsNotNone(self.app.view.layers["target"])
         self.app.on_key("Left", "")
-        self.assertEqual(self.app.tour, ("food", 0))
+        self.assertEqual(self.app.tours.tour, ("food", 0))
         for _ in range(len(keys) + 3):                      # дальше конца не уходит
-            self.app.tour_go(1)
-        self.assertEqual(self.app.tour, ("food", len(keys) + 1))
+            self.app.tours.go(1)
+        self.assertEqual(self.app.tours.tour, ("food", len(keys) + 1))
         self.assertIsNone(self.app.spot)
         self.app.set_lang("en")                              # карточка шага перерисовалась на другом языке
         self.app.set_lang("ru")
-        self.app.tour_quiz("digestive")
-        self.assertEqual((self.app.mode, self.app.cfg["topic"]), ("mix", "digestive"))
-        self.assertIsNone(self.app.tour)
+        self.app.tours.quiz("digestive")
+        self.assertEqual((self.app.mode, self.app.quiz.cfg["topic"]), ("mix", "digestive"))
+        self.assertIsNone(self.app.tours.tour)
         self.app.set_mode("study")
-        self.app.start_tour("air")
-        self.app.tour_go(2)
+        self.app.tours.start("air")
+        self.app.tours.go(2)
         self.app.on_click(int(210 * Z), int(230 * Z))       # щелчок по органу - пауза
-        self.assertIsNone(self.app.tour)
-        self.assertEqual(self.app.paused, ("air", 2))
+        self.assertIsNone(self.app.tours.tour)
+        self.assertEqual(self.app.tours.paused, ("air", 2))
         self.assertIn(i18n.t("tour_resume", title=tours.title("air")), self.button_texts())
-        self.app.resume_tour()                               # вернулись на тот же шаг
-        self.assertEqual(self.app.tour, ("air", 2))
+        self.app.tours.resume()                               # вернулись на тот же шаг
+        self.assertEqual(self.app.tours.tour, ("air", 2))
         self.assertEqual(self.app.spot, tours.steps("air", self.app.body)[1])
-        self.app.end_tour()
+        self.app.tours.end()
         self.app.on_click(int(210 * Z), int(230 * Z))       # без экскурсии - к списку
         self.assertIn(i18n.t("tours_back"), self.button_texts())
 
@@ -584,13 +584,13 @@ class AppTests(unittest.TestCase):
 
         from organism_atlas.ui import achievements as panel, overlay
         self.app.set_mode("find")
-        self.app.set_cfg("length", 5)
-        self.app.start_quiz()
+        self.app.quiz.set_cfg("length", 5)
+        self.app.quiz.start()
         self.play()
-        self.assertEqual(self.app.new_achievements, ["first", "perfect"])
-        self.assertEqual(self.app.streak, 1)
+        self.assertEqual(self.app.quiz.new_achievements, ["first", "perfect"])
+        self.assertEqual(self.app.quiz.streak, 1)
         self.assertEqual(self.app.ach_button.text(), i18n.t("ach_button", got=2, total=12))
-        self.app.show_results()                             # итоги - в карточке справа, а не панелью поверх
+        self.app.quiz.show_results()                             # итоги - в карточке справа, а не панелью поверх
         self.assertIsNone(overlay.top(self.app))
         texts = self.button_texts()
         self.assertEqual(texts[0], i18n.t("results_again"))
@@ -809,7 +809,7 @@ class AppTests(unittest.TestCase):
             self.assertTrue(wait(lambda: new.windowOpacity() == 1.0))
             self.assertFalse(a.isVisible())
             self.assertEqual((new.ui_scale, get_scale()), (1.25, 1.25))
-            self.assertEqual(new.history, ["heart"])          # открытая карточка осталась
+            self.assertEqual(new.cards.items, ["heart"])          # открытая карточка осталась
             win = settings_window._window                     # настройки снова открыты - уже в новом окне
             self.assertIsNotNone(win)
             self.assertIs(win.app, new)

@@ -1,6 +1,6 @@
 """Главное окно (Qt): схема тела, наведение, карточка органа, панель слоёв с поиском органа, режим «Изучать»
-с экскурсиями по системам органов и четыре викторины: «Найди орган», «Угадай название», «Угадай по факту»
-и «Вперемешку» (со сложностью, таймером, длиной игры, темой и повторением ошибок).
+и викторина. Игру ведёт QuizController (quiz_controller.py), экскурсии - TourController (tour_controller.py),
+историю карточек - CardHistory (history.py); окно даёт им карточку справа и подсветку органов на схеме.
 Схема подстраивается под размер окна: пока рисуется чёткая версия, показывается растянутая прежняя.
 Схема рисуется в пикселях экрана: на экране с масштабом 150 % она в полтора раза подробнее, а не растянута."""
 
@@ -20,38 +20,29 @@ from ..atlas import Atlas
 from ..body.base import BODY_LAYERS, DEFAULT_LAYERS
 from ..geometry import H, W
 from ..i18n import t
-from ..organs import ORGANS, SYSTEMS, by_system, fact_of_day, for_body, in_system, other_sex, search
-from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
+from ..organs import ORGANS, by_system, fact_of_day, for_body, other_sex, search
+from ..quiz import MODES
 from . import overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
-from .results import fill_results
 from .scaling import fit_zoom, pick_zoom, px, set_scale
 from .scheme_view import HIDE_FROM, ZOOM_STEPS, SchemeView, Stage, slide
 from . import settings_window
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .help import show_help as open_help
-from .cards import fill_card, fill_question, fill_setup, fill_start, fill_tour, mark
+from .cards import fill_card, fill_start
+from .history import CardHistory
 from .layers_panel import ORGANS_ALL, SEARCH, SKIN, by_color, fill_layers, filter_organs, show_all_button
+from .quiz_controller import QuizController, timer
+from .tour_controller import TourController
 from .widgets import alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card, set_button_bg, vbox
-
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
 REVEAL_MS = 500                # сколько на лёгком уровне видна подсказка «верный орган здесь» после ошибки
 REBUILD_WAIT = 5                # сколько секунд ждать, пока пересобранное окно нарисует схему (смена масштаба)
 CRUMBS = 2                      # сколько прежних карточек показывать «крошками» над карточкой органа
-
-
-def timer(parent, fn, ms=None):
-    """однократный таймер: start(мс) - вызвать fn через столько-то, stop() - отменить, isActive() - ждёт ли"""
-    tm = QTimer(parent)
-    tm.setSingleShot(True)
-    tm.timeout.connect(fn)
-    if ms is not None:
-        tm.setInterval(ms)
-    return tm
 
 
 class App(QWidget):
@@ -68,24 +59,17 @@ class App(QWidget):
         set_quality(quality)
         titlebar.set_icon(QApplication.instance())
         self.mode = "study"                    # study или режим викторины из quiz.MODES
-        self.session = None                    # QuizSession во время игры (None - на карточке настройки)
         saved = settings.load()
-        # настройки викторины: сложность, таймер и длина переживают перезапуск, тема и набор вопросов - нет
-        self.cfg = {"level": settings.get(saved, "quiz_level"), "timer": settings.get(saved, "quiz_timer"),
-                    "length": settings.get(saved, "quiz_length"), "topic": None, "set": "all"}
+        self.quiz = QuizController(self)       # игра: настройки, вопросы, таймер, итоги
+        self.tours = TourController(self)      # экскурсии в режиме «Изучать»
+        self.cards = CardHistory()             # просмотренные карточки органов: «назад», «вперёд»
         self.quiz_mode = settings.get(saved, "quiz_mode")     # вид викторины, который открывает кнопка «Викторина»
         self.layers_open = settings.get(saved, "layers_panel") == "open"   # раздел «Слои» развёрнут
         self.skin_clear = 0                    # прозрачность кожи, % (ползунок под строкой «Кожа»)
-        self.history, self.hpos = [], -1       # просмотренные карточки органов и место в этом списке
         self.body = settings.get(saved, "body")   # схема тела: female или male (органы малого таза)
         self.animation = settings.get(saved, "animation")      # on - сердце бьётся, лёгкие дышат
-        self.qset = "all"                      # набор вопросов текущей игры (для истории)
         self.atlas, self.cur = None, None
         self.photos = {}                       # {(орган, вид подсветки): (QImage, (x, y))}
-        self.choices = {}                      # {ключ органа: кнопка} в режиме «Угадай название»
-        self.progress = None                   # метка «Вопрос N из M · Ошибок: K» в карточке
-        self.feedback = None                   # (ключ текста, орган, цвет[, вопрос]) - отзыв о прошлом ответе
-        self.wrong = set()                     # неверно выбранные варианты текущего вопроса
         # что сейчас в карточке и в строке статуса: функции, чтобы перерисовать их на другом языке
         self.card_fn = self.status_fn = None
         self.built = queue.Queue()
@@ -94,18 +78,12 @@ class App(QWidget):
         self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
         self.query = ""                        # строка поиска органа в панели слоёв
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
-        self.tour = None                       # (экскурсия, шаг): 0 - вступление, 1..n - органы, n + 1 - конец
-        self.paused = None                     # экскурсия, прерванная щелчком по органу: к ней можно вернуться
-        self.new_achievements, self.streak = [], 0        # для итогов игры: новые достижения и серия дней
         self.toggles = {}
         # отложенные действия
         self.flash_timer = timer(self, self.unflash, 500)
         self.reveal_timer = timer(self, self.unreveal, REVEAL_MS)
         self.skin_timer = timer(self, self.apply_skin, 40)
-        self.next_timer = timer(self, self.next_question, 700)
-        self.tick_timer = timer(self, self.tick, 100)
         self.resize_timer = timer(self, self.start_build, 400)
-        self.results_timer = timer(self, self.show_results, 600)
         self.anim_timer = timer(self, self.animate)
         self.build_timer = QTimer(self)
         self.build_timer.timeout.connect(self.poll_build)
@@ -221,7 +199,7 @@ class App(QWidget):
         колонка раздвигалась бы, а схема сдвигалась и меняла масштаб"""
         mode, wide = self.mode, px(340)
         for self.mode in MODES:
-            self.render_setup()
+            self.quiz.render_setup()
             self.card.layout().activate()
             wide = max(wide, self.card.minimumSizeHint().width())
         self.mode = mode
@@ -297,7 +275,7 @@ class App(QWidget):
         self.body = value
         settings.save(body=value)
         self.hidden -= other_sex(value)
-        self.tour = self.paused = None                  # маршрут экскурсии зависит от схемы тела
+        self.tours.reset()                              # маршрут экскурсии зависит от схемы тела
         self.set_spot(None)
         self.render_layers()
         self.apply_view()
@@ -323,13 +301,14 @@ class App(QWidget):
         set_scale(scale)
         QApplication.instance().setFont(font(10))
         new = App(ui_scale=scale, quality=self.quality)
-        new.layers, new.hidden, new.skin_clear, new.cfg = set(self.layers), set(self.hidden), self.skin_clear, dict(self.cfg)
+        new.layers, new.hidden, new.skin_clear = set(self.layers), set(self.hidden), self.skin_clear
+        new.quiz.cfg = dict(self.quiz.cfg)
         new.render_layers()
         if self.mode != "study":
             new.set_mode(self.mode)
-        elif 0 <= self.hpos < len(self.history) and self.card_fn not in (self.empty_card, self.tour_card):
-            new.history, new.hpos = self.history[:self.hpos + 1], self.hpos
-            new.show_info(self.history[self.hpos], record=False)
+        elif self.cards.current is not None and self.card_fn not in (self.empty_card, self.tours.card):
+            new.cards = self.cards.upto_current()
+            new.show_info(self.cards.current, record=False)
         new.setWindowOpacity(0.0)                       # заголовок красится в showEvent, пока окно невидимо
         new.move(self.frameGeometry().topLeft())
         if self.isMaximized():
@@ -390,7 +369,7 @@ class App(QWidget):
 
     def empty_card(self):
         fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
-                   [("➜  " + tours.title(name), lambda n=name: self.start_tour(n)) for name in tours.available(self.body)],
+                   [("➜  " + tours.title(name), lambda n=name: self.tours.start(n)) for name in tours.available(self.body)],
                    review=self.review_block(), organ=self.organ_block())
 
     def review_block(self):
@@ -407,15 +386,8 @@ class App(QWidget):
         lines = [(t("home_due", n=due[mode]), "text") if due[mode] else (t("home_due_none"), "muted")]
         if streak:
             lines.append((t("home_streak", n=streak), "day_title"))
-        button = (t("home_due_button") + "  ·  " + t("mode_" + mode), lambda: self.review(mode)) if due[mode] else None
+        button = (t("home_due_button") + "  ·  " + t("mode_" + mode), lambda: self.quiz.review(mode)) if due[mode] else None
         return t("home_review"), lines, button
-
-    def review(self, mode):
-        """кнопка «Повторить»: викторина mode по органам, которые пора повторить"""
-        self.set_mode(mode)
-        self.cfg["topic"] = None
-        self.cfg["set"] = "due"
-        self.start_quiz("due")
 
     def organ_block(self):
         """«Орган дня» на стартовой карточке: каждый день другой, с фактом дня и кнопкой его карточки"""
@@ -623,7 +595,7 @@ class App(QWidget):
         self.query = text
         found = search(self.organs(), text)
         filter_organs(self.toggles, set(found))
-        if self.tour is None:
+        if self.tours.tour is None:
             self.set_spot(found[0] if text.strip() and len(found) == 1 else None)
 
     def on_search_enter(self, text):
@@ -631,7 +603,7 @@ class App(QWidget):
         found = search(self.organs(), text)
         if not text.strip() or not found:
             return
-        self.pause_tour()
+        self.tours.pause()
         self.show_info(found[0])
         self.set_spot(found[0])
 
@@ -708,15 +680,14 @@ class App(QWidget):
         self.view.setCursor(Qt.ArrowCursor if key is None else Qt.PointingHandCursor)
 
     def kind(self):
-        """тип текущего вопроса (quiz.KINDS); без игры - режим: study, find, name, facts или mix"""
-        s = self.session
-        return s.kind if s is not None and not s.finished else self.mode
+        """тип текущего вопроса (quiz.KINDS); без игры - режим: study или режим викторины"""
+        return self.quiz.kind() or self.mode
 
     def on_move(self, x, y):
         """мышь над схемой; x, y - в пикселях схемы"""
         if not self.ready() or self.kind() not in ("study", "find"):   # отвечают кнопками; в «Угадай название» подсвечен вопрос
             return
-        if self.kind() == "find" and self.session and self.session.level == "hard":
+        if self.kind() == "find" and self.quiz.session and self.quiz.session.level == "hard":
             return                                      # на сложном уровне орган под курсором не подсвечивается
         key = self.atlas.organ_at(x, y)
         if key != self.cur:
@@ -829,42 +800,34 @@ class App(QWidget):
         if key is None or self.kind() not in ("study", "find"):
             return
         if self.mode != "study":
-            self.answer(key)
+            self.quiz.answer(key)
             return
-        self.pause_tour()                               # щелчок по органу прерывает экскурсию (к ней можно вернуться)
+        self.tours.pause()                              # щелчок по органу прерывает экскурсию (к ней можно вернуться)
         self.set_spot(None)
         self.show_info(key)
 
     def show_info(self, key, record=True):
         """карточка органа; под ней - возврат к прерванной экскурсии или к списку экскурсий, над ней -
         «назад» и «вперёд» по просмотренным карточкам. record - добавить карточку в историю просмотра"""
-        if record and (self.hpos < 0 or self.history[self.hpos] != key):
-            self.history = self.history[:self.hpos + 1] + [key]          # ушли в сторону - «вперёд» больше нет
-            self.hpos = len(self.history) - 1
-
-        def back():
-            if self.paused is not None:
-                return t("tour_resume", title=tours.title(self.paused[0])), self.resume_tour
-            return t("tours_back"), self.end_tour
+        if record:
+            self.cards.record(key)
 
         def nav():
-            i = self.hpos
-            crumbs = [(i18n.name(k), "#%d" % j) for j, k in enumerate(self.history[:i]) if j >= i - CRUMBS]
-            return ((t("nav_back"), (lambda: self.go_history(-1)) if i > 0 else None),
-                    (t("nav_forward"), (lambda: self.go_history(1)) if i < len(self.history) - 1 else None),
-                    crumbs, lambda ref: self.go_history(int(ref[1:]) - self.hpos))
+            h = self.cards
+            crumbs = [(i18n.name(k), "#%d" % j) for j, k in h.crumbs(CRUMBS)]
+            return ((t("nav_back"), (lambda: self.go_history(-1)) if h.can_go(-1) else None),
+                    (t("nav_forward"), (lambda: self.go_history(1)) if h.can_go(1) else None),
+                    crumbs, lambda ref: self.go_history(int(ref[1:]) - h.pos))
 
-        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key), back=back(),
-                                        on_link=self.open_link, nav=nav()))
+        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key),
+                                        back=self.tours.back_button(), on_link=self.open_link, nav=nav()))
 
     def go_history(self, step):
         """на step карточек назад (step < 0) или вперёд по истории просмотра (Alt+стрелки, кнопки над карточкой)"""
-        i = self.hpos + step
-        if self.mode != "study" or overlay.top(self) is not None or not 0 <= i < len(self.history) or not step:
+        if self.mode != "study" or overlay.top(self) is not None or not self.cards.can_go(step):
             return
-        self.hpos = i
-        key = self.history[i]
-        self.pause_tour()
+        key = self.cards.go(step)
+        self.tours.pause()
         self.show_info(key, record=False)
         self.set_spot(key if key in self.organs() else None)
 
@@ -906,8 +869,8 @@ class App(QWidget):
         if mode != "study" and mode != self.quiz_mode:
             self.quiz_mode = mode
             settings.save(quiz_mode=mode)
-        self.tour = self.paused = None
-        self.history, self.hpos = [], -1
+        self.tours.reset()
+        self.cards.clear()
         self.unreveal()
         if SEARCH in self.toggles:
             self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
@@ -915,7 +878,7 @@ class App(QWidget):
         self.update_buttons()
         if mode != "study":
             close_diseases(self)
-        self.stop_quiz()
+        self.quiz.stop()
         self.show_panel()
         self.apply_view()                               # в викторине скрытые органы снова видны
         if mode == "study":
@@ -923,211 +886,15 @@ class App(QWidget):
             self.set_card(self.empty_card)
             return
         self.set_status(lambda: t("setup_status"))
-        self.set_card(self.render_setup)
+        self.set_card(self.quiz.render_setup)
 
-    def stop_quiz(self):
-        """прервать текущую игру: таймеры, подсветка, кнопки-варианты"""
-        for tm in (self.next_timer, self.tick_timer, self.results_timer):
-            tm.stop()
-        self.unreveal()
-        self.session = None
-        self.choices = {}
-        if self.atlas:
-            self.on_leave()
-            self.view.show_layer("target", None)
-
-    # --- настройка викторины
-    def question_keys(self, qset, data=None):
-        """органы набора вопросов qset (all, missed, due) в выбранной теме"""
-        keys = in_system(self.organs(), self.cfg["topic"])
-        if qset == "missed":
-            return progress.last_missed(self.mode, keys, data)
-        if qset == "due":
-            return progress.due(self.mode, keys, data)
-        return keys
-
-    def topics(self):
-        """темы викторины: [(система или None - все органы, сколько органов)]; системы из одного органа
-        не предлагаются - по ним нечего спрашивать"""
-        out = [(None, len(self.organs()))]
-        for name in SYSTEMS:
-            n = len(in_system(self.organs(), name))
-            if n >= 2:
-                out.append((name, n))
-        return out
-
-    def render_setup(self):
-        data = progress.load()
-        topics = self.topics()
-        if self.cfg["topic"] not in dict(topics):
-            self.cfg["topic"] = None
-        counts = {q: len(self.question_keys(q, data)) for q in ("all", "missed", "due")}
-        if not counts.get(self.cfg["set"]):
-            self.cfg["set"] = "all"
-        n = counts[self.cfg["set"]]
-        length = self.cfg["length"] if 0 < self.cfg["length"] < n else 0     # длиннее набора - значит «все»
-        rows = [
-            (t("setup_mode"), [(t("mode_" + m), m, True) for m in MODES], self.mode, self.set_mode, None, 2),
-            (t("setup_level"), [(t("level_" + v), v, True) for v in LEVELS], self.cfg["level"],
-             lambda v: self.set_cfg("level", v), t("level_hint_" + self.cfg["level"]), False),
-            (t("setup_timer"), [(t("timer_sec", sec=v) if v else t("timer_off"), v, True) for v in TIMERS],
-             self.cfg["timer"], lambda v: self.set_cfg("timer", v), None, False),
-            (t("setup_length"), [(t("length_all", n=n) if not v else str(v), v, not v or v < n) for v in LENGTHS],
-             length, lambda v: self.set_cfg("length", v), None, False),
-            (t("setup_topic"), [(t("topic_all", n=k) if name is None else
-                                 t("topic_system", system=t("system_" + name), n=k), name, True) for name, k in topics],
-             self.cfg["topic"], lambda v: self.set_cfg("topic", v), None, 2),
-            (t("setup_set"), [(t("set_" + q, n=counts[q]), q, counts[q] > 0) for q in ("all", "missed", "due")],
-             self.cfg["set"], lambda v: self.set_cfg("set", v), t("setup_set_hint"), True),
-        ]
-        history = [t("history_line", date=self.short_date(r.get("date")), level=t("level_" + r.get("level", "medium")),
-                     right=r.get("first_try", 0), total=r.get("total", 0), time=format_time(r.get("seconds", 0)))
-                   for r in progress.recent(self.mode, 3, data)
-                   if r.get("level") in LEVELS] or [t("history_empty")]
-        fill_setup(self.card, t("mode_" + self.mode), t("setup_desc_" + self.mode), rows, t("setup_start"),
-                   self.start_quiz, t("setup_history"), history)
-
-    @staticmethod
-    def short_date(iso):
-        """'2026-10-25T14:03' -> '25.10 14:03'"""
-        try:
-            d, hm = (iso or "").split("T")
-            return "%s.%s %s" % (d[8:10], d[5:7], hm[:5])
-        except ValueError:
-            return iso or ""
-
-    def set_cfg(self, key, value):
-        self.cfg[key] = value
-        if key in ("level", "timer", "length"):
-            settings.save(**{"quiz_" + key: value})
-        self.set_card(self.render_setup)
-
-    def start_quiz(self, qset=None):
-        """начать игру по текущим настройкам; qset - другой набор вопросов (кнопка «Повторить ошибки»)"""
-        qset = qset or self.cfg["set"]
-        keys = self.question_keys(qset)
-        if not keys:
-            qset, keys = "all", self.question_keys("all")
-        self.stop_quiz()
-        self.qset = qset
-        self.session = QuizSession(keys, pool=self.organs(), mode=self.mode, level=self.cfg["level"],
-                                   timer=self.cfg["timer"], count=game_length(self.cfg["length"], len(keys)))
-        self.ask()
-
-    # --- вопросы
-    def progress_text(self):
-        s = self.session
-        text = t("progress", n=s.i + 1, total=s.total, errors=s.errors)
-        rem = s.remaining()
-        return text + "  ·  " + t("progress_timer", sec=math.ceil(rem)) if rem is not None else text
-
-    def progress_state(self):
-        """(строка, доля пройденных вопросов, доля оставшегося времени или None) для шапки вопроса"""
-        s = self.session
-        rem = s.remaining()
-        return self.progress_text(), s.i / max(1, s.total), None if rem is None else rem / s.timer
-
-    def update_progress(self):
-        if alive(self.progress):
-            self.progress.set(*self.progress_state())
-
-    def ask(self, feedback=None):
-        """показать текущий вопрос в карточке справа;
-        feedback - (ключ текста, орган, цвет[, номер вопроса со своими вариантами]): отзыв о прошлом ответе"""
-        s = self.session
-        if s.finished:
-            self.set_status(lambda: "")                # итоги - в карточке справа, строка статуса не нужна
-            return
-        if s.deadline is None:                          # новый вопрос на экране - запускаем его время
-            s.start_timer()
-            self.tick_timer.stop()
-            self.tick()
-        self.feedback, self.wrong = feedback, set()
-        self.set_status(lambda: t("quiz_status", mode=t("mode_" + self.mode)))
-        self.set_card(self.render_question)
-
-    def render_question(self):
-        s = self.session
-        fb = self.feedback and (self.feedback_text(*self.feedback), self.feedback[2])
-        if s.kind == "find":
-            self.progress, self.choices = fill_question(
-                self.card, self.progress_state(), t("find_title", name=i18n.name(s.current)),
-                t("find_hint"), fb, give_up=(t("give_up"), self.give_up))
-            self.show_target()                          # во «Вперемешку» прячет подсветку прошлого вопроса
-            return
-        opts = s.options()
-        if s.kind == "facts" and s.custom():             # вопрос со своими вариантами ответа
-            title, hint = s.prompt(), t("custom_hint", n=len(opts))
-        elif s.kind == "facts":
-            title, hint = "«%s»" % s.prompt(), t("facts_hint", n=len(opts))
-        elif s.kind == "where":
-            title, hint = "«%s»" % s.prompt(), t("where_hint", n=len(opts))
-        elif s.kind == "system":
-            title, hint = t("system_title", name=i18n.name(s.current)), t("custom_hint", n=len(opts))
-        elif s.kind == "disease":
-            title, hint = "«%s»" % s.prompt(), t("disease_hint", n=len(opts))
-        elif s.kind == "latin":
-            title, hint = s.prompt(), t("latin_hint", n=len(opts))
-        elif s.kind == "truth":
-            title, hint = "«%s»" % s.prompt(), t("truth_hint", name=i18n.name(s.current))
-        else:
-            title, hint = t("name_title"), t("name_hint", n=len(opts))
-        self.progress, self.choices = fill_question(
-            self.card, self.progress_state(), title, hint, fb, [(k, s.option_label(k)) for k in opts], self.pick,
-            give_up=(t("give_up"), self.give_up))
-        for k in self.wrong:
-            mark(self.choices[k], "wrong_bg")
-        self.show_target()
-
-    def feedback_text(self, key, organ, _color, i=None):
-        """текст отзыва на текущем языке; i - номер вопроса, ответ на который не орган: назвать верный ответ"""
-        if i is not None:
-            return t(key, answer=self.session.answer_text(i))
-        return t(key, name=i18n.name(organ))
-
-    def tick(self):
-        """раз в четверть секунды: обновить остаток времени, а когда он вышел - показать ответ и идти дальше"""
-        s = self.session
-        if s is None or s.finished or s.remaining() is None:
-            return
-        if not self.next_timer.isActive():              # во время зелёной паузы после ответа не считаем
-            i = s.i if s.answer_text(s.i) is not None else None      # ответ - не орган: назовём его
-            key = s.time_up()
-            if key:
-                self.skipped(key, i, "time_up", s.level == "easy")
-                return
-            self.update_progress()
-        self.tick_timer.start()
-
-    def give_up(self):
-        """кнопка «Сдаться»: показать верный ответ (ошибка засчитывается) и закончить игру - сразу итоги"""
-        s = self.session
-        if s is None or s.finished or self.next_timer.isActive():
-            return
-        i = s.i if s.answer_text(s.i) is not None else None
-        self.skipped(s.give_up(), i, "gave_up", True)
-
-    def skipped(self, key, i, text, reveal):
-        """вопрос пропущен (время вышло или «Сдаться»): показать, где был нужный орган, и задать следующий;
-        i - номер вопроса, если ответ на него - не орган (тогда отзыв называет ответ словами);
-        text - ключ отзыва (с «_answer» - для такого вопроса); reveal - ещё и подписать орган на схеме"""
-        s = self.session
-        self.unreveal()
-        self.flash(key, "ok")
-        if reveal:
-            self.reveal(key)
-        if s.finished:
-            self.finish(key)
-            return
-        self.ask((text, key, "bad") if i is None else (text + "_answer", key, "bad", i))
-
+    # --- подсветка на схеме: вопрос, верно/ошибка, подсказка
     def show_target(self):
         """подсветить орган текущего вопроса «Угадай название», а в «Изучать» - орган поиска или экскурсии;
         у вопроса другого типа подсветки нет"""
         if not self.ready():
             return
-        s = self.session
-        key = s.current if s is not None and s.kind == "name" else self.spot if self.mode == "study" else None
+        key = self.quiz.target() if self.mode != "study" else self.spot
         if key is None or key in self.hidden_now():
             self.view.show_layer("target", None)
             return
@@ -1157,76 +924,6 @@ class App(QWidget):
         self.view.show_layer("reveal", None)
         self.view.set_pin(None)
 
-    def hint_wrong(self):
-        """после ошибки на лёгком уровне - подсказка, если ответ на вопрос - орган"""
-        s = self.session
-        if s is not None and not s.finished and s.level == "easy" and s.correct() in ORGANS:
-            self.reveal(s.correct())
-
-    def answer(self, key):
-        """клик по органу в режиме «Найди орган»"""
-        s = self.session
-        if s is None or s.finished:
-            return
-        right = s.answer(key)
-        self.flash(key, "ok" if right else "bad")
-        if not right:
-            self.ask(("answer_wrong", key, "bad"))
-            self.hint_wrong()
-            return
-        self.unreveal()
-        if s.finished:
-            self.finish(key)
-            return
-        self.ask(("answer_right", key, "ok"))
-
-    def pick(self, key):
-        """выбран вариант ответа в режимах «Угадай название» и «Угадай по факту»"""
-        s = self.session
-        if s is None or s.finished or self.next_timer.isActive() or key not in self.choices:
-            return
-        asked = s.current
-        right = s.answer(key)
-        btn = self.choices[key]
-        if not right:
-            self.wrong.add(key)
-            mark(btn, "wrong_bg")
-            self.update_progress()
-            self.hint_wrong()
-            return
-        self.unreveal()
-        mark(btn, "right_bg")
-        self.flash(asked, "ok")
-        self.next_timer.start()
-
-    def next_question(self):
-        self.next_timer.stop()
-        s = self.session
-        if s is None:
-            return
-        if s.finished:
-            self.finish(s.q[-1])
-            return
-        self.ask()
-
-    def finish(self, last):
-        """игра закончена: сохранить результат, показать карточку последнего органа, а следом - итоги"""
-        s = self.session
-        self.choices = {}
-        self.view.show_layer("target", None)
-        self.new_achievements, self.streak = [], 0
-        try:
-            before = progress.load()
-            after = progress.record(s, self.qset)
-            self.new_achievements = achievements.new_ones(before, after)
-            self.streak = achievements.streak(after)
-            self.ach_button.setText(achievements_text(after))
-        except Exception:                               # история - не повод сорвать конец игры
-            traceback.print_exc()
-        self.set_card(lambda: fill_card(self.card, last))
-        self.ask()
-        self.results_timer.start()
-
     def keyPressEvent(self, e):
         """Esc закрывает верхнюю панель; остальное - on_key"""
         if e.key() == Qt.Key_Escape:
@@ -1254,103 +951,9 @@ class App(QWidget):
             self.show_help()
             return
         if self.mode == "study":
-            if self.tour is not None and keysym in ("Right", "Left", "Return", "KP_Enter"):
-                self.tour_go(-1 if keysym == "Left" else 1)
+            self.tours.on_key(keysym)
             return
-        if self.session is None:
-            if keysym in ("Return", "KP_Enter"):
-                self.start_quiz()
-            return
-        if self.kind() != "find" and char.isdigit():
-            keys = list(self.choices)
-            i = int(char) - 1
-            if 0 <= i < len(keys):
-                self.pick(keys[i])
-
-    # --- экскурсии
-    def start_tour(self, name):
-        self.tour, self.paused = (name, 0), None
-        self.set_spot(None)
-        self.set_card(self.tour_card)
-
-    def tour_go(self, step):
-        """на step шагов вперёд или назад; после последнего органа - карточка «экскурсия пройдена»"""
-        name, i = self.tour
-        keys = tours.steps(name, self.body)
-        i = max(0, min(len(keys) + 1, i + step))
-        if i == self.tour[1]:
-            return
-        self.tour = (name, i)
-        self.set_spot(keys[i - 1] if 1 <= i <= len(keys) else None)
-        self.set_card(self.tour_card)
-
-    def end_tour(self):
-        """закончить экскурсию и показать список экскурсий"""
-        self.tour = self.paused = None
-        self.set_spot(None)
-        self.set_card(self.empty_card)
-
-    def pause_tour(self):
-        """прервать экскурсию (щелчок по органу, поиск): запомнить шаг, чтобы к нему вернуться"""
-        if self.tour is not None:
-            self.paused, self.tour = self.tour, None
-
-    def resume_tour(self):
-        """вернуться к прерванной экскурсии на тот же шаг"""
-        if self.paused is None:
-            return
-        name, i = self.tour = self.paused
-        self.paused = None
-        keys = tours.steps(name, self.body)
-        self.set_spot(keys[i - 1] if 1 <= i <= len(keys) else None)
-        self.set_card(self.tour_card)
-
-    def tour_quiz(self, topic):
-        """викторина «Вперемешку» по системе органов экскурсии: карточка настройки с выбранной темой"""
-        self.set_mode("mix")
-        self.set_cfg("topic", topic)
-
-    def tour_card(self):
-        if self.tour is None:                           # экскурсию закончили, пока карточка перерисовывалась
-            self.empty_card()
-            return
-        name, i = self.tour
-        keys = tours.steps(name, self.body)
-        n = len(keys)
-        back = (t("tour_back"), lambda: self.tour_go(-1), "card", i > 0)
-        if i == 0:
-            route = " → ".join(i18n.name(k) for k in keys)
-            fill_tour(self.card, t("tour_label"), tours.title(name), None,
-                      tours.intro(name) + "\n\n" + t("tour_route", route=route), "accent",
-                      [(t("tour_start"), lambda: self.tour_go(1), "accent", True)],
-                      [(t("tour_exit"), self.end_tour)], t("tour_keys"))
-        elif i > n:
-            topic = tours.TOPICS.get(name)
-            extra = [(t("tour_quiz"), lambda: self.tour_quiz(topic))] if topic in dict(self.topics()) else []
-            fill_tour(self.card, tours.title(name), t("tour_done"), None, t("tour_done_text", n=n), "accent",
-                      [back, (t("tour_finish"), self.end_tour, "accent", True)], extra)
-        else:
-            key = keys[i - 1]
-            fill_tour(self.card, t("tour_progress", title=tours.title(name), n=i, total=n), i18n.name(key),
-                      i18n.subtitle(key), tours.story(name, key), ORGANS[key]["color"],
-                      [back, (t("tour_next") if i < n else t("tour_last"), lambda: self.tour_go(1), "accent", True)],
-                      [(t("card_3d"), lambda: show_3d(self, key)), (t("tour_exit"), self.end_tour)])
-
-    def show_results(self):
-        s, mode = self.session, self.mode
-        if s is None or self.mode != s.mode:            # пока ждали, пользователь ушёл в другой режим
-            return
-
-        def again(qset=None):
-            if self.mode == mode:
-                self.start_quiz(qset)
-
-        due = len(progress.due(mode, self.organs()))
-        new, streak = self.new_achievements, self.streak
-        # итоги - в карточке справа, на месте карточки последнего органа
-        self.set_card(lambda: fill_results(self.card, s, on_again=again, on_retry=lambda: again("missed"),
-                                           on_setup=lambda: self.set_mode(mode), due=due, streak=streak, new=new,
-                                           on_achievements=lambda: show_achievements(self)))
+        self.quiz.on_key(keysym, char)
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
