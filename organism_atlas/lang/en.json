@@ -338,7 +338,13 @@
     "level_name_weak": "weak",
     "set_weak": "Weak spots ({n})",
     "help_knowledge": "Knowledge map: show or hide",
-    "stats_streak_best": "best: {best}"
+    "stats_streak_best": "best: {best}",
+    "kb_status": "Selected: {name}. Enter opens its card, ↑ ↓ picks another organ.",
+    "kb_selected": "An organ is selected on the diagram",
+    "card_read": "Read aloud",
+    "card_read_stop": "Stop reading",
+    "help_updown": "Select an organ on the diagram without the mouse; Enter opens its card, or answers with it in a quiz",
+    "help_read": "Read the open card aloud (press again to stop)"
   },
   "organs": {
     "lungs": {

@@ -673,6 +673,56 @@ class AppTests(unittest.TestCase):
         from PySide6.QtWidgets import QLabel
         return [w.text() for w in panel.findChildren(QLabel)]
 
+    def test_keyboard_selection(self):
+        """без мыши: ↑ ↓ выбирают орган (подсветка и название), Enter открывает карточку;
+        в «Найди орган» Enter отвечает выбранным органом, а названия рядом нет"""
+        a = self.app
+        a.on_key("Down", "")
+        first = a.kb_keys()[0]
+        self.assertEqual((a.kb_key, a.cur), (first, first))
+        self.assertIsNotNone(a.view.layers["hover"])
+        self.assertEqual(a.view.tip[2], i18n.name(first))
+        a.on_key("Up", "")
+        self.assertEqual(a.kb_key, a.kb_keys()[-1])                    # по кругу
+        a.on_key("Return", "")
+        self.assertEqual(a.cards.current, a.kb_key)
+        a.toggle_organ("heart")
+        self.assertNotIn("heart", a.kb_keys())                          # скрытые органы не выбираются
+        a.set_mode("find")
+        a.quiz.start()
+        s = a.quiz.session
+        target = s.current
+        while a.kb_key != target:
+            a.on_key("Down", "")
+        self.assertIsNone(a.view.tip)
+        a.on_key("Return", "")
+        self.assertEqual(s.results.get(target), True)
+
+    def test_read_aloud(self):
+        """«Прочитать вслух»: кнопка есть, если есть голос; R читает открытую карточку, повторно - останавливает"""
+        from organism_atlas import speech
+        from organism_atlas.ui.cards import card_text
+        said = []
+        state = {"on": False}
+        with mock.patch.object(speech, "available", return_value=True), \
+                mock.patch.object(speech, "speak", side_effect=lambda text, lang: said.append((text, lang)) or
+                                  state.update(on=True) or True), \
+                mock.patch.object(speech, "speaking", side_effect=lambda: state["on"]), \
+                mock.patch.object(speech, "stop", side_effect=lambda: state.update(on=False)):
+            a = self.app
+            a.show_info("heart")
+            self.assertEqual(a.card.read_button.text(), i18n.t("card_read"))
+            a.on_key("", "r")
+            self.assertEqual(said, [(card_text("heart"), "ru")])
+            self.assertIn(i18n.name("heart"), said[0][0])
+            self.assertEqual(a.card.read_button.text(), i18n.t("card_read_stop"))
+            a.on_key("", "к")                                           # та же клавиша в русской раскладке
+            self.assertFalse(state["on"])
+            self.assertEqual(a.card.read_button.text(), i18n.t("card_read"))
+        with mock.patch.object(speech, "available", return_value=False):
+            self.app.show_info("liver")
+            self.assertIsNone(self.app.card.read_button)
+
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH

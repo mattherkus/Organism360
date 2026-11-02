@@ -15,7 +15,7 @@ from PySide6.QtCore import QPoint, QSize, Qt, QTimer
 from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QPixmap, QRegion, QShortcut
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QLineEdit, QMenu, QScrollArea, QWidget
 
-from .. import achievements, i18n, progress, settings, stats, theme, tours
+from .. import achievements, i18n, progress, settings, speech, stats, theme, tours
 from ..colors import hex2rgb
 from ..config import STATUS
 from ..atlas import Atlas
@@ -34,7 +34,7 @@ from . import settings_window
 from .settings_window import refresh_settings, show_settings
 from .viewer3d import rerender_all, retranslate_all, set_quality, show_3d
 from .help import show_help as open_help
-from .cards import fill_card, fill_start
+from .cards import card_text, fill_card, fill_start
 from .history import CardHistory
 from .layers_panel import ORGANS_ALL, SEARCH, SKIN, by_color, fill_layers, filter_organs, show_all_button
 from .quiz_controller import QuizController, timer
@@ -84,12 +84,15 @@ class App(QWidget):
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
         self.knowledge = False                 # карта знаний на схеме (органы в цвете уровня знания)
         self.levels = {}                       # {орган: уровень знания} для карты знаний и подсказки у курсора
+        self.kb_key = None                     # орган (кость, мышца), выбранный стрелками ↑ ↓ - без мыши
+        self.reading = None                    # ключ карточки, которую сейчас читают вслух
         self.toggles = {}
         # отложенные действия
         self.flash_timer = timer(self, self.unflash, 500)
         self.reveal_timer = timer(self, self.unreveal, REVEAL_MS)
         self.skin_timer = timer(self, self.apply_skin, 40)
         self.resize_timer = timer(self, self.start_build, 400)
+        self.read_timer = timer(self, self.update_read_button)
         self.anim_timer = timer(self, self.animate)
         self.build_timer = QTimer(self)
         self.build_timer.timeout.connect(self.poll_build)
@@ -738,6 +741,7 @@ class App(QWidget):
         if self.kind() != "study" and s and (s.level == "hard" or self.quiz.exam()):
             return                                      # на сложном уровне и в экзамене подсветки под курсором нет
         key = self.thing_at(x, y)
+        self.kb_key = None                              # мышь снова главная: выбор стрелками сброшен
         if key != self.cur:
             self.cur = key
             self.set_hover(key)
@@ -880,7 +884,7 @@ class App(QWidget):
 
         on_3d = (lambda: show_3d(self, key)) if key in ORGANS else None          # у костей и мышц 3D нет
         self.set_card(lambda: fill_card(self.card, key, on_3d=on_3d, back=self.tours.back_button(),
-                                        on_link=self.open_link, nav=nav()))
+                                        on_link=self.open_link, nav=nav(), on_read=self.read_action(key)))
 
     def go_history(self, step):
         """на step карточек назад (step < 0) или вперёд по истории просмотра (Alt+стрелки, кнопки над карточкой)"""
@@ -931,6 +935,10 @@ class App(QWidget):
             settings.save(quiz_mode=mode)
         self.tours.reset()
         self.cards.clear()
+        self.kb_key = None
+        if self.reading:                                # чтение карточки - только в «Изучать»
+            speech.stop()
+            self.reading = None
         self.unreveal()
         if SEARCH in self.toggles:
             self.toggles[SEARCH].clear()                # поиск сбрасывается вместе с подсветкой
@@ -992,7 +1000,8 @@ class App(QWidget):
             else:
                 overlay.close_top(self)
             return
-        names = {Qt.Key_Right: "Right", Qt.Key_Left: "Left", Qt.Key_Return: "Return", Qt.Key_Enter: "KP_Enter"}
+        names = {Qt.Key_Right: "Right", Qt.Key_Left: "Left", Qt.Key_Return: "Return", Qt.Key_Enter: "KP_Enter",
+                 Qt.Key_Up: "Up", Qt.Key_Down: "Down"}
         self.on_key(names.get(e.key(), ""), e.text())
 
     def on_key(self, keysym, char):
@@ -1010,13 +1019,93 @@ class App(QWidget):
         if char == "?":
             self.show_help()
             return
+        if keysym in ("Up", "Down") and self.kb_keys():
+            self.kb_move(-1 if keysym == "Up" else 1)
+            return
+        if keysym in ("Return", "KP_Enter") and self.kb_key is not None and self.kb_choose():
+            return
         if self.mode == "study":
             if char in ("k", "K", "л", "Л"):             # K (и та же клавиша в русской раскладке)
                 self.set_knowledge(not self.knowledge)
                 return
+            if char in ("r", "R", "к", "К") and self.cards.current is not None:   # R - прочитать карточку вслух
+                self.read_card(self.cards.current)
+                return
             self.tours.on_key(keysym)
             return
         self.quiz.on_key(keysym, char)
+
+    # --- без мыши: стрелки выбирают орган на схеме, Enter - как щелчок по нему
+    def kb_keys(self):
+        """что можно выбрать стрелками: в «Изучать» - видимые органы по порядку панели, в «Найди орган»
+        и «Расставь по порядку» - органы схемы, в «Кости и мышцы» - кости и мышцы темы"""
+        kind = self.kind()
+        if not self.ready() or kind not in ("study", "find", "body", "order"):
+            return []
+        if kind == "body":
+            from ..structures import keys as structure_keys
+            return structure_keys(self.quiz.body_topic())
+        hidden = self.hidden_now()
+        return [k for _system, ks in self.groups() for k in ks if k not in hidden]
+
+    def kb_move(self, step):
+        """выбрать следующий (step = 1) или предыдущий орган: подсветка, а в «Изучать» - и название рядом"""
+        keys = self.kb_keys()
+        i = keys.index(self.kb_key) if self.kb_key in keys else (-1 if step > 0 else 0)
+        key = self.kb_key = keys[(i + step) % len(keys)]
+        self.cur = key
+        self.set_hover(key)
+        name = i18n.name(key)
+        if self.mode == "study":                        # в викторине название выдало бы ответ
+            self.view.set_tip((*self.view.to_screen(*self.atlas.anchor(key)), name))
+            self.set_status(lambda: t("kb_status", name=name))
+        self.view.setAccessibleName(name if self.mode == "study" else t("kb_selected"))
+
+    def kb_choose(self):
+        """Enter: выбранный стрелками орган - как щелчок по нему (карточка или ответ); True - обработано"""
+        key, kind = self.kb_key, self.kind()
+        if kind == "study":
+            if self.tours.tour is not None:             # Enter листает экскурсию
+                return False
+            self.tours.pause()
+            self.show_info(key)
+            self.set_spot(key)
+            return True
+        if kind in ("find", "body", "order"):
+            self.quiz.answer(key)
+            return True
+        return False
+
+    # --- чтение вслух
+    def read_action(self, key):
+        """кнопка «Прочитать вслух» для карточки key или None, если читать нечем"""
+        if not speech.available():
+            return None
+        return (t("card_read_stop") if self.reading == key and speech.speaking() else t("card_read"),
+                lambda: self.read_card(key))
+
+    def read_card(self, key):
+        """прочитать карточку вслух; если её уже читают - остановить"""
+        if not speech.available():
+            return
+        if self.reading == key and speech.speaking():
+            speech.stop()
+            self.reading = None
+        else:
+            self.reading = key if speech.speak(card_text(key), i18n.base()) else None
+        self.update_read_button()
+        if self.reading:
+            self.read_timer.start(400)
+
+    def update_read_button(self):
+        """подпись кнопки чтения: пока читают - «Остановить», потом снова «Прочитать вслух»"""
+        b = getattr(self.card, "read_button", None)
+        if self.reading and not speech.speaking():
+            self.reading = None
+        if alive(b):
+            b.setText(t("card_read_stop") if self.reading else t("card_read"))
+        if self.reading:
+            self.read_timer.start(400)
 
     def resizeEvent(self, e):
         super().resizeEvent(e)

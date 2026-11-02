@@ -35,14 +35,33 @@ def nav_row(lay, nav):
     put(lay, row, top=10)
 
 
-def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None):
+def read_button(lay, on_read, top=12):
+    """кнопка «Прочитать вслух» (on_read - (текст, функция)); запоминается на карточке, чтобы менять подпись"""
+    b = put(lay, flat_button(on_read[0], on_read[1], anchor="w", size=9, pady=3), top=top, align="left")
+    lay.parentWidget().read_button = b
+    return b
+
+
+def card_text(key):
+    """текст карточки органа, кости или мышцы для чтения вслух: название, описание, где находится, факты"""
+    parts = [i18n.name(key) + ".", i18n.organ(key, "desc"),
+             t("card_location") + ": " + i18n.organ(key, "location") + "."]
+    facts = i18n.organ(key, "facts")
+    if facts:
+        parts.append(t("card_facts") + ": " + ". ".join(f.rstrip(".") for f in facts) + ".")
+    return " ".join(parts)
+
+
+def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None):
     """карточка органа; compact - без заболеваний и факта дня (для 3D-просмотра, где мало места по высоте);
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
     а заболевания органа - ссылками на статьи справочника болезней;
-    nav - история просмотренных карточек (см. nav_row). Кость или мышца (structures.py) - своя карточка"""
+    nav - история просмотренных карточек (см. nav_row); on_read - (текст, функция) кнопки «Прочитать вслух».
+    Кость или мышца (structures.py) - своя карточка"""
+    card.read_button = None
     if key in STRUCTURES:
-        fill_structure(card, key, back=back, on_link=on_link, nav=nav)
+        fill_structure(card, key, back=back, on_link=on_link, nav=nav, on_read=on_read)
         return
     lay = card.lay
     clear(lay)
@@ -66,15 +85,19 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
         put(day.lay, linked(fact_of_day(key), on_link, seen), bottom=8, x=10)
         put(lay, day, top=12)
+    if on_read:
+        read_button(lay, on_read)
     if on_3d:
-        put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=12, bottom=0 if back else 14, align="left")
+        put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=8 if on_read else 12, bottom=0 if back else 14,
+            align="left")
     if back:
-        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_3d else 12, bottom=14, align="left")
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_3d or on_read else 12, bottom=14,
+            align="left")
     if not on_3d and not back:
         spacer(lay, 10)
 
 
-def fill_structure(card, key, back=None, on_link=None, nav=None):
+def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
     """карточка кости или мышцы: название, латынь, что это, где находится, факты; ссылки и история - как у органа"""
     lay = card.lay
     clear(lay)
@@ -90,8 +113,10 @@ def fill_structure(card, key, back=None, on_link=None, nav=None):
     heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
         put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
+    if on_read:
+        read_button(lay, on_read)
     if back:
-        put(lay, flat_button(back[0], back[1], anchor="w"), top=12, bottom=14, align="left")
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_read else 12, bottom=14, align="left")
     else:
         spacer(lay, 10)
 
