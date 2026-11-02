@@ -212,6 +212,24 @@ class DiseaseTests(unittest.TestCase):
         self.assertFalse(set(diseases.KEYS) & set(ORGANS))
         self.assertEqual(len(diseases.KEYS), len(set(diseases.KEYS)))
 
+    def test_sources_and_review(self):
+        """у каждого языка - список авторитетных сайтов; источники статьи - ссылки https; reviewed ставит только врач"""
+        for code in ("ru", "en"):
+            sec = i18n.section(code, "sources")
+            self.assertGreaterEqual(len(sec), 3, code)
+            for item in sec:
+                self.assertTrue(item["name"] and item["url"].startswith("https://"), (code, item))
+            for key, art in i18n.section(code, "diseases").items():
+                if key.startswith("_"):
+                    continue
+                for item in art.get("sources", []):
+                    self.assertTrue(item.get("url", "").startswith("https://"), (code, key))
+                if "reviewed" in art:
+                    self.assertIs(art["reviewed"], False, (code, key))
+        self.assertEqual(diseases.sources("cirrhosis"), [])
+        self.assertTrue(diseases.general_sources())
+        self.assertFalse(diseases.reviewed("cirrhosis"))
+
     def test_shared_diseases_and_related(self):
         self.assertEqual(diseases.ORGANS_OF["appendicitis"], ("intestines", "appendix"))
         self.assertEqual(diseases.ORGANS_OF["gerd"], ("stomach", "esophagus"))

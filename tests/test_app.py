@@ -115,6 +115,32 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(top(self.app))
         self.assertEqual(self.app.spot, "brain")
 
+    def test_diseases_disclaimer_sources_and_bone_links(self):
+        """справочник: предупреждение на виду, у статьи - источники или «Где узнать больше» (внешние ссылки),
+        ссылка на кость открывает её карточку в главном окне"""
+        from unittest import mock
+        from PySide6.QtWidgets import QLabel
+        from organism_atlas.ui import diseases as panel_mod
+        from organism_atlas.ui.overlay import top
+        panel = panel_mod.show_diseases(self.app, "spinal_injury")
+        self.assertIn(i18n.t("diseases_disclaimer"), panel.warn.text())
+        texts = [w.text() for w in panel.card.findChildren(QLabel)]
+        self.assertIn(i18n.t("disease_more").upper(), texts)
+        self.assertIn(i18n.t("disease_unreviewed"), texts)
+        urls = [w for w in panel.card.findChildren(QLabel) if 'href="https://' in w.text()]
+        self.assertTrue(urls)
+        with mock.patch.object(panel_mod, "QDesktopServices") as desk:
+            urls[0].linkActivated.emit("https://www.who.int/ru")
+            pump()
+            self.assertEqual(desk.openUrl.call_args[0][0].toString(), "https://www.who.int/ru")
+        self.assertIs(top(self.app), panel)                                  # внешняя ссылка справочник не закрывает
+        spine = [w for w in panel.card.findChildren(QLabel) if 'href="spine"' in w.text()]
+        self.assertEqual(len(spine), 1)
+        spine[0].linkActivated.emit("spine")                                 # болезнь -> кость
+        pump()
+        self.assertIsNone(top(self.app))
+        self.assertEqual((self.app.cards.current, self.app.spot), ("spine", "spine"))
+
     def test_latin_toggle(self):
         """кнопка «Латынь»: названия органов по-латыни, язык кнопок не меняется и запоминается"""
         from organism_atlas import settings

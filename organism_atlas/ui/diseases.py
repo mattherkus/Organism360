@@ -4,12 +4,14 @@
 Всё связано ссылками: в статье органы ведут на карточку органа в главном окне (панель закрывается),
 а другие болезни - на свои статьи; в карточке органа заболевания ведут сюда."""
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 
 from .. import diseases
 from ..diseases import ORGANS_OF
 from ..i18n import name as organ_name, t
 from ..organs import ORGANS
+from ..structures import STRUCTURES
 from .overlay import Panel, top
 from .scaling import px
 from .layers_panel import ScrollArea, SearchBox
@@ -40,8 +42,14 @@ def close_diseases(host):
             p.close_panel()
 
 
+def open_url(url):
+    """внешняя ссылка (источник) - в браузере"""
+    QDesktopServices.openUrl(QUrl(url))
+
+
 def fill_disease(card, key, on_link):
-    """статья о болезни: органы и упоминания в тексте - ссылки, внизу - другие болезни тех же органов"""
+    """статья о болезни: органы и упоминания в тексте - ссылки, внизу - другие болезни тех же органов,
+    источники статьи (или сайты «Где узнать больше») и проверил ли её врач"""
     lay = card.lay
     clear(lay)
     organs = ORGANS_OF[key]
@@ -62,7 +70,12 @@ def fill_disease(card, key, on_link):
     if others:
         heading(lay, t("disease_related"))
         put(lay, rich_label(joined([(diseases.text(d, "name"), d) for d in others], "  ·  "), on_link))
-    put(lay, label(t("disease_note"), "muted", 9), top=12)
+    own = diseases.sources(key)
+    heading(lay, t("disease_sources") if own else t("disease_more"))
+    for name, url in own or diseases.general_sources():
+        put(lay, rich_label([("•  ", None), (name, url)], open_url, size=10), top=1)
+    put(lay, label(t("disease_reviewed") if diseases.reviewed(key) else t("disease_unreviewed"), "muted", 9), top=10)
+    put(lay, label(t("disease_note"), "muted", 9), top=2)
     spacer(lay, 14)
 
 
@@ -86,6 +99,10 @@ class DiseasesPanel(Panel):
         self.area.lay.addWidget(self.card)
         self.area.lay.addStretch(1)
         row.addWidget(self.area, 0, Qt.AlignTop)
+        # предупреждение - над списком и статьёй, на виду
+        warn = rounded_card(fill="day_bg", border="day_title", radius=10)
+        self.warn = put(warn.lay, label("⚠  " + t("diseases_disclaimer"), "text", 10), top=8, bottom=8, x=12)
+        put(self.body, warn, top=10)
         put(self.body, row, top=10, bottom=16)          # список и статью заполняет select()
 
     def fill_list(self):
@@ -121,7 +138,7 @@ class DiseasesPanel(Panel):
 
     def select(self, key):
         """показать статью: болезнь - здесь же, орган - карточкой в главном окне (справочник закрывается)"""
-        if key in ORGANS:
+        if key in ORGANS or key in STRUCTURES:            # орган, кость или мышца - карточкой в главном окне
             self.close_panel()
             self.host.open_link(key)
             return
@@ -141,4 +158,5 @@ class DiseasesPanel(Panel):
     def refresh(self):
         self.title(t("diseases_title"))
         self.search.setPlaceholderText(t("diseases_search"))
+        self.warn.setText("⚠  " + t("diseases_disclaimer"))
         self.select(self.key)

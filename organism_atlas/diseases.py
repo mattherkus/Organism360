@@ -77,6 +77,29 @@ def name_in(code, key):
     return i18n.section(code, "diseases").get(key, {}).get("name", "")
 
 
+def sources(key):
+    """[(название, адрес)] - откуда сведения статьи (поле sources статьи на текущем языке с откатом); [] - не указано"""
+    for code in i18n.chain():
+        v = i18n.section(code, "diseases").get(key, {}).get("sources")
+        if isinstance(v, list) and v:
+            return [(s.get("name", s.get("url", "")), s["url"]) for s in v if isinstance(s, dict) and s.get("url")]
+    return []
+
+
+def general_sources():
+    """[(название, адрес)] - авторитетные сайты для «Где узнать больше» (раздел sources файла языка)"""
+    for code in i18n.chain():
+        v = i18n.section(code, "sources")
+        if isinstance(v, list) and v:
+            return [(s.get("name", s["url"]), s["url"]) for s in v if isinstance(s, dict) and s.get("url")]
+    return []
+
+
+def reviewed(key):
+    """проверил ли статью врач (поле reviewed статьи в ru.json; ставит только врач)"""
+    return i18n.section(i18n.BASE, "diseases").get(key, {}).get("reviewed") is True
+
+
 def subtitle(key):
     """подпись под названием статьи: латинское название, а при включённых латинских названиях - обычное"""
     if i18n.latin():

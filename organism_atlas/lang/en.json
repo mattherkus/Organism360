@@ -258,7 +258,12 @@
     "body_hint_muscle": "Click this muscle on the diagram.",
     "latin_question_hint": "Which organ is this? Pick an option or press 1–{n}.",
     "latin_part_title": "'{latin}' is part of which organ?",
-    "latin_part_hint": "This is the Latin name of part of an organ. Pick an option or press 1–{n}."
+    "latin_part_hint": "This is the Latin name of part of an organ. Pick an option or press 1–{n}.",
+    "diseases_disclaimer": "This guide is general information about diseases. It does not replace a doctor: do not diagnose yourself or start or change treatment based on these articles. If something worries you, see a doctor; in an emergency, call your local emergency number.",
+    "disease_sources": "Sources",
+    "disease_more": "Learn more",
+    "disease_reviewed": "This article has been checked by a doctor.",
+    "disease_unreviewed": "This article has not been checked by a doctor yet."
   },
   "organs": {
     "lungs": {
@@ -1921,5 +1926,23 @@
         "groin": "Straining them is a common sports injury of the groin"
       }
     }
-  }
+  },
+  "sources": [
+    {
+      "name": "World Health Organization (WHO)",
+      "url": "https://www.who.int"
+    },
+    {
+      "name": "MedlinePlus — U.S. National Library of Medicine",
+      "url": "https://medlineplus.gov"
+    },
+    {
+      "name": "NHS Health A to Z",
+      "url": "https://www.nhs.uk/conditions/"
+    },
+    {
+      "name": "Centers for Disease Control and Prevention (CDC)",
+      "url": "https://www.cdc.gov"
+    }
+  ]
 }
