@@ -722,7 +722,8 @@ class App(QWidget):
         if key != self.cur:
             self.cur = key
             self.set_hover(key)
-        tip = (*self.view.to_screen(x, y), i18n.name(key)) if key and self.mode == "study" else None   # в викторине - без названия
+        # в викторине - без названия
+        tip = (*self.view.to_screen(x, y), i18n.name(key)) if key and self.mode == "study" else None
         self.view.set_tip(tip)
 
     def on_leave(self):

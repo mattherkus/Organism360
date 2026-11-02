@@ -744,7 +744,7 @@ class AppTests(unittest.TestCase):
         self.qt.installEventFilter(anim)
         try:
             with mock.patch.object(a, "isActiveWindow", return_value=True):
-                for i in range(3):
+                for _ in range(3):
                     a.animate()
                     pump()
         finally:

@@ -68,7 +68,6 @@ def paint(Z, ss, seed=13):
     dense = cr_spline(cp, n=8)
     wd = smooth_scalar(cw, n=8)
     col = o.ink("colon")
-    seg = []
     arc = 0.0
     wl = []
     for i, (x, y) in enumerate(dense):

@@ -56,7 +56,7 @@ class RealisticRenderTests(unittest.TestCase):
         """классический блик выжигал пузырь и печень в белое; теперь чистого белого почти нет"""
         for key in ("bladder", "liver", "heart"):
             sc = Scene3D(ORGANS[key]["parts"]())
-            white = lambda st: int((pixels(sc.render(200, 150, -62, 18, ss=2, style=st)).min(1) >= 250).sum())
+            white = lambda st, sc=sc: int((pixels(sc.render(200, 150, -62, 18, ss=2, style=st)).min(1) >= 250).sum())
             self.assertLess(white("realistic"), max(5, white("classic") // 4), key)
 
     def test_shadows_full_frame_only(self):

@@ -70,7 +70,7 @@ def build_layers(Z=1.0, ss=4):
       mask     - маска силуэта.
     compose() складывает их; при всех видимых слоях это та же картинка, что рисовалась одним куском."""
     box = (0, 0, W, H)
-    w, h = int(math.ceil(W * Z)), int(math.ceil(H * Z))
+    h = int(math.ceil(H * Z))
 
     # --- силуэт
     L = Layer(box, Z, ss)

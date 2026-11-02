@@ -4,8 +4,6 @@ references/scratch/
 __pycache__/
 .venv/
 *.pyc
-.idea/workspace.xml
-.idea/claudeCodeTabState.xml
-.idea/shelf/
 build/
 dist/
+.idea/

@@ -1,0 +1,51 @@
+# Пакет и инструменты разработки. Установка из исходников: pip install -e .  (команда organism-atlas)
+# Проверка стиля: ruff check .   (настройки - ниже, в [tool.ruff])
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "organism-atlas"
+dynamic = ["version"]
+description = "Атлас организма: интерактивная схема тела, викторины и 3D-просмотр органов"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pillow",
+    "PySide6-Essentials",       # интерфейс (Qt)
+    "moderngl",                 # 3D на видеокарте (без него - программный рендер)
+]
+
+[project.optional-dependencies]
+build = ["pyinstaller"]         # сборка программы: python tools/build_exe.py
+dev = ["ruff"]
+
+[project.gui-scripts]
+organism-atlas = "organism_atlas.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "organism_atlas.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["organism_atlas*"]
+
+[tool.setuptools.package-data]
+# тексты, вопросы, 3D-модели с подписями авторов и лицензиями, вид 3D, готовые схемы сборки
+organism_atlas = ["lang/*.json", "questions/*.json", "models/*.json", "models/mesh/*", "render3d/*.json",
+                  "prebuilt/*"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+extend-exclude = [".idea", "build", "dist"]
+
+[tool.ruff.lint]
+# E/W - стиль, F - ошибки (неиспользуемое, неопределённое), B - подозрительные места (bugbear)
+select = ["E", "F", "W", "B"]
+ignore = [
+    "E731",     # lambda в переменной - так здесь коротко пишут обработчики
+    "E702",     # несколько присваиваний через «;» в расчётах рендера
+    "B905",     # zip() без strict=: длины совпадают по построению
+]

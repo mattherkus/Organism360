@@ -89,7 +89,8 @@ RULES = {
     "stomach": [(r"", "wall")],
     "intestines": [(r"taenia", "taenia"), (r"colon|rectum|cecum|appendix|ileocecal", "colon"), (r"", "small")],
     "kidneys": [(r"artery", "artery"), (r"ureter", "ureter"), (r"", "kidney")],
-    "pancreas": [(r"duct", None), (r"duoden", "duodenum"), (r"artery", "artery"), (r"", "gland")],          # None - не брать (проток внутри железы)
+    # None - не брать (проток внутри железы)
+    "pancreas": [(r"duct", None), (r"duoden", "duodenum"), (r"artery", "artery"), (r"", "gland")],
     "bladder": [(r"", "wall")],
     "adrenals": [(r"adrenal|suprarenal", "adrenal"), (r"kidney|renal", "kidney_dim")],
     "esophagus": [(r"esophag", "esophagus"), (r"", "stomach_dim")],

@@ -42,7 +42,6 @@ def paint(Z, ss, seed=5):
     o.L("groove").line(P([(5, 201), (6, 216), (4, 232), (-2, 244)]), 1.5)
     n_fat = o.noise(5, 2, 7)
     fatm = np.clip(o.m("fat", 0.6) * (1.25 + 0.5 * n_fat), 0, 1)
-    shp = o.shape
     base, lv, ra = hex2rgb("#bd2c35"), hex2rgb("#971c2a"), hex2rgb("#cf5662")
     alb = mixa(base, lv, np.clip(o.m("lv", 1.6) * 1.1, 0, 1))
     alb = mixa(alb, ra, np.clip(o.m("ra", 1.6), 0, 1) * 0.85)

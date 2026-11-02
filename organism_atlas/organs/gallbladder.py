@@ -2,7 +2,6 @@
 
 Раньше был нарисован внутри печени (organs/liver.py); проток пузыря по-прежнему рисуется с печенью."""
 
-import numpy as np
 
 from ..colors import hex2rgb
 from ..geometry import CX, P

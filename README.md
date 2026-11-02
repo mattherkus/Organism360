@@ -52,6 +52,8 @@ pip install -r requirements.txt     # numpy, pillow, PySide6 (интерфейс
 python run.py                       # или: python -m organism_atlas
 ```
 
+Или установить пакетом (появится команда `organism-atlas`): `pip install -e .` — описание пакета в `pyproject.toml`.
+
 Программа для Windows, которой не нужен Python (папка `dist/OrganismAtlas` с `OrganismAtlas.exe`):
 
 ```bash
@@ -75,11 +77,15 @@ python tools/build_setup.py
 python -m unittest discover -s tests -t .
 ```
 
+Проверка стиля и типичных ошибок (неиспользуемые переменные, неопределённые имена): `pip install ruff`, затем
+`ruff check .` — настройки в `pyproject.toml`.
+
 ## Структура
 
 ```
 igra/
 ├── run.py                      запуск без установки
+├── pyproject.toml              пакет (pip install -e .) и настройки ruff
 ├── requirements.txt
 ├── requirements-dev.txt        для сборки .exe (PyInstaller)
 ├── docs/                       сравнение 3D до/после

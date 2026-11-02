@@ -143,7 +143,7 @@ class LinkTests(unittest.TestCase):
 
     def test_pieces_rebuild_text(self):
         for code in ("ru", "en"):
-            for key, o in i18n._load(code)["organs"].items():
+            for o in i18n._load(code)["organs"].values():
                 for text in [o["desc"], o["location"]] + o["facts"] + o["daily"]:
                     self.assertEqual("".join(piece for piece, _ in i18n.links(text)), text)
 
