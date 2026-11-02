@@ -47,10 +47,6 @@ def available():
     return sorted(codes, key=lambda c: (PREFERRED.index(c) if c in PREFERRED else len(PREFERRED), c))
 
 
-def short_name(code):
-    return _load(code).get("short", code.upper())
-
-
 def language_name(code):
     return _load(code).get("language", code)
 

@@ -162,7 +162,6 @@ class RoundButton(QAbstractButton):
         self.padx, self.pady = px(padx), px(pady)
         self.role, self.fg, self.dis_fg = bg, "text", "muted"
         self.key_hint = None        # клавиша, которая нажимает кнопку («1»): рисуется значком слева от текста
-        self.icon = None            # значок вместо текста (функция из icons.py): рисуется в цвет текста
         self.shown = None           # (заливка, рамка, текст), которые сейчас на экране
         self.anim = None            # QVariantAnimation плавной смены цвета
         self.hover = False
@@ -202,13 +201,8 @@ class RoundButton(QAbstractButton):
         self.updateGeometry()
         self.update()
 
-    def icon_size(self):
-        return round(QFontMetrics(self.font()).height() * 1.1)
-
     def sizeHint(self):
         fm = QFontMetrics(self.font())
-        if self.icon:
-            return QSize(self.icon_size() + 2 * self.padx + 2, fm.height() + 2 * self.pady)
         return QSize(fm.horizontalAdvance(self.text()) + 2 * self.padx + 2 + self.key_width(),
                      fm.height() + 2 * self.pady)
 
@@ -317,10 +311,6 @@ class RoundButton(QAbstractButton):
             p.drawText(box, Qt.AlignCenter, self.key_hint)
             p.setOpacity(1.0)
             left += self.key_width()
-        if self.icon:
-            s = self.icon_size()
-            self.icon(p, QRectF((self.width() - s) / 2, (self.height() - s) / 2, s, s), QColor(fg))
-            return
         p.setPen(QColor(fg))
         p.setFont(self.font())
         if self.anchor == "w":
@@ -331,13 +321,6 @@ class RoundButton(QAbstractButton):
 
 def flat_button(text, command, bg="card", anchor="center", size=10, padx=14, pady=6, parent=None):
     return RoundButton(text, command, bg, anchor, size, padx, pady, parent)
-
-
-def icon_button(icon, command, size=10, padx=10, pady=6, parent=None):
-    """квадратная кнопка со значком icon (функция из icons.py) вместо текста"""
-    b = RoundButton("", command, "card", "center", size, padx, pady, parent)
-    b.icon = icon
-    return b
 
 
 def set_button_bg(b, bg, fg=None):
@@ -560,8 +543,9 @@ def kicker(lay, items, top=10, bottom=0, x=16):
 
 
 class TabButton(RoundButton):
-    """вкладка режима в шапке окна: текст без заливки, у выбранной (роль фона accent) - черта акцента снизу,
-    у невыбранной под курсором - черта цвета рамки. Роль и цвета - как у RoundButton (set_button_bg)"""
+    """вкладка в шапке окна (режим или панель): текст без заливки, у выбранной (роль фона accent) - черта акцента
+    снизу, у невыбранной под курсором - черта цвета рамки; недоступная - бледная. Роль и цвета - как
+    у RoundButton (set_button_bg)"""
 
     def __init__(self, text="", command=None, size=11, parent=None):
         super().__init__(text, command, "card", "center", size, 4, 6, parent)
@@ -575,11 +559,13 @@ class TabButton(RoundButton):
     def paintEvent(self, _e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        fg = "text" if self.selected() or self.hover else "muted"
-        p.setPen(color(fg))
+        on = self.isEnabled() and (self.selected() or self.hover)
+        p.setPen(color("text" if on else "muted"))
+        if not self.isEnabled():
+            p.setOpacity(0.45)
         p.setFont(self.font())
         p.drawText(self.rect().adjusted(0, 0, 0, -px(2)), Qt.AlignCenter, self.text())
-        if self.selected() or self.hover:
+        if on:
             h = max(2, px(2))
             p.fillRect(QRectF(self.padx, self.height() - h, self.width() - 2 * self.padx, h),
                        color("accent" if self.selected() else "border"))

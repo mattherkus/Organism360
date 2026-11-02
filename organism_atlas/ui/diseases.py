@@ -1,11 +1,12 @@
-"""Панель «Справочник болезней»: слева - все болезни из карточек органов по системам, с поиском,
-справа - статья о выбранной (что это, признаки, причины, лечение).
+"""Страница «Справочник болезней» (вкладка «Болезни»): слева - все болезни из карточек органов по системам,
+с поиском, справа - статья о выбранной (что это, признаки, причины, лечение); список и статья - во всю высоту.
 
-Всё связано ссылками: в статье органы ведут на карточку органа в главном окне (панель закрывается),
+Всё связано ссылками: в статье органы ведут на карточку органа в главном окне (страница закрывается),
 а другие болезни - на свои статьи; в карточке органа заболевания ведут сюда."""
 
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QSizePolicy
 
 from .. import diseases
 from ..diseases import ORGANS_OF
@@ -80,30 +81,32 @@ def fill_disease(card, key, on_link):
 
 
 class DiseasesPanel(Panel):
+    kind = "diseases"                              # вкладка «Болезни» в шапке окна
+
     def __init__(self, host):
-        super().__init__(host, t("diseases_title"))
+        super().__init__(host, t("diseases_title"), page=True)
         self.key = diseases.KEYS[0]
         self.query = ""
-        h = max(px(320), min(px(600), host.height() - px(140)))
         row = hbox(spacing=12)
         left = rounded_card(width=px(LIST_W))
         self.search = SearchBox(t("diseases_search"), "", self.on_search, self.on_enter)
         put(left.lay, self.search, top=12, bottom=6, x=12)
         self.list = ScrollArea()
-        self.list.setFixedHeight(h - px(60))
+        self.list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)     # до низа страницы
         put(left.lay, self.list, bottom=10, x=(12, 4))
-        row.addWidget(left, 0, Qt.AlignTop)
+        row.addWidget(left)
         self.area = ScrollArea()
-        self.area.setFixedSize(px(CARD_W) + px(12), h)
+        self.area.setFixedWidth(px(CARD_W) + px(12))
+        self.area.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.card = rounded_card(width=px(CARD_W))
         self.area.lay.addWidget(self.card)
         self.area.lay.addStretch(1)
-        row.addWidget(self.area, 0, Qt.AlignTop)
+        row.addWidget(self.area)
         # предупреждение - над списком и статьёй, на виду
         warn = rounded_card(fill="day_bg", border="day_title", radius=10)
         self.warn = put(warn.lay, label("⚠  " + t("diseases_disclaimer"), "text", 10), top=8, bottom=8, x=12)
         put(self.body, warn, top=10)
-        put(self.body, row, top=10, bottom=16)          # список и статью заполняет select()
+        put(self.body, row, top=10, x=0)                # список и статью заполняет select()
 
     def fill_list(self):
         """список найденных болезней по системам: выбранная - жирным, остальные - ссылки"""
@@ -137,7 +140,7 @@ class DiseasesPanel(Panel):
             self.select(found[0])
 
     def select(self, key):
-        """показать статью: болезнь - здесь же, орган - карточкой в главном окне (справочник закрывается)"""
+        """показать статью: болезнь - здесь же, орган - карточкой в главном окне (страница закрывается)"""
         if key in ORGANS or key in STRUCTURES:            # орган, кость или мышца - карточкой в главном окне
             self.close_panel()
             self.host.open_link(key)

@@ -1,13 +1,17 @@
-"""Настройки (встроенная панель): тема, качество 3D, масштаб интерфейса, схема тела, анимация и язык."""
+"""Настройки - страница-вкладка: тема, качество 3D, масштаб интерфейса, схема тела, анимация и язык.
+Назад к схеме ведут вкладки «Изучать» и «Викторина» (и Esc)."""
+
+from PySide6.QtWidgets import QSizePolicy
 
 from .. import i18n, settings, theme
 from ..i18n import t
 from ..render3d import gpu
+from .layers_panel import ScrollArea
 from .overlay import Panel
 from .scaling import px
-from .widgets import alive, clear, flat_button, hbox, heading, label, put, rounded_card, set_button_bg, set_fg
+from .widgets import alive, clear, flat_button, hbox, heading, label, put, rounded_card, set_button_bg, set_fg, spacer
 
-_window = None                  # панель одна: повторное нажатие «Настройки» поднимает её
+_window = None                  # страница одна: повторное нажатие «Настройки» поднимает её
 
 
 class SettingsWindow:
@@ -15,10 +19,14 @@ class SettingsWindow:
 
     def __init__(self, app):
         self.app = app
-        win = self.win = Panel(app.host, t("settings_title"))
+        win = self.win = Panel(app.host, t("settings_title"), kind="settings", page=True)
         win.closed.connect(self.close)
+        area = ScrollArea()                              # невысокое окно - настройки листаются
+        area.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.card = rounded_card()
-        put(win.body, self.card, top=10, bottom=16)
+        area.lay.addWidget(self.card)
+        area.lay.addStretch(1)
+        put(win.body, area, top=10, x=0)
         self.parts = None
         self.refresh()
 
@@ -64,8 +72,7 @@ class SettingsWindow:
         if not (parts and parts[0] == shape and all(alive(w) for w in parts[1])):
             self.build(rows)
             return
-        _shape, _all, close, lines = parts
-        close.setText(t("settings_close"))
+        _shape, _all, lines = parts
         for (head, options, selected, on_pick, hint), (head_w, buttons, hint_w) in zip(rows, lines):
             head_w.setText(head.upper())
             for b, (text, value) in zip(buttons, options):
@@ -79,10 +86,9 @@ class SettingsWindow:
         lay = self.card.lay
         clear(lay)
         lines = [self.row(*r) for r in rows]
-        close = flat_button(t("settings_close"), self.win.close_panel, bg="accent")
-        put(lay, close, top=14, bottom=16, x=20, align="right")
-        widgets = [close] + [w for head, buttons, hint in lines for w in (head, *buttons, hint) if w]
-        self.parts = ([(len(b), h is not None) for _w, b, h in lines], widgets, close, lines)
+        spacer(lay, 16)
+        widgets = [w for head, buttons, hint in lines for w in (head, *buttons, hint) if w]
+        self.parts = ([(len(b), h is not None) for _w, b, h in lines], widgets, lines)
 
     def row(self, title, options, selected, on_pick, hint=None):
         """заголовок и ряд кнопок-вариантов; выбранный вариант подсвечен акцентом;

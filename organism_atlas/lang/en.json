@@ -1,7 +1,6 @@
 {
   "_comment": "Words in curly braces, like {name}, are filled in by the program: keep them as they are.",
   "language": "English",
-  "short": "EN",
   "ui": {
     "app_title": "Body Atlas",
     "hint": "Mouse wheel zooms the diagram, F1 shows keyboard shortcuts.",
@@ -70,7 +69,6 @@
     "settings_scale": "Interface scale",
     "settings_scale_hint": "The scale changes right away, no restart needed.",
     "settings_language": "Language",
-    "settings_close": "Done",
     "mode_facts": "Guess from a fact",
     "facts_hint": "Which organ is it? Pick an answer or press 1–{n}.",
     "time_up": "Time's up! It was the {name}.",
@@ -208,7 +206,6 @@
     "disease_treatment": "Treatment and prevention",
     "disease_related": "Other diseases of these organs",
     "disease_note": "General information, not a treatment guide: if you have symptoms, see a doctor.",
-    "latin_toggle": "LA",
     "mode_quiz": "Quiz",
     "setup_mode": "Quiz type",
     "lang_hint": "Language and Latin names",
@@ -216,6 +213,9 @@
     "diseases_hint": "Disease guide",
     "ach_hint": "Achievements",
     "settings_hint": "Settings",
+    "tab_diseases": "Diseases",
+    "tab_stats": "Statistics",
+    "tab_settings": "Settings",
     "layers_system_hint": "Click to hide or show the whole system",
     "skin_opacity": "Skin transparency",
     "zoom_in": "Zoom in (+)",

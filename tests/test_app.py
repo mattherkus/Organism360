@@ -150,7 +150,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(i18n.base(), "en")
         self.assertTrue(self.app.latin_action.isChecked())
         self.assertTrue(self.app.lang_actions["en"].isChecked())
-        self.assertIn("LA", self.app.lang_button.text())                  # кнопка меню показывает и латынь
+        self.assertEqual(self.app.lang_button.text(), "English · Latina  ▾")    # язык полным названием и латынь
         self.assertEqual(self.app.toggles["heart"].text, "Cor")
         self.assertEqual(set(self.app.lang_actions), set(i18n.languages()))
         saved = settings.load()
@@ -159,6 +159,9 @@ class AppTests(unittest.TestCase):
         self.assertFalse(i18n.latin())
         self.assertFalse(self.app.latin_action.isChecked())
         self.assertEqual(self.app.toggles["heart"].text, "Heart")
+        self.assertEqual(self.app.lang_button.text(), "English  ▾")
+        self.app.set_lang("ru")
+        self.assertEqual(self.app.lang_button.text(), "Русский  ▾")
 
     def test_diseases_only_in_study(self):
         from organism_atlas.ui.overlay import top
@@ -476,8 +479,9 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.card.findChildren(QWidget), before)
 
     def test_panels_inside_window(self):
-        """настройки, 3D, справочник болезней и статистика - панели внутри главного окна, а не отдельные окна;
-        открыта всегда одна: новая заменяет прежнюю, Esc закрывает её"""
+        """справочник болезней, статистика и настройки - страницы-вкладки во всё окно под вкладками, 3D (как и
+        достижения, горячие клавиши) - панель поверх; всё внутри главного окна, а не отдельными окнами.
+        Открыта одна страница: новая заменяет прежнюю; панель поверх страницу не закрывает; Esc закрывает верхнее"""
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
 
@@ -486,24 +490,32 @@ class AppTests(unittest.TestCase):
         from organism_atlas.ui.widgets import alive
         opened = []
         for show in (lambda: settings_window.show_settings(self.app) or settings_window._window.win,
-                     lambda: viewer3d.show_3d(self.app, "heart").win,
                      lambda: show_diseases(self.app),
                      lambda: stats.show_stats(self.app),
                      lambda: show_diseases(self.app)):
-            panel = show()
+            page = show()
             pump()
             self.assertEqual([w for w in self.qt.topLevelWidgets() if w.isVisible()], [self.app])
-            self.assertIsInstance(panel, overlay.Panel)
-            self.assertIs(panel.parent(), self.app)
-            self.assertTrue(panel.isVisible())
-            self.assertTrue(self.app.rect().contains(panel.geometry().center()))
-            self.assertEqual(overlay.stack(self.app), [panel])                # прежняя панель закрылась
+            self.assertIsInstance(page, overlay.Panel)
+            self.assertTrue(page.page)
+            self.assertIs(page.parent(), self.app)
+            self.assertTrue(page.isVisible())
+            self.assertEqual(page.geometry(), self.app.page_rect())           # во всё окно под вкладками
+            self.assertEqual(overlay.stack(self.app), [page])                 # прежняя страница закрылась
             self.assertFalse(any(alive(p) and p.isVisible() for p in opened))
-            opened.append(panel)
+            opened.append(page)
         self.assertIsNone(settings_window._window)
-        self.assertIsNone(viewer3d._viewer)
         guide = opened[-1]
-        self.app.set_mode("name")                                          # цифры не уходят викторине за панелью
+        view = viewer3d.show_3d(self.app, "heart").win                       # панель поверх страницы
+        pump()
+        self.assertFalse(view.page)
+        self.assertTrue(self.app.rect().contains(view.geometry().center()))
+        self.assertEqual(overlay.stack(self.app), [guide, view])
+        QTest.keyClick(self.app, Qt.Key_Escape)                              # Esc - сначала панель поверх
+        pump()
+        self.assertEqual(overlay.stack(self.app), [guide])
+        self.assertIsNone(viewer3d._viewer)
+        self.app.set_mode("name")                                          # цифры не уходят викторине за страницей
         self.assertNotIn(guide, overlay.stack(self.app))                   # справочник в викторине закрывается
         settings_window.show_settings(self.app)
         self.app.quiz.start()
@@ -1055,7 +1067,8 @@ class AppTests(unittest.TestCase):
             a.set_theme("light")
             self.assertEqual(theme.C["bg"], theme.THEMES["light"]["bg"])
             self.assertEqual(a.title.palette().windowText().color().name(), theme.THEMES["light"]["text"])
-            self.assertEqual(a.mode_buttons["study"].colors()[0], theme.THEMES["light"]["accent"])
+            self.assertEqual(a.settings_button.colors()[0], theme.THEMES["light"]["accent"])   # вкладка панели
+            self.assertFalse(a.mode_buttons["study"].selected())
             a.set_lang("en")
             self.assertEqual(win.win.title(), "Settings")
             self.assertEqual(a.settings_button.toolTip(), "Settings")
@@ -1140,6 +1153,38 @@ class AppTests(unittest.TestCase):
         a.quiz.start()                                          # новая игра - отметок прошлой нет
         self.assertIsNone(a.view.layers["missed"])
         self.assertEqual(a.view.labels, [])
+
+    def test_header_tabs(self):
+        """болезни, статистика и настройки - вкладки рядом с режимами: страница во всё окно вместо схемы, выбрана
+        её вкладка; повторный щелчок её не закрывает; вкладка режима возвращает к схеме как было (карточка органа
+        остаётся); в викторине вкладка «Болезни» недоступна"""
+        from organism_atlas.ui import overlay
+        a = self.app
+        tabs = a.panel_tabs
+        zoom = a.stage.zoom_buttons.values()
+        a.show_info("heart")
+        self.assertEqual(tabs["diseases"].text(), i18n.t("tab_diseases"))
+        self.assertTrue(a.mode_buttons["study"].selected())
+        for name, b in tabs.items():
+            b.invoke()
+            pump()
+            self.assertEqual(a.open_tab(), name)
+            self.assertEqual([n for n, x in tabs.items() if x.selected()], [name])
+            self.assertFalse(a.mode_buttons["study"].selected())
+            self.assertFalse(any(z.isVisible() for z in zoom))             # схема с её кнопками - под страницей
+        tabs["settings"].invoke()                                         # та же вкладка - страница остаётся
+        pump()
+        self.assertEqual(a.open_tab(), "settings")
+        a.mode_buttons["study"].invoke()                                  # назад к схеме - как было
+        pump()
+        self.assertIsNone(overlay.top(a))
+        self.assertTrue(a.mode_buttons["study"].selected())
+        self.assertFalse(any(b.selected() for b in tabs.values()))
+        self.assertEqual(a.cards.current, "heart")
+        self.assertTrue(all(z.isVisible() for z in zoom))
+        a.set_mode("find")
+        self.assertFalse(tabs["diseases"].isEnabled())
+        self.assertTrue(a.mode_buttons["quiz"].selected())
 
     def test_card_fades_in(self):
         """новая карточка органа проявляется плавно, а после - без эффекта прозрачности"""

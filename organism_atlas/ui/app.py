@@ -27,7 +27,7 @@ from ..i18n import t
 from ..organs import ORGANS, PANEL_SYSTEMS, by_system, fact_of_day, for_body, other_sex, search
 from ..quiz import MODES, NOT_ORGANS
 from ..structures import KINDS, LAYER_OF, STRUCTURES
-from . import icons, overlay, titlebar, toast
+from . import overlay, titlebar, toast
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
 from .scaling import fit_zoom, pick_zoom, px, set_scale
@@ -43,8 +43,8 @@ from .layers_panel import (ORGANS_ALL, SEARCH, SKIN, by_color, count_organs, fil
 from .quiz_controller import QuizController, timer
 from .stats import show_stats
 from .tour_controller import TourController
-from .widgets import (TabButton, alive, color, flat_button, font, hbox, icon_button, label, qimage, retheme,
-                      rounded_card, set_button_bg, vbox)
+from .widgets import (TabButton, alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card,
+                      set_button_bg, vbox)
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
@@ -123,10 +123,17 @@ class App(QWidget):
         top.addWidget(self.subtitle, 0, Qt.AlignBottom)
         top.addSpacing(px(32))                           # заголовок не прилипает к кнопкам при узком окне
         top.addStretch(1)
-        # два режима - вкладками: «Изучать» и «Викторина»; вид викторины выбирается на её карточке настройки
-        self.mode_buttons = {"study": TabButton("", lambda: self.set_mode("study")),
-                             "quiz": TabButton("", lambda: self.set_mode(self.quiz_mode))}
-        for i, b in enumerate(self.mode_buttons.values()):
+        # вкладки: два режима - «Изучать» и «Викторина» (вид викторины выбирается на её карточке настройки),
+        # а следом страницы - справочник болезней, статистика и настройки (во всё окно под вкладками, вместо
+        # схемы). Выбрана вкладка открытой страницы, а без неё - режима
+        self.mode_buttons = {"study": TabButton("", lambda: self.mode_tab("study")),
+                             "quiz": TabButton("", lambda: self.mode_tab("quiz"))}
+        self.panel_tabs = {name: TabButton("", lambda n=name, f=show: self.page_tab(n, f))
+                           for name, show in (("diseases", lambda: show_diseases(self)),
+                                              ("stats", lambda: show_stats(self)),
+                                              ("settings", lambda: show_settings(self)))}
+        self.diseases_button, self.stats_button, self.settings_button = self.panel_tabs.values()
+        for i, b in enumerate([*self.mode_buttons.values(), *self.panel_tabs.values()]):
             top.addSpacing(px(10) if i else 0)
             top.addWidget(b, 0, Qt.AlignTop)
         top.addSpacing(px(24))
@@ -144,22 +151,14 @@ class App(QWidget):
         self.latin_action = self.lang_menu.addAction("", lambda: self.set_latin(not i18n.latin()))
         self.latin_action.setCheckable(True)
         top.addWidget(self.lang_button, 0, Qt.AlignTop)
-        # справочник, достижения и настройки - значками с подсказками
-        self.diseases_button = icon_button(icons.diseases, lambda: show_diseases(self))
         self.ach_button = flat_button("", lambda: show_achievements(self), padx=10)
-        self.settings_button = flat_button("⚙", lambda: show_settings(self), size=12, padx=10, pady=4)
-        self.stats_button = icon_button(icons.stats, lambda: show_stats(self))
         # новая версия на GitHub (updates.py): кнопка видна, только когда она есть
         self.update_button = flat_button("", self.open_update, bg="accent", padx=10)
         self.update_button.hide()
         self.update_info = None
-        top.addSpacing(px(6))
-        top.addWidget(self.update_button, 0, Qt.AlignTop)
-        for b in (self.diseases_button, self.stats_button, self.ach_button, self.settings_button):
+        for b in (self.update_button, self.ach_button):
             top.addSpacing(px(6))
             top.addWidget(b, 0, Qt.AlignTop)
-        for b in (self.diseases_button, self.stats_button, self.settings_button):   # значки - высотой с соседние кнопки
-            b.setFixedHeight(self.ach_button.sizeHint().height())
         self.top_bar = top
         self.header = QWidget()                            # заголовок с кнопками и статус - уезжают вместе
         head = vbox(self.header)
@@ -405,9 +404,9 @@ class App(QWidget):
         """переписать все тексты на текущем языке, не сбрасывая режим и вопрос викторины"""
         self.setWindowTitle(t("app_title"))
         self.title.setText(t("app_title"))
-        self.settings_button.setToolTip(t("settings_hint"))
-        self.diseases_button.setToolTip(t("diseases_hint"))
-        self.stats_button.setToolTip(t("stats_hint"))
+        for name, b in self.panel_tabs.items():
+            b.setText(t("tab_" + name))
+            b.setToolTip(t(name + "_hint"))
         if self.update_info:
             self.update_button.setText(t("update_button", version=self.update_info["version"]))
             self.update_button.setToolTip(t("update_hint"))
@@ -1047,14 +1046,68 @@ class App(QWidget):
         self.set_spot(key if key in self.organs() or key in STRUCTURES else None)
 
     def update_buttons(self):
-        for mode, b in self.mode_buttons.items():
-            set_button_bg(b, "accent" if (mode == "study") == (self.mode == "study") else "card")
+        self.update_tabs()
         for code, a in self.lang_actions.items():
             a.setChecked(code == i18n.base())
         self.latin_action.setChecked(i18n.latin())
-        text = i18n.short_name(i18n.base())
-        self.lang_button.setText(text + (" · " + t("latin_toggle") if i18n.latin() else "") + "  ▾")
+        name = i18n.language_name(i18n.base())          # полным названием: «Русский», «English»
+        if i18n.latin():
+            name += " · " + i18n.language_name(i18n.LATIN)
+        self.lang_button.setText(name + "  ▾")
         self.diseases_button.setEnabled(self.mode == "study")     # в викторине справочник подсказал бы ответ
+
+    def page_rect(self):
+        """место страницы-вкладки: во всю ширину окна от строки статуса (под вкладками) до низа"""
+        top = self.status.mapTo(self, QPoint(0, 0)).y()
+        return QRect(0, top, self.width(), self.height() - top)
+
+    def open_tab(self):
+        """открытая страница: diseases, stats, settings или None (видна схема). Панель поверх страницы
+        (достижения, горячие клавиши) её не закрывает"""
+        pages = [p for p in overlay.stack(self) if p.page]
+        return pages[-1].kind if pages else None
+
+    def update_tabs(self):
+        """выбрана вкладка открытой страницы, а без неё - вкладка режима"""
+        opened = self.open_tab()
+        for mode, b in self.mode_buttons.items():
+            set_button_bg(b, "accent" if opened is None and (mode == "study") == (self.mode == "study") else "card")
+        for name, b in self.panel_tabs.items():
+            set_button_bg(b, "accent" if name == opened else "card")
+
+    def panels_changed(self):
+        """страница или панель открылась или закрылась (overlay.Panel): вкладки - по ней. Пока открыта страница,
+        схема под ней не видна: кнопки приближения спрятаны, а приближенная схема - снова целиком (иначе
+        заголовок с вкладками уехал бы за край окна)"""
+        if not alive(self.diseases_button):
+            return
+        page = self.open_tab() is not None
+        for b in self.stage.zoom_buttons.values():
+            b.setVisible(not page)
+        if page:
+            self.on_leave()
+            if self.view.aim() > 1:
+                self.view.reset_zoom(animate=False)
+        self.update_tabs()
+
+    def page_tab(self, name, show):
+        """вкладка страницы: открыть страницу; если она уже открыта - закрыть панели поверх неё"""
+        if self.open_tab() != name:
+            show()
+            return
+        while overlay.top(self) is not None and not overlay.top(self).page:
+            overlay.close_top(self)
+
+    def mode_tab(self, name):
+        """вкладка режима (study или quiz). Со страницы - назад к схеме: в тот же режим - как было (начатая игра
+        и карточка остаются), в другой - режим меняется. Без страницы - как раньше: режим начинается заново
+        (в «Изучать» - стартовая карточка, в «Викторине» - её настройка)"""
+        if self.open_tab() is not None:
+            while overlay.close_top(self):
+                pass
+            if (name == "study") == (self.mode == "study"):
+                return
+        self.set_mode("study" if name == "study" else self.quiz_mode)
 
     def show_lang_menu(self):
         """меню под кнопкой языка: языки и латинские названия органов"""

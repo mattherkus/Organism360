@@ -1,4 +1,5 @@
-"""Панель «Статистика»: сводка, точность по видам викторины и по системам органов, последние игры и слабые места.
+"""Страница «Статистика» (вкладка): сводка, точность по видам викторины и по системам органов, последние игры
+и слабые места; лента листается во всю высоту страницы.
 
 Графики рисуются QPainter по правилам проекта: один ряд - один цвет (акцент темы), тонкие полосы со скруглённым
 концом от общей базы, линия 2 px с точкой на конце, сетка - волосяные линии; значения подписаны у концов полос,
@@ -7,7 +8,7 @@
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QGridLayout, QToolTip, QWidget
+from PySide6.QtWidgets import QGridLayout, QSizePolicy, QToolTip, QWidget
 
 from .. import i18n, progress, stats
 from ..config import STATUS
@@ -17,7 +18,7 @@ from .overlay import Panel, top
 from .scaling import px
 from .widgets import color, flat_button, font, heading, hbox, label, put, rounded_card, spacer, vbox
 
-WIDTH = 700                  # ширина панели при масштабе 100 %
+WIDTH = 700                  # ширина ленты при масштабе 100 %
 BAR = 10                     # толщина полосы, px
 ROW = 26                     # высота строки списка полос
 ICONS = {"learned": "✓", "learning": "~", "weak": "!"}          # значок уровня знания рядом с цветом
@@ -185,16 +186,18 @@ def legend_row(level):
 
 
 class StatsPanel(Panel):
+    kind = "stats"                                 # вкладка «Статистика» в шапке окна
+
     def __init__(self, host):
-        super().__init__(host, t("stats_title"))
+        super().__init__(host, t("stats_title"), page=True)
         data = progress.load()
         self.area = ScrollArea()
         self.area.setFixedWidth(px(WIDTH) + px(14))
-        self.area.setFixedHeight(max(px(300), min(px(640), host.height() - px(120))))
+        self.area.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)       # до низа страницы
         card = rounded_card(width=px(WIDTH))
         self.area.lay.addWidget(card)
         self.area.lay.addStretch(1)
-        put(self.body, self.area, top=10, bottom=16)
+        put(self.body, self.area, top=10, x=0)
         lay = card.lay
         s = stats.summary(data)
         if not s["games"]:
