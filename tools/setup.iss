@@ -8,7 +8,7 @@
 ; настройки и прогресс (%APPDATA%\organism_atlas).
 
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.0"
 #endif
 #ifndef Dist
   #define Dist SourcePath + "..\dist\OrganismAtlas"

@@ -723,6 +723,22 @@ class AppTests(unittest.TestCase):
             self.app.show_info("liver")
             self.assertIsNone(self.app.card.read_button)
 
+    def test_update_button(self):
+        """есть выпуск новее - в верхней панели кнопка «Новая версия», щелчок открывает его страницу"""
+        from organism_atlas import updates
+        info = {"version": "9.9.9", "url": "https://github.com/%s/releases/tag/v9.9.9" % updates.REPO}
+        a = self.app
+        self.assertTrue(a.update_button.isHidden())
+        with mock.patch.object(updates, "due", return_value=True), \
+                mock.patch.object(updates, "check", return_value=info):
+            a.check_updates()
+            self.assertTrue(wait(lambda: not a.update_button.isHidden(), 5))
+        self.assertEqual(a.update_button.text(), i18n.t("update_button", version="9.9.9"))
+        with mock.patch("PySide6.QtGui.QDesktopServices.openUrl") as open_url:
+            a.update_button.invoke()
+            pump(0.1)
+            self.assertEqual(open_url.call_args[0][0].toString(), info["url"])
+
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH

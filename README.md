@@ -81,7 +81,9 @@ python run.py                       # или: python -m organism_atlas
 
 Или установить пакетом (появится команда `organism-atlas`): `pip install -e .` — описание пакета в `pyproject.toml`.
 
-Программа для Windows, которой не нужен Python (папка `dist/OrganismAtlas` с `OrganismAtlas.exe`):
+Программа, которой не нужен Python: на Windows — папка `dist/OrganismAtlas` с `OrganismAtlas.exe`, на macOS —
+`dist/OrganismAtlas.app`, на Linux — папка `dist/OrganismAtlas` (собирать на той системе, для которой сборка;
+`--archive` ещё и упакует её в `dist/OrganismAtlas-<версия>-<система>.zip` или `.tar.gz`):
 
 ```bash
 pip install -r requirements-dev.txt
@@ -122,7 +124,7 @@ igra/
 ├── tools/atlas_import.py       импорт из Human Reference Atlas и атласа Open Anatomy (разовый)
 ├── tools/mesh_formats.py       чтение GLB и VTK для импорта
 ├── tools/make_golden.py        пересоздание эталонов tests/golden
-├── tools/build_exe.py          сборка программы для Windows (dist/OrganismAtlas)
+├── tools/build_exe.py          сборка программы без Python: Windows, macOS (.app), Linux; --archive - архивом
 ├── tools/build_setup.py        сборка установщика (dist/OrganismAtlas-Setup-<версия>.exe)
 ├── tools/setup.iss             скрипт установщика для Inno Setup
 └── organism_atlas/
@@ -144,6 +146,7 @@ igra/
     ├── achievements.py         серия дней и достижения по progress.json (без Qt)
     ├── stats.py                статистика и уровни знания для карты знаний по progress.json (без Qt)
     ├── speech.py               чтение вслух: QtTextToSpeech или системный синтезатор
+    ├── updates.py              раз в день - есть ли на GitHub выпуск новее (без Qt)
     ├── questions/              ВОПРОСЫ «Угадай по факту»: по файлу на орган (heart.json, ...)
     ├── questions.py            чтение и проверка questions/*.json
     ├── progress.py             история игр и повторение по карточкам (progress.json)
@@ -463,6 +466,18 @@ python -m organism_atlas.questions
 - `--onefile` собирает один `dist/OrganismAtlas.exe`: его удобнее передать, но при каждом запуске он
   распаковывается во временную папку и открывается полминуты-минуту, а папка — около секунды.
 - `--console` — сборка с окном консоли: в нём видно ошибки, если программа не запускается.
+- `--archive` — упаковать сборку для передачи: zip на Windows и macOS (`.app` целиком), tar.gz на Linux
+  (сохраняет право на запуск). GitHub собирает такие архивы для macOS и Linux сам (задача `portable`
+  в `.github/workflows/setup.yml`) и при выпуске кладёт их в Releases рядом с установщиком для Windows.
+- macOS: программа не подписана, поэтому при первом запуске — правый щелчок по `OrganismAtlas.app` → «Открыть».
+  Linux: нужны системные библиотеки Qt (обычно уже есть; если нет — `libegl1`, `libxkbcommon0`, `libxcb-cursor0`).
+
+## Проверка обновлений
+
+Раз в день (не чаще) программа в фоне спрашивает у GitHub, нет ли выпуска новее своей версии
+(`organism_atlas/updates.py`, анонимный запрос к `api.github.com` о последнем выпуске репозитория `REPO`, ничего
+о пользователе не передаётся). Если есть, в верхней панели появляется кнопка «Новая версия …» со ссылкой на страницу
+выпуска. Выключается в настройках («Проверять обновления» → «Нет») или переменной `ORGANISM_ATLAS_NO_UPDATE_CHECK=1`.
 
 ## Установщик
 

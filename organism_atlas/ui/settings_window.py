@@ -51,6 +51,8 @@ class SettingsWindow:
              i18n.base(), app.set_lang, None),
             (t("settings_latin"), [(t("latin_on"), True), (t("latin_off"), False)],
              i18n.latin(), app.set_latin, (t("latin_hint"), "muted")),
+            (t("settings_updates"), [(t("updates_" + v), v) for v in settings.CHOICES["updates"]],
+             settings.get(settings.load(), "updates"), app.set_updates, (t("settings_updates_hint"), "muted")),
         ]
 
     def refresh(self):

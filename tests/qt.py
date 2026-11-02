@@ -4,6 +4,8 @@ import os
 import time
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ.setdefault("ORGANISM_ATLAS_NO_UPDATE_CHECK", "1")      # тесты не ходят в сеть
+os.environ.setdefault("ORGANISM_ATLAS_SPEECH", "off")             # и не говорят вслух
 
 from PySide6.QtWidgets import QApplication  # noqa: E402
 

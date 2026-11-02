@@ -15,7 +15,7 @@ from PySide6.QtCore import QPoint, QSize, Qt, QTimer
 from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QPixmap, QRegion, QShortcut
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QLineEdit, QMenu, QScrollArea, QWidget
 
-from .. import achievements, i18n, progress, settings, speech, stats, theme, tours
+from .. import achievements, i18n, progress, settings, speech, stats, theme, tours, updates
 from ..colors import hex2rgb
 from ..config import STATUS
 from ..atlas import Atlas
@@ -93,6 +93,9 @@ class App(QWidget):
         self.skin_timer = timer(self, self.apply_skin, 40)
         self.resize_timer = timer(self, self.start_build, 400)
         self.read_timer = timer(self, self.update_read_button)
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.poll_updates)
+        self.update_queue = None
         self.anim_timer = timer(self, self.animate)
         self.build_timer = QTimer(self)
         self.build_timer.timeout.connect(self.poll_build)
@@ -133,6 +136,12 @@ class App(QWidget):
         self.ach_button = flat_button("", lambda: show_achievements(self), padx=10)
         self.settings_button = flat_button("⚙", lambda: show_settings(self), size=12, padx=10, pady=4)
         self.stats_button = flat_button("▤", lambda: show_stats(self), size=12, padx=10, pady=4)
+        # новая версия на GitHub (updates.py): кнопка видна, только когда она есть
+        self.update_button = flat_button("", self.open_update, bg="accent", padx=10)
+        self.update_button.hide()
+        self.update_info = None
+        top.addSpacing(px(6))
+        top.addWidget(self.update_button, 0, Qt.AlignTop)
         for b in (self.diseases_button, self.stats_button, self.ach_button, self.settings_button):
             top.addSpacing(px(6))
             top.addWidget(b, 0, Qt.AlignTop)
@@ -234,6 +243,8 @@ class App(QWidget):
 
     def showEvent(self, e):
         super().showEvent(e)
+        if App.main is self and self.update_queue is None:   # проверка обновлений - один раз за запуск окна
+            QTimer.singleShot(3000, self.check_updates)
         titlebar.paint(self)
         self.setFocus()
         self.on_resize()                                 # схема начинает рисоваться, когда окно на экране
@@ -267,6 +278,38 @@ class App(QWidget):
         self.quality = name
         set_quality(name)
         settings.save(quality=name)
+
+    def set_updates(self, value):
+        """проверять ли обновления (раз в день, в фоне)"""
+        settings.save(updates=value)
+        if value == "on":
+            self.check_updates()
+
+    def check_updates(self):
+        """раз в день спросить GitHub о новой версии - в фоновом потоке; ответ заберёт poll_updates"""
+        if not updates.due():
+            return
+        result = queue.Queue()
+        threading.Thread(target=lambda: result.put(updates.check()), daemon=True).start()
+        self.update_queue = result
+        self.update_timer.start(500)
+
+    def poll_updates(self):
+        try:
+            info = self.update_queue.get_nowait()
+        except queue.Empty:
+            return
+        self.update_timer.stop()
+        if info:
+            self.update_info = info
+            self.update_button.show()
+            self.retranslate()
+
+    def open_update(self):
+        if self.update_info:
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QDesktopServices
+            QDesktopServices.openUrl(QUrl(self.update_info["url"]))
 
     def set_animation(self, value):
         self.animation = value
@@ -350,6 +393,9 @@ class App(QWidget):
         self.settings_button.setToolTip(t("settings_hint"))
         self.diseases_button.setToolTip(t("diseases_hint"))
         self.stats_button.setToolTip(t("stats_hint"))
+        if self.update_info:
+            self.update_button.setText(t("update_button", version=self.update_info["version"]))
+            self.update_button.setToolTip(t("update_hint"))
         self.ach_button.setText(achievements_text())
         self.ach_button.setToolTip(t("ach_hint"))
         self.lang_button.setToolTip(t("lang_hint"))

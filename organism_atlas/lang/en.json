@@ -344,7 +344,13 @@
     "card_read": "Read aloud",
     "card_read_stop": "Stop reading",
     "help_updown": "Select an organ on the diagram without the mouse; Enter opens its card, or answers with it in a quiz",
-    "help_read": "Read the open card aloud (press again to stop)"
+    "help_read": "Read the open card aloud (press again to stop)",
+    "settings_updates": "Check for updates",
+    "updates_on": "Once a day",
+    "updates_off": "No",
+    "settings_updates_hint": "The app asks GitHub whether a new version is out (an anonymous request; nothing about you is sent).",
+    "update_button": "New version {version}",
+    "update_hint": "Open the release page to download the installer"
   },
   "organs": {
     "lungs": {

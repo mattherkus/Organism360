@@ -24,10 +24,11 @@ CHOICES = {
     # вид викторины, который открывает кнопка «Викторина» (quiz.MODES)
     "quiz_mode": ("find", "name", "facts", "mix", "model", "body", "order", "exam", "daily"),
     "layers_panel": ("open", "closed"),          # раздел «Слои» в панели слева развёрнут или свёрнут
+    "updates": ("on", "off"),                    # раз в день спрашивать GitHub о новой версии (updates.py)
 }
 DEFAULTS = {"theme": "dark", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,
             "quiz_length": 10, "body": "male", "animation": "on",
-            "quiz_mode": "find", "layers_panel": "open"}
+            "quiz_mode": "find", "layers_panel": "open", "updates": "on"}
 
 
 def path():
