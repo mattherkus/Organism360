@@ -371,7 +371,7 @@ class App(QWidget):
         self.update_buttons()
         if self.view.message:
             self.view.message = (t("rescaling") if self.view.message[1] else t("loading"), self.view.message[1])
-        self.view.tip = None
+        self.view.set_tip(None)
         self.render_layers()
         self.status.setText(self.status_fn())
         self.card_fn()
@@ -437,11 +437,17 @@ class App(QWidget):
         self.building = True
         Z = self.want_Z
         first = self.atlas is None
+        look = self.look()
 
         def work():
             try:
                 # первая схема: готовая из сборки, пусть другого масштаба, - сразу, а точная следом
-                self.built.put((Z, (first and Atlas.preview(Z)) or Atlas.cached(Z)))
+                atlas = (first and Atlas.preview(Z)) or Atlas.cached(Z)
+                # картинку для показа (фон темы, кожа, видимые слои и органы) собираем тоже здесь, а не в окне:
+                # окно её только покажет и не замрёт. Если вид за это время сменился, окно пересоберёт её само
+                self.apply_look(atlas, look)
+                atlas.anim_frame(time.monotonic())      # и заготовки анимации сердца и лёгких
+                self.built.put((Z, atlas))
             except Exception as ex:                     # покажем ошибку в основном потоке
                 self.built.put((Z, ex))
 
@@ -462,12 +468,11 @@ class App(QWidget):
                 self.view.update()
             return                                      # под новый размер не вышло: остаётся растянутая
         if self.atlas is not None:
+            self.atlas.stop_warm()
             self.drop_photos()                          # подсветка прежнего масштаба больше не подходит
         self.atlas = res
-        self.atlas.set_layers(self.layers)
-        self.atlas.set_hidden(self.hidden_now())
-        self.atlas.set_skin_opacity(1 - self.skin_clear / 100)
-        self.paint_base()
+        self.apply_look(self.atlas, self.look())        # обычно картинка уже собрана потоком с тем же видом
+        self.show_base()
         if not self.ready():                            # пока рисовали, окно снова поменяло размер
             self.view.message = (t("rescaling"), True)  # (или это готовая схема из сборки другого масштаба)
             self.start_build()
@@ -475,6 +480,22 @@ class App(QWidget):
         self.view.message = None
         self.view.update()
         self.show_target()                              # если режим включили, пока схема строилась
+        self.atlas.warm()                               # подсветка под курсором - заранее, в фоне
+
+    def look(self):
+        """вид схемы сейчас: видимые слои тела, скрытые органы, непрозрачность кожи, цвета фона темы.
+        Снимок (неизменяемые значения): его можно отдать потоку, который строит схему"""
+        return (tuple(self.layers), frozenset(self.hidden_now()), 1 - self.skin_clear / 100,
+                theme.C["scene_bg"], theme.C["scene_hi"])
+
+    @staticmethod
+    def apply_look(atlas, look):
+        """применить вид look() к схеме; что не поменялось, не пересобирается"""
+        layers, hidden, skin, bg, hi = look
+        atlas.set_layers(layers)
+        atlas.set_hidden(hidden)
+        atlas.set_skin_opacity(skin)
+        atlas.set_background(bg, hi)
 
     def paint_base(self):
         """схема тела на фоне текущей темы"""
@@ -664,6 +685,7 @@ class App(QWidget):
                 self.atlas.set_hidden(hidden)
                 self.drop_photos()                      # подсветка зависит от того, кто кого закрывает
                 self.on_leave()
+                self.atlas.warm()
             self.show_base()
             self.show_target()                          # подсветка органа поиска или экскурсии - заново
 
@@ -672,7 +694,7 @@ class App(QWidget):
         """забыть картинки подсветки"""
         for name in ("target", "hover", "flash", "reveal"):
             self.view.show_layer(name, None)
-        self.view.pin = None
+        self.view.set_pin(None)
         self.photos.clear()
 
     def photo(self, key, kind):
@@ -701,17 +723,14 @@ class App(QWidget):
             self.cur = key
             self.set_hover(key)
         tip = (*self.view.to_screen(x, y), i18n.name(key)) if key and self.mode == "study" else None   # в викторине - без названия
-        if tip != self.view.tip:
-            self.view.tip = tip
-            self.view.update()
+        self.view.set_tip(tip)
 
     def on_leave(self):
         if self.atlas is None:
             return
         self.cur = None
         self.set_hover(None)
-        self.view.tip = None
-        self.view.update()
+        self.view.set_tip(None)
 
     # --- приближение схемы
     def zoom_changed(self, animate=False):
@@ -1129,15 +1148,13 @@ class App(QWidget):
         if not self.ready() or key not in ORGANS or key in self.hidden_now():
             return
         self.view.show_layer("reveal", self.photo(key, "ok"))
-        self.view.pin = (*self.atlas.anchor(key), i18n.name(key))
-        self.view.update()
+        self.view.set_pin((*self.atlas.anchor(key), i18n.name(key)))
         self.reveal_timer.start()
 
     def unreveal(self):
         self.reveal_timer.stop()
         self.view.show_layer("reveal", None)
-        self.view.pin = None
-        self.view.update()
+        self.view.set_pin(None)
 
     def hint_wrong(self):
         """после ошибки на лёгком уровне - подсказка, если ответ на вопрос - орган"""

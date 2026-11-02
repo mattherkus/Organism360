@@ -7,6 +7,8 @@
 """
 
 import math
+import queue
+import threading
 
 import numpy as np
 from PIL import Image
@@ -27,6 +29,7 @@ BREATH = 4.5                    # период дыхания, с
 BREATH_DEPTH = (0.015, 0.035)   # насколько лёгкие расширяются вширь и вниз на вдохе
 HEART_BASE = 0.35               # где у слоя сердца основание (доля высоты сверху): к нему оно сжимается
 ANIMATED = ("lungs", "heart")
+PAD = 4                         # прозрачная рамка вокруг слоя сердца и лёгких для анимации: хватает до сжатия в 0.75
 HALO = 14                       # запас вокруг органа под свечение подсветки (в пикселях схемы при Z = 1)
 LIGHT_FROM = 0.6                # с какой средней яркости орган считается светлым (контур подсветки насыщеннее)
 
@@ -65,8 +68,11 @@ class Atlas:
         self._base = None
         self._show = {}                  # заготовки для base при текущем фоне: кожа с фоном, растворение
         self._glow = None
-        self._cache = {}
+        self._cache = {}                 # {(орган, вид): подсветка} при текущих скрытых органах
+        self._warm = queue.SimpleQueue() # подсветки, посчитанные заранее в фоне: (скрытые, (орган, вид), подсветка)
+        self._gen = 0                    # номер расчёта заранее: сменился - прежний поток бросает работу
         self._layers = {}
+        self._premul = {}                # слои сердца и лёгких для анимации: альфа умножена (RGBa), рамка PAD
         self._under = None               # (прямоугольник, подложка анимации): всё, что под лёгкими
 
     # --- слои
@@ -194,18 +200,34 @@ class Atlas:
             # сердце сжимается к основанию (там отходят крупные сосуды - дуга аорты почти не двигается),
             # лёгкие расширяются от верхушек вниз
             px, py = x + w / 2, y + (h * HEART_BASE if k == "heart" else 0)
-            # обратное отображение: точка куска -> точка слоя органа (с долями пикселя: без дрожания)
-            data = (1 / sx, 0, px - x + (x0 - px) / sx, 0, 1 / sy, py - y + (y0 - py) / sy)
-            moved = im.convert("RGBa").transform(out.size, Image.AFFINE, data, Image.BILINEAR).convert("RGBA")
-            out.paste(moved, (0, 0), moved)
+            # куда ложится слой органа в этом масштабе (с запасом в пиксель на сглаживание): считаем только там,
+            # а не по всему куску - маленькое сердце в большом прямоугольнике лёгких почти ничего не стоит
+            rx0 = max(x0, math.floor(px + (x - px) * sx) - 1)
+            ry0 = max(y0, math.floor(py + (y - py) * sy) - 1)
+            rx1 = min(x1, math.ceil(px + (x + w - px) * sx) + 1)
+            ry1 = min(y1, math.ceil(py + (y + h - py) * sy) + 1)
+            if rx1 <= rx0 or ry1 <= ry0:
+                continue
+            if k not in self._premul:                    # альфу умножаем один раз, а не на каждом кадре
+                self._premul[k] = Image.new("RGBa", (w + 2 * PAD, h + 2 * PAD))
+                self._premul[k].paste(im.convert("RGBa"), (PAD, PAD))
+            # какой прямоугольник слоя органа (с долями пикселя: без дрожания) растягивается в этот кусок.
+            # Масштаб без поворота - это resize с рамкой источника: он вдвое быстрее общего transform
+            u, v = px - x + (rx0 - px) / sx + PAD, py - y + (ry0 - py) / sy + PAD
+            ow, oh = rx1 - rx0, ry1 - ry0
+            src = self._premul[k]
+            box = (max(0.0, u), max(0.0, v), min(src.width, u + ow / sx), min(src.height, v + oh / sy))
+            moved = src.resize((ow, oh), Image.BILINEAR, box=box)
+            moved = moved.convert("RGBA")
+            out.paste(moved, (rx0 - x0, ry0 - y0), moved)
         return out, (x0, y0)
 
     def set_background(self, bg, hi):
-        """подставить фон схемы (цвета #rrggbb из темы); возвращает новую self.base"""
+        """подставить фон схемы (цвета #rrggbb из темы); возвращает self.base (пересобранную, если фон другой)"""
         if (bg, hi) != self._bg:
             self._bg = (bg, hi)
             self._show.clear()
-        self._base = None
+            self._base = None
         return self.base
 
     def set_layers(self, visible):
@@ -262,6 +284,7 @@ class Atlas:
         if organs != self.hidden:
             self.hidden = organs
             self._cache.clear()
+            self._gen += 1
             self._base = None
 
     def organ_at(self, x, y):
@@ -277,14 +300,16 @@ class Atlas:
                 return k
         return None
 
-    def _cover(self, key, pad=0):
-        """насколько орган перекрыт видимыми органами, лежащими выше него; pad - запас вокруг рамки органа"""
+    def _cover(self, key, pad=0, hidden=None):
+        """насколько орган перекрыт видимыми органами, лежащими выше него; pad - запас вокруг рамки органа,
+        hidden - скрытые органы (по умолчанию текущие)"""
+        hidden = self.hidden if hidden is None else hidden
         d = self.org[key]
         x0, y0 = d["origin"][0] - pad, d["origin"][1] - pad
         h, w = d["hit"].shape[0] + 2 * pad, d["hit"].shape[1] + 2 * pad
         cov = np.zeros((h, w), np.float32)
         for k in ORDER[ORDER.index(key) + 1:]:
-            if k in self.hidden:
+            if k in hidden:
                 continue
             e = self.org[k]
             ex, ey = e["origin"]
@@ -300,9 +325,40 @@ class Atlas:
 
     def overlay(self, key, kind):
         """RGBA-картинка подсветки и её положение. kind: hover / target / ok / bad"""
+        while True:                                       # что успел посчитать warm(), если оно ещё годится
+            try:
+                hidden, done, item = self._warm.get_nowait()
+            except queue.Empty:
+                break
+            if hidden == self.hidden:
+                self._cache.setdefault(done, item)
         if (key, kind) not in self._cache:
             self._cache[(key, kind)] = self._make(key, kind)
         return self._cache[(key, kind)]
+
+    def warm(self, kind="hover"):
+        """посчитать заранее, в фоновом потоке, подсветку kind всех видимых органов (крупные - первыми): первое
+        наведение на орган не ждёт её расчёта (на большом экране это десятки миллисекунд). Готовые забирает
+        overlay(); скрыли или показали орган - прежний расчёт бросается, а его подсветки не берутся.
+        Возвращает поток (тестам - дождаться его)"""
+        self._gen += 1
+        gen, hidden = self._gen, self.hidden
+        keys = sorted((k for k in ORDER if k not in hidden and (k, kind) not in self._cache),
+                      key=lambda k: -self.org[k]["hit"].size)
+
+        def work():
+            for k in keys:
+                if self._gen != gen:
+                    return
+                self._warm.put((hidden, (k, kind), self._make(k, kind, hidden)))
+
+        thread = threading.Thread(target=work, daemon=True)
+        thread.start()
+        return thread
+
+    def stop_warm(self):
+        """бросить расчёт подсветки заранее: схема больше не нужна (окно перешло на другой масштаб)"""
+        self._gen += 1
 
     def _lum(self, key):
         """средняя яркость органа (0..1) по его видимым пикселям"""
@@ -312,7 +368,9 @@ class Atlas:
             return 0.0
         return float((d["rgba"][..., :3][m].astype(np.float32) / 255 @ np.array([0.2126, 0.7152, 0.0722])).mean())
 
-    def _make(self, key, kind):
+    def _make(self, key, kind, hidden=None):
+        """подсветка органа key вида kind при скрытых органах hidden (по умолчанию текущих). Только читает
+        схему, поэтому её можно считать в фоновом потоке (warm)"""
         Z = self.Z
         d = self.org[key]
         # рамка органа - вплотную к нему: свечение и контур снаружи не поместились бы, а у узкого органа
@@ -320,7 +378,7 @@ class Atlas:
         pad = int(np.ceil(HALO * Z))
         m = np.pad(d["hit"], pad)
         h, w = m.shape
-        vis = 1.0 - np.clip(self._cover(key, pad), 0, 1)
+        vis = 1.0 - np.clip(self._cover(key, pad, hidden), 0, 1)
         g1 = gblur(m, 1.3 * Z)
         rim = np.clip((1 - g1) * m * 2.2 + g1 * (1 - m) * 2.4, 0, 1)
         glow = gblur(m, 3.4 * Z) * (1 - m)

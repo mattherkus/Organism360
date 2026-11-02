@@ -723,6 +723,47 @@ class AppTests(unittest.TestCase):
         self.app.animate()
         self.assertIsNone(self.app.view.layers["anim"])
 
+    def test_repaints_only_changed_part(self):
+        """кадр анимации и наведение перерисовывают только свой кусок схемы: панель слоёв и карточка поверх схемы
+        не перерисовываются (раньше каждый кадр перерисовывал всё окно)"""
+        from PySide6.QtCore import QEvent, QObject
+
+        class Paints(QObject):
+            def __init__(self):
+                super().__init__()
+                self.seen = []
+
+            def eventFilter(self, obj, e):
+                if e.type() == QEvent.Paint:
+                    self.seen.append(obj)
+                return False
+
+        pump(0.2)
+        a = self.app
+        anim, hover = Paints(), Paints()
+        self.qt.installEventFilter(anim)
+        try:
+            with mock.patch.object(a, "isActiveWindow", return_value=True):
+                for i in range(3):
+                    a.animate()
+                    pump()
+        finally:
+            self.qt.removeEventFilter(anim)
+        self.qt.installEventFilter(hover)
+        try:
+            self.hover_heart()
+            pump()
+            a.on_leave()
+            pump()
+        finally:
+            self.qt.removeEventFilter(hover)
+        self.assertIn(a.view, anim.seen)
+        for w in (a.panel, a.card, a.header):
+            self.assertNotIn(w, anim.seen)
+        self.assertIn(a.view, hover.seen)
+        for w in (a.panel, a.header):                       # подсказка у курсора в узком окне может задеть карточку
+            self.assertNotIn(w, hover.seen)
+
     def test_resize_after_hover(self):
         """после наведения окно поменяло размер: схема перерисовалась, подсветка работает"""
         self.hover_heart()
@@ -821,3 +862,18 @@ class SystemGroupTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QImageTests(unittest.TestCase):
+    def test_native_formats(self):
+        """картинки для экрана - в родных форматах Qt (их не надо перекодировать при каждой перерисовке),
+        цвета и прозрачность те же"""
+        from PIL import Image
+        from PySide6.QtGui import QColor, QImage
+        from organism_atlas.ui.widgets import qimage
+        q = qimage(Image.new("RGB", (3, 2), (10, 200, 30)))
+        self.assertEqual(q.format(), QImage.Format_RGB32)
+        self.assertEqual(q.pixelColor(2, 1), QColor(10, 200, 30))
+        q = qimage(Image.new("RGBA", (3, 2), (255, 0, 0, 255)))
+        self.assertEqual(q.format(), QImage.Format_ARGB32_Premultiplied)
+        self.assertEqual(q.pixelColor(0, 0), QColor(255, 0, 0, 255))

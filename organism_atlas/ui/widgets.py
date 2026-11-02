@@ -52,12 +52,15 @@ def font(size, bold=False, italic=False):
 
 
 def qimage(im):
-    """картинка Pillow (RGB или RGBA) -> QImage (копия: данные Pillow можно отпускать)"""
+    """картинка Pillow (RGB или RGBA) -> QImage (копия: данные Pillow можно отпускать).
+    Формат - родной для рисования Qt (RGB32 или ARGB32_Premultiplied): такая картинка кладётся на экран
+    как есть, а RGB888 Qt перекодировал бы при каждой перерисовке (и медленно растягивал бы при приближении)"""
     if im.mode == "RGBA":
         q = QImage(im.tobytes(), im.width, im.height, 4 * im.width, QImage.Format_RGBA8888)
         return q.convertToFormat(QImage.Format_ARGB32_Premultiplied)
     im = im.convert("RGB")
-    return QImage(im.tobytes(), im.width, im.height, 3 * im.width, QImage.Format_RGB888).copy()
+    return QImage(im.tobytes(), im.width, im.height, 3 * im.width, QImage.Format_RGB888).convertToFormat(
+        QImage.Format_RGB32)
 
 
 def alive(w):

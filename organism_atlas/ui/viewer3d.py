@@ -21,8 +21,8 @@ import time
 import traceback
 
 from PIL import Image
-from PySide6.QtCore import QRectF, Qt, QTimer
-from PySide6.QtGui import QPainter
+from PySide6.QtCore import QRect, QRectF, Qt, QTimer
+from PySide6.QtGui import QFontMetrics, QPainter
 from PySide6.QtWidgets import QGridLayout, QWidget
 
 from .. import i18n
@@ -79,18 +79,23 @@ class Frame(QWidget):
         if self.image is None:
             p.fillRect(self.rect(), color("view_bg"))
         else:
-            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            # кадр в пикселях экрана ложится пиксель в пиксель - сглаживать нечего; растягиваем только черновик
+            p.setRenderHint(QPainter.SmoothPixmapTransform,
+                            abs(self.image.devicePixelRatio() - self.devicePixelRatioF()) > 1e-3)
             p.drawImage(QRectF(self.rect()), self.image)
         if self.tip:
-            x, y, text = self.tip
+            r = self.tip_rect(self.tip)
             p.setFont(font(10, bold=True))
-            fm = p.fontMetrics()
-            w, h = fm.horizontalAdvance(text) + 2 * px(5), fm.height() + 2 * px(1)
-            x = min(x + px(14), max(0, self.width() - w))
-            y = y + px(14)
-            p.fillRect(x, y, w, h, color("tip_bg"))
+            p.fillRect(r, color("tip_bg"))
             p.setPen(color("tip_fg"))
-            p.drawText(QRectF(x, y, w, h), Qt.AlignCenter, text)
+            p.drawText(QRectF(r), Qt.AlignCenter, self.tip[2])
+
+    def tip_rect(self, tip):
+        """где подсказка с названием части: правее и ниже курсора, не за правым краем"""
+        x, y, text = tip
+        fm = QFontMetrics(font(10, bold=True), self)
+        w, h = fm.horizontalAdvance(text) + 2 * px(5), fm.height() + 2 * px(1)
+        return QRect(min(x + px(14), max(0, self.width() - w)), y + px(14), w, h)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
@@ -118,9 +123,12 @@ class Frame(QWidget):
             self.viewer.zoom_by(1.12 if d > 0 else 1 / 1.12)
 
     def show_tip(self, tip):
+        """подсказка (x, y, текст) или None; перерисовывается только место прежней и новой, а не весь кадр"""
         if tip != self.tip:
+            for it in (self.tip, tip):
+                if it is not None:
+                    self.update(self.tip_rect(it).adjusted(-1, -1, 1, 1))
             self.tip = tip
-            self.update()
 
 
 class Viewer3D:

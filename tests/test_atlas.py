@@ -55,6 +55,30 @@ class AtlasTests(unittest.TestCase):
         finally:
             self.atlas.set_background("#0e1a22", "#1a3547")
 
+    def test_same_background_keeps_image(self):
+        """тот же фон ещё раз - картинка не пересобирается (его ставят и поток сборки схемы, и окно)"""
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        base = a.set_background("#0e1a22", "#1a3547")
+        self.assertIs(a.set_background("#0e1a22", "#1a3547"), base)
+        self.assertIsNot(a.set_background("#000000", "#000000"), base)
+
+    def test_warm_overlays(self):
+        """подсветка, посчитанная заранее в фоне, та же, что по запросу; если органы за это время скрыли
+        или показали, посчитанная заранее не берётся"""
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        a.set_hidden(other_sex("female"))
+        a.warm().join()
+        a.overlay("heart", "hover")                      # забирает всё, что посчитано заранее
+        self.assertEqual({k for k, _kind in a._cache}, set(for_body("female")))
+        for k in ("lungs", "trachea"):
+            self.assertTrue(np.array_equal(np.asarray(a.overlay(k, "hover")[0]), np.asarray(a._make(k, "hover")[0])))
+        b = Atlas(Z, (self.atlas.body, self.atlas.org))
+        b.warm().join()
+        b.set_hidden({"lungs"})                           # печень больше не закрыта лёгкими
+        liver = b.overlay("liver", "hover")[0]
+        self.assertEqual(set(b._cache), {("liver", "hover")})
+        self.assertTrue(np.array_equal(np.asarray(liver), np.asarray(b._make("liver", "hover")[0])))
+
     def test_layers_and_hidden_organs(self):
         """скрытый слой или орган пропадает с картинки, а скрытый орган ещё и не ловит клик"""
         a = Atlas(Z, (self.atlas.body, self.atlas.org))
@@ -106,6 +130,31 @@ class AtlasTests(unittest.TestCase):
             self.assertTrue(x0 <= ox and y0 <= oy and ox + w <= x1 and oy + h <= y1, k)
         a.set_hidden({"heart", "lungs"})
         self.assertIsNone(a.anim_frame(0.0))
+        a.set_hidden(set())
+        # сердце и лёгкие растягиваются вокруг своей точки опоры - так же, как общим аффинным преобразованием
+        # слоя целиком (кадр считает только прямоугольник органа и через resize - так быстрее). resize при
+        # сжатии сердца чуть сглаживает его край, поэтому сравниваем не до уровня, а в среднем: сдвиг органа
+        # на пиксель дал бы разницу в несколько уровней в среднем
+        from PIL import Image
+        from organism_atlas.atlas import HEART_BASE
+        for t in (BEAT * 0.16, BREATH / 2, BREATH / 2 + BEAT * 0.1):
+            im, (x0, y0) = a.anim_frame(t)
+            ref = a._under[1].copy()
+            scale = {"heart": (heartbeat(t),) * 2, "lungs": breathing(t)}
+            for k in ORDER[ORDER.index("lungs"):]:
+                layer, (x, y) = a.layer(k)
+                w, h = layer.size
+                if k not in scale:
+                    ref.paste(layer, (x - x0, y - y0), layer)
+                    continue
+                sx, sy = scale[k]
+                px, py = x + w / 2, y + (h * HEART_BASE if k == "heart" else 0)
+                data = (1 / sx, 0, px - x + (x0 - px) / sx, 0, 1 / sy, py - y + (y0 - py) / sy)
+                layer = layer.convert("RGBa").transform(ref.size, Image.AFFINE, data, Image.BILINEAR).convert("RGBA")
+                ref.paste(layer, (0, 0), layer)
+            diff = np.abs(np.asarray(im).astype(int) - np.asarray(ref).astype(int))
+            self.assertLessEqual(np.percentile(diff, 99), 3, t)
+            self.assertLess(diff.mean(), 0.5, t)
         a.set_hidden({"lungs"})
         im, pos = a.anim_frame(0.0)
         self.assertLess(im.width, x1 - x0)                # остался только прямоугольник сердца

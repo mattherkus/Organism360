@@ -6,7 +6,7 @@ import math
 
 from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt,
                             QVariantAnimation)
-from PySide6.QtGui import QPainter, QPen
+from PySide6.QtGui import QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from .scaling import px
@@ -41,7 +41,9 @@ class SchemeView(QWidget):
     подсветка органа-вопроса, органа под курсором и вспышка ответа, подсказка с названием, подпись
     верного ответа и надпись «рисуется»/«перерисовывается». Координаты мыши передаются окну в пикселях схемы.
     Схему можно приблизить (колесо, +/−) и двигать мышью: k - во сколько раз, pan - где левый верхний угол.
-    Виджет лежит под всем окном: приближенная схема продолжается под панелями и карточкой, без рамки"""
+    Виджет лежит под всем окном: приближенная схема продолжается под панелями и карточкой, без рамки.
+    Перерисовывается только то, что поменялось: кадр анимации, подсветка или подсказка - своим прямоугольником,
+    а не всё окно с панелями и карточкой поверх схемы (их Qt иначе перерисовывал бы вместе с ней)"""
 
     def __init__(self, app):
         super().__init__()
@@ -64,14 +66,44 @@ class SchemeView(QWidget):
         self.press = None               # (точка нажатия, pan в тот момент, кнопка) или None
         self.dragging = False
         self.setMouseTracking(True)
+        self.setAttribute(Qt.WA_OpaquePaintEvent)       # закрашивает себя целиком: окно под ней не рисуется
 
     def dpr(self):
         return self.devicePixelRatioF()
 
+    def area(self, x, y, w, h):
+        """прямоугольник схемы (пиксели схемы) -> накрывающий его прямоугольник виджета с запасом на сглаживание"""
+        d, k = self.dpr(), self.k
+        r = QRectF(self.pan.x() + k * x / d, self.pan.y() + k * y / d, k * w / d, k * h / d)
+        return r.toAlignedRect().adjusted(-2, -2, 2, 2)
+
     def show_layer(self, name, item):
-        """item - (QImage, (x, y)) в пикселях схемы или None - спрятать"""
-        self.layers[name] = None if item is None else (item[0], item[1][0], item[1][1])
-        self.update()
+        """item - (QImage, (x, y)) в пикселях схемы или None - спрятать. Перерисовываются только прежнее
+        и новое место слоя"""
+        old = self.layers[name]
+        new = None if item is None else (item[0], item[1][0], item[1][1])
+        self.layers[name] = new
+        for it in (old, new):
+            if it is not None:
+                self.update(self.area(it[1], it[2], it[0].width(), it[0].height()))
+
+    def set_tip(self, tip):
+        """подсказка с названием у курсора: (x, y, текст) в логических пикселях или None"""
+        if tip == self.tip:
+            return
+        for it in (self.tip, tip):
+            if it is not None:
+                self.update(self.tip_rect(it).toAlignedRect().adjusted(-3, -3, 3, 3))
+        self.tip = tip
+
+    def set_pin(self, pin):
+        """подпись органа со стрелкой (верный ответ): (x, y, текст) в пикселях схемы или None"""
+        if pin == self.pin:
+            return
+        for it in (self.pin, pin):
+            if it is not None:
+                self.update(self.pin_rect(it).toAlignedRect().adjusted(-3, -3, 3, 3))
+        self.pin = pin
 
     # --- приближение
     def to_screen(self, x, y):
@@ -170,12 +202,16 @@ class SchemeView(QWidget):
         p.fillRect(self.rect(), color("bg"))             # фон схемы тот же: где она кончается, не видно
         d = self.dpr()
         if self.base is not None:
+            ready = self.app.ready()
             p.save()
             p.translate(self.pan)
             p.scale(self.k, self.k)
-            p.setRenderHint(QPainter.SmoothPixmapTransform)
-            p.drawImage(QRectF(QPointF(0, 0), self.scheme), self.base)
-            if self.app.ready():
+            # готовая схема без приближения ложится на экран пиксель в пиксель: без сглаживания она чёткая
+            # и кладётся простым копированием. Растянутую (прежнего масштаба или приближенную) - сглаживаем
+            p.setRenderHint(QPainter.SmoothPixmapTransform, not (ready and self.k == 1))
+            size = QSizeF(self.base.width() / d, self.base.height() / d) if ready else self.scheme
+            p.drawImage(QRectF(QPointF(0, 0), size), self.base)
+            if ready:
                 for name in ("anim", "target", "hover", "reveal", "flash"):
                     item = self.layers[name]
                     if item is not None:
@@ -187,10 +223,10 @@ class SchemeView(QWidget):
             p.setRenderHint(QPainter.Antialiasing)
             p.setPen(QPen(color("ok"), px(2)))
             p.drawLine(QPointF(x, y - px(2)), QPointF(x, y - px(18)))     # указатель от подписи к органу
-            self.bubble(p, x, y - px(18), self.pin[2], 12, "ok", above=True)
+            self.bubble(p, self.bubble_rect(x, y - px(18), self.pin[2], 12, above=True), self.pin[2], 12, "ok",
+                        above=True)
         if self.tip:
-            x, y, text = self.tip
-            self.bubble(p, x + 14, y + 14, text, 10, "border")
+            self.bubble(p, self.tip_rect(self.tip), self.tip[2], 10, "border")
         if self.message:
             text, bottom = self.message
             p.setPen(color("muted"))
@@ -199,22 +235,36 @@ class SchemeView(QWidget):
             r = r.adjusted(0, 0, 0, -px(6)) if bottom else r
             p.drawText(r, (Qt.AlignBottom | Qt.AlignHCenter) if bottom else Qt.AlignCenter, text)
 
-    def bubble(self, p, x, y, text, size, edge, above=False):
-        """плашка с текстом: левый верхний угол в (x, y) или (above) середина нижнего края там;
+    def bubble_rect(self, x, y, text, size, above=False):
+        """где плашка с текстом: левый верхний угол в (x, y) или (above) середина нижнего края там;
         не вылезает за край"""
-        p.setFont(font(size, bold=True))
-        fm = p.fontMetrics()
+        fm = QFontMetrics(font(size, bold=True), self)
         w, h = fm.horizontalAdvance(text) + px(12), fm.height() + px(6)
         if above:
             x, y = x - w / 2, y - h
         x = max(2, min(x, self.width() - w - 6))
         y = max(2, min(y, self.height() - h - 2))
+        return QRectF(x, y, w, h)
+
+    def tip_rect(self, tip):
+        x, y, text = tip
+        return self.bubble_rect(x + 14, y + 14, text, 10)
+
+    def pin_rect(self, pin):
+        """плашка подписи вместе с указателем от неё к органу"""
+        x, y = self.to_screen(*pin[:2])
+        return self.bubble_rect(x, y - px(18), pin[2], 12, above=True).united(QRectF(x - px(2), y - px(18), px(4),
+                                                                                        px(18)))
+
+    def bubble(self, p, r, text, size, edge, above=False):
+        """плашка с текстом в прямоугольнике r (из bubble_rect)"""
+        p.setFont(font(size, bold=True))
         p.setRenderHint(QPainter.Antialiasing)
         p.setPen(QPen(color(edge), max(1, px(2) if above else 1)))
         p.setBrush(color("tip_bg"))
-        p.drawRoundedRect(QRectF(x, y, w, h), px(4), px(4))
+        p.drawRoundedRect(r, px(4), px(4))
         p.setPen(color("tip_fg"))
-        p.drawText(QRectF(x, y, w, h), Qt.AlignCenter, text)
+        p.drawText(r, Qt.AlignCenter, text)
 
     def wheelEvent(self, e):
         steps = e.angleDelta().y() / 120
