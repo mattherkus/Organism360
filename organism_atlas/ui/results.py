@@ -9,8 +9,10 @@ from .widgets import bar, clear, flat_button, label, put, spacer
 
 
 def fill_results(card, session, on_again, on_retry=None, on_setup=None, due=0, streak=0, new=(),
-                 on_achievements=None):
-    """session - завершённая QuizSession; on_again - по кнопке «Сыграть ещё»,
+                 on_achievements=None, name_of=i18n.name, grade=None, review=()):
+    """session - завершённая QuizSession (или order.OrderSession); on_again - по кнопке «Сыграть ещё»,
+    name_of(ключ) - название того, о чём спрашивали (орган, кость, маршрут); grade - оценка «Экзамена»
+    (2-5), review - [(вопрос, верный ответ, ответ игрока)] для «Разбора ошибок»;
     on_retry - по кнопке «Повторить ошибки» (видна, если ошибки были), on_setup - вернуться к настройке игры;
     due - карточек на повторение сегодня; streak - дней подряд с игрой; new - ключи достижений,
     полученных этой игрой, on_achievements - по кнопке «Достижения» (видна, если что-то получено)"""
@@ -23,6 +25,8 @@ def fill_results(card, session, on_again, on_retry=None, on_setup=None, due=0, s
         return put(lay, label(text, fg, size, bold, align=center), top=top, bottom=bottom, x=20)
 
     line(t("results_heading"), size=15, bold=True, top=16, bottom=4)
+    if grade is not None:
+        line(t("results_grade", grade=grade, word=t("grade_%d" % grade)), "day_title", 18, True, bottom=2)
     line(t("results_score", right=session.first_try, total=session.total), "accent_fg", 32, True)
     line(t("results_first_try", percent=session.percent), "muted")
     line(session.verdict, size=12, bold=True, top=12, bottom=4)
@@ -33,13 +37,18 @@ def fill_results(card, session, on_again, on_retry=None, on_setup=None, due=0, s
     if session.timeouts:
         line(t("results_timeouts", n=session.timeouts), "muted")
     if session.missed:
-        line(t("results_missed", names=", ".join(i18n.name(k) for k in session.missed)), "muted", top=6)
+        line(t("results_missed", names=", ".join(name_of(k) for k in session.missed)), "muted", top=6)
     if due:
         line(t("results_due", n=due), "muted", 10, top=8)
     if streak > 1:
         line(t("results_streak", n=streak), "day_title", bold=True, top=8)
     for key in new:
         line("★  " + t("results_new_ach", name=t("ach_" + key)), "day_title", bold=True, top=6)
+    if review:
+        put(lay, label(t("review_title").upper(), "muted", 9, bold=True), top=14, x=20)
+        for question, right, given in review:
+            put(lay, label(question, size=10, bold=True), top=6, x=20)
+            put(lay, label(t("review_line", answer=right, given=given or t("review_no_answer")), "muted", 9), x=20)
     # кнопки столбиком: в узкой карточке в строку они не помещаются
     buttons = [(t("results_again"), on_again, "accent")]
     if session.missed and on_retry:

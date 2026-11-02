@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QWidget
 
 from tests.qt import app as qt_app, pump, wait
 
-from organism_atlas import i18n, questions
+from organism_atlas import achievements, i18n, questions
 from organism_atlas.atlas import Atlas
 from organism_atlas.organs import ORGANS, other_sex
 
@@ -560,6 +560,72 @@ class AppTests(unittest.TestCase):
         a.set_mode("study")                                           # в «Изучать» - снова выбранные слои
         self.assertEqual(set(a.atlas.visible), set(a.layers))
 
+    def test_order_quiz(self):
+        """«Расставь по порядку»: органы маршрута - кнопками и щелчками по схеме, ошибка отмечается"""
+        import numpy as np
+        a = self.app
+        a.set_mode("order")
+        a.quiz.cfg["level"] = "medium"
+        a.quiz.start()
+        s = a.quiz.session
+        self.assertEqual(s.mode, "order")
+        self.assertIn(i18n.t("progress_route", n=1, total=s.total, errors=0), a.quiz.progress_text())
+        wrong = next(k for k in s.options() if k not in s.route())     # лишний орган среди кнопок
+        a.quiz.pick(wrong)
+        self.assertEqual(s.errors, 1)
+        first = s.correct()
+        d = a.atlas.org[first]                                          # первый орган - щелчком по схеме
+        ys, xs = np.nonzero(d["hit"] > 0.9)
+        for j in range(0, len(xs), max(1, len(xs) // 50)):
+            x, y = d["origin"][0] + xs[j], d["origin"][1] + ys[j]
+            if a.atlas.organ_at(x, y) == first:
+                a.on_click(x, y)
+                break
+        self.assertEqual(s.placed, [first])
+        while s.placed:                                                 # остальные - кнопками
+            a.quiz.pick(s.correct())
+        self.assertEqual(s.i, 1)
+        self.assertTrue(a.quiz.next_timer.isActive())                   # пройденная цепочка видна, потом дальше
+
+    def test_exam_quiz(self):
+        """«Экзамен»: верно или нет - не видно, одна попытка, «Завершить» - итоги с оценкой и разбором"""
+        a = self.app
+        a.set_mode("exam")
+        a.quiz.cfg["length"] = 5
+        a.quiz.start()
+        s = a.quiz.session
+        self.assertEqual((s.total, s.total_time, s.timer), (5, 150, 0))
+        while s.kind == "find":                                          # кнопка-вариант
+            a.quiz.answer(s.correct())
+            a.quiz.next_question()
+        wrong = next(k for k in a.quiz.choices if k != s.correct())
+        a.quiz.pick(wrong)
+        self.assertEqual(a.quiz.choices, {})                             # второй попытки нет
+        self.assertNotIn(i18n.t("answer_wrong", name=""), " ".join(self.label_texts()))
+        a.quiz.next_question()
+        a.quiz.give_up()                                                 # «Завершить экзамен»
+        self.assertTrue(s.finished)
+        self.assertEqual(s.total, 5)
+        grade = i18n.t("grade_%d" % s.grade)
+        self.assertTrue(wait(lambda: any(grade in x for x in self.label_texts()), 5))   # итоги - следом
+        self.assertIn(i18n.t("review_title").upper(), self.label_texts())
+
+    def test_daily_and_model_quiz(self):
+        from organism_atlas.ui.turntable import Turntable
+        a = self.app
+        a.set_mode("daily")
+        self.assertIn(i18n.t("daily_today_none"), " ".join(self.label_texts()))
+        a.quiz.start()
+        self.assertEqual((a.quiz.session.mode, a.quiz.session.total), ("daily", 10))
+        a.set_mode("model")
+        a.quiz.start()
+        self.assertEqual(a.quiz.session.kind, "model")
+        self.assertEqual(len(a.card.findChildren(Turntable)), 1)
+        frames = a.quiz.frames[1]
+        self.assertTrue(wait(lambda: frames.images))                    # первый кадр модели готов
+        a.set_mode("study")
+        self.assertIsNone(a.quiz.frames)                                # поток кадров остановлен
+
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH
@@ -658,7 +724,7 @@ class AppTests(unittest.TestCase):
         self.play()
         self.assertEqual(self.app.quiz.new_achievements, ["first", "perfect"])
         self.assertEqual(self.app.quiz.streak, 1)
-        self.assertEqual(self.app.ach_button.text(), i18n.t("ach_button", got=2, total=12))
+        self.assertEqual(self.app.ach_button.text(), i18n.t("ach_button", got=2, total=len(achievements.KEYS)))
         self.app.quiz.show_results()                             # итоги - в карточке справа, а не панелью поверх
         self.assertIsNone(overlay.top(self.app))
         texts = self.button_texts()

@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from . import settings
-from .quiz import NOT_ORGANS
+from .quiz import NO_CARDS
 
 INTERVALS = (0, 1, 2, 4, 8, 16)      # через сколько дней повторять карточку из коробки 1..5
 MAX_BOX = len(INTERVALS) - 1
@@ -73,10 +73,10 @@ def record(session, question_set="all", today=None, now=None):
         "timer": session.timer, "set": question_set, "total": session.total, "first_try": session.first_try,
         "errors": session.errors, "timeouts": session.timeouts, "missed": list(session.missed),
         "seconds": round(session.elapsed),
-        "organs": None if session.mode in NOT_ORGANS else len(session.pool),    # для «Марафона»: органов на схеме
+        "organs": session.organ_count,               # для «Марафона»: сколько органов было на схеме
     })
     data["results"] = data["results"][-KEEP:]
-    for key, ok in session.results.items():
+    for key, ok in (session.results.items() if session.mode not in NO_CARDS else ()):   # экзамен, испытание дня - без карточек
         c = data["cards"].setdefault("%s:%s" % (session.mode, key), {"box": 0, "seen": 0, "wrong": 0})
         box = c.get("box", 0) if isinstance(c.get("box"), int) else 0
         c["box"] = min(box + 1, MAX_BOX) if ok else 1
@@ -109,6 +109,12 @@ def last_missed(mode, keys, data=None):
         if r.get("mode") == mode:
             return [k for k in r.get("missed", []) if k in keys]
     return []
+
+
+def today_results(mode, data=None, today=None):
+    """игры режима, сыгранные сегодня, первые сверху (для «Испытания дня»)"""
+    today = (today or datetime.date.today()).isoformat()
+    return [r for r in (data or load())["results"] if r.get("mode") == mode and str(r.get("date", ""))[:10] == today]
 
 
 def recent(mode, n=5, data=None):

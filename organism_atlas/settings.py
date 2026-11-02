@@ -21,7 +21,8 @@ CHOICES = {
     "quiz_length": (5, 10, 15, 0),               # вопросов в игре; 0 - про все органы схемы
     "body": ("female", "male"),                  # схема тела: органы малого таза (organs.SEXES)
     "animation": ("on", "off"),                  # сердце бьётся, лёгкие дышат
-    "quiz_mode": ("find", "name", "facts", "mix", "body"),   # вид викторины, который открывает кнопка «Викторина»
+    # вид викторины, который открывает кнопка «Викторина» (quiz.MODES)
+    "quiz_mode": ("find", "name", "facts", "mix", "model", "body", "order", "exam", "daily"),
     "layers_panel": ("open", "closed"),          # раздел «Слои» в панели слева развёрнут или свёрнут
 }
 DEFAULTS = {"theme": "dark", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,

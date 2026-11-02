@@ -156,12 +156,13 @@ def fill_tour(card, progress, title, subtitle, text, c, buttons, extra=(), hint=
     spacer(lay, 14)
 
 
-def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None, give_up=None):
+def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None, give_up=None, extra=None):
     """карточка вопроса викторины.
     progress - (строка «Вопрос N из M · Ошибок: K», доля пройденных вопросов, доля оставшегося времени или None);
     feedback - (текст, роль цвета) после ответа или None;
     options - [(ключ, название)] для кнопок-вариантов, on_pick(ключ) по нажатию; на кнопке - значок
-    клавиши-цифры, которая её нажимает; give_up - (текст, функция) кнопки «Сдаться» под вариантами.
+    клавиши-цифры, которая её нажимает; give_up - (текст, функция) кнопки «Сдаться» под вариантами;
+    extra - виджет над вариантами (вращающаяся 3D-модель в «Угадай по 3D»).
     Возвращает (шапку QuizProgress, {ключ: кнопка})."""
     lay = card.lay
     clear(lay)
@@ -171,6 +172,8 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
     put(lay, label(hint, "muted"), bottom=10)
     if feedback:
         put(lay, label(feedback[0], feedback[1], bold=True), bottom=10)
+    if extra is not None:
+        put(lay, extra, bottom=10, align="center")
     buttons = {}
     for i, (key, name) in enumerate(options):
         b = put(lay, flat_button(name, lambda k=key: on_pick(k), anchor="w", padx=10), bottom=8)

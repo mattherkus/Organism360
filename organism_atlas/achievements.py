@@ -14,6 +14,7 @@ from .quiz import CLASSIC_MODES
 
 LEGACY_ORGANS = 18          # столько органов было на мужской схеме, пока игры не записывали их число
 MEMORY = 10                 # «Долгая память»: столько карточек дошли до коробки 4 (повтор через 8 дней)
+DAILY = 5                   # «Разминка»: столько дней подряд сыграно «Испытание дня»
 
 
 def scholar_goal():
@@ -39,15 +40,21 @@ def _day(r):
         return None
 
 
-def play_days(data):
-    """дни, в которые была хотя бы одна игра, по возрастанию"""
-    return sorted({d for d in map(_day, data["results"]) if d is not None})
+def play_days(data, mode=None):
+    """дни, в которые была хотя бы одна игра (режима mode, если он задан), по возрастанию"""
+    return sorted({d for d in (_day(r) for r in data["results"] if mode is None or r.get("mode") == mode)
+                   if d is not None})
 
 
-def streak(data, today=None):
+def mode_streak(data, mode, today=None):
+    """сколько дней подряд, по сегодня (или по вчера), играли в режим mode («Испытание дня»)"""
+    return streak(data, today, mode)
+
+
+def streak(data, today=None, mode=None):
     """текущая серия: дней подряд с игрой, заканчивая сегодня или вчера (0 - серия прервалась)"""
     today = today or datetime.date.today()
-    days = set(play_days(data))
+    days = set(play_days(data, mode))
     d = today if today in days else today - datetime.timedelta(days=1)
     n = 0
     while d in days:
@@ -56,11 +63,11 @@ def streak(data, today=None):
     return n
 
 
-def best_streak(data):
-    """самая длинная серия за всю сохранённую историю"""
+def best_streak(data, mode=None):
+    """самая длинная серия за всю сохранённую историю (игр режима mode, если он задан)"""
     best = run = 0
     prev = None
-    for d in play_days(data):
+    for d in play_days(data, mode):
         run = run + 1 if prev is not None and (d - prev).days == 1 else 1
         best, prev = max(best, run), d
     return best
@@ -97,6 +104,9 @@ ACHIEVEMENTS = (
     ("streak7", lambda d: best_streak(d) >= 7),
     ("scholar", lambda d: len(_learned(d)) >= scholar_goal()),
     ("memory", lambda d: sum(isinstance(c.get("box"), int) and c["box"] >= 4 for c in d["cards"].values()) >= MEMORY),
+    ("daily", lambda d: best_streak(d, "daily") >= DAILY),
+    ("exam5", lambda d: any(r.get("mode") == "exam" and r.get("total", 0) >= 10 and r.get("first_try", 0) * 10
+                            >= 9 * r.get("total", 0) for r in d["results"])),
 )
 KEYS = tuple(k for k, _ in ACHIEVEMENTS)
 

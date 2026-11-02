@@ -9,16 +9,23 @@ import time
 from . import i18n, questions, settings
 from .i18n import t
 
-# найди орган / угадай название / угадай по факту / вперемешку / найди кость или мышцу
-MODES = ("find", "name", "facts", "mix", "body")
+# найди орган / угадай название / угадай по факту / вперемешку / угадай по 3D-модели / найди кость или мышцу /
+# расставь органы маршрута по порядку (order.py) / экзамен / испытание дня
+MODES = ("find", "name", "facts", "mix", "model", "body", "order", "exam", "daily")
 CLASSIC_MODES = ("find", "name", "facts", "mix")  # четыре викторины по органам (достижение «Универсал»)
 NOT_ORGANS = ("body",)                           # режимы, где спрашивают не об органах, а о костях и мышцах
+MIXED_MODES = ("mix", "exam", "daily")           # у каждого вопроса свой случайный тип (kinds_for)
+NO_CARDS = ("exam", "daily")                     # не двигают карточки повторения: набор вопросов задан заранее
+DAILY_LENGTH = 10                                # вопросов в «Испытании дня»
+EXAM_SECONDS = 30                                # секунд на вопрос в «Экзамене» (время общее на весь экзамен)
+EXAM_GRADES = ((90, 5), (75, 4), (50, 3), (0, 2))   # оценка по доле верных ответов, %
 # типы вопросов: три режима и ещё пять, которые есть только во «Вперемешку»:
 # where - угадай орган по расположению, system - к какой системе органов относится орган,
 # disease - какой орган поражает болезнь, latin - что за орган по латинскому названию,
 # truth - верно ли утверждение об органе (факт с карточки этого или другого органа)
-# body - найди кость или мышцу (structures.py): как find, но органы скрыты, а видны скелет и мышцы
-KINDS = ("find", "name", "facts", "where", "system", "disease", "latin", "truth", "body")
+# body - найди кость или мышцу (structures.py): как find, но органы скрыты, а видны скелет и мышцы;
+# model - что за орган на 3D-модели (варианты - названия, как у name)
+KINDS = ("find", "name", "facts", "where", "system", "disease", "latin", "truth", "body", "model")
 LEVELS = settings.CHOICES["quiz_level"]
 TIMERS = settings.CHOICES["quiz_timer"]
 LENGTHS = settings.CHOICES["quiz_length"]        # сколько вопросов в игре; 0 - про все органы
@@ -200,13 +207,16 @@ class QuizSession:
     timer - секунд на вопрос (0 - без таймера); clock - источник времени (подменяется в тестах)."""
 
     def __init__(self, keys, rng=random, pool=None, mode="find", level="medium", timer=0, clock=time.monotonic,
-                 count=None):
+                 count=None, single_try=False, total_time=0):
         self.rng, self.mode, self.level, self.timer, self.clock = rng, mode, level, timer, clock
         keys = list(keys)
         self.q = rng.sample(keys, game_length(count, len(keys)))     # какие органы и в каком порядке
         self.pool = list(pool) if pool is not None else list(self.q)
         # тип каждого вопроса
-        self.kinds = [rng.choice(kinds_for(k)) for k in self.q] if mode == "mix" else [mode] * len(self.q)
+        self.kinds = [rng.choice(kinds_for(k)) for k in self.q] if mode in MIXED_MODES else [mode] * len(self.q)
+        # «Экзамен»: на вопрос одна попытка (ошибка - сразу следующий вопрос) и общее время на всю игру
+        self.single_try, self.total_time = single_try, total_time
+        self.log = []                                # [(номер вопроса, верно ли, что ответили или None)]
         self.i = 0                                   # номер текущего вопроса
         self.errors = 0                              # всего ошибок (включая вышедшее время)
         self.first_try = 0                           # верных с первой попытки
@@ -266,10 +276,12 @@ class QuizSession:
         """секунд с начала игры (после конца - длительность игры)"""
         return (self.ended if self.ended is not None else self.clock()) - self.started
 
-    def _next(self, ok):
+    def _next(self, ok, given=None):
         self.results[self.q[self.i]] = ok
+        self.log.append((self.i, ok, given))
         self.slipped = False
-        self.deadline = None
+        if not self.total_time:                      # общее время «Экзамена» идёт дальше
+            self.deadline = None
         self.i += 1
         if self.finished:
             self.ended = self.clock()
@@ -287,15 +299,28 @@ class QuizSession:
         if key == self.correct():
             if not self.slipped:
                 self.first_try += 1
-            self._next(not self.slipped)
+            self._next(not self.slipped, key)
             return True
         self._miss()
+        if self.single_try:                          # «Экзамен»: вторая попытка не даётся
+            self._next(False, key)
         return False
+
+    @property
+    def time_limit(self):
+        """секунд на вопрос или на всю игру («Экзамен»); 0 - без времени"""
+        return self.total_time or self.timer
+
+    @property
+    def organ_count(self):
+        """сколько органов на схеме - для «Марафона» (игра про все органы); None - игра не про органы схемы
+        (кости и мышцы) или про заданный набор («Испытание дня»)"""
+        return None if self.mode in NOT_ORGANS or self.mode == "daily" else len(self.pool)
 
     # --- таймер: интерфейс запускает его, когда вопрос появился на экране
     def start_timer(self):
-        if self.timer and not self.finished:
-            self.deadline = self.clock() + self.timer
+        if self.time_limit and not self.finished and self.deadline is None:
+            self.deadline = self.clock() + self.time_limit
 
     def remaining(self):
         """сколько секунд осталось на текущий вопрос; None - таймера нет или он не запущен"""
@@ -308,6 +333,12 @@ class QuizSession:
         rem = self.remaining()
         if rem is None or rem > 0:
             return None
+        if self.total_time:                          # время «Экзамена» вышло: оставшиеся вопросы - без ответа
+            key = None
+            while not self.finished:
+                self.timeouts += 1
+                key = self._skip()
+            return key
         self.timeouts += 1
         return self._skip()
 
@@ -317,6 +348,14 @@ class QuizSession:
         if not self.slipped:                         # уже ошибся на этом вопросе - вторую ошибку не берём
             self._miss()
         self._next(False)
+        return key
+
+    def finish_all(self):
+        """закончить игру сейчас: оставшиеся вопросы - ошибки без ответа («Завершить» в «Экзамене»: в отличие
+        от «Сдаться», вопросы не выбрасываются и оценка считается от всех). Возвращает последний орган"""
+        key = None
+        while not self.finished:
+            key = self._skip()
         return key
 
     def give_up(self):
@@ -412,26 +451,50 @@ class QuizSession:
     def prompt(self):
         """текст вопроса: факт («Угадай по факту»), расположение органа (вопрос «где находится»), болезнь,
         латинское название или утверждение для «верно ли»"""
-        if self.finished:
-            return ""
-        if self.kind == "facts":
-            return prompt_text(self.current, self.prompts[self.current])
-        if self.kind == "where":
-            return i18n.organ(self.current, "location")
-        if self.kind == "disease":
+        return "" if self.finished else self.prompt_at(self.i)
+
+    def prompt_at(self, i):
+        """текст вопроса номер i (для разбора ошибок после игры)"""
+        key, kind = self.q[i], self.kinds[i]
+        if kind == "facts":
+            return prompt_text(key, self.prompts[key])
+        if kind == "where":
+            return i18n.organ(key, "location")
+        if kind == "disease":
             from . import diseases
-            return diseases.text(self.picks[self.i], "name")
-        if self.kind == "latin":
-            group = self.latin_part()
-            return latin_part_name(self.current, group) if group else latin_name(self.current)
-        if self.kind == "truth":
-            owner, fid = self.picks[self.i]
+            return diseases.text(self.picks[i], "name")
+        if kind == "latin":
+            group = self.picks.get(i)
+            return latin_part_name(key, group) if group else latin_name(key)
+        if kind == "truth":
+            owner, fid = self.picks[i]
             return i18n.fact(owner, fid)
         return ""
+
+    def given_text(self, i, given):
+        """что ответили на вопрос номер i словами (для разбора ошибок); None - ответа не было"""
+        if given is None:
+            return None
+        if given.startswith("#"):
+            return questions.answer_text(self.q[i], self.prompts[self.q[i]], int(given[1:]))
+        if given.startswith("@"):
+            return t("system_" + given[1:])
+        if given.startswith("?"):
+            return t("truth_yes" if given == "?1" else "truth_no")
+        return i18n.name(given)
 
     @property
     def percent(self):
         return round(100 * self.first_try / self.total) if self.total else 0
+
+    @property
+    def grade(self):
+        """оценка «Экзамена» от 2 до 5 по доле верных ответов (EXAM_GRADES)"""
+        return next(g for p, g in EXAM_GRADES if self.percent >= p)
+
+    def mistakes(self):
+        """вопросы с ошибкой: [(номер вопроса, орган, что ответили или None)] - для разбора после «Экзамена»"""
+        return [(i, self.q[i], given) for i, ok, given in self.log if not ok]
 
     @property
     def verdict(self):
@@ -443,6 +506,15 @@ class QuizSession:
         if pct >= 40:
             return t("verdict_ok")
         return t("verdict_bad")
+
+
+def daily_session(body, day=None, clock=time.monotonic):
+    """«Испытание дня»: в этот день у всех одни и те же DAILY_LENGTH вопросов «Вперемешку» (для схемы тела body)"""
+    import datetime
+    from .organs import for_body
+    day = day or datetime.date.today()
+    rng = random.Random(day.toordinal() * 2 + (body == "male"))
+    return QuizSession(for_body(body), rng=rng, mode="daily", level="medium", count=DAILY_LENGTH, clock=clock)
 
 
 def format_time(seconds):

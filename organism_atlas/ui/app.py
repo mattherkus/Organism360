@@ -697,10 +697,11 @@ class App(QWidget):
 
     def on_move(self, x, y):
         """мышь над схемой; x, y - в пикселях схемы"""
-        if not self.ready() or self.kind() not in ("study", "find", "body"):   # остальные - кнопками
+        if not self.ready() or self.kind() not in ("study", "find", "body", "order"):   # остальные - кнопками
             return
-        if self.kind() in ("find", "body") and self.quiz.session and self.quiz.session.level == "hard":
-            return                                      # на сложном уровне орган под курсором не подсвечивается
+        s = self.quiz.session
+        if self.kind() != "study" and s and (s.level == "hard" or self.quiz.exam()):
+            return                                      # на сложном уровне и в экзамене подсветки под курсором нет
         key = self.thing_at(x, y)
         if key != self.cur:
             self.cur = key
@@ -817,7 +818,7 @@ class App(QWidget):
         if not self.ready():
             return
         key = self.thing_at(x, y)
-        if key is None or self.kind() not in ("study", "find", "body"):
+        if key is None or self.kind() not in ("study", "find", "body", "order"):
             return
         if self.mode != "study":
             self.quiz.answer(key)
