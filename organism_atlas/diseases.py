@@ -30,10 +30,18 @@ ON_CARD = {
     "uterus": ("fibroids", "endometriosis", "cervical_cancer", "endometritis"),
     "ovaries": ("pcos", "ovarian_cyst", "ovarian_cancer", "ovarian_apoplexy"),
     "prostate": ("prostatitis", "bph", "prostate_cancer"),
+    "aorta": ("aortic_aneurysm", "aortic_dissection", "atherosclerosis", "coarctation"),
+    "vena_cava": ("svc_syndrome", "ivc_thrombosis"),
+    "spinal_cord": ("spinal_injury", "herniated_disc", "multiple_sclerosis", "carpal_tunnel"),
+    "thymus": ("myasthenia", "thymoma"),
+    "pituitary": ("pituitary_adenoma", "acromegaly", "hypopituitarism", "diabetes_insipidus"),
+    "diaphragm": ("hiatal_hernia", "diaphragmatic_hernia", "diaphragm_paralysis", "hiccups"),
+    "lymph_nodes": ("lymphadenitis", "lymphoma", "lymphedema"),
 }
 
 # органы, которых нет в карточке, но болезнь заметно их поражает
-EXTRA_ORGANS = {"cystic_fibrosis": ("lungs", "intestines"), "hiatal_hernia": ("stomach",)}
+EXTRA_ORGANS = {"cystic_fibrosis": ("lungs", "intestines"), "hiatal_hernia": ("stomach",),
+                "multiple_sclerosis": ("brain",), "atherosclerosis": ("heart", "brain"), "lymphoma": ("spleen",)}
 
 # {болезнь: (органы)}: сначала органы, в чьих карточках она записана (в порядке ORGANS), затем EXTRA_ORGANS
 ORGANS_OF = {}

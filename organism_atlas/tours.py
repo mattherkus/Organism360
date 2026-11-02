@@ -11,11 +11,14 @@ from .organs import for_body
 
 TOURS = {
     "food": ["esophagus", "stomach", "liver", "gallbladder", "pancreas", "intestines", "appendix", "rectum"],
-    "air": ["trachea", "lungs", "heart", "spleen"],
+    "air": ["trachea", "lungs", "diaphragm", "heart", "spleen"],
+    "blood": ["vena_cava", "heart", "lungs", "aorta", "kidneys"],
     "water": ["kidneys", "bladder", "prostate"],
-    "control": ["brain", "thyroid", "adrenals", "pancreas", "ovaries"],
+    "control": ["brain", "spinal_cord", "pituitary", "thyroid", "adrenals", "pancreas", "ovaries"],
+    "defense": ["thymus", "lymph_nodes", "spleen", "appendix"],
 }
-TOPICS = {"food": "digestive", "air": "respiratory", "water": "urinary", "control": "endocrine"}
+TOPICS = {"food": "digestive", "air": "respiratory", "blood": "circulatory", "water": "urinary",
+          "control": "endocrine", "defense": "immune"}
 
 
 def steps(tour, body):

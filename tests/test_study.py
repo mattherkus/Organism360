@@ -25,9 +25,9 @@ class SearchTests(unittest.TestCase):
 
     def test_by_system_name(self):
         found = search(list(ORGANS), "дыхател")
-        self.assertEqual(set(found), {"lungs", "trachea"})
+        self.assertEqual(set(found), {"lungs", "trachea", "diaphragm"})
         i18n.set_lang("en")
-        self.assertEqual(set(search(list(ORGANS), "respir")), {"lungs", "trachea"})
+        self.assertEqual(set(search(list(ORGANS), "respir")), {"lungs", "trachea", "diaphragm"})
 
     def test_only_given_keys(self):
         self.assertEqual(search(for_body("male"), "матк"), [])

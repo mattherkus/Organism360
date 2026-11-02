@@ -1,0 +1,80 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Здесь созревают T-лимфоциты.",
+      "en": "T cells mature here."
+    },
+    {
+      "level": "easy",
+      "ru": "Больше всего работает в детстве, а с возрастом замещается жиром.",
+      "en": "Works hardest in childhood and is replaced by fat with age."
+    },
+    {
+      "level": "easy",
+      "ru": "Когда тимус крупнее всего относительно размеров тела?",
+      "en": "When is the thymus largest compared with the size of the body?",
+      "answer": {
+        "ru": "У новорождённого",
+        "en": "In a newborn"
+      },
+      "wrong": {
+        "ru": [
+          "У взрослого",
+          "В старости"
+        ],
+        "en": [
+          "In an adult",
+          "In old age"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Лежит в груди за грудиной, над сердцем.",
+      "en": "Lies in the chest behind the breastbone, above the heart."
+    },
+    {
+      "level": "medium",
+      "ru": "Здесь лимфоциты учатся не нападать на собственные клетки организма.",
+      "en": "Here white blood cells learn not to attack the body's own cells."
+    },
+    {
+      "level": "medium",
+      "ru": "Что значит буква T в слове «T-лимфоциты»?",
+      "en": "What does the T in 'T cells' stand for?",
+      "answer": {
+        "ru": "Тимус",
+        "en": "Thymus"
+      },
+      "wrong": {
+        "ru": [
+          "Ткань",
+          "Трахея",
+          "Тонкая кишка"
+        ],
+        "en": [
+          "Tissue",
+          "Trachea",
+          "Tonsil"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Выделяет тимозины — гормоны, которые помогают созревать иммунным клеткам.",
+      "en": "Releases hormones that help immune cells mature."
+    },
+    {
+      "level": "hard",
+      "ru": "Опухоль этого органа часто сопровождается миастенией — болезнью, при которой слабеют мышцы.",
+      "en": "A tumor of this organ often comes with myasthenia gravis, a disease that weakens the muscles."
+    },
+    {
+      "level": "hard",
+      "ru": "Состоит из двух долей, похожих на зубцы вилки.",
+      "en": "Has two lobes shaped like the prongs of a fork."
+    }
+  ]
+}

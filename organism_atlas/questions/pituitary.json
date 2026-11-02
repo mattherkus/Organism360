@@ -1,0 +1,82 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Маленькая железа под мозгом, которая командует другими железами.",
+      "en": "A small structure beneath the brain that gives orders to other hormone-making organs."
+    },
+    {
+      "level": "easy",
+      "ru": "Его гормон роста во многом определяет, каким высоким вырастет ребёнок.",
+      "en": "Its growth hormone largely decides how tall a child will grow."
+    },
+    {
+      "level": "easy",
+      "ru": "Какого размера гипофиз?",
+      "en": "How big is the pituitary gland?",
+      "answer": {
+        "ru": "С горошину",
+        "en": "About the size of a pea"
+      },
+      "wrong": {
+        "ru": [
+          "С кулак",
+          "С яблоко",
+          "С ладонь"
+        ],
+        "en": [
+          "About the size of a fist",
+          "About the size of an apple",
+          "About the size of a palm"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Лежит в углублении основания черепа — турецком седле.",
+      "en": "Sits in a hollow at the base of the skull called the sella turcica."
+    },
+    {
+      "level": "medium",
+      "ru": "Подчиняется гипоталамусу и висит под ним на тонкой ножке.",
+      "en": "Takes orders from the hypothalamus and hangs below it on a thin stalk."
+    },
+    {
+      "level": "medium",
+      "ru": "Его гормон пролактин запускает выработку грудного молока.",
+      "en": "Its hormone prolactin starts the production of breast milk."
+    },
+    {
+      "level": "hard",
+      "ru": "Из его задней доли в кровь выходят окситоцин и вазопрессин.",
+      "en": "Oxytocin and vasopressin enter the blood from its back lobe."
+    },
+    {
+      "level": "hard",
+      "ru": "Его опухоль может сдавить зрительный перекрёст и сузить поле зрения.",
+      "en": "A tumor here can press on the optic chiasm and narrow the field of vision."
+    },
+    {
+      "level": "hard",
+      "ru": "Какой гормон гипофиза управляет щитовидной железой?",
+      "en": "Which pituitary hormone controls the thyroid?",
+      "answer": {
+        "ru": "Тиреотропный (ТТГ)",
+        "en": "Thyroid-stimulating hormone (TSH)"
+      },
+      "wrong": {
+        "ru": [
+          "Пролактин",
+          "Окситоцин",
+          "Инсулин"
+        ],
+        "en": [
+          "Prolactin",
+          "Oxytocin",
+          "Insulin"
+        ]
+      }
+    }
+  ]
+}

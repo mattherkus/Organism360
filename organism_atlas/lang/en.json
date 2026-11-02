@@ -586,6 +586,125 @@
         "Prostate cancer is one of the most common cancers in men",
         "Enzymes in its secretion make the seminal fluid more liquid"
       ]
+    },
+    "aorta": {
+      "name": "Aorta",
+      "desc": "The largest artery: it leaves the left ventricle of the heart and carries oxygen-rich blood to the whole body.",
+      "location": "Starts at the heart, arches above it and runs down along the spine into the abdomen, where it splits into the two iliac arteries",
+      "facts": {
+        "diameter": "About 2.5–3 cm wide in an adult, roughly the width of a thumb",
+        "elastic": "Its elastic wall stretches with every heartbeat and smooths out the surges of blood",
+        "branches": "Arteries to the head and arms leave the arch; arteries to the abdominal organs and kidneys leave the abdominal part"
+      },
+      "daily": [
+        "At rest about 5 liters of blood pass through it every minute",
+        "In an adult it is about 30 cm long, from the heart to the lower abdomen",
+        "The pulse in your neck and wrist is a wave that each heartbeat sends along the aorta and its branches",
+        "Its wall has three layers; the middle one is made of elastic fibers and muscle cells",
+        "The aorta passes into the abdomen through its own opening in the diaphragm"
+      ]
+    },
+    "vena_cava": {
+      "name": "Venae cavae",
+      "desc": "The two largest veins, superior and inferior: they collect oxygen-poor blood from the whole body and bring it to the right atrium.",
+      "location": "The superior one is in the chest above the heart, to the right of the aorta; the inferior one runs up from the pelvis to the right of the spine, behind the liver, to the heart",
+      "facts": {
+        "widest": "The inferior one is the widest vein in the body, about 2–3 cm across",
+        "pressure": "Blood pressure inside them is very low: muscle contractions and breathing help push the blood toward the heart",
+        "no_valves": "Unlike the veins of the legs, they have no valves inside"
+      },
+      "daily": [
+        "The inferior one drains the legs, pelvis, kidneys and liver; the superior one drains the head, neck and arms",
+        "The superior one is short, only about 7 cm long",
+        "When you breathe in, pressure in the chest drops and blood flows back to the heart faster",
+        "The Latin word cavus means 'hollow': these veins have a very wide channel",
+        "The inferior one passes through its own opening in the central tendon of the diaphragm"
+      ]
+    },
+    "spinal_cord": {
+      "name": "Spinal cord and nerves",
+      "desc": "A cord of nerve tissue inside the spine: it carries signals between the brain and the body and handles simple reflexes. 31 pairs of spinal nerves branch off it.",
+      "location": "Inside the vertebral canal, from the base of the skull to the first or second lumbar vertebra; branches spread out to the arms, legs and body wall",
+      "facts": {
+        "length": "About 45 cm long and roughly as thick as a little finger",
+        "reflex": "The knee-jerk reflex is handled here, without the brain",
+        "pairs": "31 pairs of nerves: 8 cervical, 12 thoracic, 5 lumbar, 5 sacral and 1 coccygeal"
+      },
+      "daily": [
+        "The longest nerve in the body is the sciatic nerve: it runs from the lower back to the foot",
+        "Signals travel along thick nerve fibers at up to 100 m/s",
+        "Below the second lumbar vertebra the canal holds only a 'horse's tail' of nerve roots, so lumbar punctures are done lower down",
+        "The 'funny bone' is really the ulnar nerve, which lies right under the skin at the elbow",
+        "Like the brain, it is bathed in cerebrospinal fluid"
+      ]
+    },
+    "thymus": {
+      "name": "Thymus",
+      "desc": "An immune-system gland where T cells, the white blood cells that recognize invaders, mature and are 'trained'.",
+      "location": "In the chest behind the breastbone, above the heart and in front of the large blood vessels",
+      "facts": {
+        "childhood": "It works hardest in childhood; by old age it is almost entirely replaced by fat",
+        "weight": "Weighs about 30–40 g in a teenager",
+        "lobes": "Its two lobes look like the prongs of a fork, which gave it its Russian name"
+      },
+      "daily": [
+        "The T in 'T cells' stands for thymus",
+        "In a newborn it weighs about 10–15 g, larger for the body's size than at any later age",
+        "Here white blood cells learn not to attack the body's own cells",
+        "Its hormones, thymosins, help immune cells mature",
+        "A baby born without it is almost defenseless against infections"
+      ]
+    },
+    "pituitary": {
+      "name": "Pituitary gland",
+      "desc": "A small gland beneath the brain that conducts the hormone orchestra: it controls the thyroid, adrenal glands, sex glands and growth.",
+      "location": "In a hollow at the base of the skull called the sella turcica, hanging on a stalk below the hypothalamus",
+      "facts": {
+        "size": "About the size of a pea; weighs about 0.5 g",
+        "lobes": "The front lobe makes hormones; the back lobe stores and releases hormones from the hypothalamus",
+        "growth": "Its growth hormone largely decides how tall a child will grow"
+      },
+      "daily": [
+        "Oxytocin and vasopressin enter the blood from its back lobe",
+        "It takes orders from the hypothalamus, the part of the brain just above it",
+        "Too much growth hormone in an adult causes acromegaly: the hands, feet and facial features grow larger",
+        "Its other name, hypophysis, is Greek for 'outgrowth below'",
+        "Its hormone prolactin starts the production of breast milk"
+      ]
+    },
+    "diaphragm": {
+      "name": "Diaphragm",
+      "desc": "A dome-shaped muscle that separates the chest cavity from the abdomen and does most of the work of breathing in.",
+      "location": "Below the lungs and heart, above the liver, stomach and spleen; attached to the lower ribs, breastbone and spine",
+      "facts": {
+        "inhale": "When you breathe in it contracts and moves down, and the lungs fill with air",
+        "openings": "The esophagus, aorta and inferior vena cava pass through it",
+        "excursion": "In quiet breathing the dome drops 1–2 cm; in deep breathing up to 10 cm"
+      },
+      "daily": [
+        "Hiccups are sudden involuntary contractions of this muscle",
+        "It works nonstop for life: about 20,000 breaths a day",
+        "You can control it on purpose, and in sleep it works on its own",
+        "It is driven by the phrenic nerve, which starts up in the neck",
+        "Laughing, coughing and sneezing are its work too"
+      ]
+    },
+    "lymph_nodes": {
+      "name": "Lymph nodes",
+      "desc": "Pea- or bean-sized filters of lymph: they trap germs and cancer cells, and immune cells learn to fight them there.",
+      "location": "In clusters along the vessels of the body's drainage system: in the neck, armpits and groin, and also in the chest and abdomen",
+      "facts": {
+        "count": "There are about 500–700 of them in the body",
+        "cold": "During a cold the nodes in the neck swell and hurt: an infection is being fought",
+        "flow": "Lymph flows through them slowly, without a pump: muscle contractions push it along"
+      },
+      "daily": [
+        "About 2–3 liters of lymph return to the blood every day",
+        "The lymphatic system has no 'heart' of its own",
+        "B cells make antibodies, and T cells destroy infected cells",
+        "The largest lymphatic vessel, the thoracic duct, empties into the veins at the base of the neck",
+        "Doctors feel the nodes in the neck, armpits and groin: their size says a lot about health"
+      ]
     }
   },
   "parts": {
@@ -678,7 +797,8 @@
         "trachea": "Inhaled air passes through the nose and larynx into the trachea. Rings of cartilage keep it from collapsing, and tiny cilia sweep dust back up to the throat.",
         "lungs": "The trachea splits into bronchi, which branch smaller and smaller and end in alveoli — tiny air sacs. Oxygen passes through their thin walls into the blood, and carbon dioxide passes back into the air.",
         "heart": "Oxygen-rich blood from the lungs flows into the left side of the heart, which pumps it into the aorta and on to every organ. Meanwhile the right side sends “used” blood back to the lungs.",
-        "spleen": "The spleen filters the blood, removing old red blood cells and germs, and its lymphoid tissue supports immunity. You can live without it, but defense against some infections is weaker."
+        "spleen": "The spleen filters the blood, removing old red blood cells and germs, and its lymphoid tissue supports immunity. You can live without it, but defense against some infections is weaker.",
+        "diaphragm": "Breathing in is mostly the diaphragm's job: the dome of this muscle contracts and moves down, the chest cavity grows, and air flows into the lungs. When it relaxes, you breathe out."
       }
     },
     "water": {
@@ -698,7 +818,30 @@
         "thyroid": "The thyroid releases hormones that contain iodine. They set the pace of metabolism: too little makes a person cold and tired, too much makes them lose weight and feel anxious.",
         "adrenals": "The adrenal glands sit on top of the kidneys. When you are frightened they release adrenaline: the heart beats faster and muscles get ready to act. Cortisol helps cope with stress, and aldosterone keeps salts in balance.",
         "pancreas": "The pancreas is also a hormone gland: insulin lowers blood sugar after a meal, and glucagon raises it when we are hungry.",
-        "ovaries": "The ovaries make the female sex hormones, estrogens and progesterone, which control the menstrual cycle."
+        "ovaries": "The ovaries make the female sex hormones, estrogens and progesterone, which control the menstrual cycle.",
+        "spinal_cord": "The spinal cord is the main cable: signals travel along it and its 31 pairs of nerves from the brain to the muscles and back. It handles the simplest reflexes by itself.",
+        "pituitary": "The pituitary is a pea-sized gland under the brain that conducts the other glands: on orders from the hypothalamus it releases hormones that switch on the thyroid, adrenal glands, sex glands and growth."
+      }
+    },
+    "blood": {
+      "title": "Circles of circulation",
+      "intro": "Blood keeps going round: from the body to the heart, from the heart to the lungs and back, and then around the whole body again. Let's follow the route.",
+      "steps": {
+        "vena_cava": "Blood that has given its oxygen to the body's cells gathers in the two largest veins, the superior and inferior venae cavae, and returns to the heart.",
+        "heart": "The right side of the heart sends dark venous blood to the lungs: the pulmonary circulation. The left side takes it back, now full of oxygen, and pumps it into the systemic circulation.",
+        "lungs": "In the alveoli of the lungs the blood gives up carbon dioxide and picks up oxygen, turning bright red.",
+        "aorta": "From the left ventricle the blood enters the aorta, the main artery of the systemic circulation. Its branches deliver oxygen to the head, arms, abdominal organs and legs.",
+        "kidneys": "The kidneys receive almost a quarter of all the blood the heart pumps out and clean it of waste. Then the blood flows on into the inferior vena cava, and the circle is closed."
+      }
+    },
+    "defense": {
+      "title": "Defenders of the body",
+      "intro": "The immune system is not one organ but a whole network: in some organs defender cells are born and trained, in others they meet the enemy.",
+      "steps": {
+        "thymus": "The thymus is a 'school' for T cells: here they learn to tell the body's own cells from foreign ones. It works hardest in childhood.",
+        "lymph_nodes": "Lymph nodes are filters along the path of lymph. When germs arrive, immune cells multiply and the node swells.",
+        "spleen": "The spleen filters the blood itself: it removes old red blood cells and bacteria and keeps a reserve of immune cells.",
+        "appendix": "The wall of the appendix is full of lymphoid tissue: it helps guard the gut and may keep a reserve of helpful bacteria."
       }
     }
   },
@@ -1214,11 +1357,165 @@
       "symptoms": "No signs in the early stages; later, difficulty urinating and bone pain.",
       "causes": "Age, family history, African ancestry.",
       "treatment": "A PSA blood test and MRI help find it early. Slow tumours are watched, others are treated with surgery, radiotherapy or hormones."
+    },
+    "aortic_aneurysm": {
+      "name": "Aortic aneurysm",
+      "desc": "The aortic wall weakens and bulges out like a balloon. A large aneurysm can burst, causing life-threatening bleeding.",
+      "symptoms": "Often none; it is found on an ultrasound. Sometimes a pulsing lump in the abdomen or pain in the belly or back.",
+      "causes": "Atherosclerosis, high blood pressure, smoking, older age, inherited connective-tissue disorders.",
+      "treatment": "A small one is watched with ultrasound and blood pressure is treated; a large one is replaced with a graft, by surgery or a stent-graft put in through an artery."
+    },
+    "aortic_dissection": {
+      "name": "Aortic dissection",
+      "desc": "Blood forces its way through a tear in the inner layer of the aorta and splits its wall apart. A medical emergency.",
+      "symptoms": "Sudden tearing pain in the chest or back that may move; weakness, fainting, different blood pressure in the two arms.",
+      "causes": "High blood pressure, atherosclerosis, inherited connective-tissue disorders (Marfan syndrome), injury.",
+      "treatment": "Emergency care: blood pressure and heart rate are lowered; if the ascending part is affected, urgent surgery."
+    },
+    "atherosclerosis": {
+      "name": "Atherosclerosis",
+      "desc": "Plaques of fat and cholesterol build up in artery walls: the channel narrows and blood flow weakens.",
+      "symptoms": "Unnoticed for a long time. Later it depends on where the narrowing is: chest pain on exertion, leg pain when walking, signs of stroke.",
+      "causes": "Smoking, high cholesterol, high blood pressure, diabetes, excess weight, inactivity, age.",
+      "treatment": "Quitting smoking, exercise, less animal fat in the diet; medicines for cholesterol and blood pressure; a stent or bypass for severe narrowing."
+    },
+    "coarctation": {
+      "name": "Coarctation of the aorta",
+      "desc": "A narrowing of the aorta present from birth, usually just after the arch: pressure is high above it and low below it.",
+      "symptoms": "High blood pressure in the arms and a weak pulse in the legs, headaches, cold feet; in babies, fast breathing and poor weight gain.",
+      "causes": "The vessel develops abnormally before birth; it often comes with other heart defects.",
+      "treatment": "The narrowing is widened with a balloon and stent or removed by surgery; blood pressure is then checked for life."
+    },
+    "svc_syndrome": {
+      "name": "Superior vena cava syndrome",
+      "desc": "The superior vena cava is squeezed or blocked, so blood from the head, neck and arms cannot drain properly to the heart.",
+      "symptoms": "Swelling of the face, neck and arms, bulging veins on the neck and chest, shortness of breath, cough, headache, worse when lying down.",
+      "causes": "Most often a tumor in the chest (lung cancer, lymphoma); less often a clot around a catheter or pacemaker lead.",
+      "treatment": "The cause is treated (chemotherapy or radiotherapy for a tumor), clots are dissolved with medicines; the vein can be opened with a stent."
+    },
+    "ivc_thrombosis": {
+      "name": "Inferior vena cava thrombosis",
+      "desc": "A blood clot partly or fully blocks the inferior vena cava; it often spreads up from clots in the leg or pelvic veins.",
+      "symptoms": "Swelling and heaviness in both legs, enlarged veins on the belly, lower back pain; a piece of clot can break off and reach the lungs.",
+      "causes": "Long immobility, surgery, tumors, pregnancy, blood that clots too easily, a filter placed in the vein.",
+      "treatment": "Medicines that stop blood from clotting (anticoagulants); sometimes the clot is dissolved or removed through a catheter."
+    },
+    "spinal_injury": {
+      "name": "Spinal cord injury",
+      "desc": "Damage to the spinal cord when the spine is injured: signals below the injury stop getting through.",
+      "symptoms": "Weakness or paralysis and loss of feeling below the level of injury, problems with breathing (neck injuries), bowels and bladder.",
+      "causes": "Road accidents, falls from height, diving into shallow water, sports injuries, wounds.",
+      "treatment": "Keeping the spine still right after the injury, urgent surgery, then long rehabilitation. A person who may have a spinal injury should not be moved unless necessary."
+    },
+    "herniated_disc": {
+      "name": "Herniated disc",
+      "desc": "The jelly-like core of a disc between vertebrae bulges out through a crack and presses on a nerve root.",
+      "symptoms": "Pain in the lower back or neck that spreads into a leg or arm, numbness, tingling, muscle weakness.",
+      "causes": "Wear of the discs with age, lifting heavy things while bending, excess weight, sitting a lot, injury.",
+      "treatment": "Usually gets better without surgery: painkillers, exercises, physiotherapy; surgery if a nerve is badly compressed."
+    },
+    "multiple_sclerosis": {
+      "name": "Multiple sclerosis",
+      "desc": "The immune system damages the coating of nerve fibers in the brain and spinal cord, so signals pass less well.",
+      "symptoms": "Episodes of blurred vision, numbness, weakness in the arms and legs, unsteadiness, severe tiredness; it may improve between episodes.",
+      "causes": "An autoimmune disease; the risk rises with family history, low vitamin D, smoking and past Epstein–Barr virus infection.",
+      "treatment": "There is no cure yet, but medicines reduce flare-ups and slow the disease; steroids for flare-ups, rehabilitation."
+    },
+    "carpal_tunnel": {
+      "name": "Carpal tunnel syndrome",
+      "desc": "The median nerve is squeezed in a narrow tunnel in the wrist.",
+      "symptoms": "Numbness and tingling in the thumb, index and middle fingers, especially at night; weakness of the hand.",
+      "causes": "Repetitive hand movements, pregnancy, diabetes, an underactive thyroid, rheumatoid arthritis, wrist injuries.",
+      "treatment": "A wrist splint at night, breaks from work, sometimes steroid injections; if that fails, surgery to free the nerve."
+    },
+    "myasthenia": {
+      "name": "Myasthenia gravis",
+      "desc": "The immune system makes antibodies that block nerves from passing commands to muscles. It is often linked to the thymus.",
+      "symptoms": "Muscle weakness that gets worse in the evening and after effort: drooping eyelids, double vision, trouble chewing and swallowing.",
+      "causes": "An autoimmune disease; many patients have an enlarged thymus or a thymus tumor (thymoma).",
+      "treatment": "Medicines that boost signal transmission and drugs that calm the immune system; the thymus is often removed by surgery."
+    },
+    "thymoma": {
+      "name": "Thymoma",
+      "desc": "A tumor of thymus cells that usually grows slowly.",
+      "symptoms": "Often none; it is found on a chest scan. Sometimes cough, pain behind the breastbone, shortness of breath or signs of myasthenia gravis.",
+      "causes": "The cause is unknown; it is most common at 40–60 years of age.",
+      "treatment": "Removal of the thymus together with the tumor, plus radiotherapy or chemotherapy if needed."
+    },
+    "pituitary_adenoma": {
+      "name": "Pituitary adenoma",
+      "desc": "A benign tumor of the pituitary. It may release extra hormones or press on nearby nerves.",
+      "symptoms": "Depends on the hormone: menstrual changes and nipple discharge, signs of acromegaly or Cushing's; a large tumor causes headaches and loss of side vision.",
+      "causes": "Usually unknown; rarely inherited syndromes.",
+      "treatment": "Some tumors shrink with medicines; others are removed by surgery through the nose, sometimes followed by radiotherapy."
+    },
+    "acromegaly": {
+      "name": "Acromegaly",
+      "desc": "An adult has too much growth hormone: the hands, feet, nose, jaw and internal organs get bigger.",
+      "symptoms": "Rings and shoes get tight, facial features coarsen, gaps appear between the teeth, sweating, joint pain; in childhood the excess causes gigantism.",
+      "causes": "Almost always a pituitary adenoma that releases growth hormone.",
+      "treatment": "Surgery to remove the adenoma, medicines that block growth hormone, sometimes radiotherapy."
+    },
+    "hypopituitarism": {
+      "name": "Hypopituitarism",
+      "desc": "The pituitary releases too little of one or more hormones, so the glands it controls work less.",
+      "symptoms": "Weakness, tiredness, feeling cold, low sex drive, menstrual changes; poor growth in children.",
+      "causes": "Pituitary tumors and surgery, head injury, radiotherapy, bleeding into the pituitary.",
+      "treatment": "Lifelong replacement of the missing hormones: thyroid, adrenal and sex hormones, growth hormone."
+    },
+    "diabetes_insipidus": {
+      "name": "Diabetes insipidus",
+      "desc": "There is not enough of the hormone vasopressin (or the kidneys do not respond to it), so the kidneys cannot hold on to water.",
+      "symptoms": "A lot of pale urine, up to 10–20 liters a day, strong thirst, waking at night to urinate.",
+      "causes": "Tumors and injuries around the pituitary and hypothalamus, surgery; less often inherited causes or kidney disease.",
+      "treatment": "A vasopressin substitute (desmopressin) as tablets or nasal spray, drinking to thirst."
+    },
+    "diaphragmatic_hernia": {
+      "name": "Congenital diaphragmatic hernia",
+      "desc": "A baby is born with a hole in the diaphragm, and abdominal organs move into the chest and keep the lungs from growing.",
+      "symptoms": "Severe breathing trouble right after birth, bluish skin, a sunken belly.",
+      "causes": "The diaphragm does not close completely while the baby develops; the exact cause is usually unknown.",
+      "treatment": "Intensive breathing support after birth, then surgery to close the hole. It is often found on an ultrasound during pregnancy."
+    },
+    "diaphragm_paralysis": {
+      "name": "Diaphragm paralysis",
+      "desc": "The diaphragm, or half of it, stops contracting because the phrenic nerve is damaged.",
+      "symptoms": "Shortness of breath on exertion and when lying flat, poor sleep; paralysis of one side sometimes causes no symptoms.",
+      "causes": "Heart and neck surgery, injuries, chest tumors, viral infections, nerve and muscle diseases.",
+      "treatment": "It often recovers on its own over months; breathing machines at night help, sometimes surgery or a nerve stimulator."
+    },
+    "hiccups": {
+      "name": "Persistent hiccups",
+      "desc": "Hiccups are sudden involuntary contractions of the diaphragm, each followed by the vocal cords snapping shut. They usually stop within minutes; persistent hiccups last more than two days.",
+      "symptoms": "Repeated 'hic' sounds that get in the way of eating, talking and sleeping.",
+      "causes": "Ordinary hiccups: overeating, fizzy drinks, alcohol, excitement; persistent ones may come with reflux, nervous-system or kidney disease, or some medicines.",
+      "treatment": "Ordinary hiccups stop on their own or after holding your breath or sipping cold water; persistent ones are investigated and the cause treated, sometimes with medicines."
+    },
+    "lymphadenitis": {
+      "name": "Lymphadenitis",
+      "desc": "Inflammation of a lymph node, usually caused by an infection nearby.",
+      "symptoms": "The node is swollen and tender, the skin over it may turn red; fever, weakness.",
+      "causes": "Sore throat, bad teeth, cuts and boils on the skin, childhood infections, less often tuberculosis or cat-scratch disease.",
+      "treatment": "The source of infection is treated, with antibiotics for bacterial inflammation; a node full of pus is drained by a surgeon."
+    },
+    "lymphoma": {
+      "name": "Lymphoma",
+      "desc": "A cancer of immune cells called lymphocytes. It grows in the lymph nodes, spleen and other organs.",
+      "symptoms": "Painless swollen nodes in the neck, armpits or groin, night sweats, unexplained fever, weight loss, itchy skin.",
+      "causes": "Usually unknown; the risk is higher with a weakened immune system and some viral infections.",
+      "treatment": "Chemotherapy, immunotherapy, radiotherapy; many lymphomas can be cured."
+    },
+    "lymphedema": {
+      "name": "Lymphedema",
+      "desc": "Lymph does not drain well and builds up in the tissues, usually in an arm or leg.",
+      "symptoms": "Lasting swelling, heaviness and tight skin; over time the skin hardens.",
+      "causes": "Removal or radiotherapy of lymph nodes during cancer treatment, infections, injuries, lymphatic vessels that did not develop properly.",
+      "treatment": "Hard to cure completely: lymphatic drainage massage, compression garments, exercises and skin care help."
     }
   },
   "links": {
     "_comment": "Links between organ cards. Each line is the starts of consecutive words: \"urinary bladder\" also finds \"urinary bladders\". Case does not matter. skip - phrases that must not become links.",
-    "skip": ["heartburn", "thyroid cartilage", "spinal cord"],
+    "skip": ["heartburn", "thyroid cartilage"],
     "organs": {
       "lungs": ["lung"],
       "liver": ["liver"],
@@ -1239,7 +1536,14 @@
       "rectum": ["rectum"],
       "uterus": ["uterus", "uterine"],
       "ovaries": ["ovar"],
-      "prostate": ["prostat"]
+      "prostate": ["prostat"],
+      "aorta": ["aort"],
+      "vena_cava": ["vena cava", "venae cavae"],
+      "spinal_cord": ["spinal cord", "spinal nerve"],
+      "thymus": ["thymus"],
+      "pituitary": ["pituitar"],
+      "diaphragm": ["diaphragm"],
+      "lymph_nodes": ["lymph node"]
     },
     "diseases": {
       "pneumonia": ["pneumonia"],
@@ -1314,7 +1618,29 @@
       "ovarian_apoplexy": ["ovarian apoplexy"],
       "prostatitis": ["prostatitis"],
       "bph": ["prostatic hyperplasia", "enlarged prostate"],
-      "prostate_cancer": ["prostate cancer"]
+      "prostate_cancer": ["prostate cancer"],
+      "aortic_aneurysm": ["aortic aneurysm"],
+      "aortic_dissection": ["aortic dissection"],
+      "atherosclerosis": ["atherosclerosis"],
+      "coarctation": ["coarctation"],
+      "svc_syndrome": ["superior vena cava syndrome"],
+      "ivc_thrombosis": ["inferior vena cava thrombosis"],
+      "spinal_injury": ["spinal cord injur"],
+      "herniated_disc": ["herniated disc", "slipped disc"],
+      "multiple_sclerosis": ["multiple sclerosis"],
+      "carpal_tunnel": ["carpal tunnel"],
+      "myasthenia": ["myasthenia"],
+      "thymoma": ["thymoma"],
+      "pituitary_adenoma": ["pituitary adenoma"],
+      "acromegaly": ["acromegaly"],
+      "hypopituitarism": ["hypopituitarism"],
+      "diabetes_insipidus": ["diabetes insipidus"],
+      "diaphragmatic_hernia": ["diaphragmatic hernia"],
+      "diaphragm_paralysis": ["diaphragm paralysis"],
+      "hiccups": ["persistent hiccups"],
+      "lymphadenitis": ["lymphadenitis"],
+      "lymphoma": ["lymphoma"],
+      "lymphedema": ["lymphedema"]
     }
   }
 }

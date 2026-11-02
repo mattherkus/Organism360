@@ -15,7 +15,9 @@ HIT_POINTS = {"brain": (CX, 50), "heart": (CX + 20, 230), "lungs": (CX - 45, 200
               "thyroid": (CX + 10, 124), "spleen": (CX + 58, 272), "pancreas": (CX + 20, 314),
               "bladder": (CX, 385), "esophagus": (CX + 13, 100), "trachea": (CX, 116), "adrenals": (CX + 28, 292),
               "appendix": (CX - 33, 399), "rectum": (CX, 422), "uterus": (CX, 348), "ovaries": (CX + 29, 355),
-              "prostate": (CX, 405)}
+              "prostate": (CX, 405), "aorta": (CX + 28, 172), "vena_cava": (CX - 13, 175), "thymus": (CX + 5, 170),
+              "pituitary": (CX, 66.5), "diaphragm": (CX - 63.5, 259), "lymph_nodes": (CX + 61, 169),
+              "spinal_cord": (CX + 82, 214)}
 
 
 class RegistryTests(unittest.TestCase):
@@ -33,6 +35,29 @@ class AtlasTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.atlas = Atlas(Z)
+
+    def test_behind(self):
+        """нижняя полая вена лежит выше печени в стопке, но за ней: печень её закрывает и ловит клик,
+        а скрыли печень - видна и ловит клик вена"""
+        from organism_atlas.organs import BEHIND
+        a = Atlas(Z, (self.atlas.body, self.atlas.org))
+        x, y = (CX - 6) * Z, 275 * Z
+        self.assertIn("liver", BEHIND["vena_cava"])
+        self.assertGreater(ORDER.index("vena_cava"), ORDER.index("liver"))
+        self.assertEqual(a.organ_at(x, y), "liver")
+        d = a.org["vena_cava"]
+        px, py = int(x) - d["origin"][0], int(y) - d["origin"][1]
+        self.assertGreater(d["rgba"][py, px, 3], 200)                    # вена там нарисована...
+        self.assertLess(np.asarray(a.shown("vena_cava")[0])[py, px, 3], 10)   # ...но вырезана под печенью
+        self.assertEqual(a.composite().getpixel((int(x), int(y))),
+                         a.composite(organs=[k for k in ORDER if k != "vena_cava"]).getpixel((int(x), int(y))))
+        # печень не закрыта веной (вена выше, но за ней): подсветка печени в этом месте видна
+        cov = a._cover("liver")
+        lx, ly = int(x) - a.org["liver"]["origin"][0], int(y) - a.org["liver"]["origin"][1]
+        self.assertLess(cov[ly, lx], 0.1)
+        a.set_hidden({"liver"})
+        self.assertEqual(a.organ_at(x, y), "vena_cava")
+        self.assertGreater(np.asarray(a.shown("vena_cava")[0])[py, px, 3], 200)
 
     def test_base_image_size(self):
         self.assertEqual(self.atlas.base.size, (math.ceil(W * Z), math.ceil(H * Z)))
@@ -142,7 +167,7 @@ class AtlasTests(unittest.TestCase):
             ref = a._under[1].copy()
             scale = {"heart": (heartbeat(t),) * 2, "lungs": breathing(t)}
             for k in ORDER[ORDER.index("lungs"):]:
-                layer, (x, y) = a.layer(k)
+                layer, (x, y) = a.shown(k)          # орган из BEHIND - с вырезом под органами перед ним
                 w, h = layer.size
                 if k not in scale:
                     ref.paste(layer, (x - x0, y - y0), layer)

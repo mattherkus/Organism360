@@ -20,8 +20,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from organism_atlas.atlas import build_atlas, to_u8  # noqa: E402
-from organism_atlas.body.base import BODY_LAYERS, background, compose, over  # noqa: E402
+from organism_atlas.atlas import BODY_ARRAYS, Atlas, build_atlas, to_u8  # noqa: E402
+from organism_atlas.body.base import BODY_LAYERS, background, compose  # noqa: E402
 from organism_atlas.organs import ORDER, ORGANS  # noqa: E402
 
 ZOOMS = (1.0, 0.7)
@@ -46,11 +46,11 @@ def golden_2d(out, force):
         base = compose(body, back)
         save(Image.fromarray(to_u8(base)), d / "base.png", force)
         save(Image.fromarray(to_u8(compose(body, back, BODY_LAYERS))), d / "muscles.png", force)
-        full = base.copy()
-        for k in ORDER:
-            (ox, oy), (h, w) = organs[k]["origin"], organs[k]["rgba"].shape[:2]
-            over(full[oy:oy + h, ox:ox + w], organs[k]["rgba"])
-        save(Image.fromarray(to_u8(full)), d / "full.png", force)
+        # схема целиком - так же, как её собирает Atlas.composite: органы из BEHIND вырезаны под органами перед ними
+        data = ({k: to_u8(body[k]) for k in BODY_ARRAYS},
+                {k: {"rgba": to_u8(o["rgba"]), "hit": o["hit"].astype("float32"), "origin": o["origin"]}
+                 for k, o in organs.items()})
+        save(Atlas(Z, data).composite(), d / "full.png", force)
         origins = {}
         for k in ORDER:
             save(Image.fromarray(to_u8(organs[k]["rgba"]), "RGBA"), d / (k + ".png"), force)

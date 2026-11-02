@@ -1,0 +1,72 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Два самых крупных сосуда, по которым кровь от всего тела возвращается к сердцу.",
+      "en": "The two largest vessels that bring blood from the whole body back to the heart."
+    },
+    {
+      "level": "easy",
+      "ru": "Приносят бедную кислородом кровь в правое предсердие.",
+      "en": "Bring oxygen-poor blood into the right atrium."
+    },
+    {
+      "level": "easy",
+      "ru": "Куда впадают полые вены?",
+      "en": "Where do the venae cavae empty?",
+      "answer": {
+        "ru": "В правое предсердие",
+        "en": "Into the right atrium"
+      },
+      "wrong": {
+        "ru": [
+          "В левый желудочек",
+          "В аорту",
+          "В лёгкие"
+        ],
+        "en": [
+          "Into the left ventricle",
+          "Into the aorta",
+          "Into the lungs"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Верхний из этих сосудов собирает кровь от головы, шеи и рук.",
+      "en": "The upper of these vessels drains the head, neck and arms."
+    },
+    {
+      "level": "medium",
+      "ru": "Нижний из них проходит позади печени и собирает кровь от ног и органов живота.",
+      "en": "The lower one runs behind the liver and drains the legs and abdominal organs."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько всего полых вен?",
+      "en": "How many venae cavae are there?",
+      "answer": "2",
+      "wrong": [
+        "1",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "level": "hard",
+      "ru": "Внутри них нет клапанов, а давление крови очень низкое.",
+      "en": "They have no valves inside, and the blood pressure in them is very low."
+    },
+    {
+      "level": "hard",
+      "ru": "Нижний из них проходит сквозь сухожильный центр диафрагмы.",
+      "en": "The lower one passes through the central tendon of the diaphragm."
+    },
+    {
+      "level": "hard",
+      "ru": "На вдохе давление в груди падает, и кровь по ним быстрее притекает к сердцу.",
+      "en": "When you breathe in, chest pressure drops and blood flows through them to the heart faster."
+    }
+  ]
+}

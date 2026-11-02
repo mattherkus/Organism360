@@ -22,13 +22,17 @@ OPTIONS = {"easy": 3, "medium": 4, "hard": 6}    # сколько вариант
 # {орган: ключи болезней из diseases.ON_CARD}
 VAGUE_DISEASES = {"pancreas": ("cystic_fibrosis",),      # муковисцидоз - в первую очередь лёгкие
                   "stomach": ("gerd",),                  # рефлюкс - воспаление пищевода
-                  "spleen": ("spleen_rupture",)}         # разрыв при травме живота бывает и у печени
+                  "spleen": ("spleen_rupture",),         # разрыв при травме живота бывает и у печени
+                  "thymus": ("myasthenia",),             # миастения поражает передачу сигнала к мышцам
+                  "spinal_cord": ("herniated_disc",),    # грыжа диска - болезнь позвоночника
+                  "pituitary": ("acromegaly", "diabetes_insipidus"),   # следствие болезни гипофиза, а не её место
+                  "lymph_nodes": ("lymphedema",)}        # застой лимфы в руке или ноге
 # факты, которые не годятся для «верно ли»: они верны или почти верны и для другого органа схемы
 # (у сердца и почек размер с кулак, у щитовидной железы и простаты масса около 20 г...).
 # {орган: ключи фактов из поля facts карточки в lang/*.json}; добавляете похожий факт - проверьте этот список
 SHARED_FACTS = {"gallbladder": ("pear",), "heart": ("fist",), "brain": ("weight",), "thyroid": ("weight",),
                 "spleen": ("weight", "reserve", "live_without"), "bladder": ("stretch",), "trachea": ("length",),
-                "rectum": ("length", "sphincters"), "prostate": ("weight",)}
+                "rectum": ("length", "sphincters"), "prostate": ("weight",), "thymus": ("weight",)}
 
 
 def _norm(s):
@@ -49,9 +53,10 @@ def name_stems(key):
 
 
 def leaks(text, key):
-    """выдаёт ли текст ответ: упоминает ли он сам орган"""
+    """выдаёт ли текст ответ: упоминает ли он сам орган - основой слова названия или сочетанием из раздела links
+    (оно ловит формы, которых не видно по основе: «полой вены» у «Полые вены»)"""
     s = _norm(text)
-    return any(stem in s for stem in name_stems(key))
+    return any(stem in s for stem in name_stems(key)) or any(k == key for _, k in i18n.links(text))
 
 
 def _candidates(key, levels):

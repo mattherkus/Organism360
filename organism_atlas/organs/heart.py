@@ -7,6 +7,7 @@ from ..geometry import CX, P
 from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
+from . import aorta, vena_cava
 
 
 # --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
@@ -56,29 +57,18 @@ def paint(Z, ss, seed=5):
     bump = 0.28 * fib + 0.7 * fatm * (0.5 + 0.5 * n_fat) - 1.2 * grv
     rgba = shade(o, alb, bump, mask, spec=0.5, shin=20, amp=(5.5, 8.5), ambient=0.46)
 
-    # сосуды сердца
+    # сосуды сердца. Дуга аорты и полые вены - отдельные органы (aorta, vena_cava) под сердцем:
+    # правая лёгочная артерия проходит за восходящей аортой и верхней полой веной - там её не рисуем
     pa_r = o.ink("pa_r")
     pa_r.tube(P([(20, 190), (6, 184), (-10, 186), (-22, 192)]), [7.5, 7, 6.5, 5.5])
+    for lay in (pa_r.cov, pa_r.hgt):
+        lay.tube(P(aorta.ASCENDING), aorta.ASCENDING_W, v=0)
+        lay.tube(P(vena_cava.SVC), vena_cava.SVC_W, v=0)
     rgba = pa_r.over(rgba, "#6c7fc2", 0.97, amp=3.2, spec=0.35, edge_dark=0.4)
-    svc = o.ink("svc")
-    svc.tube(P([(-8, 210), (-9, 188), (-10, 162), (-10, 148)]), [10, 9.5, 9, 8])
-    svc.tube(P([(-10, 154), (-22, 149), (-34, 150)]), [6.5, 6, 5.4])
-    svc.tube(P([(-10, 156), (8, 152), (22, 149), (34, 150)]), [6, 5.6, 5.2, 4.8])
-    svc.tube(P([(-6, 248), (-7, 268)]), [11, 10.5])
-    rgba = svc.over(rgba, "#4d7fcb", 0.97, amp=3.4, spec=0.35, edge_dark=0.4)
     pt = o.ink("pt")
     pt.tube(P([(18, 207), (19, 195), (22, 186)]), [12, 11.5, 11])
     pt.tube(P([(22, 187), (33, 182), (44, 187)]), [8, 7.2, 6.4])
     rgba = pt.over(rgba, "#7a86cf", 0.98, amp=3.6, spec=0.4, edge_dark=0.4)
-    ao = o.ink("aorta")
-    ao.tube(P([(3, 207), (3, 192), (6, 178), (14, 168), (24, 168), (31, 176), (33, 190)]),
-            [13.5, 13.5, 13, 12.5, 12, 11.5, 11])
-    ao.tube(P([(7, 173), (0, 160), (-6, 150)]), [6, 5.6, 5.2])
-    ao.tube(P([(-6, 150), (-20, 147), (-30, 150)]), [5.2, 4.8, 4.2])
-    ao.tube(P([(-6, 150), (-8, 142), (-9, 138)]), [4.8, 4.6, 4.4])
-    ao.tube(P([(16, 168), (14, 154), (12, 144)]), [5.4, 5.2, 5.0])
-    ao.tube(P([(22, 168), (32, 158), (42, 153)]), [5.4, 5.1, 4.8])
-    rgba = ao.over(rgba, "#d4343d", 0.99, amp=3.8, spec=0.5, edge_dark=0.42)
     # коронарные артерии
     cor = o.ink("cor")
     cor.tube(P([(9, 205), (13, 222), (17, 242), (20, 260)]), [2.4, 2.3, 2.0, 1.4])
@@ -88,7 +78,7 @@ def paint(Z, ss, seed=5):
     cor.tube(P([(-11, 222), (-4, 226), (3, 230)]), [1.6, 1.4, 1.0])
     cor.tube(P([(10, 204), (22, 202), (34, 209)]), [2.2, 2.0, 1.4])
     rgba = cor.over(rgba, "#ff5a4c", 0.95, amp=2.0, spec=0.4, gain=1.1)
-    allv = np.clip(gblur(pa_r.cov.get() + svc.cov.get() + pt.cov.get() + ao.cov.get(), 0.5 * Z), 0, 1)
+    allv = np.clip(gblur(pa_r.cov.get() + pt.cov.get(), 0.5 * Z), 0, 1)
     return finish(o, rgba, np.maximum(rgba[..., 3], allv))
 
 

@@ -1,0 +1,87 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Самая крупная артерия тела.",
+      "en": "The largest artery in the body."
+    },
+    {
+      "level": "easy",
+      "ru": "Выходит из левого желудочка и разносит богатую кислородом кровь по всему телу.",
+      "en": "Leaves the left ventricle and carries oxygen-rich blood to the whole body."
+    },
+    {
+      "level": "easy",
+      "ru": "Какую кровь несёт аорта?",
+      "en": "What kind of blood does the aorta carry?",
+      "answer": {
+        "ru": "Богатую кислородом",
+        "en": "Oxygen-rich"
+      },
+      "wrong": {
+        "ru": [
+          "Бедную кислородом",
+          "Лимфу",
+          "Только плазму"
+        ],
+        "en": [
+          "Oxygen-poor",
+          "Lymph",
+          "Plasma only"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Дугой поднимается над сердцем, а потом спускается вдоль позвоночника.",
+      "en": "Arches over the heart and then runs down along the spine."
+    },
+    {
+      "level": "medium",
+      "ru": "От дуги этого сосуда отходят артерии к голове и рукам.",
+      "en": "Arteries to the head and arms branch off the arch of this vessel."
+    },
+    {
+      "level": "medium",
+      "ru": "Внизу живота делится на две подвздошные артерии.",
+      "en": "In the lower abdomen it splits into the two iliac arteries."
+    },
+    {
+      "level": "medium",
+      "ru": "Какой диаметр у аорты взрослого человека?",
+      "en": "How wide is an adult's aorta?",
+      "answer": {
+        "ru": "2,5–3 см",
+        "en": "2.5–3 cm"
+      },
+      "wrong": {
+        "ru": [
+          "5–6 мм",
+          "8–10 см",
+          "1–2 мм"
+        ],
+        "en": [
+          "5–6 mm",
+          "8–10 cm",
+          "1–2 mm"
+        ]
+      }
+    },
+    {
+      "level": "hard",
+      "ru": "Упругая стенка растягивается при каждом ударе сердца и сглаживает толчки крови.",
+      "en": "Its elastic wall stretches with each heartbeat and smooths out the surges of blood."
+    },
+    {
+      "level": "hard",
+      "ru": "Проходит в живот через отдельное отверстие в диафрагме на уровне XII грудного позвонка.",
+      "en": "Passes into the abdomen through its own opening in the diaphragm at the level of the 12th thoracic vertebra."
+    },
+    {
+      "level": "hard",
+      "ru": "Надрыв её внутреннего слоя вызывает внезапную раздирающую боль в груди и спине.",
+      "en": "A tear in its inner layer causes sudden tearing pain in the chest and back."
+    }
+  ]
+}

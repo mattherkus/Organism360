@@ -1,0 +1,60 @@
+"""Лимфатические узлы: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра.
+
+На схеме - группы, которые прощупываются под кожей: шейные и подчелюстные, надключичные, подмышечные
+и паховые, с лимфатическими сосудами между узлами.
+"""
+
+import numpy as np
+
+from ..colors import hex2rgb
+from ..geometry import CX, P
+from ..models import load_parts
+from ..render2d.noise import gblur
+from ..render2d.organ import Org, finish, shade
+
+
+# --------------------------------------------------------------- цвет (тексты карточки: lang/*.json)
+COLOR = "#8cbf55"                      # цвет органа на схеме и полоски в карточке
+SYSTEMS = ("immune",)                  # системы органов (первая - главная): тема и вопросы викторины
+
+
+# --------------------------------------------------------------- 2D: рисунок на схеме тела
+
+# группы узлов (правая сторона; левая зеркальная): [(x, y, радиус)], узлы группы соединены сосудом
+GROUPS = (
+    [(15, 90, 2.6), (21, 89, 2.4)],                                              # подчелюстные
+    [(24, 97, 2.6), (23.5, 106, 3.0), (22.5, 115, 2.8), (21.5, 124, 3.0), (21, 133, 2.6), (23, 141, 2.8)],  # шейные
+    [(29, 147, 2.6), (36, 149, 2.4)],                                            # надключичные
+    [(57, 163, 2.8), (61, 169, 3.2), (65, 164, 2.6), (59, 177, 3.0), (64, 181, 2.6)],     # подмышечные
+    [(41, 380, 2.8), (34, 387, 3.2), (27, 393, 3.0), (25, 403, 2.8), (26, 414, 3.0)],      # паховые
+)
+HIT_PAD = 1.4                          # запас вокруг узлов для попадания мышью: узлы маленькие
+
+
+def paint(Z, ss, seed=61):
+    o = Org((CX - 72, 80, CX + 72, 424), Z, ss, seed)
+    m = o.L("mask")
+    vessel = o.ink("vessel")
+    for flip in (False, True):
+        for group in GROUPS:
+            pts = [(x, y) for x, y, _ in group]
+            if len(pts) > 1:
+                vessel.line(P(pts, flip), 1.1)
+            for x, y, r in group:
+                (px, py), = P([(x, y)], flip)
+                m.ellipse(px, py, r * 0.85, r)                         # узел - бобовидный, чуть вытянут
+    mask = o.m("mask")
+    fine = o.noise(0.9, 2, 1)
+    alb = np.broadcast_to(hex2rgb("#93c25c"), o.shape + (3,)).copy() * (1 + 0.05 * fine)[..., None]
+    rgba = shade(o, alb, 0.04 * fine, mask, soft=(1.2, 2.4), amp=(2.0, 2.2), spec=0.5, shin=18, ambient=0.52,
+                 edge_dark=0.35)
+    rgba = vessel.over(rgba, "#a8d27a", 0.85, amp=1.2, spec=0.25)
+    hit = np.clip(gblur(mask, HIT_PAD * Z) * 3.0, 0, 1)
+    return finish(o, rgba, np.maximum(rgba[..., 3], hit))
+
+
+# --------------------------------------------------------------- 3D: модель (данные в models/lymph_nodes.json)
+
+def parts():
+    """3D-модель: примитивы из models/lymph_nodes.json"""
+    return load_parts("lymph_nodes")

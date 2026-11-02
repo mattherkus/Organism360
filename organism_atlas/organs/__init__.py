@@ -6,22 +6,25 @@
 под тем же ключом.
 """
 from .. import i18n, settings
-from . import (adrenals, appendix, bladder, brain, esophagus, gallbladder, heart, intestines, kidneys, liver, lungs,
-               ovaries, pancreas, prostate, rectum, spleen, stomach, thyroid, trachea, uterus)
+from . import (adrenals, aorta, appendix, bladder, brain, diaphragm, esophagus, gallbladder, heart, intestines,
+               kidneys, liver, lungs, lymph_nodes, ovaries, pancreas, pituitary, prostate, rectum, spinal_cord, spleen,
+               stomach, thymus, thyroid, trachea, uterus, vena_cava)
 
 # порядок в карточках и в викторине
 _MODULES = {
-    "lungs": lungs, "liver": liver, "gallbladder": gallbladder, "stomach": stomach, "intestines": intestines,
-    "kidneys": kidneys, "heart": heart, "brain": brain, "thyroid": thyroid,
-    "spleen": spleen, "pancreas": pancreas, "bladder": bladder,
+    "lungs": lungs, "diaphragm": diaphragm, "liver": liver, "gallbladder": gallbladder, "stomach": stomach,
+    "intestines": intestines, "kidneys": kidneys, "heart": heart, "aorta": aorta, "vena_cava": vena_cava,
+    "brain": brain, "spinal_cord": spinal_cord, "pituitary": pituitary, "thyroid": thyroid,
+    "spleen": spleen, "thymus": thymus, "lymph_nodes": lymph_nodes, "pancreas": pancreas, "bladder": bladder,
     "esophagus": esophagus, "trachea": trachea, "adrenals": adrenals, "appendix": appendix, "rectum": rectum,
     "uterus": uterus, "ovaries": ovaries, "prostate": prostate,
 }
 
-# порядок слоёв на схеме: снизу вверх (последний лежит выше и первым ловит клик)
-ORDER = ["intestines", "rectum", "appendix", "kidneys", "uterus", "ovaries", "bladder", "prostate", "spleen",
-         "pancreas", "stomach", "adrenals", "gallbladder", "liver", "lungs", "esophagus", "trachea", "thyroid",
-         "heart", "brain"]
+# порядок слоёв на схеме: снизу вверх (последний лежит выше и первым ловит клик). Органы, которые лежат выше,
+# но за некоторыми нижними (аорта и полые вены - за органами живота), перечисляют их в BEHIND своего модуля
+ORDER = ["spinal_cord", "intestines", "rectum", "appendix", "kidneys", "uterus", "ovaries", "bladder", "prostate",
+         "spleen", "pancreas", "stomach", "adrenals", "gallbladder", "liver", "diaphragm", "lungs", "esophagus",
+         "trachea", "thyroid", "vena_cava", "aorta", "thymus", "heart", "lymph_nodes", "brain", "pituitary"]
 
 # системы органов (тема викторины и вопрос «к какой системе относится»); названия - в lang/*.json: system_<ключ>
 SYSTEMS = ("digestive", "respiratory", "circulatory", "nervous", "endocrine", "urinary", "reproductive", "immune")
@@ -40,6 +43,11 @@ ORGANS = {key: {"color": m.COLOR, "parts": m.parts, "systems": m.SYSTEMS, "sex":
 
 # {ключ: функция рисования органа на схеме тела}
 PAINT = {key: m.paint for key, m in _MODULES.items()}
+
+# {орган: органы, которые его закрывают, хотя лежат ниже в ORDER}. Так крупный сосуд может лежать над сердцем
+# (дуга аорты видна) и при этом за органами живота: схема вырезает его там, где видны органы из BEHIND
+# (скрыли орган - сосуд за ним снова виден). BEHIND в модуле органа - кортеж ключей
+BEHIND = {key: tuple(m.BEHIND) for key, m in _MODULES.items() if getattr(m, "BEHIND", ())}
 
 
 def for_body(sex):

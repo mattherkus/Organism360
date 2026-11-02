@@ -62,6 +62,27 @@
     },
     "prostate": {
       "name": "Prostata"
+    },
+    "aorta": {
+      "name": "Aorta"
+    },
+    "vena_cava": {
+      "name": "Venae cavae"
+    },
+    "spinal_cord": {
+      "name": "Medulla spinalis et nervi"
+    },
+    "thymus": {
+      "name": "Thymus"
+    },
+    "pituitary": {
+      "name": "Hypophysis"
+    },
+    "diaphragm": {
+      "name": "Diaphragma"
+    },
+    "lymph_nodes": {
+      "name": "Nodi lymphatici"
     }
   }
 }

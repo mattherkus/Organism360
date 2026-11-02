@@ -1,0 +1,72 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Проходит внутри позвоночника и передаёт сигналы между головой и телом.",
+      "en": "Runs inside the backbone and carries signals between the head and the body."
+    },
+    {
+      "level": "easy",
+      "ru": "Отсюда команды бегут к мышцам рук и ног.",
+      "en": "Commands travel from here to the muscles of the arms and legs."
+    },
+    {
+      "level": "easy",
+      "ru": "Где лежит спинной мозг?",
+      "en": "Where is the spinal cord?",
+      "answer": {
+        "ru": "В позвоночном канале",
+        "en": "In the spinal canal"
+      },
+      "wrong": {
+        "ru": [
+          "В черепе",
+          "В грудной клетке перед сердцем",
+          "В брюшной полости"
+        ],
+        "en": [
+          "In the skull",
+          "In the chest in front of the heart",
+          "In the abdomen"
+        ]
+      }
+    },
+    {
+      "level": "medium",
+      "ru": "Коленный рефлекс замыкается здесь, и думать о нём не нужно.",
+      "en": "The knee-jerk reflex is completed here, without you having to think about it."
+    },
+    {
+      "level": "medium",
+      "ru": "Длина около 45 см, а толщина — примерно с мизинец.",
+      "en": "About 45 cm long and roughly as thick as a little finger."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько пар нервов отходит от спинного мозга?",
+      "en": "How many pairs of nerves leave the spinal cord?",
+      "answer": "31",
+      "wrong": [
+        "12",
+        "24",
+        "46"
+      ]
+    },
+    {
+      "level": "hard",
+      "ru": "Заканчивается на уровне первого-второго поясничного позвонка, ниже — «конский хвост».",
+      "en": "Ends at the first or second lumbar vertebra; below it lies the 'horse's tail'."
+    },
+    {
+      "level": "hard",
+      "ru": "Срединный, локтевой и седалищный — это его ветви.",
+      "en": "The median, ulnar and sciatic are among its branches."
+    },
+    {
+      "level": "hard",
+      "ru": "Его повреждение в шее может парализовать и руки, и ноги.",
+      "en": "An injury to it in the neck can paralyze both the arms and the legs."
+    }
+  ]
+}

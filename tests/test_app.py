@@ -496,7 +496,7 @@ class AppTests(unittest.TestCase):
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH
         box = self.app.toggles[SEARCH]
         self.app.toggle_organ("heart")
-        box.setText("серд")
+        box.setText("сердц")                                # «серд» - ещё и сердечно-сосудистая система
         self.assertEqual(self.visible_toggles(), {"heart"})
         self.assertEqual(self.app.spot, "heart")
         self.assertNotIn("heart", self.app.hidden)          # найденный скрытый орган снова виден
@@ -842,8 +842,8 @@ class ColorGroupTests(unittest.TestCase):
         self.assertEqual(sorted(order), sorted(ORGANS))
         fams = [color_family(ORGANS[k]["color"])[0] for k in order]
         self.assertEqual(fams, sorted(fams))
-        self.assertEqual(order[-2:], ["gallbladder", "trachea"])      # зелёный, затем серо-голубая трахея
-        self.assertLess(abs(order.index("lungs") - order.index("brain")), 2)
+        self.assertEqual(order[-3:], ["gallbladder", "trachea", "vena_cava"])   # зелёный, серо-голубая, синяя
+        self.assertLessEqual(abs(order.index("lungs") - order.index("brain")), 2)    # оба розовые: рядом
 
 
 class SystemGroupTests(unittest.TestCase):
@@ -854,9 +854,11 @@ class SystemGroupTests(unittest.TestCase):
         groups = dict(by_system(list(ORGANS)))
         self.assertEqual(sorted(k for ks in groups.values() for k in ks), sorted(ORGANS))
         self.assertEqual(list(groups), [s for s in PANEL_SYSTEMS if s in groups])
-        self.assertEqual(groups["respiratory"], ["lungs", "trachea"])
+        self.assertEqual(groups["respiratory"], ["lungs", "diaphragm", "trachea"])
         self.assertIn("pancreas", groups["digestive"])                   # главная система - первая
-        self.assertEqual(groups["immune"], ["spleen"])
+        self.assertEqual(groups["immune"], ["spleen", "thymus", "lymph_nodes"])
+        self.assertEqual(groups["circulatory"], ["heart", "aorta", "vena_cava"])
+        self.assertEqual(groups["nervous"], ["brain", "spinal_cord"])
         self.assertEqual(groups["urinary"], ["kidneys", "bladder"])
 
 

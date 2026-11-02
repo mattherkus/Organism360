@@ -136,8 +136,9 @@ class LinkTests(unittest.TestCase):
                          [("stomach", "stomach"), ("esophagus", "esophagus")])
 
     def test_skip_and_lookalikes(self):
-        """«спинной мозг», «щитовидный хрящ», «желудочек» сердца и «надпочечники» - не ссылки не туда"""
-        self.assertEqual(self.found("переходит в спинной мозг; ниже щитовидного хряща"), [])
+        """«спинной мозг» - не головной мозг, «щитовидный хрящ», «желудочек» сердца и «надпочечники» - не ссылки не туда"""
+        self.assertEqual(self.found("переходит в спинной мозг; ниже щитовидного хряща"), [("спинной мозг", "spinal_cord")])
+        self.assertEqual(self.found("спинномозговая жидкость"), [])
         self.assertEqual(self.found("два предсердия и два желудочка"), [])
         self.assertEqual(self.found("над полюсами почек, надпочечники"),
                          [("почек", "kidneys"), ("надпочечники", "adrenals")])

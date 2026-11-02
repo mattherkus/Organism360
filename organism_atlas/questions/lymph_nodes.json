@@ -1,0 +1,56 @@
+{
+  "_comment": "Вопросы викторины «Угадай по факту» про этот орган. level: easy (лёгкий), medium (средний) или hard (сложный); на лёгком уровне спрашиваются easy, на среднем easy и medium, на сложном medium и hard. Текст на русском (ru) обязателен, на других языках (en, ...) - по желанию: если перевода нет, вопрос покажется по-русски. Без полей answer/wrong ответ - этот орган, поэтому не называйте его в тексте: такой вопрос выдаёт ответ и в игру не попадёт. С полями answer (верный ответ) и wrong (список неверных) варианты берутся из них: \"answer\": \"4\", \"wrong\": [\"2\", \"3\"] или по языкам \"answer\": {\"ru\": \"Кровь\", \"en\": \"Blood\"}, \"wrong\": {\"ru\": [...], \"en\": [...]}. Проверить файлы: python -m organism_atlas.questions",
+  "questions": [
+    {
+      "level": "easy",
+      "ru": "Фильтры лимфы размером с горошину или фасолину.",
+      "en": "Pea- or bean-sized filters for the fluid that drains from the tissues."
+    },
+    {
+      "level": "easy",
+      "ru": "При простуде на шее они увеличиваются и болят.",
+      "en": "During a cold they swell and hurt in the neck."
+    },
+    {
+      "level": "easy",
+      "ru": "Их прощупывают на шее, под мышками и в паху.",
+      "en": "Doctors feel for them in the neck, armpits and groin."
+    },
+    {
+      "level": "medium",
+      "ru": "В них задерживаются микробы и опухолевые клетки.",
+      "en": "Germs and cancer cells get trapped in them."
+    },
+    {
+      "level": "medium",
+      "ru": "Сколько примерно лимфатических узлов в теле человека?",
+      "en": "About how many lymph nodes are in the human body?",
+      "answer": "500–700",
+      "wrong": [
+        "20–30",
+        "5–10",
+        "10 000"
+      ]
+    },
+    {
+      "level": "medium",
+      "ru": "Здесь B-лимфоциты начинают делать антитела против микробов.",
+      "en": "Here B cells start making antibodies against germs."
+    },
+    {
+      "level": "hard",
+      "ru": "Лимфа течёт через них без насоса — её двигают сокращения мышц.",
+      "en": "Fluid flows through them without a pump: muscle contractions move it along."
+    },
+    {
+      "level": "hard",
+      "ru": "Их безболезненное увеличение вместе с ночной потливостью и похуданием — повод срочно показаться врачу.",
+      "en": "Painless swelling of them together with night sweats and weight loss needs a doctor's check."
+    },
+    {
+      "level": "hard",
+      "ru": "Каждый собирает жидкость из своей области тела, поэтому по увеличенному ищут инфекцию рядом.",
+      "en": "Each one drains its own area of the body, so a swollen one points to an infection nearby."
+    }
+  ]
+}

@@ -17,7 +17,7 @@ from . import atlas_cache
 from .body.base import BG_HI, BODY_LAYERS, DEFAULT_LAYERS, background, build_layers, compose, glow_weight, over
 from .config import BG
 from .config import TARGET_C
-from .organs import ORDER, PAINT
+from .organs import BEHIND, ORDER, PAINT
 from .render2d.noise import gblur
 
 BODY_ARRAYS = ("glow", "skin", "skin_hi", "muscles", "skeleton", "veins", "arteries", "fade")
@@ -74,6 +74,7 @@ class Atlas:
         self._layers = {}
         self._premul = {}                # слои сердца и лёгких для анимации: альфа умножена (RGBa), рамка PAD
         self._under = None               # (прямоугольник, подложка анимации): всё, что под лёгкими
+        self._punched = {}               # {орган из BEHIND: (видимые закрывающие, слой с вырезом)}
 
     # --- слои
     def layer(self, name):
@@ -85,6 +86,46 @@ class Atlas:
             else:
                 self._layers[name] = (Image.fromarray(self.body[name], "RGBA"), (0, 0))
         return self._layers[name]
+
+    def behind_cover(self, key, hidden=None, pad=0):
+        """насколько орган key (из BEHIND) закрыт видимыми органами, которые лежат ниже него в ORDER, но перед ним
+        (0..1, в рамке органа с запасом pad); None - таких нет"""
+        hidden = self.hidden if hidden is None else hidden
+        front = [k for k in BEHIND.get(key, ()) if k not in hidden]
+        if not front:
+            return None
+        d = self.org[key]
+        x0, y0 = d["origin"][0] - pad, d["origin"][1] - pad
+        h, w = d["hit"].shape[0] + 2 * pad, d["hit"].shape[1] + 2 * pad
+        cov = np.zeros((h, w), np.float32)
+        for k in front:
+            e = self.org[k]
+            ex, ey = e["origin"]
+            eh, ew = e["rgba"].shape[:2]
+            ax0, ay0 = max(x0, ex), max(y0, ey)
+            ax1, ay1 = min(x0 + w, ex + ew), min(y0 + h, ey + eh)
+            if ax1 <= ax0 or ay1 <= ay0:
+                continue
+            part = e["rgba"][ay0 - ey:ay1 - ey, ax0 - ex:ax1 - ex, 3].astype(np.float32) / 255
+            sl = (slice(ay0 - y0, ay1 - y0), slice(ax0 - x0, ax1 - x0))
+            cov[sl] = np.maximum(cov[sl], part)
+        return cov
+
+    def shown(self, key):
+        """слой органа для показа (Pillow RGBA, origin): у органа из BEHIND вырезано то, что закрывают
+        видимые органы перед ним"""
+        if key not in BEHIND:
+            return self.layer(key)
+        front = frozenset(k for k in BEHIND[key] if k not in self.hidden)
+        if key not in self._punched or self._punched[key][0] != front:
+            im, pos = self.layer(key)
+            cov = self.behind_cover(key)
+            if cov is not None:
+                arr = np.asarray(im).copy()
+                arr[..., 3] = (arr[..., 3].astype(np.float32) * (1 - cov) + 0.5).astype(np.uint8)
+                im = Image.fromarray(arr, "RGBA")
+            self._punched[key] = (front, (im, pos))
+        return self._punched[key][1]
 
     def _back(self, bg, hi):
         if self._glow is None:
@@ -108,11 +149,16 @@ class Atlas:
         back = self._back(bg, hi)
         out = compose(self.body, back, visible, skin_opacity)
         organs = [k for k in ORDER if k not in self.hidden] if organs is None else organs
+        hidden = frozenset(ORDER) - set(organs)
         for k in ORDER:
             if k in organs:
                 d = self.org[k]
                 (ox, oy), (h, w) = d["origin"], d["rgba"].shape[:2]
-                over(out[oy:oy + h, ox:ox + w], d["rgba"].astype(np.float32) / 255)
+                rgba = d["rgba"].astype(np.float32) / 255
+                cov = self.behind_cover(k, hidden) if k in BEHIND else None
+                if cov is not None:
+                    rgba[..., 3] *= 1 - cov
+                over(out[oy:oy + h, ox:ox + w], rgba)
         return Image.fromarray(to_u8(out))
 
     def _assemble(self, organs):
@@ -136,7 +182,7 @@ class Atlas:
         out.paste(self._show["fade"], (0, 0), self._show["fade"])
         for k in ORDER:
             if k in organs:
-                im, pos = self.layer(k)
+                im, pos = self.shown(k)
                 out.paste(im, pos, im)
         return out
 
@@ -189,7 +235,7 @@ class Atlas:
         for k in ORDER[first:]:
             if k in self.hidden:
                 continue
-            im, (x, y) = self.layer(k)
+            im, (x, y) = self.shown(k)
             w, h = im.size
             if x >= x1 or y >= y1 or x + w <= x0 or y + h <= y0:
                 continue
@@ -296,9 +342,22 @@ class Atlas:
             ox, oy = d["origin"]
             h, w = d["hit"].shape
             xi, yi = int(x) - ox, int(y) - oy
-            if 0 <= xi < w and 0 <= yi < h and d["hit"][yi, xi] > 0.5:
+            if 0 <= xi < w and 0 <= yi < h and d["hit"][yi, xi] > 0.5 and not self._in_front(k, x, y):
                 return k
         return None
+
+    def _in_front(self, key, x, y):
+        """закрывает ли точку видимый орган, лежащий перед key, хотя и ниже него в ORDER (BEHIND)"""
+        for k in BEHIND.get(key, ()):
+            if k in self.hidden:
+                continue
+            d = self.org[k]
+            ox, oy = d["origin"]
+            h, w = d["hit"].shape
+            xi, yi = int(x) - ox, int(y) - oy
+            if 0 <= xi < w and 0 <= yi < h and d["hit"][yi, xi] > 0.5:
+                return True
+        return False
 
     def _cover(self, key, pad=0, hidden=None):
         """насколько орган перекрыт видимыми органами, лежащими выше него; pad - запас вокруг рамки органа,
@@ -308,8 +367,11 @@ class Atlas:
         x0, y0 = d["origin"][0] - pad, d["origin"][1] - pad
         h, w = d["hit"].shape[0] + 2 * pad, d["hit"].shape[1] + 2 * pad
         cov = np.zeros((h, w), np.float32)
+        front = self.behind_cover(key, hidden, pad) if key in BEHIND else None
+        if front is not None:                             # органы перед ним, хотя и ниже в ORDER
+            cov = front
         for k in ORDER[ORDER.index(key) + 1:]:
-            if k in hidden:
+            if k in hidden or key in BEHIND.get(k, ()):   # k лежит выше, но за этим органом
                 continue
             e = self.org[k]
             ex, ey = e["origin"]
