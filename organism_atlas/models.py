@@ -11,7 +11,7 @@
 load_procedural() отдаёт эти примитивы в том виде, который понимает render3d.scene.Scene3D.
 
 Для органов есть и анатомические модели - треугольные сетки (models/mesh/<орган>.json + .npz) из BodyParts3D
-(импорт: tools/bp3d_import.py), Human Reference Atlas и атласа головы и шеи Open Anatomy
+(импорт: tools/bp3d_import.py), Human Reference Atlas, атласа головы и шеи Open Anatomy и Z-Anatomy
 (tools/atlas_import.py); источник - в поле "attribution", см. mesh_credit(). load_parts() берёт сетку, если
 в render3d/look.json "models": "anatomical" (по умолчанию), а если сетки нет или она не читается -
 процедурную модель.
@@ -75,8 +75,10 @@ def read_mesh_model(key):
 
 
 def mesh_credit(key):
-    """источник анатомической модели для подписи авторов: bp3d, hra или spl (по полю attribution)"""
+    """источник анатомической модели для подписи авторов: bp3d, hra, spl или za (по полю attribution)"""
     attribution = read_mesh_model(key).get("attribution", "")
+    if "Z-Anatomy" in attribution:                 # раньше BodyParts3D: Z-Anatomy упоминает её как основу
+        return "za"
     if "Human Reference Atlas" in attribution:
         return "hra"
     if "Head and Neck" in attribution:

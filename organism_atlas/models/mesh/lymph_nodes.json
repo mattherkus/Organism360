@@ -1,0 +1,58 @@
+{
+  "_comment": "Анатомическая модель из Human Reference Atlas. Цвет, текстуру и блеск групп можно менять; геометрия в lymph_nodes.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Human Reference Atlas 3D Reference Organs (HuBMAP), lymph node model by Li Yao and Kristen Browne (NIH); licensed under CC Attribution 4.0 International",
+  "mesh": "lymph_nodes.npz",
+  "groups": [
+    {
+      "group": "blood",
+      "color": "#c0443c",
+      "texture": "smooth",
+      "gloss": 0.5,
+      "triangles": 51190,
+      "source_parts": [
+        "Yao_blood_vasculature"
+      ]
+    },
+    {
+      "group": "follicle",
+      "color": "#c97f8a",
+      "texture": "gland",
+      "gloss": 0.4,
+      "triangles": 7149,
+      "source_parts": [
+        "Yao_follicles"
+      ]
+    },
+    {
+      "group": "lymph",
+      "color": "#e8d7a0",
+      "texture": "smooth",
+      "gloss": 0.45,
+      "triangles": 4499,
+      "source_parts": [
+        "Yao_afferent_lymphatic_vessel",
+        "Yao_efferent_lymph_node"
+      ]
+    },
+    {
+      "group": "medulla",
+      "color": "#b9606a",
+      "texture": "gland",
+      "gloss": 0.35,
+      "triangles": 5398,
+      "source_parts": [
+        "Yao_medulla_of_lymph_node"
+      ]
+    },
+    {
+      "group": "paracortex",
+      "color": "#e0a39a",
+      "texture": "gland",
+      "gloss": 0.35,
+      "triangles": 2570,
+      "source_parts": [
+        "Yao_paracortex"
+      ]
+    }
+  ]
+}

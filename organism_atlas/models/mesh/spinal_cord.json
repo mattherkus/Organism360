@@ -1,0 +1,42 @@
+{
+  "_comment": "Анатомическая модель из Z-Anatomy. Цвет, текстуру и блеск групп можно менять; геометрия в spinal_cord.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Z-Anatomy, the libre 3D atlas of anatomy, based on BodyParts3D (© The Database Center for Life Science); licensed under CC Attribution-ShareAlike 4.0 International",
+  "mesh": "spinal_cord.npz",
+  "groups": [
+    {
+      "group": "cord",
+      "color": "#efe1b6",
+      "texture": "smooth",
+      "gloss": 0.45,
+      "triangles": 8876,
+      "source_parts": [
+        "White matter of spinal cord"
+      ]
+    },
+    {
+      "group": "ganglion",
+      "color": "#e9c96a",
+      "texture": "smooth",
+      "gloss": 0.4,
+      "triangles": 3334,
+      "source_parts": [
+        "Spinal ganglion.l",
+        "Spinal ganglion.r"
+      ]
+    },
+    {
+      "group": "nerve",
+      "color": "#efd98a",
+      "texture": "smooth",
+      "gloss": 0.35,
+      "triangles": 12210,
+      "source_parts": [
+        "Anterior root of spinal nerve.l",
+        "Anterior root of spinal nerve.r",
+        "Cauda equina",
+        "Posterior root of spinal nerve.l",
+        "Posterior root of spinal nerve.r"
+      ]
+    }
+  ]
+}

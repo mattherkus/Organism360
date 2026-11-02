@@ -1,0 +1,39 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в aorta.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "aorta.npz",
+  "groups": [
+    {
+      "group": "aorta",
+      "color": "#d24a3c",
+      "texture": "smooth",
+      "gloss": 0.6,
+      "triangles": 7118,
+      "source_parts": [
+        "Abdominal aorta",
+        "Arch of aorta",
+        "Ascending aorta",
+        "Descending aorta",
+        "Descending thoracic aorta"
+      ]
+    },
+    {
+      "group": "branch",
+      "color": "#b9564b",
+      "texture": "smooth",
+      "gloss": 0.45,
+      "triangles": 2689,
+      "source_parts": [
+        "Brachiocephalic artery",
+        "Celiac trunk",
+        "Left common carotid artery",
+        "Left common iliac artery",
+        "Left subclavian artery",
+        "Right common iliac artery",
+        "Right renal artery",
+        "Trunk of left renal artery",
+        "Trunk of superior mesenteric artery"
+      ]
+    }
+  ]
+}

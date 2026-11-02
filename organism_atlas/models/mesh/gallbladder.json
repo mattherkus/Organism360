@@ -1,14 +1,24 @@
 {
-  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в gallbladder.npz (пересобрать: tools/bp3d_import.py).",
-  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "_comment": "Анатомическая модель из Z-Anatomy. Цвет, текстуру и блеск групп можно менять; геометрия в gallbladder.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Z-Anatomy, the libre 3D atlas of anatomy, based on BodyParts3D (© The Database Center for Life Science); licensed under CC Attribution-ShareAlike 4.0 International",
   "mesh": "gallbladder.npz",
   "groups": [
+    {
+      "group": "bile",
+      "color": "#6aa04a",
+      "texture": "smooth",
+      "gloss": 0.4,
+      "triangles": 2012,
+      "source_parts": [
+        "Bile duct"
+      ]
+    },
     {
       "group": "gallbladder",
       "color": "#4f8a3c",
       "texture": "smooth",
       "gloss": 0.5,
-      "triangles": 1375,
+      "triangles": 11552,
       "source_parts": [
         "Gallbladder"
       ]

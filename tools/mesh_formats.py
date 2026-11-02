@@ -1,10 +1,12 @@
-"""Чтение 3D-моделей для импорта (только numpy): glTF-binary (.glb) и устаревший VTK (.vtk, POLYDATA).
+"""Чтение 3D-моделей для импорта (только numpy): glTF-binary (.glb), устаревший VTK (.vtk, POLYDATA)
+и двоичный FBX 7.x (.fbx).
 
 Возвращают список частей (имя, V (n,3) float64, F (m,3) int64): треугольники, без нормалей и текстур.
 """
 
 import json
 import struct
+import zlib
 
 import numpy as np
 
@@ -141,3 +143,144 @@ def read_vtk(path, name=None):
     if V is None:
         raise ValueError("%s: нет точек" % path)
     return [(name or str(path), V, np.array(tris, np.int64).reshape(-1, 3))]
+
+
+# ----------------------------------------------------------------------------------- FBX
+# двоичный FBX: дерево записей (имя, свойства, вложенные записи); массивы свойств могут быть сжаты zlib
+_FBX_ARR = {"f": "<f4", "d": "<f8", "l": "<i8", "i": "<i4", "b": "<u1"}
+_FBX_SCALAR = {"Y": "<h", "C": "<?", "I": "<i", "F": "<f", "D": "<d", "L": "<q"}
+
+
+class _FbxNode:
+    __slots__ = ("name", "props", "kids")
+
+    def __init__(self, name, props, kids):
+        self.name, self.props, self.kids = name, props, kids
+
+    def find(self, name):
+        return next((k for k in self.kids if k.name == name), None)
+
+
+def _fbx_props(data, pos, n):
+    out = []
+    for _ in range(n):
+        t = chr(data[pos])
+        pos += 1
+        if t in _FBX_SCALAR:
+            fmt = _FBX_SCALAR[t]
+            out.append(struct.unpack_from(fmt, data, pos)[0])
+            pos += struct.calcsize(fmt)
+        elif t in _FBX_ARR:
+            count, enc, size = struct.unpack_from("<III", data, pos)
+            raw = data[pos + 12:pos + 12 + size]
+            pos += 12 + size
+            out.append(np.frombuffer(zlib.decompress(raw) if enc == 1 else raw, _FBX_ARR[t], count))
+        elif t in "SR":
+            size = struct.unpack_from("<I", data, pos)[0]
+            raw = data[pos + 4:pos + 4 + size]
+            pos += 4 + size
+            out.append(raw.decode("utf-8", "replace") if t == "S" else raw)
+        else:
+            raise ValueError("FBX: неизвестный тип свойства %r" % t)
+    return out
+
+
+def _fbx_node(data, pos, wide):
+    """запись с позиции pos -> (запись или None для пустой записи-терминатора, позиция за ней)"""
+    head = "<QQQ" if wide else "<III"                  # с версии 7500 смещения 64-битные
+    end, nprop, plen = struct.unpack_from(head, data, pos)
+    pos += struct.calcsize(head)
+    nlen = data[pos]
+    if end == 0:
+        return None, pos + 1
+    name = data[pos + 1:pos + 1 + nlen].decode("ascii", "replace")
+    pos += 1 + nlen
+    props = _fbx_props(data, pos, nprop)
+    pos += plen
+    kids = []
+    while pos < end:
+        kid, pos = _fbx_node(data, pos, wide)
+        if kid is None:
+            break
+        kids.append(kid)
+    return _FbxNode(name, props, kids), end
+
+
+def _euler(deg):
+    """углы Эйлера FBX (порядок XYZ: сначала поворот вокруг x) в градусах -> матрица 3x3"""
+    x, y, z = np.radians(np.asarray(deg, np.float64))
+    rx = np.array([[1, 0, 0], [0, np.cos(x), -np.sin(x)], [0, np.sin(x), np.cos(x)]])
+    ry = np.array([[np.cos(y), 0, np.sin(y)], [0, 1, 0], [-np.sin(y), 0, np.cos(y)]])
+    rz = np.array([[np.cos(z), -np.sin(z), 0], [np.sin(z), np.cos(z), 0], [0, 0, 1]])
+    return rz @ ry @ rx
+
+
+def _fbx_matrix(p, prefix=""):
+    """локальное преобразование модели (Lcl ...) или смещение её сетки (Geometric...) из Properties70"""
+    M = np.eye(4)
+    if prefix:
+        T, R, S = (p.get(prefix + k, d) for k, d in (("Translation", (0, 0, 0)), ("Rotation", (0, 0, 0)),
+                                                     ("Scaling", (1, 1, 1))))
+        M[:3, :3] = _euler(R) @ np.diag(np.asarray(S, np.float64))
+    else:
+        T = p.get("Lcl Translation", (0, 0, 0))
+        M[:3, :3] = (_euler(p.get("PreRotation", (0, 0, 0))) @ _euler(p.get("Lcl Rotation", (0, 0, 0)))
+                     @ np.diag(np.asarray(p.get("Lcl Scaling", (1, 1, 1)), np.float64)))
+    M[:3, 3] = T
+    return M
+
+
+def read_fbx(path, want=None):
+    """части - сетки моделей (Model) с учётом иерархии и их преобразований; имя - имя модели.
+    want(имя) -> bool отбирает модели заранее: в больших файлах сотни сеток, а нужны единицы.
+    Координаты - как в файле, без учёта осей и единиц из GlobalSettings"""
+    data = open(path, "rb").read()
+    if not data.startswith(b"Kaydara FBX Binary"):
+        raise ValueError("%s: не двоичный FBX" % path)
+    wide = struct.unpack_from("<I", data, 23)[0] >= 7500
+    pos, top = 27, {}
+    while pos < len(data) - 13:
+        node, pos = _fbx_node(data, pos, wide)
+        if node is None:
+            break
+        top[node.name] = node
+    models, geoms = {}, {}
+    for n in top["Objects"].kids:
+        if n.name == "Model":
+            p70 = n.find("Properties70")
+            models[n.props[0]] = (n.props[1].split("\x00")[0], {r.props[0]: r.props[4:] for r in (p70.kids if p70 else [])})
+        elif n.name == "Geometry" and n.props[2] == "Mesh":
+            geoms[n.props[0]] = n
+    parent, geom_of = {}, {}
+    for c in top["Connections"].kids:
+        if c.props[0] == "OO" and c.props[2] in models:
+            if c.props[1] in models:
+                parent[c.props[1]] = c.props[2]
+            elif c.props[1] in geoms:
+                geom_of[c.props[2]] = c.props[1]
+
+    def world(mid):
+        M = _fbx_matrix(models[mid][1])
+        return world(parent[mid]) @ M if mid in parent else M
+
+    parts = []
+    for mid, gid in geom_of.items():
+        name, p70 = models[mid]
+        if want is not None and not want(name):
+            continue
+        g = geoms[gid]
+        V = g.find("Vertices").props[0].reshape(-1, 3).astype(np.float64)
+        idx = g.find("PolygonVertexIndex").props[0].astype(np.int64)
+        ends = np.flatnonzero(idx < 0)                     # последняя вершина многоугольника записана как ~i
+        idx = np.where(idx < 0, ~idx, idx)
+        starts = np.concatenate([[0], ends[:-1] + 1])
+        ntri = ends - starts - 1                           # многоугольники -> веером треугольников
+        poly = np.repeat(np.arange(len(starts)), ntri)
+        k = np.arange(ntri.sum()) - np.repeat(np.cumsum(ntri) - ntri, ntri) + 1
+        F = np.stack([idx[starts[poly]], idx[starts[poly] + k], idx[starts[poly] + k + 1]], 1)
+        M = world(mid) @ _fbx_matrix(p70, "Geometric")
+        V = V @ M[:3, :3].T + M[:3, 3]
+        if np.linalg.det(M[:3, :3]) < 0:                   # зеркальное преобразование - порядок обхода
+            F = F[:, ::-1]
+        parts.append((name, V, F))
+    return parts

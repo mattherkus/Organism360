@@ -1,6 +1,6 @@
 {
-  "_comment": "Анатомическая модель из Human Reference Atlas. Цвет, текстуру и блеск групп можно менять; геометрия в spleen.npz (пересобрать: tools/atlas_import.py).",
-  "attribution": "Human Reference Atlas 3D Reference Organs (HuBMAP), based on the Visible Human Project, licensed under CC Attribution 4.0 International",
+  "_comment": "Анатомическая модель из Z-Anatomy. Цвет, текстуру и блеск групп можно менять; геометрия в spleen.npz (пересобрать: tools/atlas_import.py).",
+  "attribution": "Z-Anatomy, the libre 3D atlas of anatomy, based on BodyParts3D (© The Database Center for Life Science); licensed under CC Attribution-ShareAlike 4.0 International",
   "mesh": "spleen.npz",
   "groups": [
     {
@@ -8,9 +8,9 @@
       "color": "#7e3253",
       "texture": "liver",
       "gloss": 0.55,
-      "triangles": 15878,
+      "triangles": 21280,
       "source_parts": [
-        "spleen (welded)"
+        "Spleen"
       ]
     }
   ]

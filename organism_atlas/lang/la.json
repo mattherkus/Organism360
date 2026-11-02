@@ -198,12 +198,8 @@
       "kidney": "Renes",
       "ureter": "Ureteres"
     },
-    "liver": {
-      "parenchyma": "Parenchyma hepatis",
-      "vein": "Venae hepaticae et vena portae hepatis"
-    },
     "lungs": {
-      "airway": "Bronchi",
+      "airway": "Trachea et bronchi principales",
       "lung": "Pulmones"
     },
     "ovaries": {
@@ -224,12 +220,36 @@
       "gland": "Pancreas"
     },
     "prostate": {
-      "prostate": "Substantia glandularis",
-      "stroma": "Stroma fibromusculare anterius"
+      "prostate": "Prostata",
+      "seminal": "Glandulae vesiculosae et ductus deferentes"
     },
     "thyroid": {
       "cartilage": "Cartilago cricoidea",
       "thyroid": "Glandula thyroidea"
+    },
+    "aorta": {
+      "aorta": "Aorta",
+      "branch": "Origines ramorum aortae"
+    },
+    "vena_cava": {
+      "cava": "Vena cava superior et vena cava inferior",
+      "tributary": "Venae tributariae"
+    },
+    "spinal_cord": {
+      "cord": "Medulla spinalis",
+      "nerve": "Radices nervorum spinalium et cauda equina",
+      "ganglion": "Ganglia sensoria nervorum spinalium"
+    },
+    "lymph_nodes": {
+      "follicle": "Noduli lymphoidei",
+      "paracortex": "Paracortex",
+      "medulla": "Medulla nodi lymphoidei",
+      "blood": "Vasa sanguinea",
+      "lymph": "Vasa lymphatica"
+    },
+    "gallbladder": {
+      "gallbladder": "Vesica biliaris",
+      "bile": "Ductus choledochus"
     }
   },
   "diseases": {

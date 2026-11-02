@@ -1,0 +1,34 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в vena_cava.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "vena_cava.npz",
+  "groups": [
+    {
+      "group": "cava",
+      "color": "#4d6fb8",
+      "texture": "smooth",
+      "gloss": 0.5,
+      "triangles": 2214,
+      "source_parts": [
+        "Inferior vena cava",
+        "Superior vena cava"
+      ]
+    },
+    {
+      "group": "tributary",
+      "color": "#6f88c4",
+      "texture": "smooth",
+      "gloss": 0.42,
+      "triangles": 7207,
+      "source_parts": [
+        "Azygos vein",
+        "Left brachiocephalic vein",
+        "Left common iliac vein",
+        "Left hepatic vein",
+        "Right brachiocephalic vein",
+        "Right common iliac vein",
+        "Right hepatic vein"
+      ]
+    }
+  ]
+}

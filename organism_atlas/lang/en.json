@@ -49,8 +49,9 @@
     "viewer_hint": "Drag to rotate. Scroll to zoom, double-click to reset the view.",
     "viewer_error": "Could not render the model: {error}",
     "viewer_credit": "Anatomical model: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
-    "viewer_credit_hra": "Anatomical model: Human Reference Atlas (HuBMAP), based on the Visible Human Project, CC BY 4.0",
+    "viewer_credit_hra": "Anatomical model: Human Reference Atlas (HuBMAP), CC BY 4.0",
     "viewer_credit_spl": "Anatomical model: SPL Head and Neck Atlas (Brigham and Women's Hospital), Open Anatomy, 3D Slicer License",
+    "viewer_credit_za": "Anatomical model: Z-Anatomy (based on BodyParts3D, © The Database Center for Life Science), CC BY-SA 4.0",
     "settings_button": "Settings",
     "settings_title": "Settings",
     "settings_theme": "Theme",
@@ -1051,12 +1052,8 @@
       "kidney": "Kidneys",
       "ureter": "Ureters"
     },
-    "liver": {
-      "parenchyma": "Liver tissue",
-      "vein": "Hepatic and portal veins"
-    },
     "lungs": {
-      "airway": "Bronchi",
+      "airway": "Trachea and main bronchi",
       "lung": "Lungs"
     },
     "ovaries": {
@@ -1077,12 +1074,36 @@
       "gland": "Pancreas"
     },
     "prostate": {
-      "prostate": "Glandular tissue",
-      "stroma": "Anterior fibromuscular stroma"
+      "prostate": "Prostate",
+      "seminal": "Seminal vesicles and vasa deferentia"
     },
     "thyroid": {
       "cartilage": "Cricoid cartilage",
       "thyroid": "Thyroid gland"
+    },
+    "aorta": {
+      "aorta": "Aorta",
+      "branch": "Origins of aortic branches"
+    },
+    "vena_cava": {
+      "cava": "Superior and inferior venae cavae",
+      "tributary": "Tributary veins"
+    },
+    "spinal_cord": {
+      "cord": "Spinal cord",
+      "nerve": "Spinal nerve roots and cauda equina",
+      "ganglion": "Spinal ganglia"
+    },
+    "lymph_nodes": {
+      "follicle": "Lymphoid follicles",
+      "paracortex": "Paracortex",
+      "medulla": "Medulla",
+      "blood": "Blood vessels",
+      "lymph": "Lymphatic vessels"
+    },
+    "gallbladder": {
+      "gallbladder": "Gallbladder",
+      "bile": "Bile duct"
     }
   },
   "tours": {

@@ -59,10 +59,20 @@ ORGANS = {
     "rectum": ["FMA14544"],
     "appendix": ["FMA14542", "FMA14541"],                            # аппендикс и слепая кишка
     "trachea": ["FMA7394", "FMA7395", "FMA7396"],                    # трахея и главные бронхи
+    # аорта и устья её ветвей: плечеголовной ствол, левые общая сонная и подключичная, чревный ствол,
+    # верхняя брыжеечная, почечные и общие подвздошные артерии (дальше ветви обрезаны правилами RULES)
+    "aorta": ["FMA3734", "FMA3932", "FMA4058", "FMA4694", "FMA14812", "FMA14749", "FMA14752", "FMA14753",
+              "FMA14765", "FMA14766"],
+    # полые вены и впадающие в них: плечеголовные, общие подвздошные, печёночные, непарная
+    "vena_cava": ["FMA10951", "FMA4720", "FMA4751", "FMA4761", "FMA21387", "FMA21388", "FMA14338", "FMA14339",
+                  "FMA4838"],
+    "diaphragm": ["FMA13295"],
+    "pituitary": ["FMA13889"],
+    "thymus": ["FMA9607"],
 }
 # органы, модели которых теперь берутся из другого источника (tools/atlas_import.py): по умолчанию
 # не собираются, только если назвать их явно
-REPLACED = {"lungs"}
+REPLACED = {"lungs", "liver", "gallbladder", "bladder"}
 FACE_BUDGET = 45000            # треугольников на орган после упрощения
 # сосуды сердца утоплены в стенку; сегменты печени разделены щелями - раздуваем, чтобы перекрылись
 INFLATE = {"heart": {"artery": 1.0, "vein": 1.0}, "liver": {"parenchyma": 1.2}}
@@ -97,6 +107,17 @@ RULES = {
     "rectum": [(r"", "rectum")],
     "appendix": [(r"appendix", "appendix"), (r"", "cecum")],
     "trachea": [(r"", "airway")],
+    # в понятия аорты и вен входит всё дерево сосудов до кистей и стоп: берём только названные
+    "aorta": [(r"valve|cusp|sinus", None), (r"aort", "aorta"),
+              (r"^(brachiocephalic artery|left common carotid artery|left subclavian artery|celiac trunk"
+               r"|trunk of superior mesenteric artery|right renal artery|trunk of left renal artery"
+               r"|(left|right) common iliac artery)$", "branch"), (r"", None)],
+    "vena_cava": [(r"vena cava", "cava"),
+                  (r"^((left|right) brachiocephalic vein|(left|right) common iliac vein|azygos vein"
+                   r"|(left|right|middle) hepatic vein)$", "tributary"), (r"", None)],
+    "diaphragm": [(r"", "diaphragm")],
+    "pituitary": [(r"", "pituitary")],
+    "thymus": [(r"", "thymus")],
 }
 # вид групп: цвет (sRGB), текстура и блеск - те же понятия, что в procedural-моделях
 LOOKS = {
@@ -112,6 +133,9 @@ LOOKS = {
     "adrenal": ("#dda03a", "gland", 0.45), "kidney_dim": ("#ad3b4d", "smooth", 0.45),
     "esophagus": ("#cc7a70", "muscle", 0.5), "stomach_dim": ("#c79a8c", "smooth", 0.35), "rectum": ("#cf7a66", "bowel", 0.45),
     "appendix": ("#e8a77f", "bowel", 0.45), "cecum": ("#dd9269", "bowel", 0.5),
+    "aorta": ("#d24a3c", "smooth", 0.6), "branch": ("#b9564b", "smooth", 0.45),
+    "cava": ("#4d6fb8", "smooth", 0.5), "tributary": ("#6f88c4", "smooth", 0.42),
+    "diaphragm": ("#b5534d", "muscle", 0.45), "pituitary": ("#df8d5c", "gland", 0.5), "thymus": ("#d79a9c", "gland", 0.4),
 }
 
 
@@ -289,6 +313,19 @@ def drop_outliers(parts):
     return [p for p in parts if ok(p[1])], sorted(p[0] for p in parts if not ok(p[1]))
 
 
+def unfold_faces(V, F, rounds=3):
+    """сетка без граней, нормаль которых смотрит против нормалей их вершин (складки после упрощения), и без
+    оставшихся от них лишних вершин; после удаления нормали вершин пересчитываются - в несколько проходов"""
+    for _ in range(rounds):
+        fn = np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]])
+        ok = (fn * vertex_normals(V, F)[F].mean(1)).sum(1) > 0
+        if ok.all():
+            break
+        F = F[ok]
+    used, F = np.unique(F, return_inverse=True)
+    return V[used], F.reshape(-1, 3)
+
+
 # ----------------------------------------------------------------------------------- видимость
 def visible_parts(parts, size=260):
     """номера частей, которые видны снаружи хотя бы с одного из 26 направлений"""
@@ -336,9 +373,14 @@ def build(organ, z, elements, names_by_fj):
 
 
 def finish(organ, parts, group_of, attribution, source, tool, outliers=(), looks=None, budget=FACE_BUDGET,
-           inflate=None):
+           inflate=None, detail=1, unfold=False):
     """общая часть импорта для любого источника: parts - [(название части, V, F)] в миллиметрах
     в осях проекта, group_of(название) - группа материала (None - не брать).
+    detail > 1 - мельче начальная решётка упрощения: для органа, вытянутого во много раз длиннее своей
+    толщины (спинной мозг с корешками); {группа: во сколько раз мельче} - только для тонких частей
+    (сеть сосудов), остальные упрощаются под бюджет как обычно.
+    unfold - убрать грани, сложенные упрощением (тонкая трубка схлопнулась в лист): их нормаль смотрит против
+    нормалей вершин, и такие грани рисуются тёмными пятнами или пропадают при отсечении задних граней.
     Упрощение под бюджет треугольников, сглаживание, отбор видимых снаружи частей, масштаб
     как у процедурной модели, запись models/mesh/<орган>.npz и .json"""
     looks = {**LOOKS, **(looks or {})}
@@ -351,9 +393,10 @@ def finish(organ, parts, group_of, attribution, source, tool, outliers=(), looks
     coarse = {n for n, V, F in parts if edge(V, F) > COARSE_EDGE * ext}     # грубые уже в архиве
 
     # упрощение: шаг решётки подбираем под бюджет треугольников
-    cell = ext / 260
+    finer = detail if isinstance(detail, dict) else {}
+    cell = ext / (260 * (1 if finer else detail))
     while True:
-        simp = [(n, *cluster(V, F, cell)) for n, V, F in parts]
+        simp = [(n, *cluster(V, F, cell / finer.get(group_of(n), 1))) for n, V, F in parts]
         simp = [(n, V, F) for n, V, F in simp if len(F) >= 4]
         nf = sum(len(F) for *_, F in simp)
         if nf <= budget * 1.6:                 # невидимые части ещё отсеются
@@ -368,6 +411,9 @@ def finish(organ, parts, group_of, attribution, source, tool, outliers=(), looks
     infl = INFLATE.get(organ, {}) if inflate is None else inflate
     simp = [(n, V + infl[group_of(n)] * vertex_normals(V, F), F) if group_of(n) in infl else (n, V, F)
             for n, V, F in simp]
+    if unfold:
+        simp = [(n, *unfold_faces(V, F)) for n, V, F in simp]
+        simp = [(n, V, F) for n, V, F in simp if len(F) >= 4]
     vis = visible_parts(simp)
     kept = [simp[i] for i in vis]
     dropped = sorted({simp[i][0] for i in range(len(simp)) if i not in vis}) + ["[outlier] " + o for o in outliers]

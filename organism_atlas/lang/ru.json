@@ -49,8 +49,9 @@
     "viewer_hint": "Тяни мышью, чтобы вращать. Колесо мыши меняет масштаб, двойной щелчок сбрасывает вид.",
     "viewer_error": "Не удалось нарисовать модель: {error}",
     "viewer_credit": "Анатомическая модель: BodyParts3D, © The Database Center for Life Science, CC BY 4.0",
-    "viewer_credit_hra": "Анатомическая модель: Human Reference Atlas (HuBMAP), по данным Visible Human, CC BY 4.0",
+    "viewer_credit_hra": "Анатомическая модель: Human Reference Atlas (HuBMAP), CC BY 4.0",
     "viewer_credit_spl": "Анатомическая модель: атлас головы и шеи SPL (Brigham and Women's Hospital), Open Anatomy, лицензия 3D Slicer",
+    "viewer_credit_za": "Анатомическая модель: Z-Anatomy (на основе BodyParts3D, © The Database Center for Life Science), CC BY-SA 4.0",
     "settings_button": "Настройки",
     "settings_title": "Настройки",
     "settings_theme": "Тема оформления",
@@ -1051,12 +1052,8 @@
       "kidney": "Почки",
       "ureter": "Мочеточники"
     },
-    "liver": {
-      "parenchyma": "Ткань печени",
-      "vein": "Печёночные и воротная вены"
-    },
     "lungs": {
-      "airway": "Бронхи",
+      "airway": "Трахея и главные бронхи",
       "lung": "Лёгкие"
     },
     "ovaries": {
@@ -1077,12 +1074,36 @@
       "gland": "Поджелудочная железа"
     },
     "prostate": {
-      "prostate": "Железистая ткань",
-      "stroma": "Передняя фибромышечная строма"
+      "prostate": "Предстательная железа",
+      "seminal": "Семенные пузырьки и семявыносящие протоки"
     },
     "thyroid": {
       "cartilage": "Перстневидный хрящ",
       "thyroid": "Щитовидная железа"
+    },
+    "aorta": {
+      "aorta": "Аорта",
+      "branch": "Начала ветвей аорты"
+    },
+    "vena_cava": {
+      "cava": "Верхняя и нижняя полые вены",
+      "tributary": "Впадающие вены"
+    },
+    "spinal_cord": {
+      "cord": "Спинной мозг",
+      "nerve": "Корешки спинномозговых нервов и конский хвост",
+      "ganglion": "Спинномозговые узлы"
+    },
+    "lymph_nodes": {
+      "follicle": "Лимфоидные фолликулы",
+      "paracortex": "Паракортекс",
+      "medulla": "Мозговое вещество",
+      "blood": "Кровеносные сосуды",
+      "lymph": "Лимфатические сосуды"
+    },
+    "gallbladder": {
+      "gallbladder": "Жёлчный пузырь",
+      "bile": "Жёлчный проток"
     }
   },
   "tours": {

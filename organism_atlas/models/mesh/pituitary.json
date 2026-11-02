@@ -1,0 +1,17 @@
+{
+  "_comment": "Анатомическая модель из BodyParts3D. Цвет, текстуру и блеск групп можно менять; геометрия в pituitary.npz (пересобрать: tools/bp3d_import.py).",
+  "attribution": "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International",
+  "mesh": "pituitary.npz",
+  "groups": [
+    {
+      "group": "pituitary",
+      "color": "#df8d5c",
+      "texture": "gland",
+      "gloss": 0.5,
+      "triangles": 18624,
+      "source_parts": [
+        "Pituitary gland"
+      ]
+    }
+  ]
+}

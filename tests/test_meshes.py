@@ -15,14 +15,15 @@ from organism_atlas.render3d.scene import Scene3D
 
 # источник анатомической модели каждого органа (см. models/mesh/ATTRIBUTION.md)
 SOURCES = {
-    "bp3d": {"liver", "gallbladder", "stomach", "intestines", "kidneys", "heart", "brain", "pancreas", "bladder",
-             "adrenals", "esophagus", "rectum", "appendix", "trachea"},
-    "hra": {"lungs", "spleen", "prostate", "uterus", "ovaries"},
+    "bp3d": {"stomach", "intestines", "kidneys", "heart", "brain", "pancreas", "adrenals", "esophagus", "rectum",
+             "appendix", "trachea", "aorta", "vena_cava", "diaphragm", "pituitary", "thymus"},
+    "hra": {"uterus", "ovaries", "bladder", "lymph_nodes"},
     "spl": {"thyroid"},
+    "za": {"spinal_cord", "liver", "gallbladder", "lungs", "prostate", "spleen"},
 }
 ANATOMICAL = set().union(*SOURCES.values())
 ATTRIBUTION = {"bp3d": ("BodyParts3D", "CC Attribution 4.0"), "hra": ("Human Reference Atlas", "CC Attribution 4.0"),
-               "spl": ("Head and Neck", "3D Slicer License")}
+               "spl": ("Head and Neck", "3D Slicer License"), "za": ("Z-Anatomy", "CC Attribution-ShareAlike 4.0")}
 TEXTURES = {"smooth", "lung", "gyri", "folia", "liver", "muscle", "gland", "bowel"}
 
 
