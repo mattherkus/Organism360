@@ -8,7 +8,7 @@ from pathlib import Path
 from organism_atlas import diseases, i18n
 from organism_atlas.organs import ORGANS, fact_of_day
 
-FIELDS = ("name", "desc", "location", "facts", "diseases", "daily")
+FIELDS = ("name", "desc", "location", "facts", "daily")
 PKG = Path(i18n.__file__).parent
 
 
@@ -45,6 +45,7 @@ class LangFilesTests(unittest.TestCase):
         self.assertEqual(set(en["organs"]), set(ORGANS))
         for key, o in en["organs"].items():
             self.assertEqual(set(o) - {"reviewed"}, set(FIELDS), key)
+            self.assertEqual(set(o["facts"]), set(ru["organs"][key]["facts"]), key)    # факты - по ключам
 
     def test_reviewed_flag(self):
         """reviewed - отметка «факты проверены специалистом»; ставит только специалист"""
@@ -75,7 +76,7 @@ class SwitchTests(unittest.TestCase):
         i18n.set_lang("la")                         # латынь: только названия, остальное с прошлого языка
         self.assertEqual(i18n.name("heart"), "Cor")
         self.assertEqual(i18n.subtitle("heart"), "Heart")
-        self.assertEqual(i18n.organ("heart", "facts"), i18n._load("en")["organs"]["heart"]["facts"])
+        self.assertEqual(i18n.organ("heart", "facts"), list(i18n._load("en")["organs"]["heart"]["facts"].values()))
         self.assertEqual(i18n.t("card_facts"), "Facts")
         i18n.set_lang("ru")
         i18n.set_lang("la")
@@ -144,19 +145,42 @@ class LinkTests(unittest.TestCase):
     def test_pieces_rebuild_text(self):
         for code in ("ru", "en"):
             for o in i18n._load(code)["organs"].values():
-                for text in [o["desc"], o["location"]] + o["facts"] + o["daily"]:
+                for text in [o["desc"], o["location"]] + list(o["facts"].values()) + o["daily"]:
                     self.assertEqual("".join(piece for piece, _ in i18n.links(text)), text)
 
 
 class DiseaseTests(unittest.TestCase):
     """справочник болезней: diseases.py и разделы diseases в lang/*.json"""
 
-    def test_cards_match_registry(self):
-        """i-я болезнь в карточке органа - ON_CARD[орган][i] на всех языках"""
-        for code in ("ru", "en"):
-            for key in ORGANS:
-                self.assertEqual(len(i18n._load(code)["organs"][key]["diseases"]), len(diseases.ON_CARD[key]),
-                                 (code, key))
+    def test_cards_list_diseases_from_registry(self):
+        """«Заболевания» в карточке органа - ON_CARD[орган] по порядку, названия - из статей"""
+        for key in ORGANS:
+            self.assertTrue(diseases.ON_CARD[key], key)
+            self.assertEqual([d for _, d in diseases.on_card(key)], list(diseases.ON_CARD[key]))
+        i18n.set_lang("en")
+        try:
+            self.assertEqual(diseases.on_card("heart")[0], ("Coronary heart disease", "ihd"))
+        finally:
+            i18n.set_lang("ru")
+        for code in ("ru", "en"):                           # в карточках органов отдельных списков больше нет
+            for key, o in i18n._load(code)["organs"].items():
+                self.assertNotIn("diseases", o, (code, key))
+
+    def test_facts_by_key(self):
+        """факт - по ключу: перевод каждого факта откатывается на русский отдельно, порядок - как в ru.json"""
+        ids = [fid for fid, _ in i18n.facts("heart")]
+        self.assertEqual(ids, list(i18n._load("ru")["organs"]["heart"]["facts"]))
+        en = i18n._load("en")["organs"]["heart"]["facts"]
+        saved = dict(en)
+        try:
+            del en["fist"]
+            i18n.set_lang("en")
+            self.assertEqual(dict(i18n.facts("heart"))["fist"], "По размеру примерно с кулак")
+            self.assertEqual(dict(i18n.facts("heart"))["beats"], saved["beats"])
+        finally:
+            en.clear()
+            en.update(saved)
+            i18n.set_lang("ru")
 
     def test_every_disease_has_article(self):
         for code in ("ru", "en"):

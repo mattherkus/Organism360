@@ -1,9 +1,9 @@
 import random
 import unittest
 
-from organism_atlas import i18n, questions
+from organism_atlas import diseases, i18n, questions
 from organism_atlas.organs import ORGANS, SYSTEMS, for_body
-from organism_atlas.quiz import (KINDS, LENGTHS, LEVELS, OPTIONS, SHARED_FACTS, QuizSession, disease_choices,
+from organism_atlas.quiz import (KINDS, LENGTHS, LEVELS, OPTIONS, SHARED_FACTS, VAGUE_DISEASES, QuizSession, disease_choices,
                                  fact_prompts, format_time, game_length, kinds_for, latin_ok, leaks, location_leaks,
                                  prompt_text, truth_facts)
 
@@ -355,25 +355,27 @@ class NewKindTests(unittest.TestCase):
 
     def test_disease(self):
         s = self.kind("kidneys", "disease", level="hard")
-        self.assertIn(s.prompt(), [i18n.organ("kidneys", "diseases")[i] for i in disease_choices("kidneys")])
+        self.assertIn(s.prompt(), [diseases.text(d, "name") for d in disease_choices("kidneys")])
         opts = s.options()
         self.assertEqual(len(opts), 6)
         self.assertIn("kidneys", opts)
         self.assertNotIn("bladder", opts)                  # та же система - похожие болезни, не предлагаем
         self.assertIsNone(s.answer_text(0))
         i18n.set_lang("en")
-        self.assertIn(s.prompt(), i18n._load("en")["organs"]["kidneys"]["diseases"])
+        self.assertIn(s.prompt(), [diseases.name_in("en", d) for d in diseases.ON_CARD["kidneys"]])
         self.assertTrue(s.answer("kidneys"))
 
     def test_disease_never_names_an_organ_or_repeats(self):
         for key in ORGANS:
-            for i in disease_choices(key):
+            for d in disease_choices(key):
                 for code in ("ru", "en"):
-                    text = i18n._load(code)["organs"][key]["diseases"][i]
+                    text = diseases.name_in(code, d)
                     self.assertFalse(any(leaks(text, k) for k in ORGANS), (key, code, text))
         self.assertEqual(disease_choices("appendix"), [])         # «аппендицит» называет орган
-        self.assertNotIn("Аппендицит", [i18n.organ("intestines", "diseases")[i] for i in disease_choices("intestines")])
-        self.assertNotIn(3, disease_choices("pancreas"))          # VAGUE_DISEASES: муковисцидоз
+        self.assertNotIn("appendicitis", disease_choices("intestines"))      # записан и у аппендикса
+        self.assertNotIn("cystic_fibrosis", disease_choices("pancreas"))  # VAGUE_DISEASES: муковисцидоз
+        for key, ds in VAGUE_DISEASES.items():                    # ключи из списка есть в карточках
+            self.assertTrue(set(ds) <= set(diseases.ON_CARD[key]), key)
 
     def test_latin(self):
         s = self.kind("liver", "latin")
@@ -395,11 +397,11 @@ class NewKindTests(unittest.TestCase):
         seen = set()
         for seed in range(40):
             s = self.kind("heart", "truth", seed)
-            owner, idx = s.picks[0]
+            owner, fid = s.picks[0]
             self.assertEqual(s.options(), ["?1", "?0"])
             self.assertEqual(s.correct(), "?1" if owner == "heart" else "?0")
-            self.assertEqual(s.prompt(), i18n.organ(owner, "facts")[idx])
-            self.assertIn(idx, truth_facts(owner))
+            self.assertEqual(s.prompt(), i18n.fact(owner, fid))
+            self.assertIn(fid, truth_facts(owner))
             if owner != "heart":                             # чужой факт - из органа другой системы
                 self.assertFalse(set(ORGANS[owner]["systems"]) & set(ORGANS["heart"]["systems"]))
             self.assertEqual(s.option_label("?1"), "Верно")
@@ -408,13 +410,14 @@ class NewKindTests(unittest.TestCase):
         self.assertEqual(seen, {True, False})                # бывают и правда, и неправда
 
     def test_truth_facts_skip_shared_and_naming(self):
-        for key, idx in SHARED_FACTS.items():
-            self.assertFalse(set(idx) & set(truth_facts(key)), key)
+        for key, ids in SHARED_FACTS.items():
+            self.assertTrue(set(ids) <= {fid for fid, _ in i18n.facts(key)}, key)   # ключи из списка есть
+            self.assertFalse(set(ids) & set(truth_facts(key)), key)
         self.assertEqual(truth_facts("spleen"), [])
         self.assertNotIn("truth", kinds_for("spleen"))
         for key in ORGANS:
-            for i in truth_facts(key):
-                self.assertFalse(any(leaks(i18n.organ(key, "facts")[i], k) for k in ORGANS), key)
+            for fid in truth_facts(key):
+                self.assertFalse(any(leaks(i18n.fact(key, fid), k) for k in ORGANS), key)
 
     def test_mixed_game_has_new_kinds(self):
         kinds = set()

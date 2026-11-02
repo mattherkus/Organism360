@@ -5,7 +5,7 @@
 from PySide6.QtWidgets import QGridLayout
 
 from .. import i18n
-from ..diseases import ON_CARD
+from ..diseases import on_card
 from ..i18n import t
 from ..organs import ORGANS, fact_of_day
 from .scaling import px
@@ -57,11 +57,7 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
         put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
     if not compact:
         heading(lay, t("card_diseases"))
-        names = i18n.organ(key, "diseases")
-        refs = ON_CARD.get(key, ())
-        if len(refs) != len(names):                                     # список не сходится с diseases.py
-            refs = [None] * len(names)
-        put(lay, rich_label(joined(list(zip(names, refs)), "  ·  "), on_link))     # ссылки на статьи
+        put(lay, rich_label(joined(on_card(key), "  ·  "), on_link))   # ссылки на статьи справочника
         day = rounded_card(fill="day_bg", border=c, radius=10)
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
         put(day.lay, linked(fact_of_day(key), on_link, seen), bottom=8, x=10)

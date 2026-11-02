@@ -252,17 +252,11 @@
       "name": "Lungs",
       "desc": "Handle gas exchange: take in oxygen and release carbon dioxide.",
       "location": "Chest cavity on both sides of the heart; they rest on the diaphragm",
-      "facts": [
-        "Contain hundreds of millions of alveoli",
-        "The right lung has three lobes, the left has two",
-        "An adult takes 12–20 breaths per minute"
-      ],
-      "diseases": [
-        "Pneumonia",
-        "Asthma",
-        "COPD",
-        "Lung cancer"
-      ],
+      "facts": {
+        "alveoli": "Contain hundreds of millions of alveoli",
+        "lobes": "The right lung has three lobes, the left has two",
+        "breaths": "An adult takes 12–20 breaths per minute"
+      },
       "daily": [
         "The right lung is larger than the left: the heart takes up room on the left",
         "The alveoli add up to 50–75 m², about the floor area of a small flat",
@@ -275,17 +269,11 @@
       "name": "Liver",
       "desc": "Filters the blood, neutralises harmful substances and produces bile.",
       "location": "Upper right abdomen under the diaphragm; the left lobe crosses the midline",
-      "facts": [
-        "The largest gland in the body",
-        "Can regrow after damage",
-        "Stores energy as glycogen"
-      ],
-      "diseases": [
-        "Viral hepatitis",
-        "Fatty liver disease",
-        "Cirrhosis",
-        "Liver cancer"
-      ],
+      "facts": {
+        "largest_gland": "The largest gland in the body",
+        "regrow": "Can regrow after damage",
+        "glycogen": "Stores energy as glycogen"
+      },
       "daily": [
         "Weighs about 1.5 kg, making it the heaviest internal organ",
         "About 1.5 L of blood passes through it every minute",
@@ -298,15 +286,11 @@
       "name": "Gallbladder",
       "desc": "Stores bile made by the liver and releases it into the intestine when you eat.",
       "location": "Under the liver on the right, in a hollow on its lower surface; its tip sticks out below the liver's edge",
-      "facts": [
-        "Shaped like a small pear",
-        "Holds about 30–50 mL of bile",
-        "After a fatty meal it contracts and pushes bile into the duodenum"
-      ],
-      "diseases": [
-        "Gallstones",
-        "Cholecystitis"
-      ],
+      "facts": {
+        "pear": "Shaped like a small pear",
+        "volume": "Holds about 30–50 mL of bile",
+        "contracts": "After a fatty meal it contracts and pushes bile into the duodenum"
+      },
       "daily": [
         "Bile gets thicker inside it as water is absorbed",
         "Bile breaks fat into tiny droplets, so enzymes can digest it more easily",
@@ -318,17 +302,11 @@
       "name": "Stomach",
       "desc": "Churns food with gastric juice and starts digesting proteins.",
       "location": "Upper left abdomen, below the diaphragm and the liver",
-      "facts": [
-        "Holds about 1–1.5 L",
-        "Its hydrochloric acid is strong, and mucus protects the stomach walls",
-        "Food stays in it for 2–4 hours"
-      ],
-      "diseases": [
-        "Gastritis",
-        "Peptic ulcer",
-        "Acid reflux (GERD)",
-        "Stomach cancer"
-      ],
+      "facts": {
+        "volume": "Holds about 1–1.5 L",
+        "acid": "Its hydrochloric acid is strong, and mucus protects the stomach walls",
+        "digestion_time": "Food stays in it for 2–4 hours"
+      },
       "daily": [
         "The surface layer of its lining renews every 3–5 days",
         "An empty stomach holds about 50 mL and can stretch dozens of times larger",
@@ -341,17 +319,11 @@
       "name": "Intestines",
       "desc": "Finish digestion and absorb nutrients and water.",
       "location": "Abdominal cavity: the small intestine in the centre, framed by the large intestine",
-      "facts": [
-        "The small intestine is about 6 m long",
-        "The large intestine is about 1.5 m",
-        "Trillions of helpful bacteria live here"
-      ],
-      "diseases": [
-        "Irritable bowel syndrome",
-        "Crohn's disease and ulcerative colitis",
-        "Appendicitis",
-        "Colorectal cancer"
-      ],
+      "facts": {
+        "small_length": "The small intestine is about 6 m long",
+        "large_length": "The large intestine is about 1.5 m",
+        "bacteria": "Trillions of helpful bacteria live here"
+      },
       "daily": [
         "Villi and folds expand the absorbing surface to about 30 m²",
         "The gut wall holds about 500 million neurons, which is why it is called the “second brain”",
@@ -364,17 +336,11 @@
       "name": "Kidneys",
       "desc": "Clean waste from the blood and regulate the body's water balance.",
       "location": "Against the back wall of the abdomen on either side of the spine, at the level of the lower ribs",
-      "facts": [
-        "A pair of organs, each about the size of a fist",
-        "About 1.2 L of blood passes through them every minute",
-        "They make urine, which flows down the ureters into the bladder"
-      ],
-      "diseases": [
-        "Kidney stones",
-        "Pyelonephritis",
-        "Glomerulonephritis",
-        "Chronic kidney disease"
-      ],
+      "facts": {
+        "fist": "A pair of organs, each about the size of a fist",
+        "blood_flow": "About 1.2 L of blood passes through them every minute",
+        "urine": "They make urine, which flows down the ureters into the bladder"
+      },
       "daily": [
         "They filter about 180 L of primary urine a day, yet only about 1.5 L leaves the body",
         "Each kidney contains about a million nephrons, tiny filters",
@@ -387,17 +353,11 @@
       "name": "Heart",
       "desc": "A muscular pump that drives blood through the vessels.",
       "location": "Chest cavity between the lungs, about two thirds of it left of the midline",
-      "facts": [
-        "Beats about 100,000 times a day",
-        "Roughly the size of a fist",
-        "Has four chambers: two atria and two ventricles"
-      ],
-      "diseases": [
-        "Coronary heart disease",
-        "High blood pressure",
-        "Arrhythmias",
-        "Heart failure"
-      ],
+      "facts": {
+        "beats": "Beats about 100,000 times a day",
+        "fist": "Roughly the size of a fist",
+        "chambers": "Has four chambers: two atria and two ventricles"
+      },
       "daily": [
         "At rest it pumps about 5 L of blood a minute",
         "Its rhythm comes from a built-in pacemaker, the sinus node",
@@ -410,17 +370,11 @@
       "name": "Brain",
       "desc": "Controls the whole body: thinking, memory, movement and the senses.",
       "location": "Inside the skull; it joins the spinal cord through the foramen magnum",
-      "facts": [
-        "Weighs about 1.4 kg",
-        "Contains roughly 86 billion neurons",
-        "Uses about 20% of the body's energy"
-      ],
-      "diseases": [
-        "Stroke",
-        "Migraine",
-        "Epilepsy",
-        "Alzheimer's disease"
-      ],
+      "facts": {
+        "weight": "Weighs about 1.4 kg",
+        "neurons": "Contains roughly 86 billion neurons",
+        "energy": "Uses about 20% of the body's energy"
+      },
       "daily": [
         "The brain itself feels no pain: its tissue has no pain receptors",
         "About 60% of the brain's dry mass is fat",
@@ -433,17 +387,11 @@
       "name": "Thyroid gland",
       "desc": "Makes hormones that control metabolism, growth and body heat.",
       "location": "Front of the neck, below the thyroid cartilage of the larynx",
-      "facts": [
-        "Shaped like a butterfly, it sits on the windpipe below the larynx",
-        "Weighs only 15–30 g",
-        "It needs iodine from food to work"
-      ],
-      "diseases": [
-        "Hypothyroidism",
-        "Hyperthyroidism (Graves' disease)",
-        "Hashimoto's thyroiditis",
-        "Thyroid nodules"
-      ],
+      "facts": {
+        "butterfly": "Shaped like a butterfly, it sits on the windpipe below the larynx",
+        "weight": "Weighs only 15–30 g",
+        "iodine": "It needs iodine from food to work"
+      },
       "daily": [
         "It is named after the nearby thyroid cartilage, which looks like a shield",
         "Iodised salt was introduced to fight goitre caused by iodine deficiency",
@@ -456,17 +404,11 @@
       "name": "Spleen",
       "desc": "Filters the blood, removes old red blood cells and supports the immune system.",
       "location": "Upper left abdomen behind the stomach, level with ribs 9–11",
-      "facts": [
-        "Weighs about 150–200 g",
-        "Keeps a reserve of blood and platelets",
-        "You can live without it: the liver and lymph nodes take over part of its work"
-      ],
-      "diseases": [
-        "Enlarged spleen (splenomegaly)",
-        "Rupture after an abdominal injury",
-        "Splenic infarction",
-        "Hypersplenism"
-      ],
+      "facts": {
+        "weight": "Weighs about 150–200 g",
+        "reserve": "Keeps a reserve of blood and platelets",
+        "live_without": "You can live without it: the liver and lymph nodes take over part of its work"
+      },
       "daily": [
         "About 12 cm long, roughly the size of a fist",
         "The white pulp works for immunity, the red pulp filters the blood",
@@ -479,17 +421,11 @@
       "name": "Pancreas",
       "desc": "Releases digestive enzymes and the hormones insulin and glucagon.",
       "location": "Behind the stomach, across the abdomen: the head by the duodenum, the tail by the spleen",
-      "facts": [
-        "Releases 1–1.5 L of digestive juice a day",
-        "The islets of Langerhans keep track of blood sugar",
-        "About 15–20 cm long, it lies behind the stomach"
-      ],
-      "diseases": [
-        "Pancreatitis",
-        "Diabetes",
-        "Pancreatic cancer",
-        "Cystic fibrosis"
-      ],
+      "facts": {
+        "juice": "Releases 1–1.5 L of digestive juice a day",
+        "islets": "The islets of Langerhans keep track of blood sugar",
+        "length": "About 15–20 cm long, it lies behind the stomach"
+      },
       "daily": [
         "The name comes from Greek for “all flesh”",
         "The islets of Langerhans make up only 1–2% of its mass",
@@ -502,17 +438,11 @@
       "name": "Urinary bladder",
       "desc": "Stores urine coming from the kidneys and empties it out of the body.",
       "location": "In the pelvis, just behind the pubic symphysis",
-      "facts": [
-        "Holds about 0.4–0.6 L",
-        "The urge to urinate starts at about 200–300 mL",
-        "Its muscular wall stretches like a balloon"
-      ],
-      "diseases": [
-        "Cystitis",
-        "Overactive bladder",
-        "Bladder stones",
-        "Urinary incontinence"
-      ],
+      "facts": {
+        "volume": "Holds about 0.4–0.6 L",
+        "urge": "The urge to urinate starts at about 200–300 mL",
+        "stretch": "Its muscular wall stretches like a balloon"
+      },
       "daily": [
         "It is lined with a special epithelium that stretches without tearing",
         "The ureters push urine along in waves several times a minute",
@@ -525,17 +455,11 @@
       "name": "Esophagus",
       "desc": "A muscular tube that carries swallowed food and water from the throat to the stomach.",
       "location": "In the neck and chest: behind the trachea and heart, in front of the spine; passes through the diaphragm into the abdomen",
-      "facts": [
-        "About 25 cm long",
-        "Food travels down it in 5–10 seconds, pushed by waves of contraction called peristalsis",
-        "A ring of muscle (sphincter) at the bottom keeps stomach contents from flowing back up"
-      ],
-      "diseases": [
-        "Gastroesophageal reflux disease (GERD)",
-        "Esophagitis",
-        "Barrett’s esophagus",
-        "Hiatal hernia"
-      ],
+      "facts": {
+        "length": "About 25 cm long",
+        "peristalsis": "Food travels down it in 5–10 seconds, pushed by waves of contraction called peristalsis",
+        "sphincter": "A ring of muscle (sphincter) at the bottom keeps stomach contents from flowing back up"
+      },
       "daily": [
         "Thanks to peristalsis you can swallow even while standing on your head",
         "Heartburn is acidic stomach content flowing back into the esophagus",
@@ -548,17 +472,11 @@
       "name": "Trachea",
       "desc": "The windpipe: air travels through it from the larynx to the bronchi and lungs.",
       "location": "Front of the neck and upper chest, in front of the esophagus; at the bottom it splits into the two main bronchi",
-      "facts": [
-        "About 10–12 cm long in an adult",
-        "Its frame is 16–20 C-shaped rings of cartilage, open at the back",
-        "Tiny hairs (cilia) in its lining constantly sweep dust and mucus up toward the throat"
-      ],
-      "diseases": [
-        "Tracheitis",
-        "Tracheal stenosis",
-        "Inhaled foreign body",
-        "Tracheomalacia"
-      ],
+      "facts": {
+        "length": "About 10–12 cm long in an adult",
+        "rings": "Its frame is 16–20 C-shaped rings of cartilage, open at the back",
+        "cilia": "Tiny hairs (cilia) in its lining constantly sweep dust and mucus up toward the throat"
+      },
       "daily": [
         "Its soft back wall without cartilage lets the esophagus widen when you swallow",
         "The point where it splits into two bronchi is called the bifurcation, or carina",
@@ -571,17 +489,11 @@
       "name": "Adrenal glands",
       "desc": "A pair of endocrine glands that make adrenaline, cortisol and aldosterone.",
       "location": "Behind the abdominal cavity (retroperitoneum), on top of the upper poles of the kidneys",
-      "facts": [
-        "Each one weighs about 5 g",
-        "The outer layer (cortex) makes cortisol and aldosterone; the inner layer (medulla) makes adrenaline and noradrenaline",
-        "The right one is shaped like a triangle, the left one like a crescent"
-      ],
-      "diseases": [
-        "Adrenal insufficiency (Addison’s disease)",
-        "Cushing’s syndrome",
-        "Pheochromocytoma",
-        "Primary aldosteronism (Conn’s syndrome)"
-      ],
+      "facts": {
+        "weight": "Each one weighs about 5 g",
+        "layers": "The outer layer (cortex) makes cortisol and aldosterone; the inner layer (medulla) makes adrenaline and noradrenaline",
+        "shape": "The right one is shaped like a triangle, the left one like a crescent"
+      },
       "daily": [
         "Adrenaline triggers the fight-or-flight response: the heart speeds up and the pupils widen",
         "Cortisol peaks in the morning, soon after waking up",
@@ -594,16 +506,11 @@
       "name": "Appendix",
       "desc": "A worm-like pouch of the cecum: a narrow tube closed at one end, with a lot of lymphoid tissue in its wall.",
       "location": "Lower right abdomen (right iliac region), attached to the cecum",
-      "facts": [
-        "Usually 7–10 cm long and less than 1 cm thick",
-        "Its position varies: it may lie behind the cecum or hang down into the pelvis",
-        "The lymphoid tissue in its wall helps protect the gut from infection"
-      ],
-      "diseases": [
-        "Appendicitis",
-        "Appendiceal tumors",
-        "Appendiceal mucocele"
-      ],
+      "facts": {
+        "size": "Usually 7–10 cm long and less than 1 cm thick",
+        "position": "Its position varies: it may lie behind the cecum or hang down into the pelvis",
+        "lymphoid": "The lymphoid tissue in its wall helps protect the gut from infection"
+      },
       "daily": [
         "Acute appendicitis is one of the most common reasons for emergency abdominal surgery",
         "Appendicitis pain often starts near the navel and then moves to the lower right",
@@ -616,17 +523,11 @@
       "name": "Rectum",
       "desc": "The last part of the large intestine: it stores feces and pushes them out of the body.",
       "location": "In the pelvis, in front of the sacrum and coccyx; behind the bladder in men and behind the uterus in women",
-      "facts": [
-        "About 12–15 cm long",
-        "Its wider lower part is called the ampulla",
-        "The exit is closed by two rings of muscle, the internal and external sphincters"
-      ],
-      "diseases": [
-        "Hemorrhoids",
-        "Anal fissure",
-        "Proctitis",
-        "Colorectal cancer"
-      ],
+      "facts": {
+        "length": "About 12–15 cm long",
+        "ampulla": "Its wider lower part is called the ampulla",
+        "sphincters": "The exit is closed by two rings of muscle, the internal and external sphincters"
+      },
       "daily": [
         "Despite its name (Latin for “straight”), it curves along the sacrum",
         "The urge to empty the bowels comes when the ampulla stretches",
@@ -639,17 +540,11 @@
       "name": "Uterus",
       "desc": "A hollow muscular organ of the female reproductive system where a baby grows during pregnancy.",
       "location": "In the pelvis, between the urinary bladder (in front) and the rectum (behind)",
-      "facts": [
-        "About 7–8 cm long and about 50 g in a woman who has not given birth",
-        "During pregnancy its mass grows to about 1 kg",
-        "Its inner lining, the endometrium, renews itself in every menstrual cycle"
-      ],
-      "diseases": [
-        "Uterine fibroids",
-        "Endometriosis",
-        "Cervical cancer",
-        "Endometritis"
-      ],
+      "facts": {
+        "size": "About 7–8 cm long and about 50 g in a woman who has not given birth",
+        "pregnancy": "During pregnancy its mass grows to about 1 kg",
+        "endometrium": "Its inner lining, the endometrium, renews itself in every menstrual cycle"
+      },
       "daily": [
         "The fallopian tubes connect its cavity with the abdominal cavity near the ovaries",
         "Fertilization usually happens not in the uterus itself but in a fallopian tube",
@@ -662,17 +557,11 @@
       "name": "Ovaries",
       "desc": "A pair of female sex glands where egg cells mature and the hormones estrogen and progesterone are made.",
       "location": "In the pelvis, on both sides of the uterus, next to the open ends of the fallopian tubes",
-      "facts": [
-        "Each is about 3–4 cm long, roughly the size and shape of an almond",
-        "At birth they hold about 1–2 million immature eggs (follicles)",
-        "Only about 400–500 eggs mature and are released over a lifetime"
-      ],
-      "diseases": [
-        "Polycystic ovary syndrome",
-        "Ovarian cyst",
-        "Ovarian cancer",
-        "Ovarian apoplexy"
-      ],
+      "facts": {
+        "size": "Each is about 3–4 cm long, roughly the size and shape of an almond",
+        "follicles": "At birth they hold about 1–2 million immature eggs (follicles)",
+        "ovulations": "Only about 400–500 eggs mature and are released over a lifetime"
+      },
       "daily": [
         "The release of a mature egg is called ovulation and usually happens once a month",
         "The egg is one of the largest human cells: about 0.1 mm across",
@@ -685,16 +574,11 @@
       "name": "Prostate",
       "desc": "A male gland that makes part of the seminal fluid; it surrounds the beginning of the urethra.",
       "location": "In the pelvis, below the urinary bladder and in front of the rectum",
-      "facts": [
-        "About the size and shape of a chestnut",
-        "Weighs about 20 g in an adult man",
-        "Its secretion makes up about a third of the seminal fluid"
-      ],
-      "diseases": [
-        "Prostatitis",
-        "Benign prostatic hyperplasia",
-        "Prostate cancer"
-      ],
+      "facts": {
+        "chestnut": "About the size and shape of a chestnut",
+        "weight": "Weighs about 20 g in an adult man",
+        "secretion": "Its secretion makes up about a third of the seminal fluid"
+      },
       "daily": [
         "It often grows with age and can make urination harder",
         "A doctor can feel it through the wall of the rectum",

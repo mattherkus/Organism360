@@ -138,12 +138,41 @@ def t(key, **kw):
 
 
 def organ(key, field, skip_current=False):
-    """поле карточки органа: name, desc, location, facts, diseases, daily"""
+    """поле карточки органа: name, desc, location, daily; facts - список текстов фактов (см. facts())"""
+    if field == "facts":
+        return [text for _, text in facts(key)]
     for code in _chain(skip_current):
         v = _load(code)["organs"].get(key, {}).get(field)
         if v:
             return v
-    return [] if field in ("facts", "diseases", "daily") else key
+    return [] if field == "daily" else key
+
+
+def facts(key):
+    """факты карточки органа: [(ключ факта, текст)] в порядке русского файла. Факт - по ключу, а не по месту
+    в списке: переставить факты можно, а у каждого факта перевод откатывается на другой язык отдельно"""
+    order = list(_load(BASE)["organs"].get(key, {}).get("facts", {}))
+    out = []
+    for fid in order:
+        text = fact(key, fid)
+        if text:
+            out.append((fid, text))
+    return out
+
+
+def fact(key, fid):
+    """текст факта fid органа key на текущем языке (с откатом на другие языки); нет - """""
+    for code in _chain():
+        v = _load(code)["organs"].get(key, {}).get("facts", {})
+        if isinstance(v, dict) and v.get(fid):
+            return v[fid]
+    return ""
+
+
+def fact_in(code, key, fid):
+    """текст факта на языке code как есть, без отката ("" - перевода нет)"""
+    v = _load(code)["organs"].get(key, {}).get("facts", {})
+    return v.get(fid, "") if isinstance(v, dict) else ""
 
 
 def name(key):

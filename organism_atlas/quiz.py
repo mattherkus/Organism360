@@ -19,15 +19,16 @@ TIMERS = settings.CHOICES["quiz_timer"]
 LENGTHS = settings.CHOICES["quiz_length"]        # сколько вопросов в игре; 0 - про все органы
 OPTIONS = {"easy": 3, "medium": 4, "hard": 6}    # сколько вариантов ответа на кнопках
 # болезни, о которых не спрашиваем «какой орган поражает»: прежде всего они поражают другой орган схемы.
-# {орган: номера в поле diseases карточки}
-VAGUE_DISEASES = {"pancreas": (3,),              # муковисцидоз - в первую очередь лёгкие
-                  "stomach": (2,),               # рефлюкс-эзофагит - воспаление пищевода
-                  "spleen": (1,)}                # разрыв при травме живота бывает и у печени
+# {орган: ключи болезней из diseases.ON_CARD}
+VAGUE_DISEASES = {"pancreas": ("cystic_fibrosis",),      # муковисцидоз - в первую очередь лёгкие
+                  "stomach": ("gerd",),                  # рефлюкс - воспаление пищевода
+                  "spleen": ("spleen_rupture",)}         # разрыв при травме живота бывает и у печени
 # факты, которые не годятся для «верно ли»: они верны или почти верны и для другого органа схемы
 # (у сердца и почек размер с кулак, у щитовидной железы и простаты масса около 20 г...).
-# {орган: номера в поле facts карточки}; правите факты в lang/ru.json - проверьте и этот список
-SHARED_FACTS = {"gallbladder": (0,), "heart": (1,), "brain": (0,), "thyroid": (1,), "spleen": (0, 1, 2),
-                "bladder": (2,), "trachea": (0,), "rectum": (0, 2), "prostate": (1,)}
+# {орган: ключи фактов из поля facts карточки в lang/*.json}; добавляете похожий факт - проверьте этот список
+SHARED_FACTS = {"gallbladder": ("pear",), "heart": ("fist",), "brain": ("weight",), "thyroid": ("weight",),
+                "spleen": ("weight", "reserve", "live_without"), "bladder": ("stretch",), "trachea": ("length",),
+                "rectum": ("length", "sphincters"), "prostate": ("weight",)}
 
 
 def _norm(s):
@@ -74,12 +75,6 @@ def location_leaks(key):
     return any(leaks(i18n.organ_in(code, key, "location"), key) for code in i18n.available())
 
 
-def _items(code, key, field):
-    """список карточки органа (facts, diseases) на языке code, без отката на другие языки"""
-    v = i18n.organ_in(code, key, field)
-    return v if isinstance(v, list) else []
-
-
 def _names_any(text):
     """называет ли текст хоть один орган схемы"""
     from .organs import ORGANS
@@ -87,28 +82,26 @@ def _names_any(text):
 
 
 def disease_choices(key):
-    """номера болезней органа, по которым можно спросить «какой орган поражает эта болезнь»: болезнь
-    ни на одном языке не называет орган схемы, не записана и у другого органа и не из VAGUE_DISEASES"""
-    from .organs import ORGANS
-    own = _items(i18n.BASE, key, "diseases")
-    others = {_norm(d) for k in ORGANS if k != key for d in _items(i18n.BASE, k, "diseases")}
+    """ключи болезней органа (diseases.ON_CARD), по которым можно спросить «какой орган поражает эта болезнь»:
+    болезнь ни на одном языке не называет орган схемы, не записана и у другого органа и не из VAGUE_DISEASES"""
+    from . import diseases
     out = []
-    for i, d in enumerate(own):
-        texts = [x[i] for x in (_items(code, key, "diseases") for code in i18n.available()) if i < len(x)]
-        if i in VAGUE_DISEASES.get(key, ()) or _norm(d) in others or any(_names_any(s) for s in texts):
+    for d in diseases.ON_CARD.get(key, ()):
+        names = [diseases.name_in(code, d) for code in i18n.available()]
+        if d in VAGUE_DISEASES.get(key, ()) or len(diseases.ORGANS_OF[d]) > 1 or any(_names_any(s) for s in names):
             continue
-        out.append(i)
+        out.append(d)
     return out
 
 
 def truth_facts(key):
-    """номера фактов карточки органа для вопроса «верно ли»: факт не из SHARED_FACTS и не называет
+    """ключи фактов карточки органа для вопроса «верно ли»: факт не из SHARED_FACTS и не называет
     ни один орган схемы, иначе подставленный к чужому органу он сразу выдаёт себя"""
     out = []
-    for i in range(len(_items(i18n.BASE, key, "facts"))):
-        texts = [x[i] for x in (_items(code, key, "facts") for code in i18n.available()) if i < len(x)]
-        if i not in SHARED_FACTS.get(key, ()) and not any(_names_any(s) for s in texts):
-            out.append(i)
+    for fid, _ in i18n.facts(key):
+        texts = [i18n.fact_in(code, key, fid) for code in i18n.available()]
+        if fid not in SHARED_FACTS.get(key, ()) and not any(_names_any(s) for s in texts):
+            out.append(fid)
     return out
 
 
@@ -188,7 +181,7 @@ class QuizSession:
         self._options = {}                           # {номер вопроса: варианты ответа}
         facts = [k for k, kind in zip(self.q, self.kinds) if kind == "facts"]
         self.prompts = fact_prompts(facts, level, rng) if facts else {}
-        # {номер вопроса: что спрашиваем}: у disease - номер болезни, у truth - (чей факт, номер факта)
+        # {номер вопроса: что спрашиваем}: у disease - ключ болезни, у truth - (чей факт, ключ факта)
         self.picks = {i: self._pick(k, kind) for i, (k, kind) in enumerate(zip(self.q, self.kinds))
                       if kind in ("disease", "truth")}
         self.deadline = None                         # когда кончится время на текущий вопрос
@@ -378,12 +371,13 @@ class QuizSession:
         if self.kind == "where":
             return i18n.organ(self.current, "location")
         if self.kind == "disease":
-            return _item(self.current, "diseases", self.picks[self.i])
+            from . import diseases
+            return diseases.text(self.picks[self.i], "name")
         if self.kind == "latin":
             return latin_name(self.current)
         if self.kind == "truth":
-            owner, idx = self.picks[self.i]
-            return _item(owner, "facts", idx)
+            owner, fid = self.picks[self.i]
+            return i18n.fact(owner, fid)
         return ""
 
     @property
@@ -400,16 +394,6 @@ class QuizSession:
         if pct >= 40:
             return t("verdict_ok")
         return t("verdict_bad")
-
-
-def _item(key, field, i):
-    """i-й пункт списка карточки (facts, diseases) на текущем языке; если в переводе списка нет
-    или он короче - из языка, на который откатывается текст, в конце из русского"""
-    for code in i18n.chain():
-        items = _items(code, key, field)
-        if i < len(items):
-            return items[i]
-    return ""
 
 
 def format_time(seconds):
