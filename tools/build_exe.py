@@ -65,7 +65,7 @@ def archive(out, platform=sys.platform):
     tar.gz на Linux (сохраняет права на запуск). Возвращает путь архива"""
     base = ROOT / "dist" / ("%s-%s-%s" % (NAME, __version__, platform_tag(platform)))
     if platform == "darwin":
-        path = base.with_suffix(".zip")
+        path = base.parent / (base.name + ".zip")          # не with_suffix: «.0-macos» из версии - не расширение
         import subprocess
         subprocess.run(["ditto", "-c", "-k", "--keepParent", str(out), str(path)], check=True)
         return path

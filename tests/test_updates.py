@@ -101,6 +101,15 @@ class CrossPlatformBuildTests(unittest.TestCase):
             with tarfile.open(path) as tar:
                 self.assertIn("OrganismAtlas/OrganismAtlas", tar.getnames())
 
+    def test_macos_archive_name_keeps_version(self):
+        """имя архива - с полной версией и системой (точка в версии - не расширение)"""
+        tool = self.tool()
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(tool, "ROOT", Path(tmp)), \
+                mock.patch.object(tool, "__version__", "1.1.0"), mock.patch("subprocess.run") as run:
+            path = tool.archive(Path(tmp, "dist", "OrganismAtlas.app"), "darwin")
+        self.assertEqual(path.name, "OrganismAtlas-1.1.0-macos.zip")
+        self.assertEqual(run.call_args[0][0][:4], ["ditto", "-c", "-k", "--keepParent"])
+
     def test_workflow_builds_every_system_and_releases_once(self):
         text = (ROOT / ".github" / "workflows" / "setup.yml").read_text(encoding="utf-8")
         for needle in ("windows-latest", "ubuntu-latest", "macos-latest", "build_exe.py --archive",
