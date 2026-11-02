@@ -13,7 +13,7 @@ from pathlib import Path
 
 # допустимые значения и значения по умолчанию; чужое или испорченное значение заменяется умолчанием
 CHOICES = {
-    "theme": ("dark", "light", "contrast"),
+    "theme": ("paper", "dark", "light", "contrast"),
     "quality": ("low", "medium", "high"),        # качество 3D-рендера
     "ui_scale": (0.9, 1.0, 1.1, 1.25, 1.5),      # множитель к масштабу Windows; действует после перезапуска
     "quiz_level": ("easy", "medium", "hard"),     # сложность викторины
@@ -26,7 +26,7 @@ CHOICES = {
     "layers_panel": ("open", "closed"),          # раздел «Слои» в панели слева развёрнут или свёрнут
     "updates": ("on", "off"),                    # раз в день спрашивать GitHub о новой версии (updates.py)
 }
-DEFAULTS = {"theme": "dark", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,
+DEFAULTS = {"theme": "paper", "quality": "medium", "ui_scale": 1.0, "quiz_level": "medium", "quiz_timer": 0,
             "quiz_length": 10, "body": "male", "animation": "on",
             "quiz_mode": "find", "layers_panel": "open", "updates": "on"}
 

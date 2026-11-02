@@ -42,7 +42,6 @@
     "verdict_bad": "Worth going over the material again.",
     "results_heading": "Quiz complete",
     "results_score": "{right} of {total}",
-    "results_first_try": "on the first try ({percent}%)",
     "results_errors": "Total mistakes: {errors}",
     "results_gave_up": "You gave up: {n} of {total} questions played.",
     "results_missed": "Review: {names}",
@@ -56,6 +55,7 @@
     "settings_button": "Settings",
     "settings_title": "Settings",
     "settings_theme": "Theme",
+    "theme_paper": "Paper",
     "theme_dark": "Dark",
     "theme_light": "Light",
     "theme_contrast": "High contrast",
@@ -115,7 +115,6 @@
     "setup_topic": "Topic",
     "topic_all": "All systems ({n})",
     "topic_system": "{system} ({n})",
-    "card_system": "Organ system",
     "settings_body": "Body diagram",
     "body_female": "Female",
     "body_male": "Male",
@@ -246,7 +245,6 @@
     "latin_on": "On",
     "latin_off": "Off",
     "results_setup": "Change game settings",
-    "card_kind": "What it is",
     "detail_functions": "Functions",
     "detail_structure": "Structure",
     "detail_size": "Size",
@@ -364,7 +362,15 @@
     "updates_off": "No",
     "settings_updates_hint": "The app asks GitHub whether a new version is out (an anonymous request; nothing about you is sent).",
     "update_button": "New version {version}",
-    "update_hint": "Open the release page to download the installer"
+    "update_hint": "Open the release page to download the installer",
+    "plate_caption": "Plate I. Internal organs of the human body",
+    "plate_view_male": "male body · front view",
+    "plate_view_female": "female body · front view",
+    "layers_fold_hint": "Collapse or expand the organs of this system",
+    "ach_toast": "New achievement",
+    "ach_toast_hint": "Click to open achievements",
+    "results_ring": "first try",
+    "results_on_scheme": "Mistakes are marked in red on the scheme"
   },
   "organs": {
     "lungs": {

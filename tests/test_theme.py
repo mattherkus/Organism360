@@ -16,9 +16,20 @@ class PaletteTests(unittest.TestCase):
             self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 7.0, (fg, bg))
 
     def test_light_is_readable(self):
-        pal = theme.THEMES["light"]
-        for fg, bg in theme.TEXT_PAIRS:
-            self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 4.5, (fg, bg))
+        for name in ("light", "paper"):
+            pal = theme.THEMES[name]
+            for fg, bg in theme.TEXT_PAIRS:
+                self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 4.5, (name, fg, bg))
+
+    def test_paper_plate(self):
+        """«Бумага»: светлая страница, а схема - тёмная таблица в рамке, как в теме по умолчанию до неё
+        (готовые схемы из сборки и эталоны тестов те же); у других тем рамки нет"""
+        paper, dark = theme.THEMES["paper"], theme.THEMES["dark"]
+        self.assertEqual(theme.DEFAULT, "paper")
+        self.assertEqual((paper["scene_bg"], paper["scene_hi"]), (dark["scene_bg"], dark["scene_hi"]))
+        self.assertGreater(theme.contrast(paper["bg"], paper["scene_bg"]), 10)
+        self.assertTrue(paper["plate"])
+        self.assertEqual([n for n, pal in theme.THEMES.items() if pal["plate"]], ["paper"])
 
     def test_contrast_formula(self):
         self.assertAlmostEqual(theme.contrast("#000000", "#ffffff"), 21.0)
@@ -85,9 +96,9 @@ class Render3DBackgroundTests(unittest.TestCase):
 
 class PrefsTests(unittest.TestCase):
     def test_get_validates(self):
-        self.assertEqual(settings.get({}, "theme"), "dark")
+        self.assertEqual(settings.get({}, "theme"), "paper")
         self.assertEqual(settings.get({"theme": "light"}, "theme"), "light")
-        self.assertEqual(settings.get({"theme": "neon"}, "theme"), "dark")
+        self.assertEqual(settings.get({"theme": "neon"}, "theme"), "paper")
         self.assertEqual(settings.get({"quality": ["high"]}, "quality"), "medium")
         self.assertEqual(settings.get({"ui_scale": 1.25}, "ui_scale"), 1.25)
         self.assertEqual(settings.get({"ui_scale": True}, "ui_scale"), 1.0)

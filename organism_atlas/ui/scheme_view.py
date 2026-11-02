@@ -1,6 +1,8 @@
 """Схема тела на экране (SchemeView): слои-картинки поверх готовой схемы (подсветка, анимация), приближение
 колесом, кнопками и клавишами, перетаскивание мышью. Рисуется под всем окном; Stage - её место в раскладке
-окна, а slide() плавно уводит интерфейс к краям, когда схема сильно приближена."""
+окна, а slide() плавно уводит интерфейс к краям, когда схема сильно приближена.
+
+В теме «Бумага» схема - тёмная таблица в двойной рамке, под ней подпись (Stage оставляет под подпись место)."""
 
 import math
 
@@ -9,6 +11,7 @@ from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, Q
 from PySide6.QtGui import QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
+from ..theme import C
 from .scaling import px
 from .widgets import color, flat_button, font
 
@@ -18,6 +21,7 @@ HIDE_FROM = ZOOM_STEPS[2]                              # с такого при�
 ZOOM_MS = 220                                          # длительность анимации приближения
 SLIDE_MS = 260                                         # длительность выезда интерфейса
 DRAG_PX = 5                                            # сдвиг мыши, после которого нажатие - перетаскивание
+CAPTION_H = 24                                         # место под подписью таблицы («Бумага»)
 
 
 def slide(w, start, end, done=None):
@@ -50,10 +54,15 @@ class SchemeView(QWidget):
         self.app = app
         self.base = None                # QImage схемы (пока чёткая не готова - прежняя, растягивается)
         # слои поверх схемы снизу вверх; knowledge - карта знаний (органы в цвете уровня знания)
-        self.layers = {"anim": None, "knowledge": None, "target": None, "hover": None, "flash": None, "reveal": None}
+        self.layers = {"anim": None, "knowledge": None, "missed": None, "target": None, "hover": None, "flash": None,
+                       "reveal": None}
         self.tip = None                 # (x, y, текст) в логических пикселях
         self.pin = None                 # (x, y, текст) - подпись органа в пикселях схемы (верный ответ)
         self.message = None             # (текст, внизу ли) - «Рисуется схема...» или «перерисовывается»
+        # подписи органов-ошибок в итогах викторины: [(x, y, текст)], точка органа в пикселях схемы; подписи
+        # стоят столбиками у левого и правого края схемы и соединены с органом выноской
+        self.labels = []
+        self.caption = None             # подпись под таблицей («Бумага»): (слева, справа)
         self.k, self.pan = 1.0, QPointF(0, 0)
         self.scheme = QSizeF(1, 1)      # размер схемы при k = 1 в логических пикселях
         self.start = self.goal = None   # (k, угол схемы в координатах окна) в начале и в конце анимации
@@ -105,6 +114,26 @@ class SchemeView(QWidget):
             if it is not None:
                 self.update(self.pin_rect(it).toAlignedRect().adjusted(-3, -3, 3, 3))
         self.pin = pin
+
+    def set_labels(self, labels):
+        if labels != self.labels:
+            self.labels = labels
+            self.update()
+
+    def set_caption(self, caption):
+        if caption != self.caption:
+            self.caption = caption
+            self.update()
+
+    def look_at(self, x, y):
+        """приближенная схема плавно сдвигается так, чтобы точка схемы (x, y) (пиксели схемы) была посередине;
+        неприближенная видна целиком - её не двигаем"""
+        k = self.aim()
+        if k <= 1:
+            return
+        d = self.dpr()
+        pan = QPointF(self.width() / 2 - k * x / d, self.height() / 2 - k * y / d)
+        self.move_to(k, self.clamped(pan, self.scheme * k, QSizeF(self.size())))
 
     # --- приближение
     def to_screen(self, x, y):
@@ -215,12 +244,16 @@ class SchemeView(QWidget):
             size = QSizeF(self.base.width() / d, self.base.height() / d) if ready else self.scheme
             p.drawImage(QRectF(QPointF(0, 0), size), self.base)
             if ready:
-                for name in ("anim", "knowledge", "target", "hover", "reveal", "flash"):
+                for name in ("anim", "knowledge", "missed", "target", "hover", "reveal", "flash"):
                     item = self.layers[name]
                     if item is not None:
                         im, x, y = item
                         p.drawImage(QRectF(x / d, y / d, im.width() / d, im.height() / d), im)
             p.restore()
+            if C["plate"]:
+                self.paint_plate(p)
+        if self.labels and self.app.ready():
+            self.paint_labels(p)
         if self.pin and self.app.ready():
             x, y = self.to_screen(*self.pin[:2])
             p.setRenderHint(QPainter.Antialiasing)
@@ -237,6 +270,65 @@ class SchemeView(QWidget):
             r = QRectF(self.home(), self.scheme)         # надпись - посередине места схемы
             r = r.adjusted(0, 0, 0, -px(6)) if bottom else r
             p.drawText(r, (Qt.AlignBottom | Qt.AlignHCenter) if bottom else Qt.AlignCenter, text)
+
+    def paint_plate(self, p):
+        """двойная рамка вокруг схемы и подпись под ней, как у таблицы в атласе"""
+        r = QRectF(self.pan, self.scheme * self.k)
+        p.setRenderHint(QPainter.Antialiasing, False)
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(color("plate"), 1))
+        p.drawRect(r.adjusted(-1, -1, 0, 0))
+        gap = px(4)
+        p.drawRect(r.adjusted(-gap - 1, -gap - 1, gap, gap))
+        if not self.caption or self.k != 1:
+            return
+        left, right = self.caption
+        f = font(9, italic=True, serif=True)
+        fm = QFontMetrics(f, self)
+        p.setFont(f)
+        p.setPen(color("muted"))
+        line = QRectF(r.left() - gap, r.bottom() + gap + px(4), r.width() + 2 * gap, fm.height())
+        if fm.horizontalAdvance(left + right) + px(16) <= line.width():
+            p.drawText(line, Qt.AlignLeft | Qt.AlignVCenter, left)
+            p.drawText(line, Qt.AlignRight | Qt.AlignVCenter, right)
+        else:
+            p.drawText(line, Qt.AlignLeft | Qt.AlignVCenter, fm.elidedText(left, Qt.ElideRight, int(line.width())))
+
+    def label_rects(self):
+        """где подписи ошибок: [(точка органа на экране, прямоугольник подписи, текст)]. Орган левее оси тела -
+        подпись у левого края схемы, правее - у правого; в столбике подписи идут сверху вниз и не налезают"""
+        plate = QRectF(self.pan, self.scheme * self.k)
+        axis = plate.center().x()
+        gap = px(6)
+        out = []
+        for left in (True, False):
+            items = sorted(((QPointF(*self.to_screen(x, y)), text) for x, y, text in self.labels
+                            if (self.to_screen(x, y)[0] < axis) == left), key=lambda it: it[0].y())
+            bottom = plate.top() + gap
+            for at, text in items:
+                r = self.bubble_rect(0, 0, text, 10)
+                r.moveTop(max(at.y() - r.height() / 2, bottom))
+                if left:
+                    r.moveLeft(plate.left() + gap)
+                else:
+                    r.moveRight(plate.right() - gap)
+                bottom = r.bottom() + gap
+                out.append((at, r, text))
+        return out
+
+    def paint_labels(self, p):
+        """подписи органов-ошибок с выносками от органа"""
+        p.setRenderHint(QPainter.Antialiasing)
+        rects = self.label_rects()
+        pen = QPen(color("bad"), max(1.0, px(1.5)))
+        for at, r, _text in rects:
+            end = QPointF(r.right() if r.center().x() < at.x() else r.left(), r.center().y())
+            p.setPen(pen)
+            p.setBrush(color("bad"))
+            p.drawLine(at, end)
+            p.drawEllipse(at, px(3), px(3))
+        for _at, r, text in rects:
+            self.bubble(p, r, text, 10, "bad", above=True)
 
     def bubble_rect(self, x, y, text, size, above=False):
         """где плашка с текстом: левый верхний угол в (x, y) или (above) середина нижнего края там;
@@ -348,6 +440,11 @@ class Stage(QWidget):
                 slide(b, b.pos(), end)
             else:
                 b.move(end)
+
+    @staticmethod
+    def reserve():
+        """сколько места снизу оставить под подпись таблицы (только в теме с рамкой вокруг схемы)"""
+        return px(CAPTION_H) if C["plate"] else 0
 
     def sizeHint(self):                                  # раскладка окна при запуске - под размер схемы
         return self.hint

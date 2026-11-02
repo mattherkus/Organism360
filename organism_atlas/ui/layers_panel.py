@@ -1,6 +1,6 @@
-"""Панель слоёв слева: круглые флажки слоёв и органов (Toggle), органы по семействам цвета,
-строка поиска органа, прокручиваемый список и ползунок прозрачности кожи. SearchBox и ScrollArea
-нужны и справочнику болезней (diseases.py), Toggle - списку частей в 3D-просмотре."""
+"""Панель слоёв слева: круглые флажки слоёв и органов (Toggle), органы по системам (системы сворачиваются
+стрелкой, у каждой - значок её цвета и сколько её органов видно), строка поиска органа, прокручиваемый список
+и ползунок прозрачности кожи. SearchBox и ScrollArea нужны и справочнику болезней (diseases.py), Toggle - списку частей в 3D-просмотре."""
 
 import colorsys
 
@@ -8,10 +8,10 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QScrollArea, QSizePolicy, QSlider, QWidget
 
-from ..organs import ORGANS
+from ..organs import ORGANS, SYSTEM_COLORS
 from ..theme import C
 from .scaling import px
-from .widgets import _hex, _mix, _rgb, bar, clear, color, flat_button, font, hbox, label, put, set_fg, vbox
+from .widgets import Dot, _hex, _mix, _rgb, bar, clear, color, flat_button, font, hbox, label, put, set_fg, vbox
 
 
 def dot_colors(on, state):
@@ -129,7 +129,7 @@ SHOW_ALL = "_show_all"            # ключи кнопок в заголовк�
 ORGANS_ALL = "_organs_all"
 ORGANS_LIST = "_organs_list"      # прокручиваемый список органов (ScrollArea)
 SEARCH = "_search"                # строка поиска органа (SearchBox)
-GROUPS = "_groups"                # [(подзаголовок системы, [органы группы])] - для фильтра поиска
+GROUPS = "_groups"                # [SystemHead] - подзаголовки систем с их органами: для фильтра и сворачивания
 NOTHING = "_nothing"              # надпись «ничего не найдено»
 SKIN = "_skin"                    # ползунок прозрачности кожи (Slider)
 
@@ -206,21 +206,32 @@ class ScrollArea(QScrollArea):
         self.updateGeometry()
 
 
-def filter_organs(buttons, visible):
+def filter_organs(buttons, visible, folded=None, to_top=True):
     """оставить в списке органов панели слоёв только visible (и подзаголовки систем, где они есть);
-    если не осталось ничего - надпись «ничего не найдено». Порядок прежний"""
+    folded - свёрнутые системы: их органы спрятаны, а подзаголовок виден (None - поиск: свёрнутое не в счёт,
+    видно всё найденное). Если не осталось ничего - надпись «ничего не найдено». Порядок прежний;
+    to_top - прокрутить список к началу"""
     first = True
-    for head, keys in buttons[GROUPS]:
-        shown = [k for k in keys if k in visible]
+    for head in buttons[GROUPS]:
+        shown = [k for k in head.keys if k in visible]
+        is_open = folded is None or head.system not in folded
         head.setVisible(bool(shown))
-        for k in keys:
-            buttons[k].setVisible(k in visible)
+        head.set_open(is_open)
+        for k in head.keys:
+            buttons[k].setVisible(k in visible and is_open)
         if shown:
             first = False
     buttons[NOTHING].setVisible(first)
     area = buttons[ORGANS_LIST]
     area.refit()
-    area.verticalScrollBar().setValue(0)
+    if to_top:
+        area.verticalScrollBar().setValue(0)
+
+
+def count_organs(buttons):
+    """обновить у подзаголовков систем, сколько их органов видно на схеме"""
+    for head in buttons[GROUPS]:
+        head.count.setText("%d/%d" % (sum(buttons[k].on for k in head.keys), len(head.keys)))
 
 
 def show_all_button(buttons, visible):
@@ -280,6 +291,34 @@ class Slider(QSlider):
             % (h + 2, px(4), C["border"], px(2), C["accent"], px(2), C["text"], h, (h - px(4)) // 2, h // 2))
 
 
+class SystemHead(QWidget):
+    """подзаголовок системы в списке органов: стрелка свернуть-развернуть, значок цвета системы, название
+    (щелчок - скрыть или показать все органы системы) и справа - сколько органов системы видно"""
+
+    def __init__(self, system, name, keys, on_fold=None, on_system=None, fold_tip=None, system_tip=None):
+        super().__init__()
+        self.system, self.keys = system, keys
+        row = hbox(spacing=5)
+        self.setLayout(row)
+        self.arrow = ClickLabel("▾", on_fold or (lambda: None), size=8, tip=fold_tip)
+        self.arrow.setFixedWidth(QFontMetrics(font(8)).horizontalAdvance("▾") + px(4))
+        row.addWidget(self.arrow)
+        if system in SYSTEM_COLORS:
+            row.addWidget(Dot(SYSTEM_COLORS[system], 7), 0, Qt.AlignVCenter)
+        if on_system:
+            row.addWidget(ClickLabel(name, lambda: on_system(system), size=8, tip=system_tip))
+        else:
+            row.addWidget(label(name, "muted", 8, wrap=False))
+        row.addStretch(1)
+        self.count = label("", "muted", 8, wrap=False)
+        row.addWidget(self.count)
+        if on_fold is None:
+            self.arrow.hide()
+
+    def set_open(self, is_open):
+        self.arrow.setText("▾" if is_open else "▸")
+
+
 def header(lay, title, button, top, on_title=None, tip=None):
     """заголовок раздела панели с маленькой кнопкой справа; button - (текст, функция);
     on_title - щелчок по самому заголовку (свернуть раздел)"""
@@ -296,7 +335,7 @@ def header(lay, title, button, top, on_title=None, tip=None):
 
 
 def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, show_all, organs_all, search=None,
-                fold=None, skin=None, on_system=None, system_tip=None):
+                fold=None, skin=None, on_system=None, system_tip=None, folded=None, on_fold=None, fold_tip=None):
     """панель слоёв слева от схемы (только в режиме «Изучать»).
     layers - [(ключ, текст, виден)] слоёв тела; groups - [(система, название системы, [(ключ, название, цвет, виден)])]:
     органы по системам, у каждой группы - свой маленький подзаголовок; щелчок по нему - on_system(система);
@@ -304,7 +343,8 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     organs_all - (текст, функция) кнопки «Скрыть все» / «Показать все» в заголовке органов;
     search - (подсказка, текст, on_change, on_enter, «ничего не найдено») строки поиска над списком органов;
     fold - (раскрыт ли раздел слоёв, функция): щелчок по заголовку «Слои» сворачивает и разворачивает его;
-    skin - (прозрачность кожи 0..100, on_change, подсказка): ползунок под строкой кожи.
+    skin - (прозрачность кожи 0..100, on_change, подсказка): ползунок под строкой кожи;
+    folded - свёрнутые системы, on_fold(система) - щелчок по стрелке подзаголовка (fold_tip - подсказка).
     Кнопки - в строках заголовков, а список органов листается: низ панели может не поместиться в окно.
     Возвращает {ключ слоя или органа: Toggle}, кнопки заголовков под SHOW_ALL и ORGANS_ALL,
     ScrollArea списка органов под ORGANS_LIST, строку поиска под SEARCH, ползунок кожи под SKIN
@@ -340,22 +380,21 @@ def fill_layers(card, title, layers, organs_title, groups, on_layer, on_organ, s
     area = buttons[ORGANS_LIST] = ScrollArea()
     box.addWidget(area, 1)
     buttons[GROUPS] = []
+    area.lay.setSpacing(px(1))                     # спрятанные строки свёрнутых систем места не занимают
     for i, (system, name, organs) in enumerate(groups):
-        if on_system:
-            head = ClickLabel(name, lambda s=system: on_system(s), size=8, tip=system_tip)
-        else:
-            head = label(name, "muted", 8, wrap=False)
+        head = SystemHead(system, name, [k for k, *_ in organs], on_fold and (lambda s=system: on_fold(s)),
+                          on_system, fold_tip, system_tip)
         if i:
-            area.lay.addSpacing(px(5))
+            area.lay.addSpacing(px(3))
         area.lay.addWidget(head)
-        area.lay.addSpacing(px(1))
         for key, text, c, on in organs:
             buttons[key] = Toggle(text, on, lambda k=key: on_organ(k), c=c)
             area.lay.addWidget(buttons[key])
-            area.lay.addSpacing(px(1))
-        buttons[GROUPS].append((head, [k for k, *_ in organs]))
+        buttons[GROUPS].append(head)
     buttons[NOTHING] = label(search[4] if search else "", "muted", 9)
     buttons[NOTHING].hide()
     area.lay.addWidget(buttons[NOTHING])
     area.lay.addStretch(1)
+    count_organs(buttons)
+    filter_organs(buttons, {k for head in buttons[GROUPS] for k in head.keys}, folded or set())
     return buttons

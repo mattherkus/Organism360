@@ -42,7 +42,6 @@
     "verdict_bad": "Стоит повторить материал.",
     "results_heading": "Викторина завершена",
     "results_score": "{right} из {total}",
-    "results_first_try": "с первой попытки ({percent}%)",
     "results_errors": "Всего ошибок: {errors}",
     "results_gave_up": "Игра закончена кнопкой «Сдаться»: пройдено вопросов {n} из {total}.",
     "results_missed": "Повтори: {names}",
@@ -56,6 +55,7 @@
     "settings_button": "Настройки",
     "settings_title": "Настройки",
     "settings_theme": "Тема оформления",
+    "theme_paper": "Бумага",
     "theme_dark": "Тёмная",
     "theme_light": "Светлая",
     "theme_contrast": "Высокий контраст",
@@ -115,7 +115,6 @@
     "setup_topic": "Тема",
     "topic_all": "Все системы ({n})",
     "topic_system": "{system} ({n})",
-    "card_system": "Система органов",
     "settings_body": "Схема тела",
     "body_female": "Женская",
     "body_male": "Мужская",
@@ -246,7 +245,6 @@
     "latin_on": "Включены",
     "latin_off": "Выключены",
     "results_setup": "Изменить настройки игры",
-    "card_kind": "Что это",
     "detail_functions": "Функции",
     "detail_structure": "Строение",
     "detail_size": "Размеры",
@@ -364,7 +362,15 @@
     "updates_off": "Нет",
     "settings_updates_hint": "Программа спрашивает GitHub, вышла ли новая версия (анонимный запрос, ничего о вас не передаётся).",
     "update_button": "Новая версия {version}",
-    "update_hint": "Открыть страницу выпуска, чтобы скачать установщик"
+    "update_hint": "Открыть страницу выпуска, чтобы скачать установщик",
+    "plate_caption": "Табл. I. Внутренние органы человека",
+    "plate_view_male": "мужская схема · вид спереди",
+    "plate_view_female": "женская схема · вид спереди",
+    "layers_fold_hint": "Свернуть или развернуть органы системы",
+    "ach_toast": "Новое достижение",
+    "ach_toast_hint": "Щелчок — открыть достижения",
+    "results_ring": "с первой попытки",
+    "results_on_scheme": "Ошибки отмечены на схеме красным"
   },
   "organs": {
     "lungs": {

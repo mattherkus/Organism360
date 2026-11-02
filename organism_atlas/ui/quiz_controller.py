@@ -19,6 +19,7 @@ from .achievements import button_text as achievements_text, show_achievements
 from .cards import fill_card, fill_question, fill_setup, mark
 from .results import fill_results
 from .turntable import Frames, Turntable, frame_size
+from .toast import toast
 from .widgets import alive
 
 
@@ -85,6 +86,7 @@ class QuizController:
             self.frames[1].stop()
             self.frames = None
         self.app.unreveal()
+        self.app.show_missed(())                        # отметки ошибок прошлой игры
         self.session = None
         self.choices = {}
         if self.app.atlas:
@@ -266,13 +268,14 @@ class QuizController:
         if s.finished:
             self.app.set_status(lambda: "")            # итоги - в карточке справа, строка статуса не нужна
             return
-        if s.deadline is None:                          # новый вопрос на экране - запускаем его время
+        new = s.deadline is None
+        if new:                                         # новый вопрос на экране - запускаем его время
             s.start_timer()
             self.tick_timer.stop()
             self.tick()
         self.feedback, self.wrong = feedback, set()
         self.app.set_status(lambda: t("quiz_status", mode=t("mode_" + self.mode)))
-        self.app.set_card(self.render_question)
+        self.app.set_card(self.render_question, fade=new)
 
     def render_question(self):
         s = self.session
@@ -481,7 +484,7 @@ class QuizController:
             return
         self.app.unreveal()                             # маршрут пройден: показать его целиком, потом дальше
         self.feedback = ("order_done", route, "ok")
-        self.app.set_card(lambda: self.render_done(route))
+        self.app.set_card(lambda: self.render_done(route), fade=True)
         self.next_timer.start(ROUTE_MS)
 
     def render_done(self, route):
@@ -516,9 +519,11 @@ class QuizController:
             app.ach_button.setText(achievements_text(after))
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
+        for key in self.new_achievements:               # новое достижение - плашкой внизу окна
+            toast(app, t("ach_toast"), t("ach_" + key), lambda: show_achievements(app), t("ach_toast_hint"))
         self.ask()
         if last in ORGANS or last in STRUCTURES:        # сначала карточка последнего органа, следом итоги
-            app.set_card(lambda: fill_card(app.card, last))
+            app.set_card(lambda: fill_card(app.card, last), fade=True)
             self.results_timer.start()
         else:                                           # маршрут или ответ экзамена - сразу итоги
             self.show_results()
@@ -549,11 +554,12 @@ class QuizController:
         grade = s.grade if mode == "exam" else None
         review = self.review_lines() if mode == "exam" else ()
         retry = (lambda: again("missed")) if mode not in NO_CARDS else None
+        app.show_missed(s.missed)                       # ошибки - красным на схеме, с подписями
         # итоги - в карточке справа, на месте карточки последнего органа
         app.set_card(lambda: fill_results(app.card, s, on_again=again, on_retry=retry,
                                           on_setup=lambda: app.set_mode(mode), due=due, streak=streak, new=new,
                                           on_achievements=lambda: show_achievements(app), name_of=self.name_of,
-                                          grade=grade, review=review))
+                                          grade=grade, review=review, on_scheme=bool(app.missed)), fade=True)
 
     def review_lines(self):
         """разбор ошибок экзамена: [(вопрос, верный ответ, что ответили)]"""

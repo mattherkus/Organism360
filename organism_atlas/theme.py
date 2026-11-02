@@ -1,16 +1,31 @@
-"""Темы оформления интерфейса: тёмная, светлая и высококонтрастная.
+"""Темы оформления интерфейса: «Бумага» (как страница анатомического атласа), тёмная, светлая и высококонтрастная.
 
 Виджеты получают цвета не числами, а ролями (bg, card, text, ...): кнопки и карточки берут цвет роли
 в момент рисования, а надписи запоминают свою роль (ui/widgets.py: set_fg), поэтому ui.widgets.retheme()
 перекрашивает всё окно на лету.
-Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы.
+Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы. В «Бумаге» схема остаётся
+тёмной: она лежит на светлой странице как вклеенная таблица атласа, в рамке цвета plate и с подписью под ней
+(у остальных тем plate - пустая строка: фон схемы совпадает с фоном окна, рамки нет).
 """
 
 from . import config
 
-DEFAULT = "dark"
+DEFAULT = "paper"
 
 THEMES = {
+    "paper": {
+        "bg": "#f5f3ee", "card": "#fbfaf7", "border": "#d6cfbf",
+        "text": "#1d2a36", "muted": "#56626e",
+        "accent": "#24508a", "on_accent": "#ffffff",
+        "accent_fg": "#24508a",
+        "day_bg": "#f1e8cc", "day_title": "#6b4800",
+        "ok": "#1b6b3f", "bad": "#a8261d",
+        "right_bg": "#1b6b3f", "wrong_bg": "#a8261d", "on_mark": "#ffffff",
+        "tip_bg": "#1d2a36", "tip_fg": "#f5f3ee",
+        "scene_bg": config.BG, "scene_hi": "#1a3547",          # схема - тёмная таблица на светлой странице
+        "view_bg": config.BG, "view_hi": "#1b3a50",
+        "plate": "#1d2a36",                                    # двойная рамка вокруг схемы
+    },
     "dark": {
         "bg": config.BG, "card": config.CARD, "border": config.BORDER,
         "text": config.TEXT, "muted": config.MUTED,
@@ -22,6 +37,7 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": config.TEXT,            # подсказка над схемой
         "scene_bg": config.BG, "scene_hi": "#1a3547",          # фон схемы тела и пятно за телом
         "view_bg": config.BG, "view_hi": "#1b3a50",            # фон кадра 3D и пятно в центре
+        "plate": "",                                           # рамки вокруг схемы нет
     },
     "light": {
         "bg": "#eef2f5", "card": "#ffffff", "border": "#b9c7d2",
@@ -34,6 +50,7 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": "#ffffff",
         "scene_bg": "#eef2f5", "scene_hi": "#ffffff",
         "view_bg": "#eef2f5", "view_hi": "#ffffff",
+        "plate": "",
     },
     # каждый текст к своему фону - не ниже 7:1 (WCAG AAA), это проверяет tests/test_theme.py
     "contrast": {
@@ -47,6 +64,7 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": "#ffffff",
         "scene_bg": "#000000", "scene_hi": "#0d1d29",
         "view_bg": "#000000", "view_hi": "#0d1d29",
+        "plate": "",
     },
 }
 

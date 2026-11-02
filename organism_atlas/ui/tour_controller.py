@@ -30,7 +30,7 @@ class TourController:
     def start(self, name):
         self.tour, self.paused = (name, 0), None
         self.app.set_spot(None)
-        self.app.set_card(self.card)
+        self.app.set_card(self.card, fade=True)
 
     def go(self, step):
         """на step шагов вперёд или назад; после последнего органа - карточка «экскурсия пройдена»"""
@@ -40,13 +40,13 @@ class TourController:
             return
         self.tour = (name, i)
         self.app.set_spot(self.spot_of(name, i))
-        self.app.set_card(self.card)
+        self.app.set_card(self.card, fade=True)
 
     def end(self):
         """закончить экскурсию и показать список экскурсий"""
         self.tour = self.paused = None
         self.app.set_spot(None)
-        self.app.set_card(self.app.empty_card)
+        self.app.set_card(self.app.empty_card, fade=True)
 
     def pause(self):
         """прервать экскурсию (щелчок по органу, поиск): запомнить шаг, чтобы к нему вернуться"""
@@ -60,7 +60,7 @@ class TourController:
         name, i = self.tour = self.paused
         self.paused = None
         self.app.set_spot(self.spot_of(name, i))
-        self.app.set_card(self.card)
+        self.app.set_card(self.card, fade=True)
 
     def back_button(self):
         """кнопка под карточкой органа: вернуться к прерванной экскурсии или к списку экскурсий"""

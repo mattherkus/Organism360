@@ -786,7 +786,7 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(self.app.view.layers["target"])
         self.app.set_mode("study")
         self.assertEqual(self.app.query, "")
-        self.assertEqual(self.visible_toggles(), set(self.app.organs()))
+        self.assertEqual(self.visible_toggles(), set())      # без поиска системы снова свёрнуты
 
     def test_search_keeps_keys(self):
         """пока набирают в поиске, цифры и стрелки не уходят викторине и экскурсии; Esc очищает поле"""
@@ -1089,6 +1089,64 @@ class AppTests(unittest.TestCase):
         finally:
             theme.set_theme(theme.DEFAULT)
             viewer3d.set_quality("medium")
+
+    def test_fold_systems(self):
+        """системы в списке органов сначала свёрнуты; стрелка разворачивает систему, у подзаголовка -
+        сколько её органов видно; развёрнутое переживает пересборку панели"""
+        from organism_atlas.ui.layers_panel import GROUPS
+        a = self.app
+        self.assertEqual(self.visible_toggles(), set())
+        a.fold_system("circulatory")
+        self.assertEqual(self.visible_toggles(), {"heart", "aorta", "vena_cava"})
+        head = next(h for h in a.toggles[GROUPS] if h.system == "circulatory")
+        self.assertEqual(head.count.text(), "3/3")
+        a.toggle_organ("heart")
+        self.assertEqual(head.count.text(), "2/3")
+        a.set_lang("en")
+        self.assertEqual(self.visible_toggles(), {"heart", "aorta", "vena_cava"})
+        a.set_lang("ru")
+        a.fold_system("circulatory")
+        self.assertEqual(self.visible_toggles(), set())
+
+    def test_results_on_scheme_and_toast(self):
+        """итоги: кольцо доли верных с первой попытки, ошибки - красным на схеме с подписями (до следующей
+        игры); новое достижение - плашкой внизу окна, щелчок по ней открывает достижения"""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        from organism_atlas.ui import overlay, toast
+        from organism_atlas.ui.achievements import AchievementsPanel
+        from organism_atlas.ui.widgets import Ring
+        a = self.app
+        a.set_mode("find")
+        a.quiz.set_cfg("length", 5)
+        a.quiz.start()
+        s = a.quiz.session
+        missed = s.current
+        a.quiz.answer(next(k for k in a.organs() if k != missed))      # одна ошибка
+        self.play()
+        self.assertEqual(s.missed, [missed])
+        shown = toast.toasts(a)
+        self.assertEqual(len(shown), len(a.quiz.new_achievements))
+        a.quiz.show_results()
+        rings = a.card.findChildren(Ring)
+        self.assertEqual(len(rings), 1)
+        self.assertAlmostEqual(rings[0].value, s.percent / 100)
+        self.assertIsNotNone(a.view.layers["missed"])
+        self.assertEqual([text for *_xy, text in a.view.labels], [i18n.name(missed)])
+        QTest.mouseClick(shown[0], Qt.LeftButton)
+        self.assertTrue(wait(lambda: isinstance(overlay.top(a), AchievementsPanel), 2))
+        overlay.close_top(a)
+        a.quiz.start()                                          # новая игра - отметок прошлой нет
+        self.assertIsNone(a.view.layers["missed"])
+        self.assertEqual(a.view.labels, [])
+
+    def test_card_fades_in(self):
+        """новая карточка органа проявляется плавно, а после - без эффекта прозрачности"""
+        a = self.app
+        a.show_info("heart")
+        self.assertIsNotNone(a.card.graphicsEffect())
+        self.assertTrue(wait(lambda: a.card.graphicsEffect() is None, 2))
 
 
 class ColorGroupTests(unittest.TestCase):

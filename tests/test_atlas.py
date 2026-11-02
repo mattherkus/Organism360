@@ -205,5 +205,16 @@ class AtlasTests(unittest.TestCase):
         self.assertGreater(a[y0:y0 + h, x0:x0 + w][open_].mean(), 0.3)
 
 
+    def test_center_inside_organ(self):
+        """точка в глубине органа (к ней идёт выноска подписи ошибки в итогах): на самом органе и не на его
+        краю, даже у парного органа (лёгкие, почки); считается один раз"""
+        for key in ("lungs", "kidneys", "heart", "aorta", "intestines"):
+            d = self.atlas._shape(key)
+            x, y = self.atlas.center(key)
+            ix, iy = int(round(x - d["origin"][0])), int(round(y - d["origin"][1]))
+            self.assertGreater(d["hit"][iy, ix], 0.5, key)
+        self.assertIs(self.atlas.center("heart"), self.atlas.center("heart"))
+
+
 if __name__ == "__main__":
     unittest.main()

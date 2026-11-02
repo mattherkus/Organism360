@@ -1,17 +1,22 @@
 """Содержимое карточки справа: карточка органа (со строкой «назад - вперёд»), стартовая карточка
 с экскурсиями, шаг экскурсии, вопрос викторины и карточка настройки викторины. Строятся из общих
-виджетов (widgets.py) и складываются столбиком через put()."""
+виджетов (widgets.py) и складываются столбиком через put().
+
+Карточка органа, кости или мышцы сложена как статья атласа: над заголовком - система органов (значок её цвета),
+заголовок и текст - шрифтом с засечками, под заголовком - латинское название."""
 
 from PySide6.QtWidgets import QGridLayout
 
 from .. import i18n
 from ..diseases import on_card
 from ..i18n import t
-from ..organs import ORGANS, fact_of_day
+from ..organs import ORGANS, SYSTEM_COLORS, fact_of_day
 from ..structures import STRUCTURES, kind as structure_kind
 from .scaling import px
-from .widgets import (QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, label, linked, put,
-                      rich_label, rounded_card, section, set_button_bg, spacer, vbox)
+from .widgets import (QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, kicker, label, linked,
+                      put, rich_label, rounded_card, section, set_button_bg, spacer, vbox)
+
+TITLE = 19                      # размер заголовка статьи (органа, кости, мышцы)
 
 
 def nav_row(lay, nav):
@@ -57,7 +62,21 @@ def details(lay, key, on_link, seen):
     """подробности карточки: у органа - функции, строение, размеры, кровоснабжение, нервы; у кости - тип, части,
     соединения, мышцы; у мышцы - начало, прикрепление, действие, иннервация, кровоснабжение"""
     for field, text in i18n.details(key):
-        section(lay, t("detail_" + field), text, on_link, seen)
+        section(lay, t("detail_" + field), text, on_link, seen, serif=True)
+
+
+def article_head(lay, key, items, nav):
+    """начало статьи: строка с системой органов, заголовок с засечками и латинское название курсивом"""
+    if nav:
+        nav_row(lay, nav)
+    kicker(lay, items, top=8 if nav else 12)
+    put(lay, label(i18n.name(key), size=TITLE, bold=True, serif=True), top=2)
+    put(lay, label(i18n.subtitle(key), "muted", italic=True, serif=True), bottom=8)
+
+
+def system_color(key):
+    """цвет главной системы органа"""
+    return SYSTEM_COLORS[ORGANS[key]["systems"][0]]
 
 
 def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None):
@@ -76,24 +95,20 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     clear(lay)
     c = ORGANS[key]["color"]
     seen = {key}                                                        # на себя ссылок нет
-    bar(lay, c)                                                         # цветная полоска органа
-    if nav:
-        nav_row(lay, nav)
-    put(lay, label(i18n.name(key), size=15, bold=True), top=8 if nav else 12)
-    put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
-    put(lay, linked(i18n.organ(key, "desc"), on_link, seen), bottom=8)
-    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen)
-    section(lay, t("card_system"), ", ".join(t("system_" + x) for x in ORGANS[key]["systems"]))
+    bar(lay, system_color(key))                                         # полоска цвета системы органа
+    article_head(lay, key, [(SYSTEM_COLORS[x], t("system_" + x)) for x in ORGANS[key]["systems"]], nav)
+    put(lay, linked(i18n.organ(key, "desc"), on_link, seen, serif=True), bottom=8)
+    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen, serif=True)
     heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
-        put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
+        put(lay, linked("•  " + f, on_link, seen, serif=True), top=2, bottom=2)
     if not compact:
         details(lay, key, on_link, seen)
         heading(lay, t("card_diseases"))
         put(lay, rich_label(joined(on_card(key), "  ·  "), on_link))   # ссылки на статьи справочника
         day = rounded_card(fill="day_bg", border=c, radius=10)
         put(day.lay, label("★  " + t("card_fact_of_day"), "day_title", 10, bold=True), top=8, bottom=2, x=10)
-        put(day.lay, linked(fact_of_day(key), on_link, seen), bottom=8, x=10)
+        put(day.lay, linked(fact_of_day(key), on_link, seen, serif=True), bottom=8, x=10)
         put(lay, day, top=12)
     if on_read:
         read_button(lay, on_read)
@@ -113,17 +128,14 @@ def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None):
     lay = card.lay
     clear(lay)
     seen = {key}
-    bar(lay, STRUCTURES[key]["color"])
-    if nav:
-        nav_row(lay, nav)
-    put(lay, label(i18n.name(key), size=15, bold=True), top=8 if nav else 12)
-    put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
-    put(lay, linked(i18n.organ(key, "desc"), on_link, seen), bottom=8)
-    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen)
-    section(lay, t("card_kind"), t("kind_" + structure_kind(key)))
+    c = STRUCTURES[key]["color"]
+    bar(lay, c)
+    article_head(lay, key, [(c, t("kind_" + structure_kind(key)))], nav)
+    put(lay, linked(i18n.organ(key, "desc"), on_link, seen, serif=True), bottom=8)
+    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen, serif=True)
     heading(lay, t("card_facts"))
     for f in i18n.organ(key, "facts"):
-        put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
+        put(lay, linked("•  " + f, on_link, seen, serif=True), top=2, bottom=2)
     details(lay, key, on_link, seen)
     if on_read:
         read_button(lay, on_read)
@@ -141,7 +153,7 @@ def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, k
     knowledge - (кнопка (текст, функция), уровни для легенды или None): карта знаний на схеме"""
     lay = card.lay
     clear(lay)
-    put(lay, label(title, size=15, bold=True), top=14, bottom=4)
+    put(lay, label(title, size=17, bold=True, serif=True), top=14, bottom=4)
     put(lay, label(hint, "muted"), bottom=6)
     if tours:
         heading(lay, tours_title)
@@ -166,8 +178,8 @@ def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, k
         c = ORGANS[key]["color"]
         day = rounded_card(fill="day_bg", border=c, radius=10)
         put(day.lay, label("★  " + head, "day_title", 10, bold=True), top=8, bottom=2, x=10)
-        put(day.lay, label(i18n.name(key), size=12, bold=True), x=10)
-        put(day.lay, label(fact, size=10), top=2, bottom=6, x=10)
+        put(day.lay, label(i18n.name(key), size=13, bold=True, serif=True), x=10)
+        put(day.lay, label(fact, size=10, serif=True), top=2, bottom=6, x=10)
         put(day.lay, flat_button(button[0], button[1], pady=3, size=9), bottom=10, x=10, align="left")
         put(lay, day, top=14)
     spacer(lay, 14)
@@ -181,10 +193,10 @@ def fill_tour(card, progress, title, subtitle, text, c, buttons, extra=(), hint=
     clear(lay)
     bar(lay, c)
     put(lay, label(progress, "muted", 10, bold=True), top=12)
-    put(lay, label(title, size=15, bold=True), top=4)
+    put(lay, label(title, size=TITLE, bold=True, serif=True), top=4)
     if subtitle:
-        put(lay, label(subtitle, "muted", italic=True))
-    put(lay, label(text), top=8, bottom=12)
+        put(lay, label(subtitle, "muted", italic=True, serif=True))
+    put(lay, label(text, serif=True), top=8, bottom=12)
     row = QGridLayout()
     row.setContentsMargins(0, 0, 0, 0)
     row.setHorizontalSpacing(px(6))
@@ -213,7 +225,7 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
     clear(lay)
     bar(lay, "accent")
     prog = put(lay, QuizProgress(*progress), top=12)
-    put(lay, label(title, size=15, bold=True), top=8, bottom=4)
+    put(lay, label(title, size=16, bold=True, serif=True), top=8, bottom=4)
     put(lay, label(hint, "muted"), bottom=10)
     if feedback:
         put(lay, label(feedback[0], feedback[1], bold=True), bottom=10)
@@ -279,7 +291,7 @@ def fill_setup(card, title, desc, rows, start_text, on_start, history_title, his
     clear(lay)
     labels, buttons = [], []
     bar(lay, "accent")
-    labels.append(put(lay, label(title, size=15, bold=True), top=10))
+    labels.append(put(lay, label(title, size=17, bold=True, serif=True), top=10))
     labels.append(put(lay, label(desc, "muted"), bottom=4))
     for head, options, _selected, _on_pick, hint, vertical in rows:
         labels.append(heading(lay, head))

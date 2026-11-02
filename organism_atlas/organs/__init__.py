@@ -29,6 +29,11 @@ ORDER = ["spinal_cord", "intestines", "rectum", "appendix", "kidneys", "uterus",
 # системы органов (тема викторины и вопрос «к какой системе относится»); названия - в lang/*.json: system_<ключ>
 SYSTEMS = ("digestive", "respiratory", "circulatory", "nervous", "endocrine", "urinary", "reproductive", "immune")
 
+# цвет системы: значок в панели слоёв и полоска со значком в карточке органа (одинаковые во всех темах;
+# это не цвет текста - рядом всегда название системы)
+SYSTEM_COLORS = {"circulatory": "#d2474f", "respiratory": "#4f9fd8", "digestive": "#e08a3c", "nervous": "#d9b63a",
+                 "endocrine": "#9b6fd0", "urinary": "#3fb3a6", "reproductive": "#d971a6", "immune": "#6aaa4f"}
+
 # порядок групп органов в панели слоёв (орган попадает в группу своей главной системы)
 PANEL_SYSTEMS = ("respiratory", "digestive", "endocrine", "immune", "urinary", "circulatory", "nervous",
                  "reproductive")

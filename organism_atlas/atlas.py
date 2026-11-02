@@ -76,6 +76,7 @@ class Atlas:
         self._under = None               # (прямоугольник, подложка анимации): всё, что под лёгкими
         self._punched = {}               # {орган из BEHIND: (видимые закрывающие, слой с вырезом)}
         self._struct = None              # маски костей и мышц (structures.masks), считаются один раз
+        self._centers = {}               # {орган: точка для его номера} (center)
 
     # --- слои
     def layer(self, name):
@@ -300,6 +301,35 @@ class Atlas:
         cx = float(xs.mean())
         col = ys[np.abs(xs - cx) <= max(2, 0.1 * (xs.max() - xs.min()))]      # верх органа над серединой
         return d["origin"][0] + cx, d["origin"][1] + float(col.min() if len(col) else ys.min())
+
+    def center(self, key):
+        """точка для номера органа (x, y) в пикселях схемы: в глубине органа, поближе к его середине.
+        У парного органа или органа-подковы середина может прийтись мимо него, а ближайшая к ней точка органа -
+        на самом краю; поэтому маску сначала «обтачиваем» с краёв, пока от неё не останется малая доля,
+        и ищем ближайшую к середине точку в том, что осталось. Маска органа не меняется - точка запоминается"""
+        centers = self._centers
+        if key in centers:
+            return centers[key]
+        d = self._shape(key)
+        m = d["hit"] > 0.5
+        ys, xs = np.nonzero(m)
+        if not len(xs):
+            return self.anchor(key)
+        cx, cy = xs.mean(), ys.mean()
+        inner, area = m, len(xs)
+        while True:
+            e = inner.copy()
+            e[1:, :] &= inner[:-1, :]
+            e[:-1, :] &= inner[1:, :]
+            e[:, 1:] &= inner[:, :-1]
+            e[:, :-1] &= inner[:, 1:]
+            if e.sum() < 0.1 * area:
+                break
+            inner = e
+        ys, xs = np.nonzero(inner)
+        i = int(np.argmin((xs - cx) ** 2 + (ys - cy) ** 2))
+        centers[key] = (d["origin"][0] + float(xs[i]), d["origin"][1] + float(ys[i]))
+        return centers[key]
 
     @classmethod
     def cached(cls, Z, cache_dir=atlas_cache.CACHE_DIR, prebuilt=atlas_cache.PREBUILT):

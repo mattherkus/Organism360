@@ -1,6 +1,8 @@
 """Общие виджеты (Qt): цвета и шрифты, раскладка столбиком, скруглённые кнопка и карточка, полоски, надписи
 со ссылками. Из них собраны карточки справа (cards.py) и панель слоёв (layers_panel.py).
 
+Шрифт - FONT, а заголовки и текст статей (serif=True) - с засечками, как в атласе (config.SERIF).
+
 Цвета - роли текущей темы (theme.py). Кнопки, карточки, полоски и флажки рисуют себя сами (QPainter)
 и берут цвет роли в момент рисования; у надписей роль цвета текста хранится на виджете (set_fg),
 поэтому retheme() перекрашивает всё окно на лету, обойдя виджеты приложения.
@@ -17,7 +19,7 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QHBoxLayou
                                QWidget)
 
 from .. import i18n
-from ..config import FONT
+from ..config import FONT, SERIF
 from ..theme import C
 from .scaling import fs, px
 
@@ -42,9 +44,11 @@ def color(c):
     return QColor(C.get(c, c))
 
 
-def font(size, bold=False, italic=False):
-    """шрифт интерфейса: size - в пунктах при масштабе 100 %"""
+def font(size, bold=False, italic=False, serif=False):
+    """шрифт интерфейса: size - в пунктах при масштабе 100 %; serif - с засечками (заголовки, статьи)"""
     f = QFont(FONT)
+    if serif:
+        f.setFamilies(list(SERIF))
     f.setPointSizeF(fs(size))
     f.setBold(bold)
     f.setItalic(italic)
@@ -452,20 +456,20 @@ class QuizProgress(QWidget):
             self.time.set(time_left, "ok" if time_left > 0.5 else "day_title" if time_left > 0.25 else "bad")
 
 
-def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Qt.AlignLeft):
+def label(text, fg="text", size=11, bold=False, italic=False, wrap=True, align=Qt.AlignLeft, serif=False):
     w = QLabel(text)
-    w.setFont(font(size, bold, italic))
+    w.setFont(font(size, bold, italic, serif))
     w.setWordWrap(wrap)
     w.setAlignment(align | Qt.AlignTop)
     w.setTextFormat(Qt.PlainText)
     return set_fg(w, fg)
 
 
-def rich_label(pieces, on_link, fg="text", size=11, bold=False):
+def rich_label(pieces, on_link, fg="text", size=11, bold=False, serif=False):
     """надпись из кусков [(текст, ключ или None)]: куски с ключом - ссылки, щелчок вызывает on_link(ключ).
     Без ссылок (или без on_link) - обычная надпись"""
     text = "".join(piece for piece, _ in pieces)
-    w = label(text, fg, size, bold)
+    w = label(text, fg, size, bold, serif=serif)
     if on_link is None or not any(key for _, key in pieces):
         return w
     rich = '<span style="white-space:pre-wrap">%s</span>' % "".join(          # пробелы как в тексте
@@ -481,12 +485,12 @@ def rich_label(pieces, on_link, fg="text", size=11, bold=False):
     return w
 
 
-def linked(text, on_link, seen, fg="text", size=11):
+def linked(text, on_link, seen, fg="text", size=11, serif=False):
     """надпись, где названия органов и болезней - ссылки, как в статье: щелчок вызывает on_link(ключ).
     seen - ключи, которые уже стали ссылкой выше (и сам орган или болезнь статьи): ссылка на каждый
-    одна, при первом упоминании. Без on_link - обычная надпись"""
+    одна, при первом упоминании. Без on_link - обычная надпись. serif - шрифт статьи"""
     if on_link is None:
-        return label(text, fg, size)
+        return label(text, fg, size, serif=serif)
     pieces = []
     for piece, key in i18n.links(text):
         if key in seen:
@@ -494,7 +498,7 @@ def linked(text, on_link, seen, fg="text", size=11):
         elif key is not None:
             seen.add(key)
         pieces.append((piece, key))
-    return rich_label(pieces, on_link, fg, size)
+    return rich_label(pieces, on_link, fg, size, serif=serif)
 
 
 def joined(items, sep):
@@ -507,13 +511,114 @@ def joined(items, sep):
     return out
 
 
+def spaced(w, percent=108):
+    """разрядка букв надписи (подзаголовки прописными)"""
+    f = w.font()
+    f.setLetterSpacing(QFont.PercentageSpacing, percent)
+    w.setFont(f)
+    return w
+
+
 def heading(lay, text, top=8, bottom=2, x=16):
-    return put(lay, label(text.upper(), "muted", 9, bold=True, wrap=False), top=top, bottom=bottom, x=x)
+    return put(lay, spaced(label(text.upper(), "muted", 9, bold=True, wrap=False)), top=top, bottom=bottom, x=x)
 
 
-def section(lay, title, text, on_link=None, seen=None):
+def section(lay, title, text, on_link=None, seen=None, serif=False):
     heading(lay, title)
-    put(lay, linked(text, on_link, seen))
+    put(lay, linked(text, on_link, seen, serif=serif))
+
+
+class Dot(QWidget):
+    """цветной кружок-значок (система органов в карточке и в панели слоёв); c - роль темы или #rrggbb"""
+
+    def __init__(self, c, size=9):
+        super().__init__()
+        self.c = c
+        self.setFixedSize(px(size), px(size))
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen)
+        p.setBrush(color(self.c))
+        p.drawEllipse(QRectF(self.rect()))
+
+
+def kicker(lay, items, top=10, bottom=0, x=16):
+    """строка над заголовком статьи: [(цвет значка или None, текст)] прописными цвета акцента, через « · »"""
+    row = hbox(spacing=5)
+    for i, (c, text) in enumerate(items):
+        if i:
+            row.addSpacing(px(3))
+            row.addWidget(spaced(label("·", "accent_fg", 9, bold=True, wrap=False)))
+            row.addSpacing(px(3))
+        if c:
+            row.addWidget(Dot(c), 0, Qt.AlignVCenter)
+        row.addWidget(spaced(label(text.upper(), "accent_fg", 9, bold=True, wrap=False), 112))
+    row.addStretch(1)
+    return put(lay, row, top=top, bottom=bottom, x=x)
+
+
+class TabButton(RoundButton):
+    """вкладка режима в шапке окна: текст без заливки, у выбранной (роль фона accent) - черта акцента снизу,
+    у невыбранной под курсором - черта цвета рамки. Роль и цвета - как у RoundButton (set_button_bg)"""
+
+    def __init__(self, text="", command=None, size=11, parent=None):
+        super().__init__(text, command, "card", "center", size, 4, 6, parent)
+        f = font(size)
+        f.setWeight(QFont.DemiBold)
+        self.setFont(f)
+
+    def selected(self):
+        return self.role == "accent"
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        fg = "text" if self.selected() or self.hover else "muted"
+        p.setPen(color(fg))
+        p.setFont(self.font())
+        p.drawText(self.rect().adjusted(0, 0, 0, -px(2)), Qt.AlignCenter, self.text())
+        if self.selected() or self.hover:
+            h = max(2, px(2))
+            p.fillRect(QRectF(self.padx, self.height() - h, self.width() - 2 * self.padx, h),
+                       color("accent" if self.selected() else "border"))
+
+
+class Ring(QWidget):
+    """кольцо доли value (0..1) цвета c на дорожке цвета рамки, в середине - крупный текст (процент)
+    и подпись под ним мелко: итоги викторины"""
+
+    def __init__(self, value, c, text, caption="", size=128):
+        super().__init__()
+        self.value, self.c, self.text, self.caption = max(0.0, min(1.0, value)), c, text, caption
+        self.setFixedSize(px(size), px(size))
+
+    def paintEvent(self, _e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        w = px(10)
+        r = QRectF(self.rect()).adjusted(w / 2 + 1, w / 2 + 1, -w / 2 - 1, -w / 2 - 1)
+        pen = QPen(color("border"), w)
+        pen.setCapStyle(Qt.RoundCap)
+        p.setPen(pen)
+        p.drawArc(r, 0, 360 * 16)
+        if self.value > 0:
+            pen.setColor(color(self.c))
+            p.setPen(pen)
+            p.drawArc(r, 90 * 16, -round(360 * 16 * self.value))     # от верха по часовой стрелке
+        big = font(22, bold=True, serif=True)
+        fm = QFontMetrics(big)
+        small = font(7.5, bold=True)
+        sh = QFontMetrics(small).height() if self.caption else 0
+        top = (self.height() - fm.height() - sh) / 2
+        p.setPen(color("text"))
+        p.setFont(big)
+        p.drawText(QRectF(0, top, self.width(), fm.height()), Qt.AlignCenter, self.text)
+        if self.caption:
+            p.setPen(color("muted"))
+            p.setFont(small)
+            p.drawText(QRectF(0, top + fm.height(), self.width(), sh), Qt.AlignCenter, self.caption)
 
 
 def spacer(lay, h):
