@@ -17,6 +17,7 @@ PREFERRED = ("ru", "en", "la")      # порядок кнопок; осталь�
 LATIN = "la"                        # только названия органов: включается своей кнопкой поверх языка
 
 _cache = {}
+_codes = {}                         # {папка языков: коды} для available()
 _current, _previous = BASE, BASE
 _links = None                       # (регулярное выражение, {группа: орган, болезнь или None}) для links()
 
@@ -42,9 +43,12 @@ def load_all():
 
 
 def available():
-    """коды языков в порядке кнопок"""
-    codes = [p.stem for p in LANG_DIR.glob("*.json")]
-    return sorted(codes, key=lambda c: (PREFERRED.index(c) if c in PREFERRED else len(PREFERRED), c))
+    """коды языков в порядке кнопок. Папка читается один раз: проверки вопросов викторины спрашивают об этом
+    сотни раз на игру, а файлы языков за время работы не меняются"""
+    if LANG_DIR not in _codes:
+        codes = [p.stem for p in LANG_DIR.glob("*.json")]
+        _codes[LANG_DIR] = sorted(codes, key=lambda c: (PREFERRED.index(c) if c in PREFERRED else len(PREFERRED), c))
+    return list(_codes[LANG_DIR])
 
 
 def language_name(code):

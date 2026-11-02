@@ -288,6 +288,8 @@ class QuizController:
 
     def render_question(self):
         s = self.session
+        if s.finished:                                  # пауза после последнего ответа: следом - итоги
+            return
         card = self.app.card
         fb = self.feedback and (self.feedback_text(*self.feedback), self.feedback[2])
         give_up = (t("exam_finish") if self.exam() else t("give_up"), self.give_up)
@@ -325,7 +327,7 @@ class QuizController:
         self.progress, self.choices = fill_question(
             card, self.progress_state(), title, hint, fb, [(k, s.option_label(k)) for k in opts], self.pick,
             give_up=give_up, extra=self.turntable() if s.kind == "model" else None)
-        for k in self.wrong:
+        for k in self.wrong & set(self.choices):
             mark(self.choices[k], "wrong_bg")
         self.app.marks.show_target()
 
@@ -353,7 +355,7 @@ class QuizController:
         for k in s.placed:
             mark(self.choices[k], "right_bg")
             self.choices[k].setEnabled(False)
-        for k in s.wrong:
+        for k in s.wrong & set(self.choices):           # орган, названный щелчком по схеме, - не кнопка
             mark(self.choices[k], "wrong_bg")
 
     def feedback_text(self, key, organ, _color, i=None):
@@ -462,6 +464,7 @@ class QuizController:
         self.app.marks.unreveal()
         mark(btn, "right_bg")
         self.app.marks.flash(asked, "ok")
+        self.wrong = set()                              # ошибки - того вопроса, а игра уже на следующем
         self.next_timer.start(NEXT_MS)
 
     def accepted(self, key):

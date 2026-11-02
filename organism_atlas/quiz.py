@@ -71,11 +71,20 @@ def _linked(text):
     return frozenset(k for _, k in i18n.links(text) if k)
 
 
+@functools.lru_cache(maxsize=65536)
 def leaks(text, key):
     """выдаёт ли текст ответ: упоминает ли он сам орган - основой слова названия или сочетанием из раздела links
-    (оно ловит формы, которых не видно по основе: «полой вены» у «Полые вены»)"""
+    (оно ловит формы, которых не видно по основе: «полой вены» у «Полые вены»). Запоминается: игра
+    «Вперемешку» проверяет так тысячи пар «текст - орган», а тексты за время работы не меняются"""
     s = _norm(text)
     return any(stem in s for stem in name_stems(key)) or key in _linked(text)
+
+
+def _per_organ(fn):
+    """запомнить список fn(орган): он зависит только от текстов всех языков, а они за время работы не меняются.
+    Отдаётся копия - запомненный список не испортить"""
+    cached = functools.lru_cache(maxsize=None)(lambda key: tuple(fn(key)))
+    return functools.wraps(fn)(lambda key: list(cached(key)))
 
 
 def _candidates(key, levels, everywhere=False):
@@ -99,6 +108,7 @@ def fact_prompts(keys, level, rng=random, everywhere=False):
     return out
 
 
+@functools.lru_cache(maxsize=None)
 def location_leaks(key):
     """выдаёт ли расположение органа (поле location карточки) ответ хотя бы на одном языке"""
     return any(leaks(i18n.organ_in(code, key, "location"), key) for code in i18n.available())
@@ -110,6 +120,7 @@ def _names_any(text):
     return any(leaks(text, k) for k in ORGANS)
 
 
+@_per_organ
 def disease_choices(key):
     """ключи болезней органа (diseases.ON_CARD), по которым можно спросить «какой орган поражает эта болезнь»:
     болезнь ни на одном языке не называет орган схемы, не записана и у другого органа и не из VAGUE_DISEASES"""
@@ -123,6 +134,7 @@ def disease_choices(key):
     return out
 
 
+@_per_organ
 def truth_facts(key):
     """ключи фактов карточки органа для вопроса «верно ли»: факт не из SHARED_FACTS и не называет
     ни один орган схемы, иначе подставленный к чужому органу он сразу выдаёт себя"""
@@ -167,6 +179,7 @@ LATIN_PART_SKIP = {("pancreas", "duodenum"), ("pancreas", "artery"), ("appendix"
                    ("prostate", "prostate"), ("kidneys", "ureter")}
 
 
+@_per_organ
 def latin_parts(key):
     """группы 3D-модели органа (раздел parts в la.json), о которых можно спросить «часть какого органа»: латынь есть,
     это часть самого органа, а не сосед для ориентира, и название не называет ни один орган схемы"""

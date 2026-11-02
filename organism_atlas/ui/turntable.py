@@ -57,6 +57,7 @@ class Turntable(QWidget):
         self.frames, self.loading = frames, loading_text
         self.setFixedSize(w, h)
         self.i = 0
+        self.shown = None                            # (номер кадра, есть ли кадры) - что сейчас на экране
         self.cache = {}                              # {номер кадра: QImage}
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
@@ -67,13 +68,15 @@ class Turntable(QWidget):
         if n:
             # крутим, когда готов весь оборот; до тех пор - первый кадр (а не рывки по недосчитанным)
             self.i = (self.i + 1) % n if self.frames.done else 0
-        self.update()
+        if (self.i, bool(n)) != self.shown:          # пока кадры считаются, картинка та же - не перерисовываем
+            self.update()
 
     def paintEvent(self, _e):
         p = QPainter(self)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
         r = QRectF(self.rect())
         n = len(self.frames.images)
+        self.shown = (self.i, bool(n))
         if not n:
             p.fillRect(self.rect(), color("view_bg"))
             p.setPen(color("muted"))

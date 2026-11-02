@@ -642,6 +642,36 @@ class AppTests(unittest.TestCase):
         self.assertTrue(wait(lambda: any(grade in x for x in self.label_texts()), 5))   # итоги - следом
         self.assertIn(i18n.t("review_title").upper(), self.label_texts())
 
+    def test_order_click_on_organ_without_button(self):
+        """«Расставь по порядку»: щелчок по органу схемы, которого нет среди кнопок, - ошибка, вопрос на месте"""
+        a = self.app
+        a.set_mode("order")
+        a.quiz.start()
+        s = a.quiz.session
+        other = next(k for k in a.organs() if k not in s.options())
+        a.quiz.answer(other)
+        self.assertEqual((s.errors, s.placed), (1, []))
+        self.assertEqual(set(a.quiz.choices), set(s.options()))
+
+    def test_language_switch_in_pause_after_answer(self):
+        """язык сменили в паузе после верного ответа на последний вопрос (до итогов): ошибка на этом вопросе
+        не роняет перерисовку карточки"""
+        from organism_atlas import progress
+        a = self.app
+        a.set_mode("name")
+        a.quiz.cfg["length"] = 5
+        a.quiz.start()
+        s = a.quiz.session
+        while s.i < s.total - 1:
+            a.quiz.pick(s.correct())
+            a.quiz.next_question()
+        a.quiz.pick(next(k for k in a.quiz.choices if k != s.correct()))
+        a.quiz.pick(s.correct())
+        self.assertTrue(s.finished and a.quiz.next_timer.isActive())
+        a.set_lang("en")
+        a.quiz.next_question()
+        self.assertEqual(progress.load()["results"][-1]["first_try"], 4)
+
     def test_exam_ignores_set_of_other_modes(self):
         """набор «Закладки», выбранный в другом виде, в «Экзамен» (где строки набора нет) не переходит;
         «Ответ принят» - над следующим вопросом экзамена"""
@@ -677,6 +707,53 @@ class AppTests(unittest.TestCase):
         a.quiz.start()
         a.quiz.on_key("", "²")
         self.assertEqual(a.quiz.session.i, 0)
+
+    def test_knowledge_map_kept_while_organs_same(self):
+        """карта знаний: щелчок по слою тела её не пересчитывает, скрытый орган - пересчитывает"""
+        a = self.app
+        a.set_knowledge(True)
+        self.assertIsNotNone(a.view.layers["knowledge"])
+        with mock.patch.object(a.atlas, "tint", wraps=a.atlas.tint) as tint:
+            a.toggle_layer("skeleton")
+            tint.assert_not_called()
+            self.assertIsNotNone(a.view.layers["knowledge"])
+            a.toggle_organ("liver")
+            tint.assert_called_once()
+
+    def test_turntable_repaints_only_new_frame(self):
+        """«Угадай по 3D»: пока кадры оборота считаются, на экране тот же первый кадр - вертушка не перерисовывается"""
+        from types import SimpleNamespace
+        from PIL import Image
+        from organism_atlas.ui.turntable import Turntable
+        frames = SimpleNamespace(images=[], done=False)
+        w = Turntable(frames, 40, 30, "…")
+        w.timer.stop()
+        w.shown = (0, False)                                          # на экране - надпись «загружается»
+        with mock.patch.object(w, "update") as update:
+            w.tick()
+            update.assert_not_called()
+            frames.images.append(Image.new("RGB", (40, 30)))
+            w.tick()                                                  # первый кадр готов
+            update.assert_called_once()
+            w.shown = (0, True)                                       # первый кадр нарисован
+            update.reset_mock()
+            frames.images.append(Image.new("RGB", (40, 30)))
+            w.tick()                                                  # оборот ещё не готов - тот же кадр
+            update.assert_not_called()
+            frames.done = True
+            w.tick()                                                  # готов: модель вращается
+            update.assert_called_once()
+        w.deleteLater()
+
+    def test_setup_cards_fit_width(self):
+        """ширину карточки справа мерят по двум карточкам настройки (WIDEST_SETUPS): настройка любого вида
+        викторины в неё помещается"""
+        from organism_atlas.quiz import MODES
+        a = self.app
+        for mode in MODES:
+            a.set_mode(mode)
+            a.card.layout().activate()
+            self.assertLessEqual(a.card.minimumSizeHint().width(), a.card.maximumWidth(), mode)
 
     def test_close_stops_speech(self):
         """программу закрыли посреди чтения вслух: голос системы (отдельный процесс) замолкает"""
@@ -794,6 +871,10 @@ class AppTests(unittest.TestCase):
             a.on_key("", "к")                                           # та же клавиша в русской раскладке
             self.assertFalse(state["on"])
             self.assertEqual(a.card.read_button.text(), i18n.t("card_read"))
+            a.tours.end()                                               # стартовая карточка: читать нечего,
+            a.on_key("", "r")                                           # прежняя карточка сердца - не читается
+            self.assertEqual(len(said), 1)
+            self.assertFalse(state["on"])
         with mock.patch.object(speech, "available", return_value=False):
             self.app.show_info("liver")
             self.assertIsNone(self.app.card.read_button)

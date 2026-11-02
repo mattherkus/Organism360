@@ -36,6 +36,14 @@ class NotesTests(unittest.TestCase):
         self.assertEqual(notes.starred(), ["femur"])
         self.assertTrue(notes.is_starred("femur"))
 
+    def test_load_is_a_copy_and_sees_file_changes(self):
+        """файл разбирается один раз, но load() отдаёт копию и замечает, что файл переписали"""
+        notes.toggle_star("liver")
+        notes.load()["starred"].append("heart")
+        self.assertEqual(notes.starred(), ["liver"])
+        self.file.write_text('{"notes": {"heart": "x"}}', encoding="utf-8")
+        self.assertEqual(notes.load(), {"notes": {"heart": "x"}, "starred": []})
+
     def test_broken_file(self):
         self.file.parent.mkdir(parents=True)
         for broken in ("{", "[1, 2]", '{"notes": [1], "starred": {"a": 1}}', '{"notes": {"heart": 5}}'):

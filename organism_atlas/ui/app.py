@@ -62,6 +62,7 @@ REBUILD_WAIT = 5                # сколько секунд ждать, пок
 CRUMBS = 2                      # сколько прежних карточек показывать «крошками» над карточкой органа
 CARD_FADE_MS = 180              # новая карточка справа проявляется за столько миллисекунд
 LATIN_TITLE = "Corpus humanum"  # подзаголовок окна - по-латыни на любом языке, как на титуле атласа
+WIDEST_SETUPS = ("find", "body")    # самые широкие карточки настройки викторины (fix_card_width)
 
 
 class App(QWidget):
@@ -98,6 +99,7 @@ class App(QWidget):
         self.atlas, self.cur = None, None
         # что сейчас в карточке и в строке статуса: функции, чтобы перерисовать их на другом языке
         self.card_fn = self.status_fn = None
+        self.info_key = None                   # орган (кость, мышца), чья карточка сейчас справа, или None
         self.built = queue.Queue()
         self.building = False                  # в фоне рисуется схема (при запуске или под новый размер окна)
         self.layers = set(DEFAULT_LAYERS)      # видимые слои тела (мышцы включают в панели)
@@ -106,6 +108,7 @@ class App(QWidget):
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
         self.knowledge = False                 # карта знаний на схеме (органы в цвете уровня знания)
         self.levels = {}                       # {орган: уровень знания} для карты знаний и подсказки у курсора
+        self.knowledge_image = None            # (для чего, картинка) - последняя карта знаний на схеме
         self.toggles = {}
         # отложенные действия
         self.skin_timer = timer(self, self.apply_skin, 40)
@@ -227,9 +230,11 @@ class App(QWidget):
 
     def fix_card_width(self):
         """ширина карточки справа - один раз, по самой широкой (настройка викторины): иначе при смене режима
-        колонка раздвигалась бы, а схема сдвигалась и меняла масштаб"""
+        колонка раздвигалась бы, а схема сдвигалась и меняла масштаб. Подписи переносятся, ширину задают ряды
+        кнопок, а они у викторин по органам одинаковые; у других видов строк меньше - кроме «Кости и мышцы»
+        с её темами. Поэтому меряются две карточки, а не все (тест test_setup_cards_fit_width это проверяет)"""
         mode, wide = self.mode, px(340)
-        for self.mode in MODES:
+        for self.mode in WIDEST_SETUPS:
             self.quiz.render_setup()
             self.card.layout().activate()
             wide = max(wide, self.card.minimumSizeHint().width())
@@ -415,6 +420,7 @@ class App(QWidget):
         """показать в карточке справа то, что рисует fn; fade - новая карточка проявляется плавно
         (а не обновление той же карточки: ответ на вопрос, щелчок в настройке)"""
         self.card_fn = fn
+        self.info_key = None                            # карточку органа ставит show_info
         fn()
         self.card_area.verticalScrollBar().setValue(0)
         if fade:
@@ -497,7 +503,12 @@ class App(QWidget):
             traceback.print_exc()
             self.levels = {}
         colors = {k: hex2rgb(STATUS[v]) for k, v in self.levels.items()}
-        self.view.show_layer("knowledge", (qimage(self.atlas.tint(colors)), (0, 0)))
+        # тонировка зависит только от масштаба, скрытых органов и уровней: слои тела (кожа, кости, сосуды)
+        # и прозрачность кожи её не меняют - не пересчитываем (это десятки миллисекунд на каждый щелчок)
+        key = (self.atlas.Z, self.atlas.hidden, tuple(sorted(self.levels.items())))
+        if self.knowledge_image is None or self.knowledge_image[0] != key:
+            self.knowledge_image = (key, qimage(self.atlas.tint(colors)))
+        self.view.show_layer("knowledge", (self.knowledge_image[1], (0, 0)))
 
     def organ_block(self):
         """«Орган дня» на стартовой карточке: каждый день другой, с фактом дня и кнопкой его карточки"""
@@ -905,6 +916,7 @@ class App(QWidget):
         self.set_card(lambda: fill_card(self.card, key, on_3d=on_3d, back=back,
                                         on_link=self.open_link, nav=nav(), on_read=self.reader.action(key),
                                         note=self.notes.block(key)), fade=True)
+        self.info_key = key
 
     def go_history(self, step):
         """на step карточек назад (step < 0) или вперёд по истории просмотра (Alt+стрелки, кнопки над карточкой)"""
@@ -1065,8 +1077,8 @@ class App(QWidget):
             if char in ("k", "K", "л", "Л"):             # K (и та же клавиша в русской раскладке)
                 self.set_knowledge(not self.knowledge)
                 return
-            if char in ("r", "R", "к", "К") and self.cards.current is not None:   # R - прочитать карточку вслух
-                self.reader.toggle(self.cards.current)
+            if char in ("r", "R", "к", "К") and self.info_key is not None:   # R - прочитать открытую карточку
+                self.reader.toggle(self.info_key)                            # (не прежнюю, со стартовой)
                 return
             if self.flash.on_key(keysym, char):        # флеш-карточка: пробел - ответ, 1 / 2 - не знал / знал
                 return

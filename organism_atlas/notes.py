@@ -19,16 +19,32 @@ def path():
     return Path(custom) if custom else settings.path().with_name("notes.json")
 
 
+_parsed = None                  # (байты файла, проверенные данные): тот же файл не разбирается заново
+
+
 def load():
-    """{"notes": {ключ: текст}, "starred": [ключи]} - проверенное содержимое файла"""
+    """{"notes": {ключ: текст}, "starred": [ключи]} - проверенное содержимое файла (копия - её можно менять).
+    Каждая карточка читает файл: разбирается он, только если байты другие"""
+    global _parsed
     try:
-        data = json.loads(path().read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        raw = path().read_bytes()
+    except OSError:
+        raw = None
+    if _parsed is None or _parsed[0] != raw:
+        _parsed = (raw, _parse(raw))
+    data = _parsed[1]
+    return {"notes": dict(data["notes"]), "starred": list(data["starred"])}
+
+
+def _parse(raw):
+    try:
+        data = json.loads(raw.decode("utf-8")) if raw is not None else {}
+    except ValueError:
         data = {}
     if not isinstance(data, dict):
         data = {}
-    raw = data.get("notes") if isinstance(data.get("notes"), dict) else {}
-    notes = {k: v for k, v in raw.items() if isinstance(k, str) and isinstance(v, str) and v.strip()}
+    notes = data.get("notes") if isinstance(data.get("notes"), dict) else {}
+    notes = {k: v for k, v in notes.items() if isinstance(k, str) and isinstance(v, str) and v.strip()}
     starred = data.get("starred") if isinstance(data.get("starred"), list) else []
     return {"notes": notes, "starred": list(dict.fromkeys(k for k in starred if isinstance(k, str)))}
 

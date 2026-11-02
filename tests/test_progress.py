@@ -108,6 +108,19 @@ class ProgressTests(unittest.TestCase):
         progress.record(played(["a", "b"]), today=DAY)
         self.assertEqual(progress.load()["cards"]["find:a"]["seen"], 2)
 
+    def test_load_is_a_copy_and_sees_file_changes(self):
+        """файл разбирается один раз, но load() отдаёт копию (её меняет record) и замечает, что файл переписали"""
+        progress.record(played(["a"]), today=DAY)
+        data = progress.load()
+        data["results"][0]["missed"].append("b")
+        data["cards"]["find:a"]["box"] = 99
+        data["results"].clear()
+        again = progress.load()
+        self.assertEqual((len(again["results"]), again["results"][0]["missed"]), (1, []))
+        self.assertEqual(again["cards"]["find:a"]["box"], 1)
+        self.file.write_text('{"results": [], "cards": {}}', encoding="utf-8")
+        self.assertEqual(progress.load(), {"results": [], "cards": {}})
+
     def test_history_is_trimmed(self):
         for i in range(progress.KEEP + 5):
             progress.record(played(["a"], seed=i), today=DAY)

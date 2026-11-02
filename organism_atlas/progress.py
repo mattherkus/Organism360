@@ -51,11 +51,33 @@ def _clean(item):
     return out
 
 
+_parsed = None                  # (байты файла, проверенные данные): тот же файл не разбирается заново
+
+
 def load():
-    """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}[, "earned": {достижение: дата}]}"""
+    """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}[, "earned": {достижение: дата}]}.
+    Карточки окна читают историю на каждый щелчок: файл читается всегда (его могли поменять), а разбирается,
+    только если байты другие. Возвращается копия - её можно менять"""
+    global _parsed
     try:
-        data = json.loads(path().read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        raw = path().read_bytes()
+    except OSError:
+        raw = None
+    if _parsed is None or _parsed[0] != raw:
+        _parsed = (raw, _parse(raw))
+    data = _parsed[1]
+    out = {"results": [dict(r, missed=list(r["missed"])) if "missed" in r else dict(r) for r in data["results"]],
+           "cards": {k: dict(c) for k, c in data["cards"].items()}}
+    if "earned" in data:
+        out["earned"] = dict(data["earned"])
+    return out
+
+
+def _parse(raw):
+    """байты файла (None - файла нет) -> проверенные данные; испорченный файл - пустая история"""
+    try:
+        data = json.loads(raw.decode("utf-8")) if raw is not None else {}
+    except ValueError:
         data = {}
     if not isinstance(data, dict):
         data = {}
