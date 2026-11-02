@@ -1,18 +1,32 @@
 """Серия дней и достижения по истории викторин (progress.json). Без Tk.
 
 Серия - сколько дней подряд, по сегодня (или по вчера: сегодня ещё можно успеть), сыграна хотя бы одна игра.
-Достижение - условие на историю игр и карточки повторения. Полученные не хранятся, а считаются заново
-по progress.json, поэтому новое достижение в коде засчитается и за игры, сыгранные раньше
-(история хранит последние progress.KEEP игр). Тексты: ach_<ключ> и ach_<ключ>_desc в lang/*.json.
+Достижение - условие на историю игр и карточки повторения. Условия проверяются по progress.json, поэтому
+новое достижение в коде засчитается и за игры, сыгранные раньше (история хранит последние progress.KEEP игр).
+Полученное запоминается в progress.json (раздел earned, его пишет remember() при записи игры) и уже
+не пропадает: ни когда старые игры уходят из истории, ни когда органов на схеме становится больше
+и порог «Знатока» растёт. Тексты: ach_<ключ> и ach_<ключ>_desc в lang/*.json.
 """
 
 import datetime
 
 from .quiz import MODES
 
-ALL_ORGANS = 18             # «Все органы»: игра хотя бы из стольких вопросов (на мужской схеме органов 18)
-SCHOLAR = 18                # «Знаток»: столько органов хоть раз отвечены с первой попытки
+LEGACY_ORGANS = 18          # столько органов было на мужской схеме, пока игры не записывали их число
 MEMORY = 10                 # «Долгая память»: столько карточек дошли до коробки 4 (повтор через 8 дней)
+
+
+def scholar_goal():
+    """«Знаток»: столько органов хоть раз отвечены с первой попытки - все органы схемы с меньшим их числом
+    (растёт сам, когда органов становится больше)"""
+    from .organs import SEXES, for_body
+    return min(len(for_body(s)) for s in SEXES)
+
+
+def _all_organs(r):
+    """игра про все органы схемы: вопросов не меньше, чем органов было на схеме (organs - с этой версии)"""
+    organs = r.get("organs")
+    return r.get("total", 0) >= (organs if isinstance(organs, int) and organs > 0 else LEGACY_ORGANS)
 
 
 def _day(r):
@@ -71,20 +85,36 @@ ACHIEVEMENTS = (
     ("speed", lambda d: any(_flawless(r) and r.get("timer") == 10 and r.get("total", 0) >= 10
                             for r in d["results"])),
     ("all_modes", lambda d: set(MODES) <= {r.get("mode") for r in d["results"]}),
-    ("marathon", lambda d: any(r.get("total", 0) >= ALL_ORGANS for r in d["results"])),
+    ("marathon", lambda d: any(_all_organs(r) for r in d["results"])),
     ("review", lambda d: any(r.get("set") == "due" for r in d["results"])),
     ("fixer", lambda d: any(r.get("set") == "missed" and _flawless(r) for r in d["results"])),
     ("streak3", lambda d: best_streak(d) >= 3),
     ("streak7", lambda d: best_streak(d) >= 7),
-    ("scholar", lambda d: len(_learned(d)) >= SCHOLAR),
+    ("scholar", lambda d: len(_learned(d)) >= scholar_goal()),
     ("memory", lambda d: sum(isinstance(c.get("box"), int) and c["box"] >= 4 for c in d["cards"].values()) >= MEMORY),
 )
 KEYS = tuple(k for k, _ in ACHIEVEMENTS)
 
 
+# условия прежних версий: по ним засчитывается полученное до того, как полученные стали запоминаться
+LEGACY = (("scholar", lambda d: len(_learned(d)) >= LEGACY_ORGANS),)
+
+
 def earned(data):
-    """ключи полученных достижений, в порядке ACHIEVEMENTS"""
-    return [k for k, ok in ACHIEVEMENTS if ok(data)]
+    """ключи полученных достижений, в порядке ACHIEVEMENTS: запомненные и те, чьё условие выполнено"""
+    have = set(data.get("earned") or ())
+    if "earned" not in data:                    # progress.json прежней версии: пороги тогда были ниже
+        have |= {k for k, ok in LEGACY if ok(data)}
+    return [k for k, ok in ACHIEVEMENTS if k in have or ok(data)]
+
+
+def remember(data, today=None):
+    """запомнить полученные достижения в data["earned"] ({ключ: дата получения}); возвращает новые"""
+    today = (today or datetime.date.today()).isoformat()
+    old = data.get("earned") if isinstance(data.get("earned"), dict) else {}
+    got = earned(data)
+    data["earned"] = {k: old.get(k, today) for k in got}
+    return [k for k in got if k not in old]
 
 
 def new_ones(before, after):

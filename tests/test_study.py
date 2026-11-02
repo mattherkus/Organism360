@@ -111,6 +111,33 @@ class AchievementTests(unittest.TestCase):
         cards = {"find:%s" % k: {"box": 1, "seen": 2, "wrong": 2} for k in ORGANS}
         self.assertEqual(achievements.earned(self.data(cards=cards)), [])
 
+    def test_thresholds_follow_organ_registry(self):
+        from organism_atlas.organs import SEXES
+        self.assertEqual(achievements.scholar_goal(), min(len(for_body(s)) for s in SEXES))
+        n = len(for_body("male"))
+        self.assertNotIn("marathon", achievements.earned(self.data([game(DAY, total=n - 1, organs=n)])))
+        self.assertIn("marathon", achievements.earned(self.data([game(DAY, total=n, organs=n)])))
+        # игры прежних версий без числа органов: «все органы» - это 18 вопросов
+        self.assertIn("marathon", achievements.earned(self.data([game(DAY, total=achievements.LEGACY_ORGANS)])))
+
+    def test_earned_are_remembered(self):
+        """полученное не пропадает: ни когда игра ушла из истории, ни когда порог вырос"""
+        d = self.data([game(DAY, total=5)])
+        self.assertEqual(achievements.remember(d, DAY), ["first", "perfect"])
+        self.assertEqual(d["earned"], {"first": DAY.isoformat(), "perfect": DAY.isoformat()})
+        d["results"].clear()
+        self.assertEqual(achievements.earned(d), ["first", "perfect"])
+        self.assertEqual(achievements.remember(d, DAY + datetime.timedelta(days=1)), [])
+        self.assertEqual(d["earned"]["first"], DAY.isoformat())          # дата - первого получения
+
+    def test_legacy_scholar_kept_when_goal_grows(self):
+        from unittest import mock
+        cards = {"find:%s" % k: {"box": 2, "seen": 1, "wrong": 0} for k in list(ORGANS)[:achievements.LEGACY_ORGANS]}
+        with mock.patch.object(achievements, "scholar_goal", return_value=len(ORGANS) + 5):
+            self.assertIn("scholar", achievements.earned(self.data(cards=cards)))    # файл прежней версии
+            fresh = dict(self.data(cards=cards), earned={})
+            self.assertNotIn("scholar", achievements.earned(fresh))                   # новый порог - не набран
+
     def test_new_ones(self):
         before = self.data([game(DAY, total=5, first_try=4)])
         after = self.data(before["results"] + [game(DAY, total=5)])

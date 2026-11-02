@@ -26,7 +26,7 @@ def path():
 
 
 def load():
-    """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}}"""
+    """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}[, "earned": {достижение: дата}]}"""
     try:
         data = json.loads(path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -37,7 +37,10 @@ def load():
         if isinstance(data.get("results"), list) else []
     cards = {k: c for k, c in data.get("cards", {}).items() if isinstance(c, dict)} \
         if isinstance(data.get("cards"), dict) else {}
-    return {"results": results, "cards": cards}
+    out = {"results": results, "cards": cards}
+    if isinstance(data.get("earned"), dict):         # полученные достижения (achievements.remember)
+        out["earned"] = {k: v for k, v in data["earned"].items() if isinstance(k, str)}
+    return out
 
 
 def save(data):
@@ -68,7 +71,7 @@ def record(session, question_set="all", today=None, now=None):
         "date": now.isoformat(timespec="minutes"), "mode": session.mode, "level": session.level,
         "timer": session.timer, "set": question_set, "total": session.total, "first_try": session.first_try,
         "errors": session.errors, "timeouts": session.timeouts, "missed": list(session.missed),
-        "seconds": round(session.elapsed),
+        "seconds": round(session.elapsed), "organs": len(session.pool),
     })
     data["results"] = data["results"][-KEEP:]
     for key, ok in session.results.items():
@@ -79,6 +82,8 @@ def record(session, question_set="all", today=None, now=None):
         c["seen"] = c.get("seen", 0) + 1
         c["wrong"] = c.get("wrong", 0) + (0 if ok else 1)
         c["last"] = today.isoformat()
+    from . import achievements                   # полученные достижения - запомнить, чтобы не пропали
+    achievements.remember(data, today)
     save(data)
     return data
 

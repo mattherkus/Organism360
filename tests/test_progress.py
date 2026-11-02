@@ -52,6 +52,9 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(progress.recent("name"), [])
         self.assertEqual(progress.last_missed("find", ["a", "b", "c"]), ["b"])
         self.assertEqual(progress.last_missed("find", ["a"]), [])        # органа больше нет в списке
+        self.assertEqual(r["organs"], 3)                                 # органов на схеме - для «Марафона»
+        # достижения запомнены: первая игра, и она про все органы своей «схемы» (3 из 3) - «Марафон»
+        self.assertEqual(progress.load()["earned"], {"first": DAY.isoformat(), "marathon": DAY.isoformat()})
 
     def test_leitner_intervals(self):
         keys = ["a", "b"]
