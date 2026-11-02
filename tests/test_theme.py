@@ -16,7 +16,7 @@ class PaletteTests(unittest.TestCase):
             self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 7.0, (fg, bg))
 
     def test_light_is_readable(self):
-        for name in ("light", "paper"):
+        for name in ("light", "paper", "black"):
             pal = theme.THEMES[name]
             for fg, bg in theme.TEXT_PAIRS:
                 self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 4.5, (name, fg, bg))
@@ -29,7 +29,16 @@ class PaletteTests(unittest.TestCase):
         self.assertEqual((paper["scene_bg"], paper["scene_hi"]), (dark["scene_bg"], dark["scene_hi"]))
         self.assertGreater(theme.contrast(paper["bg"], paper["scene_bg"]), 10)
         self.assertTrue(paper["plate"])
-        self.assertEqual([n for n, pal in theme.THEMES.items() if pal["plate"]], ["paper"])
+        self.assertEqual([n for n, pal in theme.THEMES.items() if pal["plate"]], ["paper", "black"])
+
+    def test_black_plate(self):
+        """«Чёрная» - тот же атлас в тёмном: окно тёмное (тёмный заголовок окна), рамка схемы светлая
+        и видна на странице, поле схемы отличается от страницы"""
+        from organism_atlas.ui import titlebar
+        black = theme.THEMES["black"]
+        self.assertTrue(titlebar.is_dark(black["bg"]))
+        self.assertGreater(theme.contrast(black["plate"], black["bg"]), 7)
+        self.assertNotEqual(black["scene_bg"], black["bg"])
 
     def test_contrast_formula(self):
         self.assertAlmostEqual(theme.contrast("#000000", "#ffffff"), 21.0)

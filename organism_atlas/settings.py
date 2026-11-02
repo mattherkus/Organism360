@@ -13,7 +13,7 @@ from pathlib import Path
 
 # допустимые значения и значения по умолчанию; чужое или испорченное значение заменяется умолчанием
 CHOICES = {
-    "theme": ("paper", "dark", "light", "contrast"),
+    "theme": ("paper", "black", "dark", "light", "contrast"),
     "quality": ("low", "medium", "high"),        # качество 3D-рендера
     "ui_scale": (0.9, 1.0, 1.1, 1.25, 1.5),      # множитель к масштабу Windows; действует после перезапуска
     "quiz_level": ("easy", "medium", "hard"),     # сложность викторины
