@@ -8,6 +8,7 @@ from .. import i18n
 from ..diseases import on_card
 from ..i18n import t
 from ..organs import ORGANS, fact_of_day
+from ..structures import STRUCTURES, kind as structure_kind
 from .scaling import px
 from .widgets import (QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, label, linked, put,
                       rich_label, rounded_card, section, set_button_bg, spacer, vbox)
@@ -39,7 +40,10 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
     а заболевания органа - ссылками на статьи справочника болезней;
-    nav - история просмотренных карточек (см. nav_row)"""
+    nav - история просмотренных карточек (см. nav_row). Кость или мышца (structures.py) - своя карточка"""
+    if key in STRUCTURES:
+        fill_structure(card, key, back=back, on_link=on_link, nav=nav)
+        return
     lay = card.lay
     clear(lay)
     c = ORGANS[key]["color"]
@@ -67,6 +71,28 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     if back:
         put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_3d else 12, bottom=14, align="left")
     if not on_3d and not back:
+        spacer(lay, 10)
+
+
+def fill_structure(card, key, back=None, on_link=None, nav=None):
+    """карточка кости или мышцы: название, латынь, что это, где находится, факты; ссылки и история - как у органа"""
+    lay = card.lay
+    clear(lay)
+    seen = {key}
+    bar(lay, STRUCTURES[key]["color"])
+    if nav:
+        nav_row(lay, nav)
+    put(lay, label(i18n.name(key), size=15, bold=True), top=8 if nav else 12)
+    put(lay, label(i18n.subtitle(key), "muted", italic=True), bottom=6)
+    put(lay, linked(i18n.organ(key, "desc"), on_link, seen), bottom=8)
+    section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen)
+    section(lay, t("card_kind"), t("kind_" + structure_kind(key)))
+    heading(lay, t("card_facts"))
+    for f in i18n.organ(key, "facts"):
+        put(lay, linked("•  " + f, on_link, seen), top=2, bottom=2)
+    if back:
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=12, bottom=14, align="left")
+    else:
         spacer(lay, 10)
 
 

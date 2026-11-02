@@ -8,12 +8,16 @@ import time
 from . import i18n, questions, settings
 from .i18n import t
 
-MODES = ("find", "name", "facts", "mix")         # найди орган / угадай название / угадай по факту / вперемешку
+# найди орган / угадай название / угадай по факту / вперемешку / найди кость или мышцу
+MODES = ("find", "name", "facts", "mix", "body")
+CLASSIC_MODES = ("find", "name", "facts", "mix")  # четыре викторины по органам (достижение «Универсал»)
+NOT_ORGANS = ("body",)                           # режимы, где спрашивают не об органах, а о костях и мышцах
 # типы вопросов: три режима и ещё пять, которые есть только во «Вперемешку»:
 # where - угадай орган по расположению, system - к какой системе органов относится орган,
 # disease - какой орган поражает болезнь, latin - что за орган по латинскому названию,
 # truth - верно ли утверждение об органе (факт с карточки этого или другого органа)
-KINDS = ("find", "name", "facts", "where", "system", "disease", "latin", "truth")
+# body - найди кость или мышцу (structures.py): как find, но органы скрыты, а видны скелет и мышцы
+KINDS = ("find", "name", "facts", "where", "system", "disease", "latin", "truth", "body")
 LEVELS = settings.CHOICES["quiz_level"]
 TIMERS = settings.CHOICES["quiz_timer"]
 LENGTHS = settings.CHOICES["quiz_length"]        # сколько вопросов в игре; 0 - про все органы

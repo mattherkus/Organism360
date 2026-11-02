@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from . import settings
+from .quiz import NOT_ORGANS
 
 INTERVALS = (0, 1, 2, 4, 8, 16)      # через сколько дней повторять карточку из коробки 1..5
 MAX_BOX = len(INTERVALS) - 1
@@ -71,7 +72,8 @@ def record(session, question_set="all", today=None, now=None):
         "date": now.isoformat(timespec="minutes"), "mode": session.mode, "level": session.level,
         "timer": session.timer, "set": question_set, "total": session.total, "first_try": session.first_try,
         "errors": session.errors, "timeouts": session.timeouts, "missed": list(session.missed),
-        "seconds": round(session.elapsed), "organs": len(session.pool),
+        "seconds": round(session.elapsed),
+        "organs": None if session.mode in NOT_ORGANS else len(session.pool),    # для «Марафона»: органов на схеме
     })
     data["results"] = data["results"][-KEEP:]
     for key, ok in session.results.items():

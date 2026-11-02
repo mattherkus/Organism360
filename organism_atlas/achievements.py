@@ -10,7 +10,7 @@
 
 import datetime
 
-from .quiz import MODES
+from .quiz import CLASSIC_MODES
 
 LEGACY_ORGANS = 18          # столько органов было на мужской схеме, пока игры не записывали их число
 MEMORY = 10                 # «Долгая память»: столько карточек дошли до коробки 4 (повтор через 8 дней)
@@ -24,7 +24,10 @@ def scholar_goal():
 
 
 def _all_organs(r):
-    """игра про все органы схемы: вопросов не меньше, чем органов было на схеме (organs - с этой версии)"""
+    """игра про все органы схемы: вопросов не меньше, чем органов было на схеме (organs - с этой версии;
+    None - игра не про органы, а про кости и мышцы)"""
+    if "organs" in r and r["organs"] is None:
+        return False
     organs = r.get("organs")
     return r.get("total", 0) >= (organs if isinstance(organs, int) and organs > 0 else LEGACY_ORGANS)
 
@@ -69,10 +72,12 @@ def _flawless(r):
 
 def _learned(data):
     """органы, на которые хоть раз ответили с первой попытки (в любом режиме)"""
+    from .organs import ORGANS
     out = set()
     for key, c in data["cards"].items():
-        if c.get("seen", 0) > c.get("wrong", 0):
-            out.add(key.split(":", 1)[-1])
+        organ = key.split(":", 1)[-1]
+        if c.get("seen", 0) > c.get("wrong", 0) and organ in ORGANS:          # кости и мышцы - не органы
+            out.add(organ)
     return out
 
 
@@ -84,7 +89,7 @@ ACHIEVEMENTS = (
                            for r in d["results"])),
     ("speed", lambda d: any(_flawless(r) and r.get("timer") == 10 and r.get("total", 0) >= 10
                             for r in d["results"])),
-    ("all_modes", lambda d: set(MODES) <= {r.get("mode") for r in d["results"]}),
+    ("all_modes", lambda d: set(CLASSIC_MODES) <= {r.get("mode") for r in d["results"]}),
     ("marathon", lambda d: any(_all_organs(r) for r in d["results"])),
     ("review", lambda d: any(r.get("set") == "due" for r in d["results"])),
     ("fixer", lambda d: any(r.get("set") == "missed" and _flawless(r) for r in d["results"])),

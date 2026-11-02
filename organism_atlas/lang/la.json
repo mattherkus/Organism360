@@ -84,5 +84,85 @@
     "lymph_nodes": {
       "name": "Nodi lymphatici"
     }
+  },
+  "structures": {
+    "skull": {
+      "name": "Cranium"
+    },
+    "mandible": {
+      "name": "Mandibula"
+    },
+    "clavicle": {
+      "name": "Clavicula"
+    },
+    "sternum": {
+      "name": "Sternum"
+    },
+    "ribs": {
+      "name": "Costae"
+    },
+    "spine": {
+      "name": "Columna vertebralis"
+    },
+    "humerus": {
+      "name": "Humerus"
+    },
+    "ulna": {
+      "name": "Ulna"
+    },
+    "radius": {
+      "name": "Radius"
+    },
+    "hand": {
+      "name": "Ossa manus"
+    },
+    "pelvis": {
+      "name": "Ossa coxae"
+    },
+    "sacrum": {
+      "name": "Os sacrum"
+    },
+    "femur": {
+      "name": "Femur"
+    },
+    "sternocleidomastoid": {
+      "name": "Musculus sternocleidomastoideus"
+    },
+    "trapezius": {
+      "name": "Musculus trapezius"
+    },
+    "deltoid": {
+      "name": "Musculus deltoideus"
+    },
+    "pectoralis": {
+      "name": "Musculus pectoralis major"
+    },
+    "biceps": {
+      "name": "Musculus biceps brachii"
+    },
+    "brachioradialis": {
+      "name": "Musculus brachioradialis"
+    },
+    "forearm_flexors": {
+      "name": "Musculi flexores antebrachii"
+    },
+    "rectus_abdominis": {
+      "name": "Musculus rectus abdominis"
+    },
+    "external_oblique": {
+      "name": "Musculus obliquus externus abdominis"
+    },
+    "sartorius": {
+      "name": "Musculus sartorius"
+    },
+    "rectus_femoris": {
+      "name": "Musculus rectus femoris"
+    },
+    "vastus_lateralis": {
+      "name": "Musculus vastus lateralis"
+    },
+    "adductors": {
+      "name": "Musculi adductores"
+    }
   }
 }

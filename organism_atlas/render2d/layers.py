@@ -100,6 +100,10 @@ class Ink:
     def line(self, pts, width, smooth=True):
         self.tube(pts, [width] * len(pts))
 
+    def part(self, name):
+        """дальше рисуется кость или мышца name (structures.py строит по этим отметкам маски для клика);
+        на сам рисунок не влияет"""
+
     def disc(self, x, y, r):
         self.cov.disc(x, y, r)
         for s in range(6):

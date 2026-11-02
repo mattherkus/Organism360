@@ -13,7 +13,7 @@ import threading
 import numpy as np
 from PIL import Image
 
-from . import atlas_cache
+from . import atlas_cache, structures
 from .body.base import BG_HI, BODY_LAYERS, DEFAULT_LAYERS, background, build_layers, compose, glow_weight, over
 from .config import BG
 from .config import TARGET_C
@@ -75,6 +75,7 @@ class Atlas:
         self._premul = {}                # слои сердца и лёгких для анимации: альфа умножена (RGBa), рамка PAD
         self._under = None               # (прямоугольник, подложка анимации): всё, что под лёгкими
         self._punched = {}               # {орган из BEHIND: (видимые закрывающие, слой с вырезом)}
+        self._struct = None              # маски костей и мышц (structures.masks), считаются один раз
 
     # --- слои
     def layer(self, name):
@@ -292,7 +293,7 @@ class Atlas:
 
     def anchor(self, key):
         """точка для подписи органа (x, y) в пикселях схемы: над серединой органа, у его верхнего края"""
-        d = self.org[key]
+        d = self._shape(key)
         ys, xs = np.nonzero(d["hit"] > 0.5)
         if not len(xs):
             return d["origin"][0] + d["hit"].shape[1] / 2, d["origin"][1]
@@ -363,14 +364,15 @@ class Atlas:
         """насколько орган перекрыт видимыми органами, лежащими выше него; pad - запас вокруг рамки органа,
         hidden - скрытые органы (по умолчанию текущие)"""
         hidden = self.hidden if hidden is None else hidden
-        d = self.org[key]
+        d = self._shape(key)
         x0, y0 = d["origin"][0] - pad, d["origin"][1] - pad
         h, w = d["hit"].shape[0] + 2 * pad, d["hit"].shape[1] + 2 * pad
         cov = np.zeros((h, w), np.float32)
         front = self.behind_cover(key, hidden, pad) if key in BEHIND else None
         if front is not None:                             # органы перед ним, хотя и ниже в ORDER
             cov = front
-        for k in ORDER[ORDER.index(key) + 1:]:
+        above = ORDER[ORDER.index(key) + 1:] if key in self.org else ORDER   # кость или мышцу закрывают все органы
+        for k in above:
             if k in hidden or key in BEHIND.get(k, ()):   # k лежит выше, но за этим органом
                 continue
             e = self.org[k]
@@ -384,6 +386,35 @@ class Atlas:
             sl = (slice(ay0 - y0, ay1 - y0), slice(ax0 - x0, ax1 - x0))
             cov[sl] = np.maximum(cov[sl], part)
         return cov
+
+    # --- кости и мышцы (structures.py): ловят клик там, где нет органа, если их слой тела виден
+    def structures(self):
+        """{кость или мышца: {"hit", "origin"}}; считается при первом обращении (быстро: доли секунды)"""
+        if self._struct is None:
+            self._struct = structures.masks(self.Z)
+        return self._struct
+
+    def _shape(self, key):
+        """маска попадания и положение органа или кости/мышцы"""
+        return self.org[key] if key in self.org else self.structures()[key]
+
+    def structure_at(self, x, y):
+        """какая кость или мышца под точкой (x, y), если её слой тела виден; органы лежат выше - их проверяет
+        organ_at, а здесь не проверяются"""
+        layers = {kind for kind, layer in structures.LAYER_OF.items() if layer in self.visible}
+        if not layers:
+            return None
+        found = self.structures()
+        for k in structures.HIT_ORDER:
+            if structures.kind(k) not in layers or k not in found:
+                continue
+            d = found[k]
+            ox, oy = d["origin"]
+            h, w = d["hit"].shape
+            xi, yi = int(x) - ox, int(y) - oy
+            if 0 <= xi < w and 0 <= yi < h and d["hit"][yi, xi] > 0.5:
+                return k
+        return None
 
     def overlay(self, key, kind):
         """RGBA-картинка подсветки и её положение. kind: hover / target / ok / bad"""
@@ -424,17 +455,23 @@ class Atlas:
 
     def _lum(self, key):
         """средняя яркость органа (0..1) по его видимым пикселям"""
-        d = self.org[key]
+        d = self._shape(key)
         m = d["hit"] > 0.5
         if not m.any():
             return 0.0
-        return float((d["rgba"][..., :3][m].astype(np.float32) / 255 @ np.array([0.2126, 0.7152, 0.0722])).mean())
+        if "rgba" in d:
+            rgb = d["rgba"][..., :3]
+        else:                                             # кость или мышца: цвет - из её слоя тела
+            (ox, oy), (h, w) = d["origin"], d["hit"].shape
+            rgb = self.body[structures.LAYER_OF[structures.kind(key)]][oy:oy + h, ox:ox + w, :3]
+            m = m[:rgb.shape[0], :rgb.shape[1]]
+        return float((rgb[m].astype(np.float32) / 255 @ np.array([0.2126, 0.7152, 0.0722])).mean())
 
     def _make(self, key, kind, hidden=None):
         """подсветка органа key вида kind при скрытых органах hidden (по умолчанию текущих). Только читает
         схему, поэтому её можно считать в фоновом потоке (warm)"""
         Z = self.Z
-        d = self.org[key]
+        d = self._shape(key)
         # рамка органа - вплотную к нему: свечение и контур снаружи не поместились бы, а у узкого органа
         # (трахея) их съедало бы и гашение у края. Поэтому подсветка - на рамке с запасом pad со всех сторон
         pad = int(np.ceil(HALO * Z))

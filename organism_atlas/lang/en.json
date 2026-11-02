@@ -245,7 +245,17 @@
     "settings_latin": "Latin names",
     "latin_on": "On",
     "latin_off": "Off",
-    "results_setup": "Change game settings"
+    "results_setup": "Change game settings",
+    "card_kind": "What it is",
+    "kind_bone": "Bone",
+    "kind_muscle": "Muscle",
+    "mode_body": "Bones and muscles",
+    "setup_desc_body": "You get the name of a bone or muscle: find it on the diagram and click it. Organs are hidden during the game.",
+    "topic_body_all": "Bones and muscles ({n})",
+    "topic_body_bone": "Bones ({n})",
+    "topic_body_muscle": "Muscles ({n})",
+    "body_hint_bone": "Click this bone on the diagram.",
+    "body_hint_muscle": "Click this muscle on the diagram."
   },
   "organs": {
     "lungs": {
@@ -1641,6 +1651,272 @@
       "lymphadenitis": ["lymphadenitis"],
       "lymphoma": ["lymphoma"],
       "lymphedema": ["lymphedema"]
+    },
+    "structures": {
+      "skull": ["skull"],
+      "mandible": ["lower jaw", "mandible"],
+      "clavicle": ["collarbone", "clavicle"],
+      "sternum": ["breastbone", "sternum"],
+      "ribs": ["rib cage", "ribs"],
+      "spine": ["spine", "backbone", "vertebral column"],
+      "humerus": ["humerus"],
+      "ulna": ["ulna"],
+      "radius": ["radius"],
+      "hand": ["bones of the hand"],
+      "pelvis": ["hip bone"],
+      "sacrum": ["sacrum"],
+      "femur": ["femur", "thigh bone"],
+      "sternocleidomastoid": ["sternocleidomastoid"],
+      "trapezius": ["trapezius"],
+      "deltoid": ["deltoid"],
+      "pectoralis": ["pectoralis"],
+      "biceps": ["biceps"],
+      "brachioradialis": ["brachioradialis"],
+      "forearm_flexors": ["forearm flexor"],
+      "rectus_abdominis": ["rectus abdominis"],
+      "external_oblique": ["external oblique"],
+      "sartorius": ["sartorius"],
+      "rectus_femoris": ["rectus femoris"],
+      "vastus_lateralis": ["vastus lateralis"],
+      "adductors": ["adductor"]
+    }
+  },
+  "structures": {
+    "skull": {
+      "name": "Skull",
+      "desc": "The bony box of the head: it protects the brain and sense organs and shapes the face.",
+      "location": "The head; the lower jaw is hinged to it, and the spine joins it from below",
+      "facts": {
+        "bones": "Made of 22 bones, not counting the tiny ear bones",
+        "sutures": "The bones of the vault are joined by fixed seams called sutures; a baby has soft spots called fontanelles between them"
+      }
+    },
+    "mandible": {
+      "name": "Lower jaw (mandible)",
+      "desc": "The only movable bone of the skull: it holds the lower teeth and moves when you chew and talk.",
+      "location": "The lower face; joined to the temporal bones by joints just in front of the ears",
+      "facts": {
+        "strongest": "The largest and strongest bone of the face",
+        "bite": "The chewing muscles can press its teeth together with a force of tens of kilograms"
+      }
+    },
+    "clavicle": {
+      "name": "Collarbone (clavicle)",
+      "desc": "An S-shaped strut between the breastbone and the shoulder blade that holds the shoulder away from the chest.",
+      "location": "Above the first rib at the base of the neck; easy to feel under the skin",
+      "facts": {
+        "fracture": "One of the most often broken bones, usually in a fall onto the shoulder or an outstretched hand",
+        "first": "It starts turning into bone earlier than any other bone, long before birth"
+      }
+    },
+    "sternum": {
+      "name": "Breastbone (sternum)",
+      "desc": "A flat bone in the middle of the chest: the ribs attach to it by cartilage, and the collarbones at the top.",
+      "location": "In the middle of the front of the chest, in front of the heart",
+      "facts": {
+        "parts": "Made of three parts: the handle, the body and the sword-shaped tip",
+        "cpr": "In CPR, rescuers press rhythmically on the lower half of the breastbone"
+      }
+    },
+    "ribs": {
+      "name": "Ribs",
+      "desc": "Twelve pairs of curved bones forming the rib cage: they protect the heart and lungs and lift when you breathe in.",
+      "location": "The chest: at the back the ribs join the spine; at the front most of them join the breastbone by cartilage",
+      "facts": {
+        "pairs": "7 pairs of true ribs reach the breastbone, 3 pairs are false and 2 pairs are floating",
+        "breath": "The muscles between the ribs lift them and help the diaphragm when you breathe in"
+      }
+    },
+    "spine": {
+      "name": "Spine (vertebral column)",
+      "desc": "The body's support, made of vertebrae: it holds up the head and trunk and protects the spinal cord in its canal.",
+      "location": "Along the back, from the base of the skull to the sacrum and tailbone",
+      "facts": {
+        "vertebrae": "7 neck, 12 chest and 5 lower-back vertebrae, with the sacrum and tailbone below",
+        "curves": "Four curves turn it into a spring that cushions every step",
+        "discs": "Springy discs lie between the vertebrae"
+      }
+    },
+    "humerus": {
+      "name": "Humerus",
+      "desc": "The long bone of the upper arm, from the shoulder joint to the elbow.",
+      "location": "The upper arm, between the shoulder blade and the forearm bones",
+      "facts": {
+        "funny": "Hitting your 'funny bone' means hitting the ulnar nerve at the lower end of this bone",
+        "groove": "The radial nerve winds around its middle in a spiral groove"
+      }
+    },
+    "ulna": {
+      "name": "Ulna",
+      "desc": "The forearm bone on the little-finger side; together with the humerus it forms the elbow joint.",
+      "location": "The forearm, on the little-finger side",
+      "facts": {
+        "elbow": "Its tip is the point of the elbow you lean on",
+        "length": "In an adult it is about 25–28 cm long"
+      }
+    },
+    "radius": {
+      "name": "Radius",
+      "desc": "The forearm bone on the thumb side: when you turn your palm over, it crosses over the ulna.",
+      "location": "The forearm, on the thumb side",
+      "facts": {
+        "pulse": "The pulse at the wrist is felt over the lower end of the radius",
+        "fracture": "A break at its lower end is one of the most common fractures from falling on a hand"
+      }
+    },
+    "hand": {
+      "name": "Bones of the hand",
+      "desc": "27 small bones of the wrist, palm and fingers make the hand nimble and precise.",
+      "location": "The hand: 8 wrist bones, 5 palm bones and 14 finger bones",
+      "facts": {
+        "quarter": "The two hands hold more than a quarter of all the bones in the body",
+        "thumb": "The thumb can touch each of the other fingers, which lets us pick up small things"
+      }
+    },
+    "pelvis": {
+      "name": "Hip bones",
+      "desc": "Two large bones that form the pelvis together with the sacrum: they carry the weight of the trunk and protect the pelvic organs.",
+      "location": "The bottom of the trunk; the heads of the thigh bones fit into their hip sockets",
+      "facts": {
+        "three": "Each hip bone grows together from three: the ilium, the pubis and the ischium",
+        "female": "A woman's pelvis is wider and shallower, which makes childbirth easier"
+      }
+    },
+    "sacrum": {
+      "name": "Sacrum",
+      "desc": "A triangular bone made of five fused vertebrae that closes the pelvis at the back.",
+      "location": "The bottom of the spine, between the hip bones; the tailbone is below it",
+      "facts": {
+        "fused": "Five vertebrae fuse into one bone by the age of 20–25",
+        "holes": "Nerves to the pelvic organs and legs pass through openings in the sacrum"
+      }
+    },
+    "femur": {
+      "name": "Thigh bone (femur)",
+      "desc": "The longest and strongest bone in the body: it connects the pelvis to the knee.",
+      "location": "The thigh; its head fits into the hip joint",
+      "facts": {
+        "length": "It is about a quarter of a person's height",
+        "strength": "It can bear many times the body's weight",
+        "neck": "A broken hip, a fracture of its neck, is a common injury in older people"
+      }
+    },
+    "sternocleidomastoid": {
+      "name": "Sternocleidomastoid",
+      "desc": "A neck muscle running from the bump behind the ear to the breastbone and collarbone: it tilts the head and turns it to the side.",
+      "location": "The side of the neck; easy to see when you turn your head",
+      "facts": {
+        "turn": "The right muscle turns the head to the left, and the left one to the right",
+        "breath": "During hard breathing it helps lift the chest"
+      }
+    },
+    "trapezius": {
+      "name": "Trapezius",
+      "desc": "A large flat muscle of the back and neck: it raises and pulls together the shoulder blades and supports the head.",
+      "location": "The upper back and back of the neck, out to the shoulders",
+      "facts": {
+        "shape": "Together the two muscles look like a trapezoid, hence the name",
+        "shrug": "It is the muscle that lifts your shoulders when you shrug"
+      }
+    },
+    "deltoid": {
+      "name": "Deltoid",
+      "desc": "The muscle that covers the shoulder joint: it lifts the arm out to the side and up.",
+      "location": "The outer side of the shoulder, giving it its rounded shape",
+      "facts": {
+        "delta": "It looks like an upside-down Greek letter delta (Δ)",
+        "shot": "Vaccines are often injected here"
+      }
+    },
+    "pectoralis": {
+      "name": "Pectoralis major",
+      "desc": "A fan-shaped chest muscle: it pulls the arm toward the body and turns it inward.",
+      "location": "The front of the chest, from the breastbone and collarbone to the humerus",
+      "facts": {
+        "pushups": "The main muscle in push-ups and the bench press",
+        "armpit": "Its edge forms the front wall of the armpit"
+      }
+    },
+    "biceps": {
+      "name": "Biceps brachii",
+      "desc": "The muscle at the front of the upper arm: it bends the elbow and turns the palm up.",
+      "location": "The front of the upper arm",
+      "facts": {
+        "heads": "It starts with two heads, hence the name",
+        "partner": "Its opponent is the triceps at the back of the arm, which straightens the elbow"
+      }
+    },
+    "brachioradialis": {
+      "name": "Brachioradialis",
+      "desc": "A forearm muscle on the thumb side: it bends the elbow, especially with the palm turned sideways.",
+      "location": "The outer forearm, from the humerus to the radius",
+      "facts": {
+        "hammer": "It works hardest when you hold a hammer or a mug",
+        "visible": "It shows clearly under the skin when you bend your arm hard"
+      }
+    },
+    "forearm_flexors": {
+      "name": "Forearm flexors",
+      "desc": "A group of muscles at the front of the forearm: they bend the wrist and fingers and give the grip its strength.",
+      "location": "The front (palm side) of the forearm; their tendons run through the carpal tunnel to the fingers",
+      "facts": {
+        "tendons": "The muscles stay in the forearm and send long tendons to the fingers, which is why fingers are slim",
+        "grip": "Make a fist and you can see the forearm tighten"
+      }
+    },
+    "rectus_abdominis": {
+      "name": "Rectus abdominis",
+      "desc": "A long muscle of the front abdominal wall: it bends the trunk forward and tightens the abs.",
+      "location": "The front of the abdomen from the ribs to the pubic bone, on both sides of the midline",
+      "facts": {
+        "cubes": "Bands of tendon divide it into the 'six-pack'",
+        "cough": "It helps with coughing, straining and forceful breathing out"
+      }
+    },
+    "external_oblique": {
+      "name": "External oblique",
+      "desc": "A broad muscle of the side of the abdomen: it twists and bends the trunk.",
+      "location": "The sides of the abdomen, running down and forward from the lower ribs",
+      "facts": {
+        "pockets": "Its fibers run the same way as your fingers when your hands are in your jacket pockets",
+        "layers": "Two more muscles lie beneath it: the internal oblique and the transverse abdominis"
+      }
+    },
+    "sartorius": {
+      "name": "Sartorius",
+      "desc": "The longest muscle in the body: a strap that crosses the thigh diagonally and bends the hip and knee.",
+      "location": "The front of the thigh, running diagonally from the pelvis to the inner side of the knee",
+      "facts": {
+        "tailor": "It is named after tailors: it helps you sit cross-legged",
+        "length": "It is about half a meter long"
+      }
+    },
+    "rectus_femoris": {
+      "name": "Rectus femoris",
+      "desc": "One of the four heads of the quadriceps: it straightens the knee and bends the hip.",
+      "location": "The middle of the front of the thigh",
+      "facts": {
+        "kick": "It works when you kick a ball or climb stairs",
+        "quads": "The quadriceps is one of the strongest muscles in the body"
+      }
+    },
+    "vastus_lateralis": {
+      "name": "Vastus lateralis",
+      "desc": "The largest head of the quadriceps: it straightens the knee.",
+      "location": "The outer side of the thigh",
+      "facts": {
+        "injection": "Babies get injections and vaccines here",
+        "biopsy": "It is the usual place to take a small muscle sample for testing"
+      }
+    },
+    "adductors": {
+      "name": "Thigh adductors",
+      "desc": "A group of muscles on the inner thigh: they bring the legs together.",
+      "location": "The inner thigh, from the pubic bone to the femur",
+      "facts": {
+        "riding": "They work especially hard in horse riders and footballers",
+        "groin": "Straining them is a common sports injury of the groin"
+      }
     }
   }
 }

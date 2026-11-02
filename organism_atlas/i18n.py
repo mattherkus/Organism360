@@ -137,12 +137,19 @@ def t(key, **kw):
     return key                                    # видно на экране, какого ключа не хватает
 
 
+def _entry(code, key):
+    """карточка органа key на языке code, а если такого органа нет - кости или мышцы (раздел structures)"""
+    data = _load(code)
+    return data["organs"].get(key) or data.get("structures", {}).get(key) or {}
+
+
 def organ(key, field, skip_current=False):
-    """поле карточки органа: name, desc, location, daily; facts - список текстов фактов (см. facts())"""
+    """поле карточки органа (или кости, мышцы): name, desc, location, daily; facts - список текстов фактов
+    (см. facts())"""
     if field == "facts":
         return [text for _, text in facts(key)]
     for code in _chain(skip_current):
-        v = _load(code)["organs"].get(key, {}).get(field)
+        v = _entry(code, key).get(field)
         if v:
             return v
     return [] if field == "daily" else key
@@ -151,7 +158,7 @@ def organ(key, field, skip_current=False):
 def facts(key):
     """факты карточки органа: [(ключ факта, текст)] в порядке русского файла. Факт - по ключу, а не по месту
     в списке: переставить факты можно, а у каждого факта перевод откатывается на другой язык отдельно"""
-    order = list(_load(BASE)["organs"].get(key, {}).get("facts", {}))
+    order = list(_entry(BASE, key).get("facts", {}))
     out = []
     for fid in order:
         text = fact(key, fid)
@@ -163,7 +170,7 @@ def facts(key):
 def fact(key, fid):
     """текст факта fid органа key на текущем языке (с откатом на другие языки); нет - """""
     for code in _chain():
-        v = _load(code)["organs"].get(key, {}).get("facts", {})
+        v = _entry(code, key).get("facts", {})
         if isinstance(v, dict) and v.get(fid):
             return v[fid]
     return ""
@@ -171,7 +178,7 @@ def fact(key, fid):
 
 def fact_in(code, key, fid):
     """текст факта на языке code как есть, без отката ("" - перевода нет)"""
-    v = _load(code)["organs"].get(key, {}).get("facts", {})
+    v = _entry(code, key).get("facts", {})
     return v.get(fid, "") if isinstance(v, dict) else ""
 
 
@@ -186,14 +193,14 @@ def section(code, name):
 
 def organ_in(code, key, field):
     """поле карточки органа на языке code как есть, без отката на другие языки ("" - поля нет)"""
-    return _load(code)["organs"].get(key, {}).get(field) or ""
+    return _entry(code, key).get(field) or ""
 
 
 def all_names(key):
     """название органа на всех языках (чтобы факт не выдавал ответ ни на одном из них)"""
     out = []
     for code in available():
-        n = _load(code)["organs"].get(key, {}).get("name")
+        n = _entry(code, key).get("name")
         if n and n not in out:
             out.append(n)
     return out
@@ -227,7 +234,7 @@ def subtitle(key):
     """подпись под названием: латинское название, а в латинском режиме - обычное"""
     if _current == "la":
         return organ(key, "name", skip_current=True)
-    return _load("la")["organs"].get(key, {}).get("name", "") if "la" in available() else ""
+    return _entry("la", key).get("name", "") if "la" in available() else ""
 
 
 def fact_of_day(key, order, day=None):
@@ -254,7 +261,8 @@ def _links_re():
         for code in available():
             sec = _load(code).get("links", {})
             items += [(p, None) for p in sec.get("skip", [])]
-            items += [(p, key) for part in ("organs", "diseases") for key, ps in sec.get(part, {}).items() for p in ps]
+            items += [(p, key) for part in ("organs", "diseases", "structures")
+                      for key, ps in sec.get(part, {}).items() for p in ps]
         items.sort(key=lambda it: (-len(it[0].split()), -len(it[0])))
         groups, parts = {}, []
         for i, (p, key) in enumerate(items):

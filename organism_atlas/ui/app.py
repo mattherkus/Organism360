@@ -21,7 +21,8 @@ from ..body.base import BODY_LAYERS, DEFAULT_LAYERS
 from ..geometry import H, W
 from ..i18n import t
 from ..organs import ORGANS, by_system, fact_of_day, for_body, other_sex, search
-from ..quiz import MODES
+from ..quiz import MODES, NOT_ORGANS
+from ..structures import KINDS, LAYER_OF, STRUCTURES
 from . import overlay, titlebar
 from .achievements import button_text as achievements_text, show_achievements
 from .diseases import close_diseases, refresh_diseases, show_diseases
@@ -377,7 +378,7 @@ class App(QWidget):
         где их больше всего) и серия дней подряд"""
         try:
             data = progress.load()
-            due = {mode: len(progress.due(mode, self.organs(), data)) for mode in MODES}
+            due = {mode: len(progress.due(mode, self.quiz.mode_keys(mode), data)) for mode in MODES}
             streak = achievements.streak(data)
         except Exception:                               # прогресс - не повод не показать карточку
             traceback.print_exc()
@@ -419,6 +420,7 @@ class App(QWidget):
                 # окно её только покажет и не замрёт. Если вид за это время сменился, окно пересоберёт её само
                 self.apply_look(atlas, look)
                 atlas.anim_frame(time.monotonic())      # и заготовки анимации сердца и лёгких
+                atlas.structures()                      # маски костей и мышц для клика
                 self.built.put((Z, atlas))
             except Exception as ex:                     # покажем ошибку в основном потоке
                 self.built.put((Z, ex))
@@ -457,7 +459,7 @@ class App(QWidget):
     def look(self):
         """вид схемы сейчас: видимые слои тела, скрытые органы, непрозрачность кожи, цвета фона темы.
         Снимок (неизменяемые значения): его можно отдать потоку, который строит схему"""
-        return (tuple(self.layers), frozenset(self.hidden_now()), 1 - self.skin_clear / 100,
+        return (tuple(self.layers_now()), frozenset(self.hidden_now()), 1 - self.skin_clear / 100,
                 theme.C["scene_bg"], theme.C["scene_hi"])
 
     @staticmethod
@@ -531,9 +533,19 @@ class App(QWidget):
 
     # --- слои
     def hidden_now(self):
-        """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым;
-        органов другого пола нет на схеме всегда"""
+        """какие органы скрыты сейчас: в викторине видны все, иначе вопрос мог бы оказаться невидимым
+        (а в викторине по костям и мышцам не видно ни одного); органов другого пола нет на схеме всегда"""
+        if self.mode in NOT_ORGANS:
+            return set(ORGANS)
         return (self.hidden if self.mode == "study" else set()) | other_sex(self.body)
+
+    def layers_now(self):
+        """какие слои тела видны сейчас: выбранные в панели «Слои», а в викторине по костям и мышцам - кожа
+        и скелет и (или) мышцы по теме игры"""
+        if self.mode not in NOT_ORGANS:
+            return self.layers
+        topic = self.quiz.body_topic()
+        return {"skin"} | {LAYER_OF[k] for k in (KINDS if topic is None else (topic,))}
 
     def something_hidden(self):
         return bool(self.hidden or not set(DEFAULT_LAYERS) <= self.layers)
@@ -651,7 +663,7 @@ class App(QWidget):
         """применить слои и скрытые органы к схеме и обновить панель"""
         self.update_layers()
         if self.atlas is not None:
-            self.atlas.set_layers(self.layers)
+            self.atlas.set_layers(self.layers_now())
             hidden = frozenset(self.hidden_now())
             if hidden != self.atlas.hidden:
                 self.atlas.set_hidden(hidden)
@@ -685,17 +697,25 @@ class App(QWidget):
 
     def on_move(self, x, y):
         """мышь над схемой; x, y - в пикселях схемы"""
-        if not self.ready() or self.kind() not in ("study", "find"):   # отвечают кнопками; в «Угадай название» подсвечен вопрос
+        if not self.ready() or self.kind() not in ("study", "find", "body"):   # остальные - кнопками
             return
-        if self.kind() == "find" and self.quiz.session and self.quiz.session.level == "hard":
+        if self.kind() in ("find", "body") and self.quiz.session and self.quiz.session.level == "hard":
             return                                      # на сложном уровне орган под курсором не подсвечивается
-        key = self.atlas.organ_at(x, y)
+        key = self.thing_at(x, y)
         if key != self.cur:
             self.cur = key
             self.set_hover(key)
         # в викторине - без названия
         tip = (*self.view.to_screen(x, y), i18n.name(key)) if key and self.mode == "study" else None
         self.view.set_tip(tip)
+
+    def thing_at(self, x, y):
+        """что под точкой схемы: орган, а в «Изучать» и викторине по костям и мышцам - и кость или мышца
+        (если её слой тела виден и органа над ней нет)"""
+        key = self.atlas.organ_at(x, y)
+        if key is None and self.kind() in ("study", "body"):
+            key = self.atlas.structure_at(x, y)
+        return key
 
     def on_leave(self):
         if self.atlas is None:
@@ -796,8 +816,8 @@ class App(QWidget):
     def on_click(self, x, y):
         if not self.ready():
             return
-        key = self.atlas.organ_at(x, y)
-        if key is None or self.kind() not in ("study", "find"):
+        key = self.thing_at(x, y)
+        if key is None or self.kind() not in ("study", "find", "body"):
             return
         if self.mode != "study":
             self.quiz.answer(key)
@@ -819,8 +839,9 @@ class App(QWidget):
                     (t("nav_forward"), (lambda: self.go_history(1)) if h.can_go(1) else None),
                     crumbs, lambda ref: self.go_history(int(ref[1:]) - h.pos))
 
-        self.set_card(lambda: fill_card(self.card, key, on_3d=lambda: show_3d(self, key),
-                                        back=self.tours.back_button(), on_link=self.open_link, nav=nav()))
+        on_3d = (lambda: show_3d(self, key)) if key in ORGANS else None          # у костей и мышц 3D нет
+        self.set_card(lambda: fill_card(self.card, key, on_3d=on_3d, back=self.tours.back_button(),
+                                        on_link=self.open_link, nav=nav()))
 
     def go_history(self, step):
         """на step карточек назад (step < 0) или вперёд по истории просмотра (Alt+стрелки, кнопки над карточкой)"""
@@ -829,16 +850,16 @@ class App(QWidget):
         key = self.cards.go(step)
         self.tours.pause()
         self.show_info(key, record=False)
-        self.set_spot(key if key in self.organs() else None)
+        self.set_spot(key if key in self.organs() or key in STRUCTURES else None)
 
     def open_link(self, key):
         """щелчок по ссылке в карточке: орган - открыть его карточку и подсветить на схеме,
         болезнь - статью справочника болезней"""
-        if key not in ORGANS:
+        if key not in ORGANS and key not in STRUCTURES:
             show_diseases(self, key)
             return
         self.show_info(key)
-        self.set_spot(key if key in self.organs() else None)
+        self.set_spot(key if key in self.organs() or key in STRUCTURES else None)
 
     def update_buttons(self):
         for mode, b in self.mode_buttons.items():
@@ -913,7 +934,7 @@ class App(QWidget):
 
     def reveal(self, key):
         """лёгкий уровень: после ошибки ненадолго показать на схеме, где верный орган, и подписать его"""
-        if not self.ready() or key not in ORGANS or key in self.hidden_now():
+        if not self.ready() or (key not in ORGANS and key not in STRUCTURES) or key in self.hidden_now():
             return
         self.view.show_layer("reveal", self.photo(key, "ok"))
         self.view.set_pin((*self.atlas.anchor(key), i18n.name(key)))

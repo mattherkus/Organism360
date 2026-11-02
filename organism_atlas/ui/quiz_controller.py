@@ -9,10 +9,11 @@ import traceback
 
 from PySide6.QtCore import QTimer
 
-from .. import achievements, i18n, progress, settings
+from .. import achievements, i18n, progress, settings, structures
 from ..i18n import t
 from ..organs import ORGANS, SYSTEMS, in_system
-from ..quiz import LENGTHS, LEVELS, MODES, TIMERS, QuizSession, format_time, game_length
+from ..quiz import LENGTHS, LEVELS, MODES, NOT_ORGANS, TIMERS, QuizSession, format_time, game_length
+from ..structures import STRUCTURES
 from .achievements import button_text as achievements_text, show_achievements
 from .cards import fill_card, fill_question, fill_setup, mark
 from .results import fill_results
@@ -73,9 +74,21 @@ class QuizController:
             self.app.view.show_layer("target", None)
 
     # --- настройка викторины
+    def mode_keys(self, mode=None, topic=None):
+        """о чём спрашивает режим mode (по умолчанию текущий): органы схемы в системе topic, а в «Кости и мышцы» -
+        кости и (или) мышцы (topic - bone, muscle или None)"""
+        mode = mode or self.mode
+        if mode in NOT_ORGANS:
+            return structures.keys(topic)
+        return in_system(self.app.organs(), topic)
+
+    def body_topic(self):
+        """тема «Кости и мышцы»: bone, muscle или None (обе); у других режимов - None"""
+        return self.cfg["topic"] if self.mode in NOT_ORGANS and self.cfg["topic"] in structures.KINDS else None
+
     def question_keys(self, qset, data=None):
         """органы набора вопросов qset (all, missed, due) в выбранной теме"""
-        keys = in_system(self.app.organs(), self.cfg["topic"])
+        keys = self.mode_keys(topic=self.cfg["topic"])
         if qset == "missed":
             return progress.last_missed(self.mode, keys, data)
         if qset == "due":
@@ -84,7 +97,9 @@ class QuizController:
 
     def topics(self):
         """темы викторины: [(система или None - все органы, сколько органов)]; системы из одного органа
-        не предлагаются - по ним нечего спрашивать"""
+        не предлагаются - по ним нечего спрашивать. В «Кости и мышцы» - кости, мышцы или всё вместе"""
+        if self.mode in NOT_ORGANS:
+            return [(None, len(structures.keys()))] + [(k, len(v)) for k, v in structures.KINDS.items()]
         organs = self.app.organs()
         out = [(None, len(organs))]
         for name in SYSTEMS:
@@ -111,8 +126,7 @@ class QuizController:
              self.cfg["timer"], lambda v: self.set_cfg("timer", v), None, False),
             (t("setup_length"), [(t("length_all", n=n) if not v else str(v), v, not v or v < n) for v in LENGTHS],
              length, lambda v: self.set_cfg("length", v), None, False),
-            (t("setup_topic"), [(t("topic_all", n=k) if name is None else
-                                 t("topic_system", system=t("system_" + name), n=k), name, True) for name, k in topics],
+            (t("setup_topic"), [(self.topic_text(name, k), name, True) for name, k in topics],
              self.cfg["topic"], lambda v: self.set_cfg("topic", v), None, 2),
             (t("setup_set"), [(t("set_" + q, n=counts[q]), q, counts[q] > 0) for q in ("all", "missed", "due")],
              self.cfg["set"], lambda v: self.set_cfg("set", v), t("setup_set_hint"), True),
@@ -124,10 +138,17 @@ class QuizController:
         fill_setup(self.app.card, t("mode_" + self.mode), t("setup_desc_" + self.mode), rows, t("setup_start"),
                    self.start, t("setup_history"), history)
 
+    def topic_text(self, name, n):
+        if self.mode in NOT_ORGANS:
+            return t("topic_body_all", n=n) if name is None else t("topic_body_" + name, n=n)
+        return t("topic_all", n=n) if name is None else t("topic_system", system=t("system_" + name), n=n)
+
     def set_cfg(self, key, value):
         self.cfg[key] = value
         if key in ("level", "timer", "length"):
             settings.save(**{"quiz_" + key: value})
+        if key == "topic" and self.mode in NOT_ORGANS:
+            self.app.apply_view()                       # кости, мышцы или всё: на схеме - нужные слои
         self.app.set_card(self.render_setup)
 
     def review(self, mode):
@@ -145,7 +166,8 @@ class QuizController:
             qset, keys = "all", self.question_keys("all")
         self.stop()
         self.qset = qset
-        self.session = QuizSession(keys, pool=self.app.organs(), mode=self.mode, level=self.cfg["level"],
+        pool = structures.keys() if self.mode in NOT_ORGANS else self.app.organs()
+        self.session = QuizSession(keys, pool=pool, mode=self.mode, level=self.cfg["level"],
                                    timer=self.cfg["timer"], count=game_length(self.cfg["length"], len(keys)))
         self.ask()
 
@@ -185,10 +207,11 @@ class QuizController:
         s = self.session
         card = self.app.card
         fb = self.feedback and (self.feedback_text(*self.feedback), self.feedback[2])
-        if s.kind == "find":
+        if s.kind in ("find", "body"):
+            hint = t("find_hint") if s.kind == "find" else t("body_hint_" + structures.kind(s.current))
             self.progress, self.choices = fill_question(
                 card, self.progress_state(), t("find_title", name=i18n.name(s.current)),
-                t("find_hint"), fb, give_up=(t("give_up"), self.give_up))
+                hint, fb, give_up=(t("give_up"), self.give_up))
             self.app.show_target()                      # во «Вперемешку» прячет подсветку прошлого вопроса
             return
         opts = s.options()
@@ -260,7 +283,8 @@ class QuizController:
     def hint_wrong(self):
         """после ошибки на лёгком уровне - подсказка, если ответ на вопрос - орган"""
         s = self.session
-        if s is not None and not s.finished and s.level == "easy" and s.correct() in ORGANS:
+        if s is not None and not s.finished and s.level == "easy" and (s.correct() in ORGANS
+                                                                        or s.correct() in STRUCTURES):
             self.app.reveal(s.correct())
 
     def answer(self, key):
@@ -334,7 +358,7 @@ class QuizController:
             if keysym in ("Return", "KP_Enter"):
                 self.start()
             return
-        if self.kind() != "find" and char.isdigit():
+        if self.kind() not in ("find", "body") and char.isdigit():
             keys = list(self.choices)
             i = int(char) - 1
             if 0 <= i < len(keys):
@@ -349,7 +373,7 @@ class QuizController:
             if app.mode == mode:
                 self.start(qset)
 
-        due = len(progress.due(mode, app.organs()))
+        due = len(progress.due(mode, self.mode_keys(mode)))
         new, streak = self.new_achievements, self.streak
         # итоги - в карточке справа, на месте карточки последнего органа
         app.set_card(lambda: fill_results(app.card, s, on_again=again, on_retry=lambda: again("missed"),

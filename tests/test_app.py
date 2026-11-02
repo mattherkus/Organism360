@@ -491,6 +491,49 @@ class AppTests(unittest.TestCase):
         pump()
         return {k for k in self.app.organs() if not self.app.toggles[k].isHidden()}
 
+    def test_bones_and_muscles_in_study(self):
+        """где органа нет, а кость видна - наведение и клик ловят кость; её карточка - в истории карточек"""
+        from organism_atlas.geometry import CX
+        a = self.app
+        x, y = int((CX + 82) * Z), int(245 * Z)                       # плечевая кость: органов и нервов там нет
+        a.on_move(x, y)
+        self.assertEqual(a.cur, "humerus")
+        a.on_click(x, y)
+        self.assertEqual(a.cards.current, "humerus")
+        self.assertIn(i18n.name("humerus"), self.label_texts())
+        a.toggle_layer("skeleton")                                     # кости скрыты, мышцы - тоже
+        a.on_move(x, y)
+        self.assertIsNone(a.cur)
+        a.toggle_layer("muscles")
+        a.on_click(x, y)
+        self.assertEqual(a.cards.current, "biceps")
+        a.open_link("spine")                                          # ссылка из текста на кость
+        self.assertEqual((a.cards.current, a.spot), ("spine", "spine"))
+
+    def test_body_quiz(self):
+        """«Кости и мышцы»: органы скрыты, видны слои темы; верный щелчок по кости засчитывается"""
+        import numpy as np
+        from organism_atlas import structures
+        a = self.app
+        a.set_mode("body")
+        self.assertEqual(a.hidden_now(), set(ORGANS))
+        self.assertEqual(a.layers_now(), {"skin", "skeleton", "muscles"})
+        a.quiz.set_cfg("topic", "bone")
+        self.assertEqual(a.layers_now(), {"skin", "skeleton"})
+        self.assertEqual(set(a.atlas.visible), {"skin", "skeleton"})
+        a.quiz.start()
+        s = a.quiz.session
+        self.assertEqual(set(s.q) - set(structures.BONES), set())
+        key = s.current
+        d = a.atlas.structures()[key]
+        ys, xs = np.nonzero(d["hit"] > 0.9)
+        i = len(xs) // 2
+        a.on_click(d["origin"][0] + xs[i], d["origin"][1] + ys[i])
+        self.assertEqual(s.first_try, 1)
+        self.assertEqual(s.results, {key: True})
+        a.set_mode("study")                                           # в «Изучать» - снова выбранные слои
+        self.assertEqual(set(a.atlas.visible), set(a.layers))
+
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH
