@@ -96,11 +96,12 @@ def fill_structure(card, key, back=None, on_link=None, nav=None):
         spacer(lay, 10)
 
 
-def fill_start(card, title, hint, tours_title, tours, review=None, organ=None):
+def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, knowledge=None):
     """карточка режима «Изучать», пока орган не выбран: подсказка, кнопки экскурсий, повторение и орган дня.
     tours - [(текст кнопки, функция)];
     review - (заголовок, [(текст, роль цвета)], кнопка (текст, функция) или None): сколько пора повторить, серия дней;
-    organ - (заголовок, ключ органа, факт, кнопка (текст, функция)): орган дня"""
+    organ - (заголовок, ключ органа, факт, кнопка (текст, функция)): орган дня;
+    knowledge - (кнопка (текст, функция), уровни для легенды или None): карта знаний на схеме"""
     lay = card.lay
     clear(lay)
     put(lay, label(title, size=15, bold=True), top=14, bottom=4)
@@ -116,6 +117,13 @@ def fill_start(card, title, hint, tours_title, tours, review=None, organ=None):
             put(lay, label(text, fg, 10, bold=fg != "muted"), top=2)
         if button:
             put(lay, flat_button(button[0], button[1], bg="accent", pady=4), top=6, align="left")
+    if knowledge:
+        (text, command), levels = knowledge
+        put(lay, flat_button(text, command, pady=4, size=9), top=8, align="left")
+        if levels:                                                      # легенда: цвет + значок + подпись
+            from .stats import legend_row
+            for level in levels:
+                put(lay, legend_row(level), top=4)
     if organ:
         head, key, fact, button = organ
         c = ORGANS[key]["color"]

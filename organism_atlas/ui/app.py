@@ -15,7 +15,9 @@ from PySide6.QtCore import QPoint, QSize, Qt, QTimer
 from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QPixmap, QRegion, QShortcut
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QLineEdit, QMenu, QScrollArea, QWidget
 
-from .. import achievements, i18n, progress, settings, theme, tours
+from .. import achievements, i18n, progress, settings, stats, theme, tours
+from ..colors import hex2rgb
+from ..config import STATUS
 from ..atlas import Atlas
 from ..body.base import BODY_LAYERS, DEFAULT_LAYERS
 from ..geometry import H, W
@@ -36,6 +38,7 @@ from .cards import fill_card, fill_start
 from .history import CardHistory
 from .layers_panel import ORGANS_ALL, SEARCH, SKIN, by_color, fill_layers, filter_organs, show_all_button
 from .quiz_controller import QuizController, timer
+from .stats import show_stats
 from .tour_controller import TourController
 from .widgets import alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card, set_button_bg, vbox
 
@@ -79,6 +82,8 @@ class App(QWidget):
         self.hidden = set()                    # органы, скрытые в режиме «Изучать» (в викторине видны все)
         self.query = ""                        # строка поиска органа в панели слоёв
         self.spot = None                       # орган, подсвеченный в «Изучать»: найденный поиском или шаг экскурсии
+        self.knowledge = False                 # карта знаний на схеме (органы в цвете уровня знания)
+        self.levels = {}                       # {орган: уровень знания} для карты знаний и подсказки у курсора
         self.toggles = {}
         # отложенные действия
         self.flash_timer = timer(self, self.unflash, 500)
@@ -124,10 +129,11 @@ class App(QWidget):
         self.diseases_button = flat_button("⚕", lambda: show_diseases(self), size=12, padx=10, pady=4)
         self.ach_button = flat_button("", lambda: show_achievements(self), padx=10)
         self.settings_button = flat_button("⚙", lambda: show_settings(self), size=12, padx=10, pady=4)
-        for b in (self.diseases_button, self.ach_button, self.settings_button):
+        self.stats_button = flat_button("▤", lambda: show_stats(self), size=12, padx=10, pady=4)
+        for b in (self.diseases_button, self.stats_button, self.ach_button, self.settings_button):
             top.addSpacing(px(6))
             top.addWidget(b, 0, Qt.AlignTop)
-        for b in (self.diseases_button, self.settings_button):         # значок крупнее - высота как у соседних
+        for b in (self.diseases_button, self.stats_button, self.settings_button):   # значок крупнее - высота как у соседних
             b.setFixedHeight(self.ach_button.sizeHint().height())
         self.top_bar = top
         self.header = QWidget()                            # заголовок с кнопками и статус - уезжают вместе
@@ -340,6 +346,7 @@ class App(QWidget):
         self.title.setText(t("app_title"))
         self.settings_button.setToolTip(t("settings_hint"))
         self.diseases_button.setToolTip(t("diseases_hint"))
+        self.stats_button.setToolTip(t("stats_hint"))
         self.ach_button.setText(achievements_text())
         self.ach_button.setToolTip(t("ach_hint"))
         self.lang_button.setToolTip(t("lang_hint"))
@@ -371,7 +378,7 @@ class App(QWidget):
     def empty_card(self):
         fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
                    [("➜  " + tours.title(name), lambda n=name: self.tours.start(n)) for name in tours.available(self.body)],
-                   review=self.review_block(), organ=self.organ_block())
+                   review=self.review_block(), organ=self.organ_block(), knowledge=self.knowledge_block())
 
     def review_block(self):
         """раздел «Повторение» на стартовой карточке: сколько органов пора повторить (в том виде викторины,
@@ -389,6 +396,32 @@ class App(QWidget):
             lines.append((t("home_streak", n=streak), "day_title"))
         button = (t("home_due_button") + "  ·  " + t("mode_" + mode), lambda: self.quiz.review(mode)) if due[mode] else None
         return t("home_review"), lines, button
+
+    def knowledge_block(self):
+        """кнопка карты знаний на стартовой карточке и легенда, пока карта видна"""
+        button = (t("knowledge_hide") if self.knowledge else t("knowledge_show"),
+                  lambda: self.set_knowledge(not self.knowledge))
+        return button, (stats.LEVELS[::-1] if self.knowledge else None)
+
+    def set_knowledge(self, on):
+        """показать или спрятать карту знаний: органы в цвете уровня знания (выучено, учу, слабо)"""
+        self.knowledge = on
+        self.refresh_knowledge()
+        if self.card_fn == self.empty_card:
+            self.card_fn()
+
+    def refresh_knowledge(self):
+        """слой карты знаний заново (новые результаты, скрытые органы, другой масштаб); в викторине его нет"""
+        if not (self.knowledge and self.mode == "study" and self.ready()):
+            self.view.show_layer("knowledge", None)
+            return
+        try:
+            self.levels = stats.mastery(progress.load())
+        except Exception:
+            traceback.print_exc()
+            self.levels = {}
+        colors = {k: hex2rgb(STATUS[v]) for k, v in self.levels.items()}
+        self.view.show_layer("knowledge", (qimage(self.atlas.tint(colors)), (0, 0)))
 
     def organ_block(self):
         """«Орган дня» на стартовой карточке: каждый день другой, с фактом дня и кнопкой его карточки"""
@@ -454,6 +487,7 @@ class App(QWidget):
         self.view.message = None
         self.view.update()
         self.show_target()                              # если режим включили, пока схема строилась
+        self.refresh_knowledge()
         self.atlas.warm()                               # подсветка под курсором - заранее, в фоне
 
     def look(self):
@@ -522,7 +556,7 @@ class App(QWidget):
         if self.atlas is None:                          # первая схема ещё рисуется
             return
         self.on_leave()
-        for name in ("target", "flash", "anim"):        # в прежнем масштабе
+        for name in ("target", "flash", "anim", "knowledge"):        # в прежнем масштабе
             self.view.show_layer(name, None)
         if self.ready():                                # вернули прежний размер, пока рисовалась другая
             self.view.message = None
@@ -672,6 +706,7 @@ class App(QWidget):
                 self.atlas.warm()
             self.show_base()
             self.show_target()                          # подсветка органа поиска или экскурсии - заново
+            self.refresh_knowledge()
 
     # --- наведение и клики
     def drop_photos(self):
@@ -706,8 +741,11 @@ class App(QWidget):
         if key != self.cur:
             self.cur = key
             self.set_hover(key)
-        # в викторине - без названия
-        tip = (*self.view.to_screen(x, y), i18n.name(key)) if key and self.mode == "study" else None
+        # в викторине - без названия; при карте знаний - и уровень знания
+        name = i18n.name(key) if key else ""
+        if key and self.knowledge and key in self.levels:
+            name += "  ·  " + t("level_name_" + self.levels[key])
+        tip = (*self.view.to_screen(x, y), name) if key and self.mode == "study" else None
         self.view.set_tip(tip)
 
     def thing_at(self, x, y):
@@ -973,6 +1011,9 @@ class App(QWidget):
             self.show_help()
             return
         if self.mode == "study":
+            if char in ("k", "K", "л", "Л"):             # K (и та же клавиша в русской раскладке)
+                self.set_knowledge(not self.knowledge)
+                return
             self.tours.on_key(keysym)
             return
         self.quiz.on_key(keysym, char)

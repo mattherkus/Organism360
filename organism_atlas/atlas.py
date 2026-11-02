@@ -387,6 +387,34 @@ class Atlas:
             cov[sl] = np.maximum(cov[sl], part)
         return cov
 
+    # --- карта знаний: органы тонируются цветом уровня знания (stats.mastery)
+    def tint(self, colors, strength=0.5):
+        """слой поверх схемы (Pillow RGBA во всю схему): видимые органы из colors ({орган: (r, g, b) 0..1})
+        закрашены своим цветом с непрозрачностью strength; органы без цвета закрывают тонировку тех, что под ними"""
+        w, h = self.size
+        rgb = np.zeros((h, w, 3), np.float32)              # с умноженной альфой
+        a = np.zeros((h, w), np.float32)
+        for k in ORDER:
+            if k in self.hidden:
+                continue
+            im, (ox, oy) = self.shown(k)
+            cov = np.asarray(im)[..., 3].astype(np.float32) / 255
+            x0, y0 = max(0, ox), max(0, oy)
+            x1, y1 = min(w, ox + cov.shape[1]), min(h, oy + cov.shape[0])
+            if x1 <= x0 or y1 <= y0:
+                continue
+            cov = cov[y0 - oy:y1 - oy, x0 - ox:x1 - ox]
+            sl = (slice(y0, y1), slice(x0, x1))
+            if k in colors:
+                ca = cov * strength
+                rgb[sl] = rgb[sl] * (1 - ca[..., None]) + np.asarray(colors[k], np.float32) * ca[..., None]
+                a[sl] = a[sl] * (1 - ca) + ca
+            else:
+                rgb[sl] *= (1 - cov)[..., None]
+                a[sl] *= 1 - cov
+        out = rgb / np.maximum(a, 1e-5)[..., None]
+        return Image.fromarray(to_u8(np.dstack([out, a])), "RGBA")
+
     # --- кости и мышцы (structures.py): ловят клик там, где нет органа, если их слой тела виден
     def structures(self):
         """{кость или мышца: {"hit", "origin"}}; считается при первом обращении (быстро: доли секунды)"""

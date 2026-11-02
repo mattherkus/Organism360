@@ -203,10 +203,16 @@ class QuizController:
         self.cfg["set"] = "due"
         self.start("due")
 
-    def start(self, qset=None):
-        """начать игру по текущим настройкам; qset - другой набор вопросов (кнопка «Повторить ошибки»)"""
+    def train(self, keys, mode="mix"):
+        """«Потренировать слабые места» (статистика): игра mode по органам keys"""
+        self.app.set_mode(mode)
+        self.start("weak", keys=keys)
+
+    def start(self, qset=None, keys=None):
+        """начать игру по текущим настройкам; qset - другой набор вопросов (кнопка «Повторить ошибки»),
+        keys - свой список органов (тогда qset - только подпись набора в истории)"""
         qset = qset or self.cfg["set"]
-        keys = self.question_keys(qset)
+        keys = keys or self.question_keys(qset)
         if not keys:
             qset, keys = "all", self.question_keys("all")
         self.stop()

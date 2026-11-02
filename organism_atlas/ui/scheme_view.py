@@ -49,7 +49,8 @@ class SchemeView(QWidget):
         super().__init__()
         self.app = app
         self.base = None                # QImage схемы (пока чёткая не готова - прежняя, растягивается)
-        self.layers = {"anim": None, "target": None, "hover": None, "flash": None, "reveal": None}
+        # слои поверх схемы снизу вверх; knowledge - карта знаний (органы в цвете уровня знания)
+        self.layers = {"anim": None, "knowledge": None, "target": None, "hover": None, "flash": None, "reveal": None}
         self.tip = None                 # (x, y, текст) в логических пикселях
         self.pin = None                 # (x, y, текст) - подпись органа в пикселях схемы (верный ответ)
         self.message = None             # (текст, внизу ли) - «Рисуется схема...» или «перерисовывается»
@@ -212,7 +213,7 @@ class SchemeView(QWidget):
             size = QSizeF(self.base.width() / d, self.base.height() / d) if ready else self.scheme
             p.drawImage(QRectF(QPointF(0, 0), size), self.base)
             if ready:
-                for name in ("anim", "target", "hover", "reveal", "flash"):
+                for name in ("anim", "knowledge", "target", "hover", "reveal", "flash"):
                     item = self.layers[name]
                     if item is not None:
                         im, x, y = item

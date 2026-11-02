@@ -626,6 +626,53 @@ class AppTests(unittest.TestCase):
         a.set_mode("study")
         self.assertIsNone(a.quiz.frames)                                # поток кадров остановлен
 
+    def test_stats_panel_and_knowledge_map(self):
+        """статистика: пусто до первой игры; после игр - графики и слабые места; карта знаний на схеме и K"""
+        import random
+        from organism_atlas import progress
+        from organism_atlas.quiz import QuizSession
+        from organism_atlas.ui import stats as panel_mod
+        from organism_atlas.ui.overlay import top
+        a = self.app
+        p = panel_mod.show_stats(a)
+        self.assertIn(i18n.t("stats_empty"), self.panel_texts(p))
+        p.close_panel()
+        keys = a.organs()
+        for seed in range(3):
+            s = QuizSession(keys, rng=random.Random(seed), pool=keys, mode="find", count=8)
+            while not s.finished:
+                if s.current == "liver" and not s.slipped:
+                    s.answer("heart")
+                s.answer(s.correct())
+            progress.record(s)
+        p = panel_mod.show_stats(a)
+        self.assertTrue(p.findChildren(panel_mod.BarList) and p.findChildren(panel_mod.TrendChart))
+        a.on_key("", "k")                                               # поверх открыта панель - клавиша не работает
+        self.assertFalse(a.knowledge)
+        p.toggle_map()                                                  # «Показать карту знаний»
+        self.assertIsNone(top(a))
+        self.assertTrue(a.knowledge)
+        self.assertIsNotNone(a.view.layers["knowledge"])
+        self.assertTrue(a.levels)
+        a.set_mode("find")                                              # в викторине карты нет
+        self.assertIsNone(a.view.layers["knowledge"])
+        a.set_mode("study")
+        self.assertIsNotNone(a.view.layers["knowledge"])
+        a.on_key("", "k")
+        self.assertFalse(a.knowledge)
+        self.assertIsNone(a.view.layers["knowledge"])
+
+    def test_train_weak_spots(self):
+        a = self.app
+        a.quiz.train(["liver", "heart"])
+        self.assertEqual(a.mode, "mix")
+        self.assertEqual(set(a.quiz.session.q), {"liver", "heart"})
+        self.assertEqual(a.quiz.qset, "weak")
+
+    def panel_texts(self, panel):
+        from PySide6.QtWidgets import QLabel
+        return [w.text() for w in panel.findChildren(QLabel)]
+
     def test_search(self):
         """поиск оставляет в панели подходящие органы, единственный найденный подсвечен, Enter открывает карточку"""
         from organism_atlas.ui.layers_panel import NOTHING, SEARCH
