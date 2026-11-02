@@ -1,8 +1,6 @@
 """Схема тела на экране (SchemeView): слои-картинки поверх готовой схемы (подсветка, анимация), приближение
 колесом, кнопками и клавишами, перетаскивание мышью. Рисуется под всем окном; Stage - её место в раскладке
-окна, а slide() плавно уводит интерфейс к краям, когда схема сильно приближена.
-
-В теме «Бумага» схема - тёмная таблица в двойной рамке, под ней подпись (Stage оставляет под подпись место)."""
+окна, а slide() плавно уводит интерфейс к краям, когда схема сильно приближена."""
 
 import math
 
@@ -11,7 +9,6 @@ from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, Q
 from PySide6.QtGui import QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
-from ..theme import C
 from .scaling import px
 from .widgets import color, flat_button, font
 
@@ -21,7 +18,6 @@ HIDE_FROM = ZOOM_STEPS[2]                              # с такого при�
 ZOOM_MS = 220                                          # длительность анимации приближения
 SLIDE_MS = 260                                         # длительность выезда интерфейса
 DRAG_PX = 5                                            # сдвиг мыши, после которого нажатие - перетаскивание
-CAPTION_H = 24                                         # место под подписью таблицы («Бумага»)
 
 
 def slide(w, start, end, done=None):
@@ -62,7 +58,6 @@ class SchemeView(QWidget):
         # подписи органов-ошибок в итогах викторины: [(x, y, текст)], точка органа в пикселях схемы; подписи
         # стоят столбиками у левого и правого края схемы и соединены с органом выноской
         self.labels = []
-        self.caption = None             # подпись под таблицей («Бумага»): (слева, справа)
         self.k, self.pan = 1.0, QPointF(0, 0)
         self.scheme = QSizeF(1, 1)      # размер схемы при k = 1 в логических пикселях
         self.start = self.goal = None   # (k, угол схемы в координатах окна) в начале и в конце анимации
@@ -118,11 +113,6 @@ class SchemeView(QWidget):
     def set_labels(self, labels):
         if labels != self.labels:
             self.labels = labels
-            self.update()
-
-    def set_caption(self, caption):
-        if caption != self.caption:
-            self.caption = caption
             self.update()
 
     def look_at(self, x, y):
@@ -250,8 +240,6 @@ class SchemeView(QWidget):
                         im, x, y = item
                         p.drawImage(QRectF(x / d, y / d, im.width() / d, im.height() / d), im)
             p.restore()
-            if C["plate"]:
-                self.paint_plate(p)
         if self.labels and self.app.ready():
             self.paint_labels(p)
         if self.pin and self.app.ready():
@@ -271,47 +259,24 @@ class SchemeView(QWidget):
             r = r.adjusted(0, 0, 0, -px(6)) if bottom else r
             p.drawText(r, (Qt.AlignBottom | Qt.AlignHCenter) if bottom else Qt.AlignCenter, text)
 
-    def paint_plate(self, p):
-        """двойная рамка вокруг схемы и подпись под ней, как у таблицы в атласе"""
-        r = QRectF(self.pan, self.scheme * self.k)
-        p.setRenderHint(QPainter.Antialiasing, False)
-        p.setBrush(Qt.NoBrush)
-        p.setPen(QPen(color("plate"), 1))
-        p.drawRect(r.adjusted(-1, -1, 0, 0))
-        gap = px(4)
-        p.drawRect(r.adjusted(-gap - 1, -gap - 1, gap, gap))
-        if not self.caption or self.k != 1:
-            return
-        left, right = self.caption
-        f = font(9, italic=True, serif=True)
-        fm = QFontMetrics(f, self)
-        p.setFont(f)
-        p.setPen(color("muted"))
-        line = QRectF(r.left() - gap, r.bottom() + gap + px(4), r.width() + 2 * gap, fm.height())
-        if fm.horizontalAdvance(left + right) + px(16) <= line.width():
-            p.drawText(line, Qt.AlignLeft | Qt.AlignVCenter, left)
-            p.drawText(line, Qt.AlignRight | Qt.AlignVCenter, right)
-        else:
-            p.drawText(line, Qt.AlignLeft | Qt.AlignVCenter, fm.elidedText(left, Qt.ElideRight, int(line.width())))
-
     def label_rects(self):
         """где подписи ошибок: [(точка органа на экране, прямоугольник подписи, текст)]. Орган левее оси тела -
         подпись у левого края схемы, правее - у правого; в столбике подписи идут сверху вниз и не налезают"""
-        plate = QRectF(self.pan, self.scheme * self.k)
-        axis = plate.center().x()
+        area = QRectF(self.pan, self.scheme * self.k)
+        axis = area.center().x()
         gap = px(6)
         out = []
         for left in (True, False):
             items = sorted(((QPointF(*self.to_screen(x, y)), text) for x, y, text in self.labels
                             if (self.to_screen(x, y)[0] < axis) == left), key=lambda it: it[0].y())
-            bottom = plate.top() + gap
+            bottom = area.top() + gap
             for at, text in items:
                 r = self.bubble_rect(0, 0, text, 10)
                 r.moveTop(max(at.y() - r.height() / 2, bottom))
                 if left:
-                    r.moveLeft(plate.left() + gap)
+                    r.moveLeft(area.left() + gap)
                 else:
-                    r.moveRight(plate.right() - gap)
+                    r.moveRight(area.right() - gap)
                 bottom = r.bottom() + gap
                 out.append((at, r, text))
         return out
@@ -440,11 +405,6 @@ class Stage(QWidget):
                 slide(b, b.pos(), end)
             else:
                 b.move(end)
-
-    @staticmethod
-    def reserve():
-        """сколько места снизу оставить под подпись таблицы (только в теме с рамкой вокруг схемы)"""
-        return px(CAPTION_H) if C["plate"] else 0
 
     def sizeHint(self):                                  # раскладка окна при запуске - под размер схемы
         return self.hint

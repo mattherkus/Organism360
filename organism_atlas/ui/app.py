@@ -244,12 +244,12 @@ class App(QWidget):
         dpr = self.devicePixelRatioF()
         Z = pick_zoom(screen.width(), screen.height(), dpr)
         cw, ch = math.ceil(W * Z / dpr), math.ceil(H * Z / dpr)
-        self.stage.hint = QSize(cw, ch + self.stage.reserve())             # и место под подпись таблицы
+        self.stage.hint = QSize(cw, ch)
         self.stage.updateGeometry()
         self.layout().activate()
         hint = self.sizeHint()
         w = min(hint.width(), int(0.96 * screen.width()))
-        h = min(max(hint.height(), ch + px(150) + self.stage.reserve()), int(0.92 * screen.height()))
+        h = min(max(hint.height(), ch + px(150)), int(0.92 * screen.height()))
         self.resize(w, h)
         self.setMinimumSize(min(self.top_bar.minimumSize().width() + px(48), screen.width()), px(520))
 
@@ -285,7 +285,6 @@ class App(QWidget):
             self.paint_base()
         rerender_all()
         self.retranslate()
-        self.on_resize()                                # под подпись таблицы место есть не во всех темах
 
     def set_quality(self, name):
         self.quality = name
@@ -344,7 +343,6 @@ class App(QWidget):
         self.tours.reset()                              # маршрут экскурсии зависит от схемы тела
         self.set_spot(None)
         self.render_layers()
-        self.update_caption()
         self.apply_view()
         if self.mode != "study":
             self.set_mode(self.mode)
@@ -422,7 +420,6 @@ class App(QWidget):
         if self.view.message:
             self.view.message = (t("rescaling") if self.view.message[1] else t("loading"), self.view.message[1])
         self.view.set_tip(None)
-        self.update_caption()
         self.render_layers()
         self.status.setText(self.status_fn())
         self.card_fn()
@@ -433,10 +430,6 @@ class App(QWidget):
     def set_status(self, fn):
         self.status_fn = fn
         self.status.setText(fn())
-
-    def update_caption(self):
-        """подпись под таблицей-схемой: что на ней и какая схема тела"""
-        self.view.set_caption((t("plate_caption"), t("plate_view_" + self.body)))
 
     def set_card(self, fn, fade=False):
         """показать в карточке справа то, что рисует fn; fade - новая карточка проявляется плавно
@@ -642,7 +635,7 @@ class App(QWidget):
         if not self.isVisible():                         # раскладка до показа окна - размер ещё не настоящий
             return
         d = self.stage.devicePixelRatioF()
-        Z = fit_zoom(self.stage.width() * d, (self.stage.height() - self.stage.reserve()) * d)
+        Z = fit_zoom(self.stage.width() * d, self.stage.height() * d)
         if self.atlas is None and not self.building:    # окно показалось: рисуем первую схему сразу
             self.set_zoom(Z)
             self.start_build()

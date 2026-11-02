@@ -4,11 +4,8 @@
 Виджеты получают цвета не числами, а ролями (bg, card, text, ...): кнопки и карточки берут цвет роли
 в момент рисования, а надписи запоминают свою роль (ui/widgets.py: set_fg), поэтому ui.widgets.retheme()
 перекрашивает всё окно на лету.
-Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы. В «Бумаге» схема остаётся
-тёмной: она лежит на светлой странице как вклеенная таблица атласа, в рамке цвета plate и с подписью под ней.
-«Чёрная» - та же страница атласа, вывернутая в тёмное: чёрная страница, светлая рамка вокруг схемы, сама схема
-на чуть более светлом сине-чёрном поле (у остальных тем plate - пустая строка: фон схемы совпадает с фоном окна,
-рамки нет).
+Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы. В «Бумаге» и «Чёрной» схема
+лежит прямо на странице: её фон - фон окна.
 """
 
 from . import config
@@ -25,9 +22,8 @@ THEMES = {
         "ok": "#1b6b3f", "bad": "#a8261d",
         "right_bg": "#1b6b3f", "wrong_bg": "#a8261d", "on_mark": "#ffffff",
         "tip_bg": "#1d2a36", "tip_fg": "#f5f3ee",
-        "scene_bg": config.BG, "scene_hi": "#1a3547",          # схема - тёмная таблица на светлой странице
+        "scene_bg": "#f5f3ee", "scene_hi": "#fdfcf8",          # схема - прямо на странице
         "view_bg": config.BG, "view_hi": "#1b3a50",
-        "plate": "#1d2a36",                                    # двойная рамка вокруг схемы
     },
     "black": {
         "bg": "#0b0b0c", "card": "#141416", "border": "#2e2d2b",
@@ -38,9 +34,8 @@ THEMES = {
         "ok": "#5fd08a", "bad": "#ff7a6e",
         "right_bg": "#2e7d4f", "wrong_bg": "#8a2b26", "on_mark": "#ffffff",
         "tip_bg": "#000000", "tip_fg": "#ecebe6",
-        "scene_bg": "#10161b", "scene_hi": "#1b3141",          # поле схемы - чуть светлее чёрной страницы
+        "scene_bg": "#0b0b0c", "scene_hi": "#16232c",          # схема - прямо на чёрной странице
         "view_bg": "#10161b", "view_hi": "#1b3a50",
-        "plate": "#b9b6ad",                                    # светлая двойная рамка
     },
     "dark": {
         "bg": config.BG, "card": config.CARD, "border": config.BORDER,
@@ -53,7 +48,6 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": config.TEXT,            # подсказка над схемой
         "scene_bg": config.BG, "scene_hi": "#1a3547",          # фон схемы тела и пятно за телом
         "view_bg": config.BG, "view_hi": "#1b3a50",            # фон кадра 3D и пятно в центре
-        "plate": "",                                           # рамки вокруг схемы нет
     },
     "light": {
         "bg": "#eef2f5", "card": "#ffffff", "border": "#b9c7d2",
@@ -66,7 +60,6 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": "#ffffff",
         "scene_bg": "#eef2f5", "scene_hi": "#ffffff",
         "view_bg": "#eef2f5", "view_hi": "#ffffff",
-        "plate": "",
     },
     # каждый текст к своему фону - не ниже 7:1 (WCAG AAA), это проверяет tests/test_theme.py
     "contrast": {
@@ -80,7 +73,6 @@ THEMES = {
         "tip_bg": "#000000", "tip_fg": "#ffffff",
         "scene_bg": "#000000", "scene_hi": "#0d1d29",
         "view_bg": "#000000", "view_hi": "#0d1d29",
-        "plate": "",
     },
 }
 

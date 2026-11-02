@@ -21,24 +21,15 @@ class PaletteTests(unittest.TestCase):
             for fg, bg in theme.TEXT_PAIRS:
                 self.assertGreaterEqual(theme.contrast(pal[fg], pal[bg]), 4.5, (name, fg, bg))
 
-    def test_paper_plate(self):
-        """«Бумага»: светлая страница, а схема - тёмная таблица в рамке, как в теме по умолчанию до неё
-        (готовые схемы из сборки и эталоны тестов те же); у других тем рамки нет"""
-        paper, dark = theme.THEMES["paper"], theme.THEMES["dark"]
-        self.assertEqual(theme.DEFAULT, "paper")
-        self.assertEqual((paper["scene_bg"], paper["scene_hi"]), (dark["scene_bg"], dark["scene_hi"]))
-        self.assertGreater(theme.contrast(paper["bg"], paper["scene_bg"]), 10)
-        self.assertTrue(paper["plate"])
-        self.assertEqual([n for n, pal in theme.THEMES.items() if pal["plate"]], ["paper", "black"])
-
-    def test_black_plate(self):
-        """«Чёрная» - тот же атлас в тёмном: окно тёмное (тёмный заголовок окна), рамка схемы светлая
-        и видна на странице, поле схемы отличается от страницы"""
+    def test_atlas_themes(self):
+        """«Бумага» (по умолчанию) и «Чёрная»: схема прямо на странице - её фон как у окна;
+        окно «Чёрной» тёмное, «Бумаги» - светлое"""
         from organism_atlas.ui import titlebar
-        black = theme.THEMES["black"]
-        self.assertTrue(titlebar.is_dark(black["bg"]))
-        self.assertGreater(theme.contrast(black["plate"], black["bg"]), 7)
-        self.assertNotEqual(black["scene_bg"], black["bg"])
+        self.assertEqual(theme.DEFAULT, "paper")
+        for name in ("paper", "black"):
+            self.assertEqual(theme.THEMES[name]["scene_bg"], theme.THEMES[name]["bg"], name)
+        self.assertTrue(titlebar.is_dark(theme.THEMES["black"]["bg"]))
+        self.assertFalse(titlebar.is_dark(theme.THEMES["paper"]["bg"]))
 
     def test_contrast_formula(self):
         self.assertAlmostEqual(theme.contrast("#000000", "#ffffff"), 21.0)
