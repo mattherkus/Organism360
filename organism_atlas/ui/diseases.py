@@ -47,6 +47,9 @@ def fill_disease(card, key, on_link):
     organs = ORGANS_OF[key]
     bar(lay, ORGANS[organs[0]]["color"])
     put(lay, label(diseases.text(key, "name"), size=15, bold=True), top=12)
+    sub = diseases.subtitle(key)
+    if sub and sub != diseases.text(key, "name"):
+        put(lay, label(sub, "muted", italic=True))
     put(lay, label(", ".join(t("system_" + s) for s in dict.fromkeys(ORGANS[o]["systems"][0] for o in organs)),
                    "muted", italic=True), bottom=4)
     seen = {key, *organs}                                   # органы уже ссылки в заголовке - в тексте не повторять

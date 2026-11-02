@@ -1,6 +1,7 @@
 """Логика викторины без привязки к интерфейсу: порядок и число вопросов, варианты ответа, таймер,
 вопросы по фактам, по расположению, о системе органов, о болезнях, по латинскому названию и «верно ли»."""
 
+import functools
 import random
 import re
 import time
@@ -48,19 +49,26 @@ def _stems(text):
     return {w[:max(4, len(w) - 2)] for w in re.findall(r"\w+", _norm(text)) if len(w) >= 4}
 
 
+@functools.lru_cache(maxsize=None)
 def name_stems(key):
-    """основы слов названия органа на всех языках"""
+    """основы слов названия органа на всех языках (названия в lang/*.json за время работы не меняются)"""
     stems = set()
     for n in i18n.all_names(key):
         stems |= _stems(n)
-    return stems
+    return frozenset(stems)
+
+
+@functools.lru_cache(maxsize=8192)
+def _linked(text):
+    """ключи органов, костей и болезней, которые текст упоминает сочетаниями из раздела links"""
+    return frozenset(k for _, k in i18n.links(text) if k)
 
 
 def leaks(text, key):
     """выдаёт ли текст ответ: упоминает ли он сам орган - основой слова названия или сочетанием из раздела links
     (оно ловит формы, которых не видно по основе: «полой вены» у «Полые вены»)"""
     s = _norm(text)
-    return any(stem in s for stem in name_stems(key)) or any(k == key for _, k in i18n.links(text))
+    return any(stem in s for stem in name_stems(key)) or key in _linked(text)
 
 
 def _candidates(key, levels):
@@ -133,6 +141,27 @@ def latin_ok(key):
                 or any(s in _norm(plain) for s in _stems(la)))
 
 
+# части 3D-моделей, о которых не спрашиваем по латыни «часть какого органа»: это соседи для ориентира
+# (двенадцатиперстная кишка у поджелудочной), отдельный орган (мочеточники) или название ничего не говорит
+LATIN_PART_SKIP = {("pancreas", "duodenum"), ("pancreas", "artery"), ("appendix", "cecum"), ("thyroid", "cartilage"),
+                   ("prostate", "prostate"), ("kidneys", "ureter")}
+
+
+def latin_parts(key):
+    """группы 3D-модели органа (раздел parts в la.json), о которых можно спросить «часть какого органа»: латынь есть,
+    это часть самого органа, а не сосед для ориентира, и название не называет ни один орган схемы"""
+    from .organs import ORGANS
+    if "la" not in i18n.available():
+        return []
+    parts = i18n.section("la", "parts").get(key, {})
+    return [g for g, name in parts.items() if name and not g.endswith("_dim") and (key, g) not in LATIN_PART_SKIP
+            and not any(leaks(name, k) for k in ORGANS)]
+
+
+def latin_part_name(key, group):
+    return i18n.section("la", "parts").get(key, {}).get(group, "")
+
+
 def kinds_for(key):
     """какие типы вопросов можно задать про орган во «Вперемешку»"""
     from .organs import ORGANS
@@ -145,7 +174,7 @@ def kinds_for(key):
             out.append("disease")
         if truth_facts(key):
             out.append("truth")
-    if latin_ok(key):
+    if latin_ok(key) or latin_parts(key):
         out.append("latin")
     return out
 
@@ -190,15 +219,21 @@ class QuizSession:
         self._options = {}                           # {номер вопроса: варианты ответа}
         facts = [k for k, kind in zip(self.q, self.kinds) if kind == "facts"]
         self.prompts = fact_prompts(facts, level, rng) if facts else {}
-        # {номер вопроса: что спрашиваем}: у disease - ключ болезни, у truth - (чей факт, ключ факта)
+        # {номер вопроса: что спрашиваем}: у disease - ключ болезни, у truth - (чей факт, ключ факта),
+        # у latin - часть 3D-модели («часть какого органа») или None (само латинское название органа)
         self.picks = {i: self._pick(k, kind) for i, (k, kind) in enumerate(zip(self.q, self.kinds))
-                      if kind in ("disease", "truth")}
+                      if kind in ("disease", "truth", "latin")}
         self.deadline = None                         # когда кончится время на текущий вопрос
         self.started, self.ended = clock(), None
 
     def _pick(self, key, kind):
         if kind == "disease":
             return self.rng.choice(disease_choices(key))
+        if kind == "latin":
+            parts = latin_parts(key)
+            if parts and (not latin_ok(key) or self.rng.random() < 0.5):
+                return self.rng.choice(parts)
+            return None
         # «верно ли»: поровну правды и неправды; неправда - факт органа из другой системы (чтобы не
         # оказался верным и для этого органа)
         from .organs import ORGANS
@@ -297,6 +332,10 @@ class QuizSession:
     # вопрос по факту со своими вариантами - «#0» (верный) и «#1», «#2»... (неверные);
     # вопрос о системе органов - «@система» (ключ из organs.SYSTEMS);
     # вопрос «верно ли» - «?1» (верно) и «?0» (неверно)
+    def latin_part(self):
+        """у вопроса по латыни - часть 3D-модели органа (группа сетки) или None: спрашивают само название органа"""
+        return self.picks.get(self.i) if self.kind == "latin" else None
+
     def custom(self):
         """у текущего вопроса свои варианты ответа (а не «какой это орган»)"""
         idx = self.prompts.get(self.current) if self.kind == "facts" else None
@@ -383,7 +422,8 @@ class QuizSession:
             from . import diseases
             return diseases.text(self.picks[self.i], "name")
         if self.kind == "latin":
-            return latin_name(self.current)
+            group = self.latin_part()
+            return latin_part_name(self.current, group) if group else latin_name(self.current)
         if self.kind == "truth":
             owner, fid = self.picks[self.i]
             return i18n.fact(owner, fid)

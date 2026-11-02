@@ -385,6 +385,27 @@ class NewKindTests(unittest.TestCase):
         self.assertEqual(s.option_label("liver"), "Печень")
         self.assertTrue(s.answer("liver"))
 
+    def test_latin_part(self):
+        """по латыни спрашивают и о части 3D-модели: «Myocardium» - часть какого органа"""
+        from organism_atlas.quiz import latin_parts
+        seen = set()
+        for seed in range(30):
+            s = self.kind("heart", "latin", seed)
+            group = s.latin_part()
+            seen.add(group is not None)
+            if group:
+                self.assertIn(group, latin_parts("heart"))
+                self.assertEqual(s.prompt(), i18n.section("la", "parts")["heart"][group])
+            else:
+                self.assertEqual(s.prompt(), "Cor")
+            self.assertTrue(s.answer("heart"))
+        self.assertEqual(seen, {True, False})
+        self.assertNotIn("duodenum", latin_parts("pancreas"))          # сосед для ориентира, а не часть органа
+        self.assertNotIn("kidney_dim", latin_parts("adrenals"))
+        for key in ORGANS:                                              # латынь части не называет орган
+            for g in latin_parts(key):
+                self.assertFalse(any(leaks(i18n.section("la", "parts")[key][g], k) for k in ORGANS), (key, g))
+
     def test_latin_only_when_not_obvious(self):
         self.assertTrue(latin_ok("liver"))
         self.assertTrue(latin_ok("pancreas"))                # Pancreas и «Поджелудочная железа» - не похожи

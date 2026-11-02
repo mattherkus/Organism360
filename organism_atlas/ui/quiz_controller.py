@@ -225,8 +225,10 @@ class QuizController:
             title, hint = t("system_title", name=i18n.name(s.current)), t("custom_hint", n=len(opts))
         elif s.kind == "disease":
             title, hint = "«%s»" % s.prompt(), t("disease_hint", n=len(opts))
+        elif s.kind == "latin" and s.latin_part():
+            title, hint = t("latin_part_title", latin=s.prompt()), t("latin_part_hint", n=len(opts))
         elif s.kind == "latin":
-            title, hint = s.prompt(), t("latin_hint", n=len(opts))
+            title, hint = s.prompt(), t("latin_question_hint", n=len(opts))
         elif s.kind == "truth":
             title, hint = "«%s»" % s.prompt(), t("truth_hint", name=i18n.name(s.current))
         else:

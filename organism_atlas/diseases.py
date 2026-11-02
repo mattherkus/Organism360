@@ -77,6 +77,16 @@ def name_in(code, key):
     return i18n.section(code, "diseases").get(key, {}).get("name", "")
 
 
+def subtitle(key):
+    """подпись под названием статьи: латинское название, а при включённых латинских названиях - обычное"""
+    if i18n.latin():
+        for code in i18n.chain()[1:]:
+            if name_in(code, key):
+                return name_in(code, key)
+        return ""
+    return name_in(i18n.LATIN, key) if i18n.LATIN in i18n.available() else ""
+
+
 def on_card(organ):
     """[(название, ключ болезни)] для раздела «Заболевания» карточки органа"""
     return [(text(d, "name"), d) for d in ON_CARD.get(organ, ())]

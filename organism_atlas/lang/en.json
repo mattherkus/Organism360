@@ -133,7 +133,7 @@
     "system_reproductive": "Reproductive",
     "system_immune": "Immune",
     "disease_hint": "Which organ does this disease affect? Pick an option or press 1–{n}.",
-    "latin_hint": "Organ names in Latin; the rest of the text stays in the chosen language.",
+    "latin_hint": "Names of organs, bones, muscles, 3D model parts and diseases in Latin; the rest of the text stays in the chosen language.",
     "truth_hint": "Is this true about the {name}? Click a button or press 1–2.",
     "truth_yes": "True",
     "truth_no": "False",
@@ -212,7 +212,7 @@
     "mode_quiz": "Quiz",
     "setup_mode": "Quiz type",
     "lang_hint": "Language and Latin names",
-    "lang_latin_item": "Latin organ names",
+    "lang_latin_item": "Latin names",
     "diseases_hint": "Disease guide",
     "ach_hint": "Achievements",
     "settings_hint": "Settings",
@@ -255,7 +255,10 @@
     "topic_body_bone": "Bones ({n})",
     "topic_body_muscle": "Muscles ({n})",
     "body_hint_bone": "Click this bone on the diagram.",
-    "body_hint_muscle": "Click this muscle on the diagram."
+    "body_hint_muscle": "Click this muscle on the diagram.",
+    "latin_question_hint": "Which organ is this? Pick an option or press 1–{n}.",
+    "latin_part_title": "'{latin}' is part of which organ?",
+    "latin_part_hint": "This is the Latin name of part of an organ. Pick an option or press 1–{n}."
   },
   "organs": {
     "lungs": {

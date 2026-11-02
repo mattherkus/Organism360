@@ -1,5 +1,5 @@
 {
-  "_comment": "Только латинские названия органов. Остальные тексты берутся из языка, выбранного перед латынью.",
+  "_comment": "Латинские названия: органов (organs), костей и мышц (structures), частей 3D-моделей (parts) и болезней (diseases, только название). Включаются пунктом «Латинские названия» в меню языка; чего здесь нет, берётся с выбранного языка.",
   "language": "Latina",
   "short": "LA",
   "organs": {
@@ -163,6 +163,337 @@
     },
     "adductors": {
       "name": "Musculi adductores"
+    }
+  },
+  "parts": {
+    "adrenals": {
+      "adrenal": "Glandulae suprarenales",
+      "kidney_dim": "Renes"
+    },
+    "appendix": {
+      "appendix": "Appendix vermiformis",
+      "cecum": "Caecum"
+    },
+    "brain": {
+      "brainstem": "Truncus encephali",
+      "cerebellum": "Cerebellum",
+      "cortex": "Hemispheria cerebri"
+    },
+    "esophagus": {
+      "esophagus": "Oesophagus",
+      "stomach_dim": "Gaster"
+    },
+    "heart": {
+      "artery": "Arteriae coronariae",
+      "myocardium": "Myocardium",
+      "vein": "Venae cordis",
+      "vessel": "Valva aortae"
+    },
+    "intestines": {
+      "colon": "Intestinum crassum",
+      "small": "Intestinum tenue",
+      "taenia": "Taeniae coli"
+    },
+    "kidneys": {
+      "artery": "Arteriae renales",
+      "kidney": "Renes",
+      "ureter": "Ureteres"
+    },
+    "liver": {
+      "parenchyma": "Parenchyma hepatis",
+      "vein": "Venae hepaticae et vena portae hepatis"
+    },
+    "lungs": {
+      "airway": "Bronchi",
+      "lung": "Pulmones"
+    },
+    "ovaries": {
+      "cervix": "Cervix uteri",
+      "ovary": "Ovaria",
+      "tube": "Tubae uterinae",
+      "uterus": "Uterus"
+    },
+    "uterus": {
+      "cervix": "Cervix uteri",
+      "ovary": "Ovaria",
+      "tube": "Tubae uterinae",
+      "uterus": "Uterus"
+    },
+    "pancreas": {
+      "artery": "Arteria splenica",
+      "duodenum": "Duodenum",
+      "gland": "Pancreas"
+    },
+    "prostate": {
+      "prostate": "Substantia glandularis",
+      "stroma": "Stroma fibromusculare anterius"
+    },
+    "thyroid": {
+      "cartilage": "Cartilago cricoidea",
+      "thyroid": "Glandula thyroidea"
+    }
+  },
+  "diseases": {
+    "pneumonia": {
+      "name": "Pneumonia"
+    },
+    "asthma": {
+      "name": "Asthma bronchiale"
+    },
+    "lung_cancer": {
+      "name": "Carcinoma pulmonis"
+    },
+    "hepatitis": {
+      "name": "Hepatitis viralis"
+    },
+    "fatty_liver": {
+      "name": "Steatosis hepatis"
+    },
+    "cirrhosis": {
+      "name": "Cirrhosis hepatis"
+    },
+    "liver_cancer": {
+      "name": "Carcinoma hepatocellulare"
+    },
+    "gallstones": {
+      "name": "Cholelithiasis"
+    },
+    "cholecystitis": {
+      "name": "Cholecystitis"
+    },
+    "gastritis": {
+      "name": "Gastritis"
+    },
+    "peptic_ulcer": {
+      "name": "Ulcus pepticum"
+    },
+    "stomach_cancer": {
+      "name": "Carcinoma ventriculi"
+    },
+    "ibs": {
+      "name": "Colon irritabile"
+    },
+    "ibd": {
+      "name": "Morbus Crohn et colitis ulcerosa"
+    },
+    "appendicitis": {
+      "name": "Appendicitis"
+    },
+    "colorectal_cancer": {
+      "name": "Carcinoma colorectale"
+    },
+    "kidney_stones": {
+      "name": "Urolithiasis"
+    },
+    "pyelonephritis": {
+      "name": "Pyelonephritis"
+    },
+    "glomerulonephritis": {
+      "name": "Glomerulonephritis"
+    },
+    "ckd": {
+      "name": "Insufficientia renalis chronica"
+    },
+    "ihd": {
+      "name": "Morbus ischaemicus cordis"
+    },
+    "hypertension": {
+      "name": "Hypertensio arterialis"
+    },
+    "arrhythmia": {
+      "name": "Arrhythmiae cordis"
+    },
+    "heart_failure": {
+      "name": "Insufficientia cordis"
+    },
+    "stroke": {
+      "name": "Insultus cerebri"
+    },
+    "migraine": {
+      "name": "Hemicrania"
+    },
+    "epilepsy": {
+      "name": "Epilepsia"
+    },
+    "alzheimer": {
+      "name": "Morbus Alzheimer"
+    },
+    "hypothyroidism": {
+      "name": "Hypothyreosis"
+    },
+    "hyperthyroidism": {
+      "name": "Struma diffusa toxica"
+    },
+    "thyroiditis": {
+      "name": "Thyreoiditis autoimmunis"
+    },
+    "goiter": {
+      "name": "Struma nodosa"
+    },
+    "splenomegaly": {
+      "name": "Splenomegalia"
+    },
+    "spleen_rupture": {
+      "name": "Ruptura lienis"
+    },
+    "spleen_infarction": {
+      "name": "Infarctus lienis"
+    },
+    "hypersplenism": {
+      "name": "Hypersplenismus"
+    },
+    "pancreatitis": {
+      "name": "Pancreatitis"
+    },
+    "diabetes": {
+      "name": "Diabetes mellitus"
+    },
+    "pancreatic_cancer": {
+      "name": "Carcinoma pancreatis"
+    },
+    "cystic_fibrosis": {
+      "name": "Mucoviscidosis"
+    },
+    "cystitis": {
+      "name": "Cystitis"
+    },
+    "bladder_stones": {
+      "name": "Calculi vesicae urinariae"
+    },
+    "incontinence": {
+      "name": "Incontinentia urinae"
+    },
+    "esophagitis": {
+      "name": "Oesophagitis"
+    },
+    "hiatal_hernia": {
+      "name": "Hernia hiatus oesophagei"
+    },
+    "tracheitis": {
+      "name": "Tracheitis"
+    },
+    "tracheal_stenosis": {
+      "name": "Stenosis tracheae"
+    },
+    "foreign_body": {
+      "name": "Corpus alienum viarum respiratoriarum"
+    },
+    "tracheomalacia": {
+      "name": "Tracheomalacia"
+    },
+    "addison": {
+      "name": "Morbus Addison"
+    },
+    "cushing": {
+      "name": "Syndroma Cushing"
+    },
+    "pheochromocytoma": {
+      "name": "Phaeochromocytoma"
+    },
+    "conn": {
+      "name": "Hyperaldosteronismus primarius"
+    },
+    "mucocele": {
+      "name": "Mucocele appendicis"
+    },
+    "hemorrhoids": {
+      "name": "Haemorrhoides"
+    },
+    "anal_fissure": {
+      "name": "Fissura ani"
+    },
+    "proctitis": {
+      "name": "Proctitis"
+    },
+    "fibroids": {
+      "name": "Myoma uteri"
+    },
+    "endometriosis": {
+      "name": "Endometriosis"
+    },
+    "cervical_cancer": {
+      "name": "Carcinoma cervicis uteri"
+    },
+    "endometritis": {
+      "name": "Endometritis"
+    },
+    "ovarian_cyst": {
+      "name": "Cystis ovarii"
+    },
+    "ovarian_cancer": {
+      "name": "Carcinoma ovarii"
+    },
+    "ovarian_apoplexy": {
+      "name": "Apoplexia ovarii"
+    },
+    "prostatitis": {
+      "name": "Prostatitis"
+    },
+    "bph": {
+      "name": "Hyperplasia prostatae benigna"
+    },
+    "prostate_cancer": {
+      "name": "Carcinoma prostatae"
+    },
+    "aortic_aneurysm": {
+      "name": "Aneurysma aortae"
+    },
+    "aortic_dissection": {
+      "name": "Dissectio aortae"
+    },
+    "atherosclerosis": {
+      "name": "Atherosclerosis"
+    },
+    "coarctation": {
+      "name": "Coarctatio aortae"
+    },
+    "ivc_thrombosis": {
+      "name": "Thrombosis venae cavae inferioris"
+    },
+    "spinal_injury": {
+      "name": "Laesio medullae spinalis"
+    },
+    "herniated_disc": {
+      "name": "Hernia disci intervertebralis"
+    },
+    "multiple_sclerosis": {
+      "name": "Sclerosis multiplex"
+    },
+    "myasthenia": {
+      "name": "Myasthenia gravis"
+    },
+    "thymoma": {
+      "name": "Thymoma"
+    },
+    "pituitary_adenoma": {
+      "name": "Adenoma hypophysis"
+    },
+    "acromegaly": {
+      "name": "Acromegalia"
+    },
+    "hypopituitarism": {
+      "name": "Hypopituitarismus"
+    },
+    "diabetes_insipidus": {
+      "name": "Diabetes insipidus"
+    },
+    "diaphragmatic_hernia": {
+      "name": "Hernia diaphragmatica congenita"
+    },
+    "diaphragm_paralysis": {
+      "name": "Paralysis diaphragmatis"
+    },
+    "hiccups": {
+      "name": "Singultus persistens"
+    },
+    "lymphadenitis": {
+      "name": "Lymphadenitis"
+    },
+    "lymphoma": {
+      "name": "Lymphoma"
+    },
+    "lymphedema": {
+      "name": "Lymphoedema"
     }
   }
 }

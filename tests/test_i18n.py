@@ -59,6 +59,22 @@ class LangFilesTests(unittest.TestCase):
         for key in ORGANS:
             self.assertTrue(la["organs"][key]["name"], key)
 
+    def test_latin_parts_and_diseases(self):
+        """латынь частей 3D-моделей - для тех же групп, что и в ru.json; латынь болезней - только для известных"""
+        la, ru = i18n._load("la"), i18n._load("ru")
+        for key, parts in la["parts"].items():
+            self.assertEqual(set(parts), set(ru["parts"][key]), key)
+        self.assertTrue(set(la["diseases"]) <= set(diseases.KEYS))
+        self.assertEqual(diseases.subtitle("cirrhosis"), "Cirrhosis hepatis")
+        i18n.set_latin(True)
+        try:
+            self.assertEqual(diseases.text("cirrhosis", "name"), "Cirrhosis hepatis")
+            self.assertEqual(diseases.subtitle("cirrhosis"), "Цирроз")
+            self.assertEqual(i18n.part("heart", "myocardium"), "Myocardium")
+            self.assertEqual(diseases.text("cirrhosis", "symptoms"), i18n._load("ru")["diseases"]["cirrhosis"]["symptoms"])
+        finally:
+            i18n.set_latin(False)
+
     def test_buttons_order(self):
         self.assertEqual(i18n.available()[:3], ["ru", "en", "la"])
 
