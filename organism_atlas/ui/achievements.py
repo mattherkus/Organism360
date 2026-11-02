@@ -48,7 +48,7 @@ class AchievementsPanel(Panel):
             row.addWidget(star)
             text = vbox()
             text.addWidget(label(t("ach_" + key), "text" if on else "muted", 11, bold=True))
-            text.addWidget(label(t("ach_%s_desc" % key), "muted", 9))
+            text.addWidget(label(t("ach_%s_desc" % key, n=achievements.scholar_goal()), "muted", 9))
             text.addStretch(1)
             row.addLayout(text, 1)
             grid.addLayout(row, i // 2, i % 2)
