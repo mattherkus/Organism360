@@ -85,6 +85,29 @@ class ProgressTests(unittest.TestCase):
         progress.record(played(["a"]), today=DAY + datetime.timedelta(days=3))
         self.assertEqual(progress.due("find", keys, today=DAY + datetime.timedelta(days=10)), ["b", "a"])
 
+    def test_fields_of_wrong_type(self):
+        """файл правили руками: поле не того типа отбрасывается, а счёт, повторение и запись игры не падают"""
+        import json
+        from organism_atlas import achievements, stats
+        self.file.parent.mkdir(parents=True)
+        self.file.write_text(json.dumps({
+            "results": [{"date": "2026-10-24T10:00", "mode": "find", "total": "10", "first_try": None,
+                         "missed": 5, "seconds": "x", "organs": "all"},
+                        {"date": "2026-10-24T11:00", "mode": "find", "missed": ["a", 7]}],
+            "cards": {"find:a": {"box": "3", "seen": "2", "wrong": None, "due": "2026-10-01"},
+                      "find:b": {"box": 2, "seen": 1, "wrong": 0, "due": "2026-10-01"},
+                      "find:c": {"box": True, "due": 7}}}), encoding="utf-8")
+        data = progress.load()
+        self.assertEqual(data["results"][0], {"date": "2026-10-24T10:00", "mode": "find"})
+        self.assertEqual(data["cards"]["find:a"], {"due": "2026-10-01"})
+        self.assertEqual(progress.due("find", ["a", "b", "c"], today=DAY), ["a", "b"])
+        self.assertEqual(progress.last_missed("find", ["a", "b"]), ["a"])
+        achievements.earned(data)
+        stats.summary(data, DAY)
+        progress.mark("find", "a", True, DAY)
+        progress.record(played(["a", "b"]), today=DAY)
+        self.assertEqual(progress.load()["cards"]["find:a"]["seen"], 2)
+
     def test_history_is_trimmed(self):
         for i in range(progress.KEEP + 5):
             progress.record(played(["a"], seed=i), today=DAY)

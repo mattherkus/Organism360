@@ -29,6 +29,17 @@ class SettingsTests(unittest.TestCase):
         settings.save(previous_lang="ru")
         self.assertEqual(settings.load(), {"lang": "en", "previous_lang": "ru"})
 
+    def test_saves_from_two_threads_keep_both(self):
+        """окно и фоновая проверка обновлений пишут одновременно: ни одна запись не теряется"""
+        import threading
+        workers = [threading.Thread(target=lambda n=n: [settings.save(**{"k%d_%d" % (n, i): i}) for i in range(40)])
+                   for n in range(2)]
+        for w in workers:
+            w.start()
+        for w in workers:
+            w.join()
+        self.assertEqual(len(settings.load()), 80)
+
     def test_broken_file_is_ignored(self):
         self.file.parent.mkdir(parents=True)
         for text in ("{oops", "[1, 2]", ""):

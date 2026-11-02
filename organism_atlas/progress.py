@@ -26,6 +26,31 @@ def path():
     return Path(custom) if custom else settings.path().with_name("progress.json")
 
 
+COUNTS = ("box", "seen", "wrong", "total", "first_try", "errors", "timeouts", "seconds")   # целые >= 0
+TEXTS = ("due", "last", "date", "mode", "level", "set")                                   # строки
+
+
+def _clean(item):
+    """запись игры или карточку - с полями нужного типа: поле не того типа (файл правили руками) отбрасывается,
+    чтобы счёт, сортировка и статистика не падали на нём. organs - число или None, missed - список ключей"""
+    out = {}
+    for k, v in item.items():
+        if k in COUNTS:
+            ok = isinstance(v, int) and not isinstance(v, bool) and v >= 0
+        elif k in TEXTS:
+            ok = isinstance(v, str)
+        elif k == "organs":
+            ok = v is None or isinstance(v, int) and not isinstance(v, bool)
+        elif k == "missed":
+            ok = isinstance(v, list)
+            v = [x for x in v if isinstance(x, str)] if ok else v
+        else:
+            ok = True
+        if ok:
+            out[k] = v
+    return out
+
+
 def load():
     """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}[, "earned": {достижение: дата}]}"""
     try:
@@ -34,9 +59,9 @@ def load():
         data = {}
     if not isinstance(data, dict):
         data = {}
-    results = [r for r in data.get("results", []) if isinstance(r, dict)] \
+    results = [_clean(r) for r in data.get("results", []) if isinstance(r, dict)] \
         if isinstance(data.get("results"), list) else []
-    cards = {k: c for k, c in data.get("cards", {}).items() if isinstance(c, dict)} \
+    cards = {k: _clean(c) for k, c in data.get("cards", {}).items() if isinstance(c, dict)} \
         if isinstance(data.get("cards"), dict) else {}
     out = {"results": results, "cards": cards}
     if isinstance(data.get("earned"), dict):         # полученные достижения (achievements.remember)

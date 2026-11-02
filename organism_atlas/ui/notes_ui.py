@@ -101,9 +101,9 @@ class CardNotes:
         """викторина по закладкам: органы - «Вперемешку», а если в закладках только кости и мышцы - «Кости и мышцы»"""
         keys = self.starred()
         mode = "mix" if any(k in ORGANS for k in keys) else "body"
-        self.app.set_mode(mode)
-        self.app.quiz.cfg["topic"] = None
+        self.app.quiz.cfg["topic"] = None               # до смены режима: по теме «Кости и мышцы» видны слои
         self.app.quiz.cfg["set"] = "starred"
+        self.app.set_mode(mode)
         self.app.quiz.start("starred")
 
 

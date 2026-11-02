@@ -109,6 +109,11 @@ class QuizController:
         """тема «Кости и мышцы»: bone, muscle или None (обе); у других режимов - None"""
         return self.cfg["topic"] if self.mode in NOT_ORGANS and self.cfg["topic"] in structures.KINDS else None
 
+    def chosen_set(self):
+        """набор вопросов с карточки настройки; у «Экзамена» и «Испытания дня» строки набора нет - все органы
+        (набор, выбранный в другом виде викторины, сюда не переходит)"""
+        return self.cfg["set"] if self.mode not in NO_CARDS else "all"
+
     def question_keys(self, qset, data=None):
         """органы набора вопросов qset (all, missed, due, starred - закладки) в выбранной теме"""
         keys = self.mode_keys(topic=self.cfg["topic"])
@@ -144,7 +149,7 @@ class QuizController:
         counts = {q: len(self.question_keys(q, data)) for q in QSETS}
         if not counts.get(self.cfg["set"]):
             self.cfg["set"] = "all"
-        n = counts[self.cfg["set"]]
+        n = counts[self.chosen_set()]
         length = self.cfg["length"] if 0 < self.cfg["length"] < n else 0     # длиннее набора - значит «все»
         mode = self.mode
         rows = [(t("setup_mode"), [(t("mode_" + m), m, True) for m in MODES], mode, self.app.set_mode, None, 2)]
@@ -202,10 +207,11 @@ class QuizController:
         self.app.set_card(self.render_setup)
 
     def review(self, mode):
-        """кнопка «Повторить»: викторина mode по органам, которые пора повторить"""
-        self.app.set_mode(mode)
+        """кнопка «Повторить»: викторина mode по органам, которые пора повторить. Тема - до смены режима:
+        по ней «Кости и мышцы» показывает слои (кости, мышцы или оба)"""
         self.cfg["topic"] = None
         self.cfg["set"] = "due"
+        self.app.set_mode(mode)
         self.start("due")
 
     def train(self, keys, mode="mix"):
@@ -216,7 +222,7 @@ class QuizController:
     def start(self, qset=None, keys=None):
         """начать игру по текущим настройкам; qset - другой набор вопросов (кнопка «Повторить ошибки»),
         keys - свой список органов (тогда qset - только подпись набора в истории)"""
-        qset = qset or self.cfg["set"]
+        qset = qset or self.chosen_set()
         keys = keys or self.question_keys(qset)
         if not keys:
             qset, keys = "all", self.question_keys("all")
@@ -505,7 +511,7 @@ class QuizController:
         if s.finished:
             self.finish(s.q[-1])
             return
-        self.ask()
+        self.ask(self.feedback if self.exam() else None)        # «Экзамен»: «Ответ принят» - над новым вопросом
 
     def finish(self, last):
         """игра закончена: сохранить результат, показать карточку последнего органа, а следом - итоги"""
@@ -537,7 +543,7 @@ class QuizController:
             if keysym in ("Return", "KP_Enter"):
                 self.start()
             return
-        if self.kind() not in ("find", "body") and char.isdigit():          # цифры - кнопки вариантов
+        if self.kind() not in ("find", "body") and char.isdecimal():        # цифры - кнопки вариантов (не «²»)
             keys = list(self.choices)
             i = int(char) - 1
             if 0 <= i < len(keys):

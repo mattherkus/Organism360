@@ -642,6 +642,49 @@ class AppTests(unittest.TestCase):
         self.assertTrue(wait(lambda: any(grade in x for x in self.label_texts()), 5))   # итоги - следом
         self.assertIn(i18n.t("review_title").upper(), self.label_texts())
 
+    def test_exam_ignores_set_of_other_modes(self):
+        """набор «Закладки», выбранный в другом виде, в «Экзамен» (где строки набора нет) не переходит;
+        «Ответ принят» - над следующим вопросом экзамена"""
+        from organism_atlas import notes
+        a = self.app
+        for key in ("heart", "lungs"):
+            notes.toggle_star(key)
+        a.set_mode("find")
+        a.quiz.set_cfg("set", "starred")
+        a.set_mode("exam")
+        a.quiz.cfg["length"] = 5
+        a.quiz.start()
+        s = a.quiz.session
+        self.assertEqual((a.quiz.qset, s.total), ("all", 5))
+        if s.kind in ("find", "body"):
+            a.quiz.answer(s.correct())
+        else:
+            a.quiz.pick(s.correct())
+        a.quiz.next_question()
+        self.assertIn(i18n.t("exam_accepted"), self.label_texts())
+
+    def test_review_body_quiz_shows_both_layers(self):
+        """«Повторить» в «Кости и мышцы» - про кости и мышцы: оба слоя видны, хотя раньше была тема «кости»;
+        цифра не из 0-9 («²») на клавиатуре не роняет игру"""
+        a = self.app
+        a.set_mode("body")
+        a.quiz.set_cfg("topic", "bone")
+        a.set_mode("study")
+        a.quiz.review("body")
+        self.assertIsNone(a.quiz.cfg["topic"])
+        self.assertEqual(set(a.atlas.visible), {"skin", "skeleton", "muscles"})
+        a.set_mode("name")
+        a.quiz.start()
+        a.quiz.on_key("", "²")
+        self.assertEqual(a.quiz.session.i, 0)
+
+    def test_close_stops_speech(self):
+        """программу закрыли посреди чтения вслух: голос системы (отдельный процесс) замолкает"""
+        from organism_atlas import speech
+        with mock.patch.object(speech, "stop") as stop:
+            self.app.close()
+        stop.assert_called_once_with()
+
     def test_daily_and_model_quiz(self):
         from organism_atlas.ui.turntable import Turntable
         a = self.app

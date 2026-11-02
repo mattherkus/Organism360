@@ -78,18 +78,23 @@ def leaks(text, key):
     return any(stem in s for stem in name_stems(key)) or key in _linked(text)
 
 
-def _candidates(key, levels):
+def _candidates(key, levels, everywhere=False):
     """номера вопросов органа (questions/<орган>.json) нужных уровней, которые не выдают ответ.
-    Вопрос со своими вариантами может называть орган: ответ на него - не орган."""
+    Вопрос со своими вариантами может называть орган: ответ на него - не орган.
+    everywhere - не выдают ни на одном языке (а не только на текущем): выбор не зависит от языка"""
+    def leaky(i, q):
+        texts = q["text"].values() if everywhere else (questions.text(key, i),)
+        return any(leaks(s, key) for s in texts)
     return [i for i, q in enumerate(questions.for_organ(key))
-            if q["level"] in levels and ("answer" in q or not leaks(questions.text(key, i), key))]
+            if q["level"] in levels and ("answer" in q or not leaky(i, q))]
 
 
-def fact_prompts(keys, level, rng=random):
-    """{орган: номер вопроса} - что спросить про каждый орган; None - вопросов нет, спросим о функции"""
+def fact_prompts(keys, level, rng=random, everywhere=False):
+    """{орган: номер вопроса} - что спросить про каждый орган; None - вопросов нет, спросим о функции.
+    everywhere - одинаково на любом языке («Испытание дня»)"""
     out = {}
     for k in keys:
-        cand = _candidates(k, questions.POOL[level]) or _candidates(k, questions.LEVELS)
+        cand = _candidates(k, questions.POOL[level], everywhere) or _candidates(k, questions.LEVELS, everywhere)
         out[k] = rng.choice(cand) if cand else None
     return out
 
@@ -138,14 +143,22 @@ def latin_name(key):
     return i18n.organ_in("la", key, "name") if "la" in i18n.available() else ""
 
 
-def latin_ok(key):
+def _alike(la, plain):
+    """похоже ли латинское название на обычное (общая основа слова)"""
+    return bool(_stems(plain) & _stems(la) or any(s in _norm(la) for s in _stems(plain))
+                or any(s in _norm(plain) for s in _stems(la)))
+
+
+def latin_ok(key, everywhere=False):
     """можно ли спросить «что это за орган» по латинскому названию: оно есть и не похоже на название,
-    которым подписаны варианты (Pancreas - Pancreas, Trachea - Трахея спрашивать незачем)"""
-    la, plain = latin_name(key), plain_name(key)
+    которым подписаны варианты (Pancreas - Pancreas, Trachea - Трахея спрашивать незачем).
+    everywhere - не похоже ни на одном языке («Испытание дня» одинаково на любом языке, а Trachea - Trachea
+    по-английски выдала бы ответ)"""
+    la = latin_name(key)
     if not la:
         return False
-    return not (_stems(plain) & _stems(la) or any(s in _norm(la) for s in _stems(plain))
-                or any(s in _norm(plain) for s in _stems(la)))
+    names = [i18n.organ_in(code, key, "name") for code in i18n.languages()] if everywhere else [plain_name(key)]
+    return not any(_alike(la, n) for n in names if n)
 
 
 # части 3D-моделей, о которых не спрашиваем по латыни «часть какого органа»: это соседи для ориентира
@@ -169,8 +182,8 @@ def latin_part_name(key, group):
     return i18n.section("la", "parts").get(key, {}).get(group, "")
 
 
-def kinds_for(key):
-    """какие типы вопросов можно задать про орган во «Вперемешку»"""
+def kinds_for(key, everywhere=False):
+    """какие типы вопросов можно задать про орган во «Вперемешку»; everywhere - одинаково на любом языке"""
     from .organs import ORGANS
     out = ["find", "name", "facts"]
     if not location_leaks(key):
@@ -181,7 +194,7 @@ def kinds_for(key):
             out.append("disease")
         if truth_facts(key):
             out.append("truth")
-    if latin_ok(key) or latin_parts(key):
+    if latin_ok(key, everywhere) or latin_parts(key):
         out.append("latin")
     return out
 
@@ -212,8 +225,11 @@ class QuizSession:
         keys = list(keys)
         self.q = rng.sample(keys, game_length(count, len(keys)))     # какие органы и в каком порядке
         self.pool = list(pool) if pool is not None else list(self.q)
+        # «Испытание дня» одинаково у всех: что спросить, выбирается без оглядки на язык интерфейса
+        self.everywhere = mode == "daily"
         # тип каждого вопроса
-        self.kinds = [rng.choice(kinds_for(k)) for k in self.q] if mode in MIXED_MODES else [mode] * len(self.q)
+        self.kinds = ([rng.choice(kinds_for(k, self.everywhere)) for k in self.q] if mode in MIXED_MODES
+                      else [mode] * len(self.q))
         # «Экзамен»: на вопрос одна попытка (ошибка - сразу следующий вопрос) и общее время на всю игру
         self.single_try, self.total_time = single_try, total_time
         self.log = []                                # [(номер вопроса, верно ли, что ответили или None)]
@@ -228,7 +244,7 @@ class QuizSession:
         self.results = {}                            # {орган: True - с первой попытки, False - нет}
         self._options = {}                           # {номер вопроса: варианты ответа}
         facts = [k for k, kind in zip(self.q, self.kinds) if kind == "facts"]
-        self.prompts = fact_prompts(facts, level, rng) if facts else {}
+        self.prompts = fact_prompts(facts, level, rng, self.everywhere) if facts else {}
         # {номер вопроса: что спрашиваем}: у disease - ключ болезни, у truth - (чей факт, ключ факта),
         # у latin - часть 3D-модели («часть какого органа») или None (само латинское название органа)
         self.picks = {i: self._pick(k, kind) for i, (k, kind) in enumerate(zip(self.q, self.kinds))
@@ -241,7 +257,7 @@ class QuizSession:
             return self.rng.choice(disease_choices(key))
         if kind == "latin":
             parts = latin_parts(key)
-            if parts and (not latin_ok(key) or self.rng.random() < 0.5):
+            if parts and (not latin_ok(key, self.everywhere) or self.rng.random() < 0.5):
                 return self.rng.choice(parts)
             return None
         # «верно ли»: поровну правды и неправды; неправда - факт органа из другой системы (чтобы не

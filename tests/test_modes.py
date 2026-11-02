@@ -143,6 +143,21 @@ class DailyTests(unittest.TestCase):
         self.assertNotEqual(a.q, other.q)
         self.assertTrue(set(daily_session("female", DAY).q) <= set(for_body("female")))
 
+    def test_same_questions_in_every_language(self):
+        """язык интерфейса не меняет вопросы дня: по-английски Trachea - Trachea, и латинский вопрос о трахее
+        не задают и по-русски"""
+        try:
+            for day in range(30):
+                d = DAY + datetime.timedelta(days=day)
+                got = []
+                for code in i18n.languages():
+                    i18n._current = i18n._previous = code
+                    s = daily_session("male", d)
+                    got.append((s.q, s.kinds, s.prompts, s.picks, s.options()))
+                self.assertTrue(all(g == got[0] for g in got), d)
+        finally:
+            i18n._current = i18n._previous = i18n.BASE
+
     def test_daily_streak_achievement(self):
         game = lambda d, mode="daily": {"date": d.isoformat() + "T10:00", "mode": mode, "total": 10, "first_try": 5}
         data = {"results": [game(DAY - datetime.timedelta(days=i)) for i in range(4)], "cards": {}}

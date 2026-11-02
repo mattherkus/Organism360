@@ -9,7 +9,10 @@
 
 import json
 import os
+import threading
 from pathlib import Path
+
+_lock = threading.Lock()
 
 # допустимые значения и значения по умолчанию; чужое или испорченное значение заменяется умолчанием
 CHOICES = {
@@ -49,16 +52,19 @@ def load():
 
 
 def save(**values):
-    """дописать значения к сохранённым; ошибки записи молча пропускаем - это не повод падать"""
-    data = {**load(), **values}
-    p = path()
-    try:
-        p.parent.mkdir(parents=True, exist_ok=True)
-        tmp = p.with_name(p.name + ".tmp")           # через временный файл: не оставим полузаписанный
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        os.replace(tmp, p)
-    except OSError:
-        pass
+    """дописать значения к сохранённым; ошибки записи молча пропускаем - это не повод падать.
+    Пишут и окно, и фоновый поток (проверка обновлений): прочитать-дописать-записать - под замком, иначе
+    одна запись затёрла бы другую, а общий временный файл перемешал бы их"""
+    with _lock:
+        data = {**load(), **values}
+        p = path()
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_name(p.name + ".tmp")       # через временный файл: не оставим полузаписанный
+            tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            os.replace(tmp, p)
+        except OSError:
+            pass
 
 
 def get(saved, key):

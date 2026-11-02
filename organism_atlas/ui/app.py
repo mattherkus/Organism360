@@ -20,7 +20,7 @@ from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QShortcut
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QLineEdit, QMenu, QPlainTextEdit,
                                QScrollArea, QWidget)
 
-from .. import achievements, i18n, progress, settings, stats, theme, tours
+from .. import achievements, i18n, progress, settings, speech, stats, theme, tours
 from ..colors import hex2rgb
 from ..config import STATUS
 from ..atlas import Atlas
@@ -1076,6 +1076,8 @@ class App(QWidget):
 
     def closeEvent(self, e):
         self.notes.flush()                              # недописанная заметка - в файл
+        if App.main is self:                            # программу закрывают (а не пересобирают окно):
+            speech.stop()                               # голос системы - отдельный процесс, сам он не замолчит
         super().closeEvent(e)
 
     def resizeEvent(self, e):
