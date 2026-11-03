@@ -127,7 +127,8 @@ class FallbackTests(unittest.TestCase):
             arrays["f0"] = arrays["f0"].astype(np.int64)
             arrays["f0"].flat[0] = -1
             np.savez(Path(tmp, meta["mesh"]), **arrays)
-            with mock.patch.object(models, "_mesh_dir", return_value=Path(tmp)),                     mock.patch.dict(models._mesh_cache, clear=True):
+            with mock.patch.object(models, "_mesh_dir", return_value=Path(tmp)), \
+                    mock.patch.dict(models._mesh_cache, clear=True):
                 with self.assertRaisesRegex(ValueError, "за пределами"):
                     models.load_mesh("heart")
 

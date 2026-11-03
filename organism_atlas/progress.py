@@ -1,7 +1,7 @@
 """История викторин и повторение по карточкам (упрощённая система Лейтнера).
 
 Файл: progress.json рядом с settings.json; переменная окружения ORGANISM_ATLAS_PROGRESS задаёт другой путь
-(нужна тестам). Испорченный файл не мешает: история просто начинается заново.
+(нужна тестам). Испорченный файл не мешает: история начинается заново, а сам файл сохраняется в progress.json.bad.
 
 Карточка - пара «режим викторины + орган». Ответ с первой попытки переносит карточку в следующую
 коробку, и её снова спросят через 1, 2, 4, 8 или 16 дней; ошибка (или вышедшее время) возвращает её
@@ -9,11 +9,10 @@
 """
 
 import datetime
-import json
 import os
 from pathlib import Path
 
-from . import settings
+from . import jsonstore, settings
 from .quiz import NO_CARDS
 
 INTERVALS = (0, 1, 2, 4, 8, 16)      # через сколько дней повторять карточку из коробки 1..5
@@ -51,21 +50,13 @@ def _clean(item):
     return out
 
 
-_parsed = None                  # (байты файла, проверенные данные): тот же файл не разбирается заново
 
 
 def load():
     """{"results": [игры, от старых к новым], "cards": {"режим:орган": карточка}[, "earned": {достижение: дата}]}.
     Карточки окна читают историю на каждый щелчок: файл читается всегда (его могли поменять), а разбирается,
     только если байты другие. Возвращается копия - её можно менять"""
-    global _parsed
-    try:
-        raw = path().read_bytes()
-    except OSError:
-        raw = None
-    if _parsed is None or _parsed[0] != raw:
-        _parsed = (raw, _parse(raw))
-    data = _parsed[1]
+    data = _store.load(path())
     out = {"results": [dict(r, missed=list(r["missed"])) if "missed" in r else dict(r) for r in data["results"]],
            "cards": {k: dict(c) for k, c in data["cards"].items()}}
     if "earned" in data:
@@ -73,14 +64,9 @@ def load():
     return out
 
 
-def _parse(raw):
+def _parse(raw, p=None):
     """байты файла (None - файла нет) -> проверенные данные; испорченный файл - пустая история"""
-    try:
-        data = json.loads(raw.decode("utf-8")) if raw is not None else {}
-    except ValueError:
-        data = {}
-    if not isinstance(data, dict):
-        data = {}
+    data = jsonstore.decode(raw, p)
     results = [_clean(r) for r in data.get("results", []) if isinstance(r, dict)] \
         if isinstance(data.get("results"), list) else []
     cards = {k: _clean(c) for k, c in data.get("cards", {}).items() if isinstance(c, dict)} \
@@ -92,15 +78,11 @@ def _parse(raw):
 
 
 def save(data):
-    """записать через временный файл; ошибки записи пропускаем - это не повод падать"""
-    p = path()
-    try:
-        p.parent.mkdir(parents=True, exist_ok=True)
-        tmp = p.with_name(p.name + ".tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(tmp, p)
-    except OSError:
-        pass
+    """записать атомарно (jsonstore.write); ошибки записи пропускаем - это не повод падать"""
+    jsonstore.write(path(), data)
+
+
+_store = jsonstore.Cached(_parse)       # тот же файл не разбирается заново
 
 
 def _date(s):

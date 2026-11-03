@@ -140,8 +140,8 @@ class RepaintTests(unittest.TestCase):
         from PySide6.QtWidgets import QLabel
         labels = card.findChildren(QLabel)
         self.assertTrue(labels)
-        self.assertTrue(all(w.palette().windowText().color().name() in (pal["text"], pal["muted"], pal["accent_fg"], pal["day_title"])
-                            for w in labels))
+        allowed = (pal["text"], pal["muted"], pal["accent_fg"], pal["day_title"])
+        self.assertTrue(all(w.palette().windowText().color().name() in allowed for w in labels))
 
 
 if __name__ == "__main__":

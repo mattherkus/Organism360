@@ -79,6 +79,9 @@ def _answers(path, n, q):
     answer, wrong = _by_lang(q["answer"]), _by_lang(q["wrong"])
     if i18n.BASE not in answer or i18n.BASE not in wrong:
         _fail(path, "вопрос %d: в answer и wrong нужен вариант на русском (\"%s\")" % (n, i18n.BASE))
+    if isinstance(q["answer"], dict) and isinstance(q["wrong"], dict) and set(answer) != set(wrong):
+        # иначе верный ответ - на языке интерфейса, а неверные - по-русски, и ответ виден сразу
+        _fail(path, "вопрос %d: answer и wrong переведены на разные языки" % n)
     for lang, a in answer.items():
         if not isinstance(a, str) or not a.strip():
             _fail(path, "вопрос %d: answer «%s» пустой или не строка" % (n, lang))

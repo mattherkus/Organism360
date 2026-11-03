@@ -61,4 +61,7 @@ def check(opener=urllib.request.urlopen, today=None):
     tag = data.get("tag_name", "") if isinstance(data, dict) else ""
     if not newer(tag):
         return None
-    return {"version": tag.lstrip("v"), "url": data.get("html_url") or "https://github.com/%s/releases" % REPO}
+    url = data.get("html_url")
+    if not (isinstance(url, str) and url.startswith("https://github.com/")):     # открывается в браузере: только GitHub
+        url = "https://github.com/%s/releases" % REPO
+    return {"version": tag.lstrip("v"), "url": url}

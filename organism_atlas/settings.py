@@ -7,12 +7,13 @@
 Испорченный или недоступный файл не мешает запуску: настройки просто берутся по умолчанию.
 """
 
-import json
 import os
 import threading
 from pathlib import Path
 
-_lock = threading.Lock()
+from . import jsonstore
+
+_lock = threading.RLock()                 # окно и фоновый поток (проверка обновлений)
 
 # допустимые значения и значения по умолчанию; чужое или испорченное значение заменяется умолчанием
 CHOICES = {
@@ -44,11 +45,8 @@ def path():
 
 
 def load():
-    try:
-        data = json.loads(path().read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
+    with _lock:                                  # не читать посреди записи из другого потока
+        return jsonstore.decode(jsonstore.read_bytes(path()))
 
 
 def save(**values):
@@ -56,15 +54,7 @@ def save(**values):
     Пишут и окно, и фоновый поток (проверка обновлений): прочитать-дописать-записать - под замком, иначе
     одна запись затёрла бы другую, а общий временный файл перемешал бы их"""
     with _lock:
-        data = {**load(), **values}
-        p = path()
-        try:
-            p.parent.mkdir(parents=True, exist_ok=True)
-            tmp = p.with_name(p.name + ".tmp")       # через временный файл: не оставим полузаписанный
-            tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-            os.replace(tmp, p)
-        except OSError:
-            pass
+        jsonstore.write(path(), {**load(), **values}, indent=2)
 
 
 # темы, которых больше нет, - к ближайшей оставшейся

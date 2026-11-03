@@ -56,6 +56,13 @@ class UpdateTests(unittest.TestCase):
         self.assertFalse(updates.due(today=DAY))                       # сегодня уже проверяли
         self.assertTrue(updates.due(today=DAY + datetime.timedelta(days=1)))
 
+    def test_release_url_must_be_github(self):
+        """адрес из ответа открывается в браузере: не GitHub (или не https) - страница выпусков по умолчанию"""
+        default = "https://github.com/%s/releases" % updates.REPO
+        for url in ("file:///C:/Windows/System32/calc.exe", "http://github.com/x", "ms-settings:", 5, None):
+            info = updates.check(opener({"tag_name": "v99.0.0", "html_url": url}), today=DAY)
+            self.assertEqual(info["url"], default, url)
+
     def test_same_version_and_errors_are_silent(self):
         self.assertIsNone(updates.check(opener({"tag_name": "v0.1.0"}), today=DAY))
 

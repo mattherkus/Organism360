@@ -41,6 +41,22 @@ class SpeechTests(unittest.TestCase):
             proc.terminate.assert_called_once()
             self.assertFalse(speech.speaking())
 
+    def test_powershell_text_is_fed_in_background(self):
+        """длинная карточка не держит окно: текст уходит в ввод PowerShell из другого потока"""
+        import threading
+        proc = mock.Mock()
+        proc.poll.return_value = None
+        fed = threading.Event()
+        proc.stdin.close.side_effect = lambda: fed.set()
+        with mock.patch.dict(os.environ, {"ORGANISM_ATLAS_SPEECH": ""}), \
+                mock.patch.object(speech, "_qt", return_value=None), \
+                mock.patch.object(speech, "_system", return_value=("powershell", None)), \
+                mock.patch.object(speech.subprocess, "Popen", return_value=proc):
+            self.assertTrue(speech.speak("Сердце " * 2000, "ru"))
+            self.assertTrue(fed.wait(5))
+            proc.stdin.write.assert_called_once_with(("Сердце " * 2000).encode("utf-8"))
+            speech.stop()
+
 
 if __name__ == "__main__":
     unittest.main()

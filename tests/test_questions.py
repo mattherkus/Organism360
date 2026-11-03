@@ -108,6 +108,7 @@ class LoaderTests(unittest.TestCase):
             ({"answer": " ", "wrong": ["2"]}, "answer «ru» пустой"),
             ({"answer": "4", "wrong": ["2", "4"]}, "есть и среди неверных"),
             ({"answer": {"ru": "а", "en": "a"}, "wrong": {"ru": ["б", "в"], "en": ["b"]}}, "разное число"),
+            ({"answer": {"ru": "а", "en": "a"}, "wrong": {"ru": ["б"]}}, "на разные языки"),
         ]
         for extra, expected in cases:
             self.write("heart.json", {"questions": [{"level": "easy", "ru": "Вопрос?", **extra}]})

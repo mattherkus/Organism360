@@ -133,7 +133,12 @@ def t(key, **kw):
     for code in _chain():
         s = _load(code)["ui"].get(key)
         if s:
-            return s.format(**kw) if kw else s
+            if not kw:
+                return s
+            try:
+                return s.format(**kw)
+            except (KeyError, IndexError, ValueError):   # опечатка в переводе ({имя} не то, лишняя скобка)
+                return s
     return key                                    # видно на экране, какого ключа не хватает
 
 

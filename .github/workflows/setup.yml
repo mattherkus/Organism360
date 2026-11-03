@@ -15,7 +15,28 @@ permissions:
   contents: write
 
 jobs:
+  # тесты (окно - без экрана, offscreen): без них сборки не начинаются и выпуск не выкладывается
+  tests:
+    runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Зависимости
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Стиль
+        run: ruff check .
+      - name: Тесты
+        run: python -m unittest discover -s tests -t .
+
   setup:
+    needs: tests
     runs-on: windows-latest
     env:
       PYTHONUTF8: "1"                  # консоль раннера - cp1252, а скрипты пишут по-русски
@@ -39,6 +60,7 @@ jobs:
 
   # macOS и Linux: та же программа без Python, архивом (установщика нет - распаковать и запустить)
   portable:
+    needs: tests
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +100,16 @@ jobs:
           merge-multiple: true
       - name: Версия
         id: ver
-        run: python3 -c "import organism_atlas; print('tag=v' + organism_atlas.__version__)" >> "$GITHUB_OUTPUT"
+        run: |
+          tag="v$(python3 -c "import organism_atlas; print(organism_atlas.__version__)")"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            # тег и версия в программе должны совпадать, иначе файл v1.1.0 окажется в выпуске v1.2.0
+            [ "${{ github.ref_name }}" = "$tag" ] || { echo "::error::тег ${{ github.ref_name }}, а версия $tag"; exit 1; }
+          elif git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            # ручной запуск: выпуск с этим тегом уже есть - новые файлы попали бы в старый выпуск
+            echo "::error::выпуск $tag уже есть: поднимите organism_atlas.__version__"; exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Выпуск
         uses: softprops/action-gh-release@v2
         with:

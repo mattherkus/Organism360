@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 
 _backend = None                 # выбранный источник голоса (кэш)
 _proc = None                    # процесс системного синтезатора, пока он говорит
@@ -88,13 +89,21 @@ def speak(text, lang="ru"):
     try:
         _proc = subprocess.Popen(cmd, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=flags)
-        if stdin is not None:
-            _proc.stdin.write(stdin.encode("utf-8"))
-            _proc.stdin.close()
     except OSError:
         _proc = None
         return False
+    if stdin is not None:           # в фоне: PowerShell читает ввод через секунду-другую, а канал вмещает ~4 КБ
+        threading.Thread(target=_feed, args=(_proc, stdin.encode("utf-8")), daemon=True).start()
     return True
+
+
+def _feed(proc, data):
+    """отдать текст синтезатору; если его уже остановили (stop), запись просто обрывается"""
+    try:
+        proc.stdin.write(data)
+        proc.stdin.close()
+    except (OSError, ValueError):
+        pass
 
 
 def speaking():

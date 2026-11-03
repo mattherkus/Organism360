@@ -4,6 +4,7 @@ import string
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from organism_atlas import diseases, i18n
 from organism_atlas.organs import ORGANS, fact_of_day
@@ -135,6 +136,13 @@ class SwitchTests(unittest.TestCase):
 
     def test_missing_key_is_visible(self):
         self.assertEqual(i18n.t("no_such_key"), "no_such_key")
+
+    def test_typo_in_translation_does_not_crash(self):
+        """лишняя скобка или не то {имя} в переводе - строка без подстановки, а не ошибка посреди игры"""
+        ui = i18n._load(i18n.BASE)["ui"]
+        with mock.patch.dict(ui, {"typo_a": "Вопрос {n из {total}", "typo_b": "Вопрос {num}"}):
+            self.assertEqual(i18n.t("typo_a", n=1, total=2), "Вопрос {n из {total}")
+            self.assertEqual(i18n.t("typo_b", n=1), "Вопрос {num}")
 
     def test_fact_of_day(self):
         d = datetime.date(2026, 10, 24)
