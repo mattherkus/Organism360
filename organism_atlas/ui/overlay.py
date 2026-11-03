@@ -13,8 +13,9 @@ Esc закрывает верхнюю (это делает главное окн
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtGui import QPainter
 
+from ..i18n import t
 from .scaling import px
-from .widgets import RoundCard, alive, color, flat_button, hbox, label, vbox
+from .widgets import RoundCard, alive, clear, color, flat_button, hbox, label, vbox
 
 
 def stack(host):
@@ -64,6 +65,7 @@ class Panel(RoundCard):
 
     closed = Signal()
     kind = None
+    title_key = None                             # ключ заголовка: такая панель пересобирается при смене языка
 
     def __init__(self, host, title="", kind=None, page=False):
         super().__init__(fill="bg", border="border", radius=16, parent=host)
@@ -105,6 +107,17 @@ class Panel(RoundCard):
         self.show()
         self.raise_()
         changed(host)
+
+    def build(self):
+        """содержимое панели в self.body (панели с title_key)"""
+
+    def retranslate(self):
+        """смена языка: заголовок и содержимое заново (панели со своим refresh обновляются им)"""
+        if self.title_key is None or not self.is_open:
+            return
+        self.title(t(self.title_key))
+        clear(self.body)
+        self.build()
 
     def title(self, text=None):
         if text is None:

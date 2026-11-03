@@ -98,7 +98,7 @@ def load_mesh(key):
             arr = [np.asarray(data[k + str(i)], dt) for k, dt in (("v", np.float64), ("f", np.int64), ("n", np.float64))]
             for a in arr:
                 a.flags.writeable = False
-            if arr[1].max() >= len(arr[0]):
+            if arr[1].size and (arr[1].min() < 0 or arr[1].max() >= len(arr[0])):
                 raise ValueError("models/mesh/%s: номер вершины за пределами сетки" % key)
             groups.append((g, arr))
         _mesh_cache[key] = groups

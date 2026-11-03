@@ -30,6 +30,7 @@ class TourController:
 
     def start(self, name):
         self.tour, self.paused = (name, 0), None
+        self.app.kb.key = None
         self.app.set_spot(None)
         self.app.set_card(self.card, fade=True)
 

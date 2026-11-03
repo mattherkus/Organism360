@@ -117,6 +117,20 @@ class FallbackTests(unittest.TestCase):
                 parts = load_parts("heart")
         self.assertTrue(all(p["k"] in ("e", "t") for p in parts))
 
+    def test_negative_vertex_index_is_rejected(self):
+        """отрицательный номер вершины numpy молча взял бы с конца, а видеокарта - за пределами буфера"""
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = read_mesh_model("heart")
+            Path(tmp, "heart.json").write_text(json.dumps(meta), encoding="utf-8")
+            with np.load(models._mesh_dir() / meta["mesh"]) as z:
+                arrays = {k: z[k] for k in z.files}
+            arrays["f0"] = arrays["f0"].astype(np.int64)
+            arrays["f0"].flat[0] = -1
+            np.savez(Path(tmp, meta["mesh"]), **arrays)
+            with mock.patch.object(models, "_mesh_dir", return_value=Path(tmp)),                     mock.patch.dict(models._mesh_cache, clear=True):
+                with self.assertRaisesRegex(ValueError, "за пределами"):
+                    models.load_mesh("heart")
+
     def test_organs_without_mesh_use_procedural(self):
         for key in set(ORGANS) - ANATOMICAL:
             self.assertTrue(all(p["k"] in ("e", "t") for p in load_parts(key)), key)

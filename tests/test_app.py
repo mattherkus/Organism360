@@ -815,12 +815,54 @@ class AppTests(unittest.TestCase):
         self.assertFalse(a.knowledge)
         self.assertIsNone(a.view.layers["knowledge"])
 
+    def test_panels_follow_language(self):
+        """открытые статистика и клавиши переписываются на новом языке, а не остаются на старом"""
+        from organism_atlas.ui import help as help_panel, stats as stats_page
+        page = stats_page.show_stats(self.app)
+        keys = help_panel.show_help(self.app)
+        self.app.set_lang("en")
+        self.assertEqual(page.title(), i18n.t("stats_title"))
+        self.assertIn(i18n.t("help_enter"), self.panel_texts(keys))
+        self.assertIn(i18n.t("stats_empty"), self.panel_texts(page))
+        self.assertEqual(self.app.panels, [page, keys])                   # обе открыты, порядок прежний
+        self.app.set_lang("ru")
+
     def test_train_weak_spots(self):
         a = self.app
         a.quiz.train(["liver", "heart"])
         self.assertEqual(a.mode, "mix")
         self.assertEqual(set(a.quiz.session.q), {"liver", "heart"})
         self.assertEqual(a.quiz.qset, "weak")
+
+    def test_train_again_keeps_weak_organs(self):
+        """«Сыграть ещё» после «Потренировать слабые места» - снова те же органы, а не все"""
+        a = self.app
+        a.quiz.train(["liver", "heart"])
+        self.play()
+        a.quiz.show_results()
+        again = [b for b in self.buttons(a.card) if b.text() == i18n.t("results_again")]
+        again[0].click()
+        self.assertEqual(set(a.quiz.session.q), {"liver", "heart"})
+        self.assertEqual(a.quiz.qset, "weak")
+        a.quiz.stop()
+        a.set_mode("find")
+        a.quiz.start()                                  # обычная игра после тренировки - по всем органам
+        self.assertIsNone(a.quiz.custom)
+
+    def test_wrong_answer_is_not_a_new_question(self):
+        """без таймера ошибка в «Найди орган» не проявляет карточку заново, а следующий вопрос - проявляет"""
+        a = self.app
+        a.set_mode("find")
+        a.quiz.set_cfg("timer", 0)
+        a.quiz.start()
+        s = a.quiz.session
+        with mock.patch.object(a, "fade_card") as fade:
+            wrong = next(k for k in a.organs() if k != s.current)
+            a.quiz.answer(wrong)
+            fade.assert_not_called()
+            a.quiz.answer(s.current)
+            a.quiz.next_question()
+            fade.assert_called()
 
     def panel_texts(self, panel):
         from PySide6.QtWidgets import QLabel
@@ -850,6 +892,23 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(a.view.tip)
         a.on_key("Return", "")
         self.assertEqual(s.results.get(target), True)
+
+    def test_keyboard_selection_respects_hard_level_and_flashcards(self):
+        """на сложном уровне стрелки не подсвечивают орган; во флеш-карточках Enter открывает ответ,
+        а не карточку органа, выбранного стрелками раньше"""
+        a = self.app
+        a.on_key("Down", "")
+        a.flash.start("latin")
+        a.on_key("Down", "")                                    # выбор стрелками - уже при идущем подходе
+        a.on_key("Return", "")
+        self.assertTrue(a.flash.session.shown)
+        self.assertEqual(a.card_fn, a.flash.card)
+        a.set_mode("find")
+        a.quiz.set_cfg("level", "hard")
+        a.quiz.start()
+        a.on_key("Down", "")
+        self.assertIsNotNone(a.kb.key)
+        self.assertIsNone(a.view.layers["hover"])
 
     def test_read_aloud(self):
         """«Прочитать вслух»: кнопка есть, если есть голос; R читает открытую карточку, повторно - останавливает"""

@@ -47,6 +47,8 @@ class QuizController:
                     "length": settings.get(saved, "quiz_length"), "topic": None, "set": "all"}
         self.session = None                    # QuizSession во время игры (None - на карточке настройки)
         self.qset = "all"                      # набор вопросов текущей игры (для истории)
+        self.custom = None                     # (qset, органы) игры по своему списку - для «Сыграть ещё»
+        self.shown = None                      # номер вопроса на экране: другой - значит, вопрос новый
         self.choices = {}                      # {ключ варианта: кнопка} в вопросах с вариантами
         self.progress = None                   # шапка вопроса: «Вопрос N из M · Ошибок: K» и полоски
         self.feedback = None                   # (ключ текста, орган, цвет[, вопрос]) - отзыв о прошлом ответе
@@ -89,6 +91,7 @@ class QuizController:
         self.app.marks.unreveal()
         self.app.marks.show_missed(())                        # отметки ошибок прошлой игры
         self.session = None
+        self.shown = None
         self.choices = {}
         if self.app.atlas:
             self.app.on_leave()
@@ -222,12 +225,13 @@ class QuizController:
     def start(self, qset=None, keys=None):
         """начать игру по текущим настройкам; qset - другой набор вопросов (кнопка «Повторить ошибки»),
         keys - свой список органов (тогда qset - только подпись набора в истории)"""
+        custom = (qset, list(keys)) if keys else None
         qset = qset or self.chosen_set()
         keys = keys or self.question_keys(qset)
         if not keys:
             qset, keys = "all", self.question_keys("all")
         self.stop()
-        self.qset = qset
+        self.qset, self.custom = qset, custom
         count = game_length(self.cfg["length"], len(keys))
         mode, level = self.mode, self.cfg["level"]
         if mode == "daily":
@@ -277,7 +281,8 @@ class QuizController:
         if s.finished:
             self.app.set_status(lambda: "")            # итоги - в карточке справа, строка статуса не нужна
             return
-        new = s.deadline is None
+        new = s.i != self.shown
+        self.shown = s.i
         if new:                                         # новый вопрос на экране - запускаем его время
             s.start_timer()
             self.tick_timer.stop()
@@ -558,7 +563,11 @@ class QuizController:
             return
 
         def again(qset=None):
-            if app.mode == mode:
+            if app.mode != mode:
+                return
+            if qset is None and self.custom:            # «Потренировать слабые места» - снова те же органы
+                self.start(*self.custom)
+            else:
                 self.start(qset)
 
         due = len(progress.due(mode, self.mode_keys(mode))) if mode not in NO_CARDS else 0

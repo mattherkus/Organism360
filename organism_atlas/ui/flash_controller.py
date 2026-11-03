@@ -42,6 +42,7 @@ class FlashController:
     def start(self, deck):
         app = self.app
         app.tours.reset()                               # экскурсия и подход вместе не идут
+        app.kb.key = None                               # Enter - ответ на карточку, а не выбранный стрелками орган
         try:
             self.before = progress.load()
         except Exception:

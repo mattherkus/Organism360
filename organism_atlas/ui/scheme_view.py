@@ -4,13 +4,13 @@
 
 import math
 
-from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt,
+from PySide6.QtCore import (QAbstractAnimation, QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt,
                             QVariantAnimation)
 from PySide6.QtGui import QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from .scaling import px
-from .widgets import color, flat_button, font
+from .widgets import alive, color, flat_button, font
 
 
 ZOOM_STEPS = (1.0, 1.25, 1.6, 2.0, 2.5, 3.2, 4.0)     # приближение схемы колесом и кнопками
@@ -23,7 +23,7 @@ DRAG_PX = 5                                            # сдвиг мыши, п
 def slide(w, start, end, done=None):
     """плавно передвинуть виджет из start в end (координаты родителя); done - после"""
     old = getattr(w, "_slide", None)
-    if old is not None:
+    if alive(old):                                     # доехавшая анимация уже удалена (DeleteWhenStopped)
         old.stop()
     a = QPropertyAnimation(w, b"pos", w)
     a.setDuration(SLIDE_MS)
@@ -33,7 +33,7 @@ def slide(w, start, end, done=None):
     if done:
         a.finished.connect(done)
     w._slide = a
-    a.start()
+    a.start(QAbstractAnimation.DeleteWhenStopped)
 
 
 class SchemeView(QWidget):

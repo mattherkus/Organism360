@@ -15,7 +15,7 @@ import time
 import traceback
 from datetime import date
 
-from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRect, QSize, Qt, QTimer
+from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QPoint, QPropertyAnimation, QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QActionGroup, QKeySequence, QPainter, QShortcut
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QLineEdit, QMenu, QPlainTextEdit,
                                QScrollArea, QWidget)
@@ -340,6 +340,7 @@ class App(QWidget):
         self.hidden -= other_sex(value)
         self.tours.reset()                              # маршрут экскурсии зависит от схемы тела
         self.flash.reset()                              # и колоды флеш-карточек - тоже
+        self.cards.clear()                              # «назад» не ведёт к органу, которого нет на схеме
         self.set_spot(None)
         self.render_layers()
         self.apply_view()
@@ -420,6 +421,8 @@ class App(QWidget):
         self.render_layers()
         self.status.setText(self.status_fn())
         self.card_fn()
+        for p in list(overlay.stack(self)):            # статистика, достижения, клавиши - на новом языке
+            p.retranslate()
         retranslate_all()
         refresh_settings()
         refresh_diseases(self)
@@ -461,7 +464,7 @@ class App(QWidget):
 
         a.finished.connect(done)
         self.card_fade = a
-        a.start()
+        a.start(QAbstractAnimation.DeleteWhenStopped)                 # иначе остаётся дочерним объектом карточки навсегда
 
     def empty_card(self):
         fill_start(self.card, t("pick_title"), t("pick_hint"), t("tours_title"),
@@ -831,13 +834,17 @@ class App(QWidget):
         """тип текущего вопроса (quiz.KINDS); без игры - режим: study или режим викторины"""
         return self.quiz.kind() or self.mode
 
+    def hover_allowed(self):
+        """подсветка под курсором (и выбранного стрелками): на сложном уровне и в экзамене её нет"""
+        s = self.quiz.session
+        return self.kind() == "study" or not (s and (s.level == "hard" or self.quiz.exam()))
+
     def on_move(self, x, y):
         """мышь над схемой; x, y - в пикселях схемы"""
         if not self.ready() or self.kind() not in ("study", "find", "body", "order"):   # остальные - кнопками
             return
-        s = self.quiz.session
-        if self.kind() != "study" and s and (s.level == "hard" or self.quiz.exam()):
-            return                                      # на сложном уровне и в экзамене подсветки под курсором нет
+        if not self.hover_allowed():
+            return
         key = self.thing_at(x, y)
         self.kb.key = None                              # мышь снова главная: выбор стрелками сброшен
         if key != self.cur:

@@ -127,7 +127,7 @@ in vec3 v_n; in float v_z;
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 void main() {
-    o0 = vec4(v_z, normalize(v_n));
+    o0 = vec4(v_z, v_n / (length(v_n) + 1e-12));      // нулевая нормаль - 0, а не NaN (как в meshraster)
     o1 = vec4(mid, 0.0, -1.0, 1.0);
 }
 """

@@ -12,8 +12,11 @@
 запуске схема берётся оттуда (или ближайшая из них показывается растянутой, пока рисуется точная).
 """
 
+import functools
 import hashlib
 import os
+import zipfile
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -43,8 +46,9 @@ KEEP = 6                                          # сколько масшта�
 _SOURCES = ["atlas.py", "geometry.py", "colors.py", "config.py", "body", "organs", "render2d"]
 
 
+@functools.lru_cache(maxsize=1)
 def version():
-    """хэш исходников рисунка. В собранной программе (tools/build_exe.py) эти исходники лежат рядом
+    """хэш исходников рисунка (считается раз за запуск: рисует код, который уже загружен). В собранной программе (tools/build_exe.py) эти исходники лежат рядом
     как данные - версия та же, что при запуске из исходников. Если файла нет, хэшируется только его имя:
     кэш работает, просто не следит за правками этого файла"""
     h = hashlib.sha256(("%d|%s|%s" % (FORMAT, np.__version__, PIL.__version__)).encode())
@@ -72,11 +76,12 @@ BODY = ("glow", "skin", "skin_hi", "muscles", "skeleton", "veins", "arteries", "
 def _read(p, ORDER):
     """({слой тела: uint8}, {орган: {rgba, hit, origin}}) из файла p или None, если его нет или он не годится"""
     try:
-        with np.load(p) as z:
+        with open(p, "rb") as f, np.load(f) as z:      # файл закрывается, даже если zip не открылся
             body = {k: z["body_" + k] for k in BODY}
             org = {k: {"rgba": z["rgba_" + k], "hit": z["hit_" + k],
                        "origin": tuple(int(v) for v in z["origin_" + k])} for k in ORDER}
-    except (OSError, KeyError, ValueError, EOFError):   # нет файла, другой набор органов, мусор
+    except (OSError, KeyError, ValueError, EOFError,    # нет файла, другой набор органов, мусор
+            zipfile.BadZipFile, zlib.error):              # обрезанный или испорченный zip
         return None
     shape = body["skin"].shape
     if any(a.dtype != np.uint8 for a in body.values()) or len(shape) != 3 or shape[2] != 4:

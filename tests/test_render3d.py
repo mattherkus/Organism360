@@ -15,6 +15,13 @@ class Render3DTests(unittest.TestCase):
                 colors = np.unique(np.asarray(im).reshape(-1, 3), axis=0)
                 self.assertGreater(len(colors), 50)               # не пустая картинка
 
+    def test_background_cache_keeps_only_last_size(self):
+        """черновики вращения - почти каждый кадр другого размера: фон не копится в памяти"""
+        scene = Scene3D(ORGANS["heart"]["parts"]())
+        for w in range(60, 90):
+            scene.render(w, 45, -62, 18, ss=1, step=2)
+        self.assertEqual(len(scene._bg), 1)
+
     def test_hidden_parts_and_part_map(self):
         """скрытая часть не рисуется, камера не сдвигается; карта частей совпадает с кадром"""
         from organism_atlas.models import load_mesh

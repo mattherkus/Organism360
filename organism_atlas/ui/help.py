@@ -35,8 +35,13 @@ def show_help(host):
 
 
 class HelpPanel(Panel):
+    title_key = "help_title"
+
     def __init__(self, host):
-        super().__init__(host, t("help_title"))
+        super().__init__(host, t(self.title_key))
+        self.build()
+
+    def build(self):
         card = rounded_card(width=px(520))
         put(self.body, card, top=10, bottom=16)
         grid = QGridLayout()

@@ -86,6 +86,17 @@ class AtlasCacheTests(unittest.TestCase):
         with mock.patch.object(atlas, "build_atlas", no_build):
             Atlas.cached(Z, self.dir)                          # и испорченный файл перезаписан
 
+    def test_truncated_file_is_rebuilt(self):
+        """обрезанный zip (питание пропало при записи) - не ошибка сборки, а повод нарисовать заново"""
+        Atlas.cached(Z, self.dir)
+        f = self.dir / self.files()[0]
+        f.write_bytes(f.read_bytes()[: f.stat().st_size // 2])
+        self.assertSameAtlas(Atlas.cached(Z, self.dir), self.fresh)
+        data = bytearray(f.read_bytes())                      # испорченные сжатые данные внутри zip
+        data[len(data) // 3: len(data) // 3 + 64] = bytes(64)
+        f.write_bytes(bytes(data))
+        self.assertSameAtlas(Atlas.cached(Z, self.dir), self.fresh)
+
     def test_new_version_rebuilds_and_removes_old_files(self):
         with mock.patch.object(atlas_cache, "version", return_value="old"):
             Atlas.cached(Z, self.dir)
@@ -124,6 +135,8 @@ class AtlasCacheTests(unittest.TestCase):
             self.assertIsNone(Atlas.preview(Z, user, prebuilt=pre))
 
     def test_version_depends_on_drawing_code(self):
+        atlas_cache.version.cache_clear()
+        self.addCleanup(atlas_cache.version.cache_clear)
         v = atlas_cache.version()
         self.assertEqual(v, atlas_cache.version())
         real = Path.read_bytes
@@ -133,6 +146,8 @@ class AtlasCacheTests(unittest.TestCase):
             return data + b"\n# edit" if p.name == "heart.py" else data
 
         with mock.patch.object(Path, "read_bytes", edited):
+            self.assertEqual(atlas_cache.version(), v)            # считается раз за запуск
+            atlas_cache.version.cache_clear()
             self.assertNotEqual(atlas_cache.version(), v)
 
     def test_unwritable_cache_dir_still_works(self):

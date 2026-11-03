@@ -187,9 +187,14 @@ def legend_row(level):
 
 class StatsPanel(Panel):
     kind = "stats"                                 # вкладка «Статистика» в шапке окна
+    title_key = "stats_title"
 
     def __init__(self, host):
-        super().__init__(host, t("stats_title"), page=True)
+        super().__init__(host, t(self.title_key), page=True)
+        self.build()
+
+    def build(self):
+        host = self.host
         data = progress.load()
         self.area = ScrollArea()
         self.area.setFixedWidth(px(WIDTH) + px(14))

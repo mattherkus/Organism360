@@ -85,13 +85,15 @@ class Scene3D:
     # --- фон
     def background(self, w, h, colors=BG):
         """фон кадра: colors - (цвет фона, цвет пятна в центре), #rrggbb; задаёт тема оформления"""
-        if (w, h, colors) not in self._bg:
+        key = (w, h, colors)
+        if key not in self._bg:
+            self._bg.clear()                    # только последний: размер черновика меняется почти каждый кадр
             yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
             r = np.hypot((xx / w - 0.5) / 0.5, (yy / h - 0.52) / 0.56)     # на краях кадра свечение = 0
             t = np.clip(1 - r, 0, 1) ** 1.6
             bg, hi = hex2rgb(colors[0]), hex2rgb(colors[1])
-            self._bg[(w, h, colors)] = bg[None, None, :] * (1 - t[..., None]) + hi[None, None, :] * t[..., None]
-        return self._bg[(w, h, colors)]
+            self._bg[key] = bg[None, None, :] * (1 - t[..., None]) + hi[None, None, :] * t[..., None]
+        return self._bg[key]
 
     # --- рендер
     def _raster(self, W_, H_, cam, right, up, scale, cx, cy, step, hidden=()):

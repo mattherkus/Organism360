@@ -23,8 +23,13 @@ def show_achievements(host):
 
 
 class AchievementsPanel(Panel):
+    title_key = "ach_title"
+
     def __init__(self, host):
-        super().__init__(host, t("ach_title"))
+        super().__init__(host, t(self.title_key))
+        self.build()
+
+    def build(self):
         data = progress.load()
         got = set(achievements.earned(data))
         card = rounded_card(width=px(640))

@@ -34,7 +34,8 @@ class KeyboardChoice:
         i = keys.index(self.key) if self.key in keys else (-1 if step > 0 else 0)
         key = self.key = keys[(i + step) % len(keys)]
         app.cur = key
-        app.marks.hover(key)
+        if app.hover_allowed():                        # на сложном уровне и в экзамене контур выдал бы ответ
+            app.marks.hover(key)
         name = i18n.name(key)
         if app.mode == "study":                        # в викторине название выдало бы ответ
             app.view.set_tip((*app.view.to_screen(*app.atlas.anchor(key)), name))
@@ -48,7 +49,7 @@ class KeyboardChoice:
         if key is None:
             return False
         if kind == "study":
-            if app.tours.tour is not None:             # Enter листает экскурсию
+            if app.tours.tour is not None or app.flash.active():     # Enter листает экскурсию или карточки
                 return False
             app.tours.pause()
             app.show_info(key)

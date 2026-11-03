@@ -8,6 +8,7 @@ from PySide6.QtGui import QPixmap, QRegion
 from PySide6.QtWidgets import QLabel, QWidget
 
 from .scheme_view import slide
+from .widgets import alive
 
 
 class UiSlide:
@@ -49,7 +50,8 @@ class UiSlide:
         pos = None
         if old is not None:
             pos = old.pos()
-            old._slide.stop()
+            if alive(old._slide):
+                old._slide.stop()
             old.deleteLater()
         g = QLabel(self.app)
         g.setAttribute(Qt.WA_TransparentForMouseEvents)

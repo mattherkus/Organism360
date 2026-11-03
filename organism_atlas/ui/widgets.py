@@ -13,7 +13,7 @@
 import html
 
 import shiboken6
-from PySide6.QtCore import QEasingCurve, QRectF, QSize, Qt, QTimer, QVariantAnimation
+from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QRectF, QSize, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout,
                                QWidget)
@@ -256,7 +256,7 @@ class RoundButton(QAbstractButton):
         a.valueChanged.connect(step)
         a.finished.connect(done)
         self.anim = a
-        a.start()
+        a.start(QAbstractAnimation.DeleteWhenStopped)
 
     def changeEvent(self, e):
         super().changeEvent(e)
