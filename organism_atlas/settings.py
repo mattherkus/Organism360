@@ -16,7 +16,7 @@ _lock = threading.Lock()
 
 # допустимые значения и значения по умолчанию; чужое или испорченное значение заменяется умолчанием
 CHOICES = {
-    "theme": ("paper", "black", "dark", "light", "contrast"),
+    "theme": ("paper", "black", "system"),     # светлая, тёмная, как в системе (theme.SYSTEM)
     "quality": ("low", "medium", "high"),        # качество 3D-рендера
     "ui_scale": (0.9, 1.0, 1.1, 1.25, 1.5),      # множитель к масштабу Windows; действует после перезапуска
     "quiz_level": ("easy", "medium", "hard"),     # сложность викторины
@@ -67,7 +67,13 @@ def save(**values):
             pass
 
 
+# темы, которых больше нет, - к ближайшей оставшейся
+_RENAMED = {"theme": {"light": "paper", "dark": "black", "contrast": "black"}}
+
+
 def get(saved, key):
     """значение настройки key из словаря load(), проверенное по CHOICES"""
     v = saved.get(key)
+    if isinstance(v, str):
+        v = _RENAMED.get(key, {}).get(v, v)
     return v if v in CHOICES[key] and not isinstance(v, bool) else DEFAULTS[key]

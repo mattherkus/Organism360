@@ -30,6 +30,8 @@ def main():
     app.setFont(font(10))
     win = App(ui_scale=settings.get(saved, "ui_scale"), quality=settings.get(saved, "quality"))
     win.show()
+    # тема «как в системе»: в Windows переключили светлую/тёмную - перекрашиваемся сразу
+    app.styleHints().colorSchemeChanged.connect(lambda _scheme: App.main and App.main.follow_system_theme())
     from .ui import onboarding
     onboarding.maybe_start(win)                 # подсказки при первом запуске - когда схема нарисована
     sys.exit(app.exec())

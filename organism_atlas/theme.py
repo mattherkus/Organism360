@@ -1,16 +1,17 @@
-"""Темы оформления интерфейса: «Бумага» (как страница анатомического атласа), «Чёрная» (тот же атлас в чёрных
-тонах), тёмная, светлая и высококонтрастная.
+"""Темы оформления интерфейса: светлая (как страница анатомического атласа), тёмная (тот же атлас в чёрных
+тонах) и «как в системе» - светлая или тёмная по настройке Windows (ui/app.py следит, когда её меняют).
 
 Виджеты получают цвета не числами, а ролями (bg, card, text, ...): кнопки и карточки берут цвет роли
 в момент рисования, а надписи запоминают свою роль (ui/widgets.py: set_fg), поэтому ui.widgets.retheme()
 перекрашивает всё окно на лету.
-Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы. В «Бумаге» и «Чёрной» схема
+Фон схемы тела (scene_bg, scene_hi) и кадров 3D (view_bg, view_hi) тоже из темы. В обеих темах схема
 лежит прямо на странице: её фон - фон окна.
 """
 
 from . import config
 
 DEFAULT = "paper"
+SYSTEM = "system"                  # не палитра: светлая или тёмная, как в системе
 
 THEMES = {
     "paper": {
@@ -37,43 +38,6 @@ THEMES = {
         "scene_bg": "#0b0b0c", "scene_hi": "#16232c",          # схема - прямо на чёрной странице
         "view_bg": "#10161b", "view_hi": "#1b3a50",
     },
-    "dark": {
-        "bg": config.BG, "card": config.CARD, "border": config.BORDER,
-        "text": config.TEXT, "muted": config.MUTED,
-        "accent": config.ACCENT, "on_accent": config.TEXT,     # кнопка выбранного режима и её текст
-        "accent_fg": config.ACCENT,                            # акцентный текст на карточке (счёт)
-        "day_bg": "#1c3446", "day_title": "#f2c14e",           # плашка «факт дня»
-        "ok": "#5fd08a", "bad": "#ff7a6e",                     # отзыв после верного / неверного ответа
-        "right_bg": "#2e7d4f", "wrong_bg": "#8a2b26", "on_mark": config.TEXT,   # кнопки-варианты
-        "tip_bg": "#000000", "tip_fg": config.TEXT,            # подсказка над схемой
-        "scene_bg": config.BG, "scene_hi": "#1a3547",          # фон схемы тела и пятно за телом
-        "view_bg": config.BG, "view_hi": "#1b3a50",            # фон кадра 3D и пятно в центре
-    },
-    "light": {
-        "bg": "#eef2f5", "card": "#ffffff", "border": "#b9c7d2",
-        "text": "#14232e", "muted": "#4b5d6a",
-        "accent": "#1f62a3", "on_accent": "#ffffff",
-        "accent_fg": "#1f62a3",
-        "day_bg": "#fff5d6", "day_title": "#7a4f00",
-        "ok": "#1b7340", "bad": "#b3261e",
-        "right_bg": "#1b7340", "wrong_bg": "#b3261e", "on_mark": "#ffffff",
-        "tip_bg": "#000000", "tip_fg": "#ffffff",
-        "scene_bg": "#eef2f5", "scene_hi": "#ffffff",
-        "view_bg": "#eef2f5", "view_hi": "#ffffff",
-    },
-    # каждый текст к своему фону - не ниже 7:1 (WCAG AAA), это проверяет tests/test_theme.py
-    "contrast": {
-        "bg": "#000000", "card": "#000000", "border": "#ffffff",
-        "text": "#ffffff", "muted": "#e6e6e6",
-        "accent": "#ffd400", "on_accent": "#000000",
-        "accent_fg": "#ffd400",
-        "day_bg": "#000000", "day_title": "#ffd400",
-        "ok": "#7dff9b", "bad": "#ff9e94",
-        "right_bg": "#005a1e", "wrong_bg": "#8b0000", "on_mark": "#ffffff",
-        "tip_bg": "#000000", "tip_fg": "#ffffff",
-        "scene_bg": "#000000", "scene_hi": "#0d1d29",
-        "view_bg": "#000000", "view_hi": "#0d1d29",
-    },
 }
 
 # пары (текст, фон), которые встречаются в интерфейсе
@@ -90,13 +54,34 @@ def current():
     return _name
 
 
+def system_theme():
+    """светлая или тёмная тема - как в системе: спрашиваем Qt, а до QApplication - реестр Windows"""
+    try:
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QGuiApplication
+        if QGuiApplication.instance():
+            scheme = QGuiApplication.styleHints().colorScheme()
+            if scheme != Qt.ColorScheme.Unknown:
+                return "black" if scheme == Qt.ColorScheme.Dark else "paper"
+    except ImportError:
+        pass
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+            return "paper" if winreg.QueryValueEx(key, "AppsUseLightTheme")[0] else "black"
+    except (ImportError, OSError):
+        return DEFAULT
+
+
 def set_theme(name):
+    """name - палитра из THEMES или SYSTEM; current() вернёт именно name, а цвета в C - уже палитры"""
     global _name
-    if name not in THEMES:
+    if name not in THEMES and name != SYSTEM:
         name = DEFAULT
     _name = name
     C.clear()
-    C.update(THEMES[name])
+    C.update(THEMES[system_theme() if name == SYSTEM else name])
 
 
 def contrast(a, b):

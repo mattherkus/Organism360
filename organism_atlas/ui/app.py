@@ -283,6 +283,18 @@ class App(QWidget):
         """сменить тему на лету: перекрасить все окна, а карточки и тексты перерисовать"""
         theme.set_theme(name)
         settings.save(theme=theme.current())
+        self.repaint_theme()
+
+    def follow_system_theme(self):
+        """в системе сменили светлую/тёмную тему: если выбрано «как в системе» - перекраситься"""
+        if theme.current() != theme.SYSTEM:
+            return
+        before = dict(theme.C)
+        theme.set_theme(theme.SYSTEM)
+        if theme.C != before:
+            self.repaint_theme()
+
+    def repaint_theme(self):
         retheme()
         titlebar.set_icon(QApplication.instance())
         titlebar.paint(self)

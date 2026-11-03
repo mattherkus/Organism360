@@ -1298,10 +1298,18 @@ class AppTests(unittest.TestCase):
         settings_window.show_settings(a)
         win = settings_window._window
         try:
-            a.set_theme("light")
-            self.assertEqual(theme.C["bg"], theme.THEMES["light"]["bg"])
-            self.assertEqual(a.title.palette().windowText().color().name(), theme.THEMES["light"]["text"])
-            self.assertEqual(a.settings_button.colors()[0], theme.THEMES["light"]["accent"])   # вкладка панели
+            from unittest import mock
+            with mock.patch.object(theme, "system_theme", return_value="paper"):
+                a.set_theme("system")
+            self.assertEqual(theme.C["bg"], theme.THEMES["paper"]["bg"])
+            with mock.patch.object(theme, "system_theme", return_value="black"):
+                a.follow_system_theme()                    # в системе включили тёмную тему
+            self.assertEqual(a.title.palette().windowText().color().name(), theme.THEMES["black"]["text"])
+            a.set_theme("black")
+            a.follow_system_theme()                        # выбрана не «как в системе» - ничего не меняется
+            self.assertEqual(theme.C["bg"], theme.THEMES["black"]["bg"])
+            self.assertEqual(a.title.palette().windowText().color().name(), theme.THEMES["black"]["text"])
+            self.assertEqual(a.settings_button.colors()[0], theme.THEMES["black"]["accent"])   # вкладка панели
             self.assertFalse(a.mode_buttons["study"].selected())
             a.set_lang("en")
             self.assertEqual(win.win.title(), "Settings")
@@ -1329,7 +1337,7 @@ class AppTests(unittest.TestCase):
             self.assertIs(win.app, new)
             saved = settings.load()
             self.assertEqual({k: settings.get(saved, k) for k in settings.DEFAULTS},
-                             {**settings.DEFAULTS, "theme": "light", "quality": "medium", "ui_scale": 1.25})
+                             {**settings.DEFAULTS, "theme": "black", "quality": "medium", "ui_scale": 1.25})
             self.assertEqual(saved["lang"], "en")
             win.win.close_panel()
             self.assertIsNone(settings_window._window)

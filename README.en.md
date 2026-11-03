@@ -31,7 +31,7 @@ The interface is in English and Russian, with Latin names for every organ, bone 
 - **3D** — anatomical meshes from open atlases (BodyParts3D, Human Reference Atlas, Open Anatomy, Z-Anatomy),
   rendered on the GPU with OpenGL 3.3 (with a NumPy fallback). Parts of a model can be hidden or named under
   the cursor, and *Find the part* is a mini-quiz inside the 3D view.
-- **Comfort** — five themes (*Paper* by default, *Black*, dark, light and high contrast), interface scaling,
+- **Comfort** — light (default), dark or *Match system* theme, interface scaling,
   keyboard control without a mouse, reading a card aloud, and a short tour of the window on the first launch.
 
 | | |
