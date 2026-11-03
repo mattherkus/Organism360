@@ -164,13 +164,14 @@ class AppTests(unittest.TestCase):
         self.app.set_lang("ru")
         self.assertEqual(self.app.lang_button.text(), "Русский  ▾")
 
-    def test_diseases_only_in_study(self):
+    def test_diseases_closed_on_quiz_start(self):
+        """переход в викторину закрывает справочник, но вкладка «Болезни» в ней доступна"""
         from organism_atlas.ui.overlay import top
         self.app.diseases_button.invoke()
         self.assertIsNotNone(top(self.app))
         self.app.set_mode("find")
         self.assertIsNone(top(self.app))
-        self.assertFalse(self.app.diseases_button.isEnabled())
+        self.assertTrue(self.app.diseases_button.isEnabled())
 
     @property
     def other(self):
@@ -1390,7 +1391,7 @@ class AppTests(unittest.TestCase):
     def test_header_tabs(self):
         """болезни, статистика и настройки - вкладки рядом с режимами: страница во всё окно вместо схемы, выбрана
         её вкладка; повторный щелчок её не закрывает; вкладка режима возвращает к схеме как было (карточка органа
-        остаётся); в викторине вкладка «Болезни» недоступна"""
+        остаётся); в викторине вкладка «Болезни» тоже открывается"""
         from organism_atlas.ui import overlay
         a = self.app
         tabs = a.panel_tabs
@@ -1416,8 +1417,31 @@ class AppTests(unittest.TestCase):
         self.assertEqual(a.cards.current, "heart")
         self.assertTrue(all(z.isVisible() for z in zoom))
         a.set_mode("find")
-        self.assertFalse(tabs["diseases"].isEnabled())
+        self.assertTrue(tabs["diseases"].isEnabled())
         self.assertTrue(a.mode_buttons["quiz"].selected())
+
+    def test_diseases_during_quiz(self):
+        """справочник открывается посреди игры: органы в статье - не ссылки (вопрос викторины не подменяется
+        карточкой органа), болезни - ссылки; назад вкладкой «Викторина» - та же игра"""
+        from PySide6.QtWidgets import QLabel
+        from organism_atlas.ui.overlay import top
+        a = self.app
+        a.set_mode("find")
+        a.quiz.start()
+        pump()
+        current = a.quiz.session.current
+        a.panel_tabs["diseases"].invoke()
+        pump()
+        panel = top(a)
+        self.assertEqual(a.open_tab(), "diseases")
+        panel.select("cirrhosis")
+        texts = [w.text() for w in panel.card.findChildren(QLabel)]
+        self.assertFalse(any('href="liver"' in s for s in texts))
+        self.assertTrue(any('href="hepatitis"' in s for s in texts))
+        a.mode_buttons["quiz"].invoke()
+        pump()
+        self.assertIsNone(a.open_tab())
+        self.assertEqual(a.quiz.session.current, current)
 
     def test_card_fades_in(self):
         """новая карточка органа проявляется плавно, а после - без эффекта прозрачности"""

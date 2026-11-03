@@ -48,9 +48,10 @@ def open_url(url):
     QDesktopServices.openUrl(QUrl(url))
 
 
-def fill_disease(card, key, on_link):
+def fill_disease(card, key, on_link, organ_links=True):
     """статья о болезни: органы и упоминания в тексте - ссылки, внизу - другие болезни тех же органов,
-    источники статьи (или сайты «Где узнать больше») и проверил ли её врач"""
+    источники статьи (или сайты «Где узнать больше») и проверил ли её врач. organ_links=False - органы
+    без ссылок (идёт викторина: карточка органа встала бы на место её вопроса), болезни - по-прежнему ссылки"""
     lay = card.lay
     clear(lay)
     organs = ORGANS_OF[key]
@@ -62,8 +63,10 @@ def fill_disease(card, key, on_link):
     put(lay, label(", ".join(t("system_" + s) for s in dict.fromkeys(ORGANS[o]["systems"][0] for o in organs)),
                    "muted", italic=True), bottom=4)
     seen = {key, *organs}                                   # органы уже ссылки в заголовке - в тексте не повторять
+    if not organ_links:
+        seen |= ORGANS.keys() | STRUCTURES.keys()           # ни один орган, кость или мышца - не ссылка
     heading(lay, t("disease_organs"))
-    put(lay, rich_label(joined([(organ_name(o), o) for o in organs], ", "), on_link))
+    put(lay, rich_label(joined([(organ_name(o), o if organ_links else None) for o in organs], ", "), on_link))
     for field in ("desc", "symptoms", "causes", "treatment"):
         heading(lay, t("disease_" + ("what" if field == "desc" else field)))
         put(lay, linked(diseases.text(key, field), on_link, seen))
@@ -155,7 +158,7 @@ class DiseasesPanel(Panel):
             self.search.clear()
             self.search.blockSignals(False)
         self.fill_list()
-        fill_disease(self.card, key, self.select)
+        fill_disease(self.card, key, self.select, organ_links=self.host.mode == "study")
         self.area.verticalScrollBar().setValue(0)
         w = self.items[key]                                 # прокрутить список к ней, когда он разложится
         QTimer.singleShot(0, lambda: alive(w) and self.list.ensureWidgetVisible(w))

@@ -945,7 +945,6 @@ class App(QWidget):
         if i18n.latin():
             name += " · " + i18n.language_name(i18n.LATIN)
         self.lang_button.setText(name + "  ▾")
-        self.diseases_button.setEnabled(self.mode == "study")     # в викторине справочник подсказал бы ответ
 
     def page_rect(self):
         """место страницы-вкладки: во всю ширину окна от строки статуса (под вкладками) до низа"""
