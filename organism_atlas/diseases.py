@@ -121,19 +121,15 @@ def related(key):
     return [d for d in KEYS if d != key and organs & set(ORGANS_OF[d])]
 
 
-def _norm(s):
-    return s.lower().replace("ё", "е").strip()
-
-
 def search(query):
     """болезни, подходящие под строку: часть названия болезни на любом языке или органа на любом языке"""
-    q = _norm(query)
+    q = i18n.fold(query)
     if not q:
         return list(KEYS)
     out = []
     for d in KEYS:
         names = [i18n.section(code, "diseases").get(d, {}).get("name", "") for code in i18n.available()]
         names += [n for o in ORGANS_OF[d] for n in i18n.all_names(o)]
-        if any(q in _norm(n) for n in names if n):
+        if any(q in i18n.fold(n) for n in names if n):
             out.append(d)
     return out

@@ -1,11 +1,15 @@
 """Реестр органов.
 
-Чтобы добавить орган: создайте модуль organs/<имя>.py с COLOR, SYSTEMS, paint() и parts() по образцу
-существующих (SEX - если орган есть только у одного пола), впишите его в _MODULES (порядок = порядок
+Чтобы добавить орган: создайте модуль organs/<имя>.py с COLOR, SYSTEMS и paint() по образцу
+существующих (SEX - если орган есть только у одного пола; parts() - если 3D-модель не из models/<имя>.json
+или models/mesh/<имя>.*), впишите его в _MODULES (порядок = порядок
 в карточках) и в ORDER (порядок слоёв), а тексты карточки добавьте в lang/ru.json (и в другие языки)
 под тем же ключом.
 """
+import functools
+
 from .. import i18n, settings
+from ..models import load_parts
 from . import (adrenals, aorta, appendix, bladder, brain, diaphragm, esophagus, gallbladder, heart, intestines,
                kidneys, liver, lungs, lymph_nodes, ovaries, pancreas, pituitary, prostate, rectum, spinal_cord, spleen,
                stomach, thymus, thyroid, trachea, uterus, vena_cava)
@@ -42,8 +46,9 @@ PANEL_SYSTEMS = ("respiratory", "digestive", "endocrine", "immune", "urinary", "
 SEXES = settings.CHOICES["body"]
 
 # {ключ: {color, parts, systems, sex}}: не зависящее от языка; тексты берутся через i18n.
-# sex - None, если орган есть у всех
-ORGANS = {key: {"color": m.COLOR, "parts": m.parts, "systems": m.SYSTEMS, "sex": getattr(m, "SEX", None)}
+# parts() - 3D-модель (по умолчанию models/<ключ>.json или анатомическая сетка), sex - None, если орган есть у всех
+ORGANS = {key: {"color": m.COLOR, "parts": getattr(m, "parts", functools.partial(load_parts, key)), "systems": m.SYSTEMS,
+                "sex": getattr(m, "SEX", None)}
           for key, m in _MODULES.items()}
 
 # {ключ: функция рисования органа на схеме тела}
@@ -77,18 +82,14 @@ def by_system(keys):
     return [(name, ks) for name, ks in groups if ks]
 
 
-def _norm(s):
-    return s.lower().replace("ё", "е").strip()
-
-
 def search(keys, query):
     """органы из keys, подходящие под строку поиска (регистр и ё не важны): часть названия органа
     на любом языке или часть названия системы органов на текущем языке. Пустая строка - все органы"""
-    q = _norm(query)
+    q = i18n.fold(query)
     if not q:
         return list(keys)
-    systems = {s for s in SYSTEMS if q in _norm(i18n.t("system_" + s))}
-    return [k for k in keys if any(q in _norm(n) for n in i18n.all_names(k)) or systems & set(ORGANS[k]["systems"])]
+    systems = {s for s in SYSTEMS if q in i18n.fold(i18n.t("system_" + s))}
+    return [k for k in keys if any(q in i18n.fold(n) for n in i18n.all_names(k)) or systems & set(ORGANS[k]["systems"])]
 
 
 def fact_of_day(key, day=None):

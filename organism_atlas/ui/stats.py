@@ -14,7 +14,7 @@ from .. import i18n, progress, stats
 from ..config import STATUS
 from ..i18n import t
 from .layers_panel import ScrollArea
-from .overlay import Panel, top
+from .overlay import Panel
 from .scaling import px
 from .widgets import color, flat_button, font, heading, hbox, label, put, rounded_card, spacer, vbox
 
@@ -22,13 +22,6 @@ WIDTH = 700                  # ширина ленты при масштабе 1
 BAR = 10                     # толщина полосы, px
 ROW = 26                     # высота строки списка полос
 ICONS = {"learned": "✓", "learning": "~", "weak": "!"}          # значок уровня знания рядом с цветом
-
-
-def show_stats(host):
-    p = top(host)
-    if isinstance(p, StatsPanel):
-        return p
-    return StatsPanel(host)
 
 
 class BarList(QWidget):
@@ -281,5 +274,8 @@ class StatsPanel(Panel):
 
 
 def _date(iso):
-    d = stats.day_label(iso)
+    d = progress.iso_day(iso)
     return d.strftime("%d.%m") if d else ""
+
+
+show_stats = StatsPanel.open                 # открыть панель (если уже открыта - просто вернуть её)

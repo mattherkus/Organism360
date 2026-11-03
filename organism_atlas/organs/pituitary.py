@@ -4,7 +4,6 @@ import numpy as np
 
 from ..colors import hex2rgb
 from ..geometry import CX
-from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
 
@@ -31,17 +30,10 @@ def paint(Z, ss, seed=53):
     mask = o.m("mask")
     post = o.m("post", 0.5)
     fine = o.noise(1.2, 2, 1)
-    alb = np.broadcast_to(hex2rgb("#df8d5c"), o.shape + (3,)).copy()
+    alb = o.fill("#df8d5c")
     alb = alb * (1 - 0.5 * post[..., None]) + hex2rgb("#f0c9a0") * (0.5 * post[..., None])
     alb = alb * (1 + 0.05 * fine)[..., None]
     rgba = shade(o, alb, 0.04 * fine, mask, soft=(1.6, 3.2), amp=(2.2, 2.4), spec=0.55, shin=18, ambient=0.5,
                  edge_dark=0.35)
     hit = np.clip(gblur(mask, HIT_PAD * Z) * 3.0, 0, 1)
     return finish(o, rgba, np.maximum(rgba[..., 3], hit))
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/pituitary.json)
-
-def parts():
-    """3D-модель: примитивы из models/pituitary.json"""
-    return load_parts("pituitary")

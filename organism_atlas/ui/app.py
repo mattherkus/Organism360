@@ -47,14 +47,14 @@ from .layers_panel import (ORGANS_ALL, SEARCH, SKIN, by_color, count_organs, fil
                            show_all_button)
 from .marks import Marks
 from .notes_ui import CardNotes
-from .quiz_controller import QuizController, timer
+from .quiz_controller import QuizController
 from .reader import CardReader
 from .sliding import UiSlide
 from .stats import show_stats
 from .tour_controller import TourController
 from .update_check import UpdateCheck
 from .widgets import (TabButton, alive, color, flat_button, font, hbox, label, qimage, retheme, rounded_card,
-                      set_button_bg, vbox)
+                      set_button_bg, timer, vbox)
 
 ANIM_MS = 60                    # кадр анимации сердца и лёгких (около 16 в секунду)
 ANIM_IDLE_MS = 300              # проверка, не пора ли снова анимировать, пока анимация не видна
@@ -323,8 +323,7 @@ class App(QWidget):
     def show_tips(self):
         """кнопка в настройках: подсказки по интерфейсу ещё раз - поверх схемы, а не страницы настроек"""
         from . import onboarding
-        while overlay.close_top(self):
-            pass
+        overlay.close_all(self)
         onboarding.start(self)
 
     def organs(self):
@@ -387,8 +386,7 @@ class App(QWidget):
                 QTimer.singleShot(30, swap)             # схема ещё рисуется - прежнее окно пока на экране
                 return
             settings_open = settings_window._window is not None
-            while overlay.close_top(self):
-                pass
+            overlay.close_all(self)
             if settings_open:
                 show_settings(new)
             new.repaint()                               # нарисовать всё, пока окно невидимо
@@ -1012,8 +1010,7 @@ class App(QWidget):
         и карточка остаются), в другой - режим меняется. Без страницы - как раньше: режим начинается заново
         (в «Изучать» - стартовая карточка, в «Викторине» - её настройка)"""
         if self.open_tab() is not None:
-            while overlay.close_top(self):
-                pass
+            overlay.close_all(self)
             if (name == "study") == (self.mode == "study"):
                 return
         self.set_mode("study" if name == "study" else self.quiz_mode)

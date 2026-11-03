@@ -250,9 +250,9 @@ def part(organ_key, group):
 
 def subtitle(key):
     """подпись под названием: латинское название, а в латинском режиме - обычное"""
-    if _current == "la":
+    if _current == LATIN:
         return organ(key, "name", skip_current=True)
-    return _entry("la", key).get("name", "") if "la" in available() else ""
+    return _entry(LATIN, key).get("name", "") if LATIN in available() else ""
 
 
 def fact_of_day(key, order, day=None):
@@ -268,6 +268,11 @@ def fact_of_day(key, order, day=None):
 def _fold(s):
     """ё -> е без смены длины: позиции в тексте и в сложенной строке совпадают"""
     return s.replace("ё", "е").replace("Ё", "Е")
+
+
+def fold(s):
+    """строка для поиска и сравнения: без регистра, ё = е, без пробелов по краям"""
+    return _fold(s).lower().strip()
 
 
 def _links_re():

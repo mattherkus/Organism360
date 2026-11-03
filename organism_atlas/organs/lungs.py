@@ -6,7 +6,6 @@ import numpy as np
 
 from ..colors import hex2rgb, mixa
 from ..geometry import CX, P, cr_spline, pip
-from ..models import load_parts
 from ..render2d.noise import gblur, upsample, worley
 from ..render2d.organ import Org, finish, shade
 
@@ -96,10 +95,3 @@ def paint(Z, ss, seed=3):
     rgba = tree.over(rgba, "#e6eef3", 0.95, amp=2.8, spec=0.35, edge_dark=0.35)
     hit = np.maximum(rgba[..., 3], gblur(tree.cov.get(), 0.6 * Z))
     return finish(o, rgba, hit)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/lungs.json)
-
-def parts():
-    """3D-модель: примитивы из models/lungs.json"""
-    return load_parts("lungs")

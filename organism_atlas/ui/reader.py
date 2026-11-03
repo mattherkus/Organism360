@@ -6,8 +6,7 @@ CardReader помнит, какую карточку читают, и пока �
 from .. import i18n, speech
 from ..i18n import t
 from .cards import card_text
-from .quiz_controller import timer
-from .widgets import alive
+from .widgets import alive, timer
 
 POLL_MS = 400
 

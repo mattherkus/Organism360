@@ -2,9 +2,7 @@
 
 import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -28,7 +26,7 @@ def paint(Z, ss, seed=7):
     o.L("lig").line(P([(5, 244), (2, 264), (-2, 291)]), 2.2)
     o.L("lig2").line(P([(-44, 250), (-38, 268), (-29, 288)]), 1.4)
     lig = o.m("lig", 0.8) + 0.5 * o.m("lig2", 0.7)
-    alb = np.broadcast_to(hex2rgb("#97402f"), o.shape + (3,)).copy()
+    alb = o.fill("#97402f")
     n1, n2 = o.noise(22, 3, 1), o.noise(2.4, 2, 2)
     # лёгкий градиент: ярче правая доля, темнее к низу
     yy = np.mgrid[0:o.shape[0], 0:o.shape[1]][0] / Z / (330 - 228)
@@ -41,10 +39,3 @@ def paint(Z, ss, seed=7):
     duct.tube(P([(-22, 296), (-14, 290), (-8, 288)]), [2.4, 2.4, 2.2])
     rgba = duct.over(rgba, "#7bc050", 0.9, amp=1.5)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/liver.json)
-
-def parts():
-    """3D-модель: примитивы из models/liver.json"""
-    return load_parts("liver")

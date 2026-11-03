@@ -6,13 +6,12 @@
 
 import traceback
 
-from .. import achievements, flashcards, progress
+from .. import flashcards, progress
 from ..i18n import t
 from ..organs import ORGANS
 from ..structures import STRUCTURES
-from .achievements import button_text as achievements_text, show_achievements
+from .achievements import announce
 from .cards import fill_flash
-from .toast import toast
 
 
 class FlashController:
@@ -115,14 +114,9 @@ class FlashController:
         """подход окончен: новые достижения (например, «Долгая память») - плашкой и на кнопке «★»"""
         app = self.app
         try:
-            after = progress.load()
-            new = achievements.new_ones(self.before, after) if self.before is not None else []
-            app.ach_button.setText(achievements_text(after))
-        except Exception:
+            announce(app, self.before, progress.load())
+        except Exception:                               # история - не повод сорвать конец подхода
             traceback.print_exc()
-            new = []
-        for key in new:
-            toast(app, t("ach_toast"), t("ach_" + key), lambda: show_achievements(app), t("ach_toast_hint"))
 
     def resume(self):
         """вернуться к подходу после карточки органа"""

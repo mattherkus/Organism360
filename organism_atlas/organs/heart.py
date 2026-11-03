@@ -4,7 +4,6 @@ import numpy as np
 
 from ..colors import hex2rgb, mixa
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
 from . import aorta, vena_cava
@@ -80,10 +79,3 @@ def paint(Z, ss, seed=5):
     rgba = cor.over(rgba, "#ff5a4c", 0.95, amp=2.0, spec=0.4, gain=1.1)
     allv = np.clip(gblur(pa_r.cov.get() + pt.cov.get(), 0.5 * Z), 0, 1)
     return finish(o, rgba, np.maximum(rgba[..., 3], allv))
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/heart.json)
-
-def parts():
-    """3D-модель: примитивы из models/heart.json"""
-    return load_parts("heart")

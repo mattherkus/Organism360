@@ -8,7 +8,6 @@
 import numpy as np
 
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish
 
 
@@ -47,10 +46,3 @@ def paint(Z, ss, seed=43):
     o.L("mask")                                                    # рамка органа (origin) - по маске
     rgba = v.over(np.zeros(o.shape + (4,), np.float32), "#4d7fcb", 0.97, amp=3.4, spec=0.35, edge_dark=0.4)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/vena_cava.json)
-
-def parts():
-    """3D-модель: примитивы из models/vena_cava.json"""
-    return load_parts("vena_cava")

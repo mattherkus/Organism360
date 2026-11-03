@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from ..colors import hex2rgb
 from .layers import Ink, Layer
 from .lighting import lighting
 from .noise import fbm, gblur, upsample, worley
@@ -34,6 +35,10 @@ class Org:
     @property
     def origin(self):
         return self.L("mask").origin
+
+    def fill(self, color):
+        """альбедо одного цвета (#rrggbb) на весь холст органа; копия - её можно менять"""
+        return np.broadcast_to(hex2rgb(color), self.shape + (3,)).copy()
 
     def noise(self, cell, octaves=3, seed=0, stretch=(1, 1)):
         return fbm(self.shape, cell * self.Z, octaves, self.seed * 31 + seed, stretch=stretch)

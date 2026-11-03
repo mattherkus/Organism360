@@ -7,7 +7,6 @@ QuizController ведёт игру (quiz.QuizSession) и всё, что к не�
 import math
 import traceback
 
-from PySide6.QtCore import QTimer
 
 from .. import achievements, i18n, notes, order, progress, settings, structures
 from ..i18n import t
@@ -15,27 +14,16 @@ from ..organs import ORGANS, SYSTEMS, in_system
 from ..quiz import (EXAM_SECONDS, LENGTHS, LEVELS, MODES, NO_CARDS, NOT_ORGANS, TIMERS, QuizSession, daily_session,
                     format_time, game_length)
 from ..structures import STRUCTURES
-from .achievements import button_text as achievements_text, show_achievements
+from .achievements import announce, show_achievements
 from .cards import fill_card, fill_question, fill_setup, mark
 from .results import fill_results
 from .turntable import Frames, Turntable, frame_size
-from .toast import toast
-from .widgets import alive
+from .widgets import alive, timer
 
 
 NEXT_MS = 700                   # пауза после верного ответа перед следующим вопросом
 ROUTE_MS = 1300                 # «Расставь по порядку»: сколько видна пройденная цепочка
 QSETS = ("all", "missed", "due", "starred")   # наборы вопросов: все, ошибки прошлой игры, пора повторить, закладки
-
-
-def timer(parent, fn, ms=None):
-    """однократный таймер: start(мс) - вызвать fn через столько-то, stop() - отменить, isActive() - ждёт ли"""
-    tm = QTimer(parent)
-    tm.setSingleShot(True)
-    tm.timeout.connect(fn)
-    if ms is not None:
-        tm.setInterval(ms)
-    return tm
 
 
 class QuizController:
@@ -531,13 +519,10 @@ class QuizController:
         try:
             before = progress.load()
             after = progress.record(s, self.qset)
-            self.new_achievements = achievements.new_ones(before, after)
             self.streak = achievements.streak(after)
-            app.ach_button.setText(achievements_text(after))
+            self.new_achievements = announce(app, before, after)     # новое достижение - плашкой внизу окна
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
-        for key in self.new_achievements:               # новое достижение - плашкой внизу окна
-            toast(app, t("ach_toast"), t("ach_" + key), lambda: show_achievements(app), t("ach_toast_hint"))
         self.ask()
         if last in ORGANS or last in STRUCTURES:        # сначала карточка последнего органа, следом итоги
             app.set_card(lambda: fill_card(app.card, last), fade=True)

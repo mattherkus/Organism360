@@ -20,7 +20,7 @@ from .config import TARGET_C
 from .organs import BEHIND, ORDER, PAINT
 from .render2d.noise import gblur
 
-BODY_ARRAYS = ("glow", "skin", "skin_hi", "muscles", "skeleton", "veins", "arteries", "fade")
+BODY_ARRAYS = atlas_cache.BODY                # слои тела, которые хранит кэш (uint8): список - один на оба модуля
 # «живая» схема: сердце бьётся, лёгкие дышат. Слой органа масштабируется по времени (маски попадания не меняются)
 BEAT = 60 / 72                  # период сердцебиения, с (72 удара в минуту)
 SYSTOLE = 0.32                  # доля периода, за которую сердце сжимается и расслабляется

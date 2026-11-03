@@ -5,7 +5,6 @@
 
 from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -29,10 +28,3 @@ def paint(Z, ss, seed=41):
     bump = 0.10 * n1 + 0.04 * n2
     rgba = shade(o, alb, bump, mask, spec=0.6, shin=11, amp=(3.0, 4.0), ambient=0.45)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/gallbladder.json)
-
-def parts():
-    """3D-модель: анатомическая сетка models/mesh/gallbladder.*, иначе примитивы models/gallbladder.json"""
-    return load_parts("gallbladder")

@@ -5,7 +5,6 @@
 органа для карты знаний на схеме.
 """
 
-import datetime
 
 from . import achievements
 from .quiz import MODES, NOT_ORGANS
@@ -118,10 +117,3 @@ def trend(data, n=TREND):
             out.append((str(r.get("date", "")), r.get("mode"), round(100 * _num(r, "first_try") / total)))
     return out
 
-
-def day_label(iso):
-    """'2026-10-25T14:03' -> datetime.date или None"""
-    try:
-        return datetime.date.fromisoformat(iso[:10])
-    except ValueError:
-        return None

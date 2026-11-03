@@ -4,22 +4,25 @@ from PySide6.QtWidgets import QGridLayout
 
 from .. import achievements, progress
 from ..i18n import t
-from .overlay import Panel, top
+from .overlay import Panel
 from .scaling import px
+from .toast import toast
 from .widgets import heading, hbox, label, put, rounded_card, spacer, vbox
+
+
+def announce(app, before, after):
+    """достижения, полученные между историями before и after: плашкой внизу окна и числом на кнопке «★».
+    Возвращает список новых (before None - сравнивать не с чем, новых нет)"""
+    new = achievements.new_ones(before, after) if before is not None else []
+    app.ach_button.setText(button_text(after))
+    for key in new:
+        toast(app, t("ach_toast"), t("ach_" + key), lambda: show_achievements(app), t("ach_toast_hint"))
+    return new
 
 
 def button_text(data=None):
     """подпись кнопки в верхней панели: сколько достижений получено"""
     return t("ach_button", got=len(achievements.earned(data or progress.load())), total=len(achievements.KEYS))
-
-
-def show_achievements(host):
-    """открыть панель (если уже открыта - просто поднять её)"""
-    p = top(host)
-    if isinstance(p, AchievementsPanel):
-        return p
-    return AchievementsPanel(host)
 
 
 class AchievementsPanel(Panel):
@@ -59,3 +62,6 @@ class AchievementsPanel(Panel):
             grid.addLayout(row, i // 2, i % 2)
         put(lay, grid, top=4)
         spacer(lay, 12)
+
+
+show_achievements = AchievementsPanel.open                 # открыть панель (если уже открыта - просто вернуть её)

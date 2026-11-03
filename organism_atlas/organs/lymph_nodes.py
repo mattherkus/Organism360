@@ -6,9 +6,7 @@
 
 import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
 
@@ -45,16 +43,9 @@ def paint(Z, ss, seed=61):
                 m.ellipse(px, py, r * 0.85, r)                         # узел - бобовидный, чуть вытянут
     mask = o.m("mask")
     fine = o.noise(0.9, 2, 1)
-    alb = np.broadcast_to(hex2rgb("#93c25c"), o.shape + (3,)).copy() * (1 + 0.05 * fine)[..., None]
+    alb = o.fill("#93c25c") * (1 + 0.05 * fine)[..., None]
     rgba = shade(o, alb, 0.04 * fine, mask, soft=(1.2, 2.4), amp=(2.0, 2.2), spec=0.5, shin=18, ambient=0.52,
                  edge_dark=0.35)
     rgba = vessel.over(rgba, "#a8d27a", 0.85, amp=1.2, spec=0.25)
     hit = np.clip(gblur(mask, HIT_PAD * Z) * 3.0, 0, 1)
     return finish(o, rgba, np.maximum(rgba[..., 3], hit))
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/lymph_nodes.json)
-
-def parts():
-    """3D-модель: примитивы из models/lymph_nodes.json"""
-    return load_parts("lymph_nodes")

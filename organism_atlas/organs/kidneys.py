@@ -6,7 +6,6 @@ import numpy as np
 
 from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
 
@@ -43,7 +42,7 @@ def paint(Z, ss, seed=17):
     o.L("hil").ellipse(CX + 23, 322, 5.5, 9.5)
     mask = o.m("mask")
     hil = np.clip(o.m("hil", 1.2) * 1.2, 0, 1)
-    alb = np.broadcast_to(hex2rgb("#ad3b4d"), o.shape + (3,)).copy()
+    alb = o.fill("#ad3b4d")
     lob = o.noise(6.5, 2, 1)
     fine = o.noise(2.2, 2, 2)
     big = o.noise(20, 2, 3)
@@ -67,10 +66,3 @@ def paint(Z, ss, seed=17):
     rgba = ra.over(rgba, "#d1404a", 0.97, amp=2.2, spec=0.4, edge_dark=0.35)
     hitv = np.clip(gblur(ur.cov.get() + rv.cov.get() + ra.cov.get(), 0.5 * Z), 0, 1)
     return finish(o, rgba, np.maximum(rgba[..., 3], hitv))
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/kidneys.json)
-
-def parts():
-    """3D-модель: примитивы из models/kidneys.json"""
-    return load_parts("kidneys")

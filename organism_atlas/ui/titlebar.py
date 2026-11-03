@@ -11,16 +11,13 @@ import sys
 from PIL import Image, ImageDraw
 
 from ..theme import C
+from .widgets import _rgb
 
 # атрибуты DwmSetWindowAttribute
 DARK_MODE = 20                  # DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1+, 11)
 BORDER_COLOR = 34               # DWMWA_BORDER_COLOR (Windows 11)
 CAPTION_COLOR = 35              # DWMWA_CAPTION_COLOR
 TEXT_COLOR = 36                 # DWMWA_TEXT_COLOR
-
-
-def _rgb(c):
-    return tuple(int(c[i:i + 2], 16) for i in (1, 3, 5))
 
 
 def _colorref(c):

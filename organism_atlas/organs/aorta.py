@@ -9,7 +9,6 @@
 import numpy as np
 
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish
 
 
@@ -50,10 +49,3 @@ def paint(Z, ss, seed=41):
     o.L("mask")                                                    # рамка органа (origin) - по маске
     rgba = ao.over(np.zeros(o.shape + (4,), np.float32), "#d4343d", 0.99, amp=3.8, spec=0.5, edge_dark=0.42)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/aorta.json)
-
-def parts():
-    """3D-модель: примитивы из models/aorta.json"""
-    return load_parts("aorta")

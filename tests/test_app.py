@@ -46,8 +46,7 @@ class AppTests(unittest.TestCase):
 
     def tearDown(self):
         from organism_atlas.ui import overlay
-        while overlay.close_top(self.app):
-            pass
+        overlay.close_all(self.app)
         self.app.close()
         self.app.deleteLater()
         pump()

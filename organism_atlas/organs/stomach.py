@@ -1,10 +1,8 @@
 """Желудок: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
 
-import numpy as np
 
 from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -35,7 +33,7 @@ def paint(Z, ss, seed=9):
     o.L("vsl_b").line(P([(-3, 285.5), (5.5, 283.5), (12.5, 278.5), (16, 271.5)]), 1.0)
     fold = o.m("fold", 0.9)
     vsl, vsb = o.m("vsl", 0.4), o.m("vsl_b", 0.4)
-    alb = np.broadcast_to(hex2rgb("#e89f80"), o.shape + (3,)).copy()
+    alb = o.fill("#e89f80")
     fib = o.noise(3.4, 3, 4, stretch=(1.7, 0.45))
     big = o.noise(18, 3, 5)
     alb = alb * (1 + 0.028 * fib + 0.035 * big)[..., None]
@@ -45,10 +43,3 @@ def paint(Z, ss, seed=9):
     bump = 0.04 * fib + 0.06 * big - 1.7 * fold
     rgba = shade(o, alb, bump, mask, spec=0.34, shin=14, amp=(5.0, 8.0))
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/stomach.json)
-
-def parts():
-    """3D-модель: примитивы из models/stomach.json"""
-    return load_parts("stomach")

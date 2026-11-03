@@ -47,13 +47,9 @@ SHARED_FACTS = {"gallbladder": ("pear",), "heart": ("fist",), "brain": ("weight"
                 "rectum": ("length", "sphincters"), "prostate": ("weight",), "thymus": ("weight",)}
 
 
-def _norm(s):
-    return s.lower().replace("ё", "е")
-
-
 def _stems(text):
     """основы слов текста: «желудок» -> «желуд», «лёгкие» -> «легк» (короткие слова не берём)"""
-    return {w[:max(4, len(w) - 2)] for w in re.findall(r"\w+", _norm(text)) if len(w) >= 4}
+    return {w[:max(4, len(w) - 2)] for w in re.findall(r"\w+", i18n.fold(text)) if len(w) >= 4}
 
 
 @functools.lru_cache(maxsize=None)
@@ -76,7 +72,7 @@ def leaks(text, key):
     """выдаёт ли текст ответ: упоминает ли он сам орган - основой слова названия или сочетанием из раздела links
     (оно ловит формы, которых не видно по основе: «полой вены» у «Полые вены»). Запоминается: игра
     «Вперемешку» проверяет так тысячи пар «текст - орган», а тексты за время работы не меняются"""
-    s = _norm(text)
+    s = i18n.fold(text)
     return any(stem in s for stem in name_stems(key)) or key in _linked(text)
 
 
@@ -157,8 +153,8 @@ def latin_name(key):
 
 def _alike(la, plain):
     """похоже ли латинское название на обычное (общая основа слова)"""
-    return bool(_stems(plain) & _stems(la) or any(s in _norm(la) for s in _stems(plain))
-                or any(s in _norm(plain) for s in _stems(la)))
+    return bool(_stems(plain) & _stems(la) or any(s in i18n.fold(la) for s in _stems(plain))
+                or any(s in i18n.fold(plain) for s in _stems(la)))
 
 
 def latin_ok(key, everywhere=False):

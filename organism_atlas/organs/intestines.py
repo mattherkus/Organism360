@@ -4,9 +4,7 @@ import math
 
 import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P, cr_spline, smooth_scalar
-from ..models import load_parts
 from ..render2d.layers import Layer, over_rgba
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish
@@ -96,7 +94,7 @@ def paint(Z, ss, seed=13):
     o.layers["mask"] = Layer(o.box, Z, ss)           # только для origin / формы
     rgba = np.zeros(o.shape + (4,), np.float32)
     # фон-брыжейка
-    cav_rgb = np.broadcast_to(hex2rgb("#74363c"), o.shape + (3,)).copy()
+    cav_rgb = o.fill("#74363c")
     cav_rgb *= (1 + 0.06 * o.noise(7, 2, 1))[..., None]
     rgba = over_rgba(rgba, cav_rgb, cavity * 0.96)
     # тонкая кишка
@@ -108,10 +106,3 @@ def paint(Z, ss, seed=13):
     rgba = over_rgba(rgba, np.clip(ccol, 0, 1), cov)
     hit = np.maximum(rgba[..., 3], cavity)
     return finish(o, rgba, hit)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/intestines.json)
-
-def parts():
-    """3D-модель: примитивы из models/intestines.json"""
-    return load_parts("intestines")

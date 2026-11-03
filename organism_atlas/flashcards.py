@@ -12,7 +12,7 @@ import random
 from . import diseases, i18n, progress, questions
 from .i18n import t
 from .organs import for_body
-from .quiz import leaks
+from .quiz import latin_name, leaks, plain_name
 from .structures import STRUCTURES
 
 DECKS = ("organs", "latin", "facts", "diseases")
@@ -22,15 +22,6 @@ SIZE = 10                       # карточек за один подход
 def mode(deck):
     """режим в progress.json: карточки колоды хранятся как «flash_<колода>:<карточка>»"""
     return "flash_" + deck
-
-
-def plain_name(key):
-    """название на языке интерфейса, даже когда включены латинские названия"""
-    return i18n.subtitle(key) if i18n.latin() else i18n.name(key)
-
-
-def latin_name(key):
-    return i18n.name(key) if i18n.latin() else i18n.subtitle(key)
 
 
 def _fact(item):

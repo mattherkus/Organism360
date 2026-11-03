@@ -3,7 +3,7 @@
 from PySide6.QtWidgets import QGridLayout
 
 from ..i18n import t
-from .overlay import Panel, top
+from .overlay import Panel
 from .scaling import px
 from .widgets import label, put, rounded_card, spacer
 
@@ -26,14 +26,6 @@ KEYS = (
 )
 
 
-def show_help(host):
-    """открыть панель (если уже открыта - просто поднять её)"""
-    p = top(host)
-    if isinstance(p, HelpPanel):
-        return p
-    return HelpPanel(host)
-
-
 class HelpPanel(Panel):
     title_key = "help_title"
 
@@ -54,3 +46,6 @@ class HelpPanel(Panel):
             grid.addWidget(label(t(desc), size=10), i, 1)
         put(card.lay, grid, top=14)
         spacer(card.lay, 14)
+
+
+show_help = HelpPanel.open                 # открыть панель (если уже открыта - просто вернуть её)

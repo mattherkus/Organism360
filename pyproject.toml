@@ -32,9 +32,9 @@ version = { attr = "organism_atlas.__version__" }
 include = ["organism_atlas*"]
 
 [tool.setuptools.package-data]
-# тексты, вопросы, 3D-модели с подписями авторов и лицензиями, вид 3D, готовые схемы сборки
-organism_atlas = ["lang/*.json", "questions/*.json", "models/*.json", "models/mesh/*", "render3d/*.json",
-                  "prebuilt/*"]
+# тексты, вопросы, 3D-модели с подписями авторов и лицензиями, вид 3D
+# (готовые схемы prebuilt кладёт только сборка программы: tools/build_exe.py, --add-data)
+organism_atlas = ["lang/*.json", "questions/*.json", "models/*.json", "models/mesh/*", "render3d/*.json"]
 
 [tool.ruff]
 line-length = 130

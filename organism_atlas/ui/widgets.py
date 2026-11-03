@@ -67,6 +67,16 @@ def qimage(im):
         QImage.Format_RGB32)
 
 
+def timer(parent, fn, ms=None):
+    """однократный таймер: start(мс) - вызвать fn через столько-то, stop() - отменить, isActive() - ждёт ли"""
+    tm = QTimer(parent)
+    tm.setSingleShot(True)
+    tm.timeout.connect(fn)
+    if ms is not None:
+        tm.setInterval(ms)
+    return tm
+
+
 def alive(w):
     return w is not None and shiboken6.isValid(w)
 
@@ -179,13 +189,6 @@ class RoundButton(QAbstractButton):
 
     def set_command(self, command):
         self.command = command
-
-    def set_padding(self, padx=None, pady=None):
-        if padx is not None:
-            self.padx = px(padx)
-        if pady is not None:
-            self.pady = px(pady)
-        self.updateGeometry()
 
     def key_width(self):
         """место под значок клавиши слева (0 - значка нет)"""

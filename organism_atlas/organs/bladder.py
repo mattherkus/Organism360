@@ -1,10 +1,7 @@
 """Мочевой пузырь: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
 
-import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P, sym
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -27,7 +24,7 @@ def paint(Z, ss, seed=37):
     mask = o.m("mask")
     fib = o.noise(2.6, 3, 1, stretch=(0.45, 1.8))
     big = o.noise(12, 2, 2)
-    alb = np.broadcast_to(hex2rgb("#dcae72"), o.shape + (3,)).copy()
+    alb = o.fill("#dcae72")
     alb = alb * (1 + 0.035 * fib + 0.05 * big)[..., None]
     bump = 0.1 * fib + 0.08 * big
     rgba = shade(o, alb, bump, mask, spec=0.5, shin=16, amp=(4.5, 6.0), ambient=0.48)
@@ -38,10 +35,3 @@ def paint(Z, ss, seed=37):
         a.tube(P([(11, 380), (6, 386), (3, 392)], s), [1.0, 0.9, 0.7])
     rgba = a.over(rgba, "#c9575a", 0.45, amp=1.0, spec=0.2)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/bladder.json)
-
-def parts():
-    """3D-модель: примитивы из models/bladder.json"""
-    return load_parts("bladder")

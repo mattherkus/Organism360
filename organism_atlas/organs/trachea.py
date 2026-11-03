@@ -5,7 +5,6 @@
 import numpy as np
 
 from ..geometry import CX
-from ..models import load_parts
 from ..render2d.layers import over_rgba
 from ..render2d.organ import Org, finish
 
@@ -32,10 +31,3 @@ def paint(Z, ss, seed=3):
     col = col * (1 - 0.34 * rg[..., None])
     rgba = over_rgba(np.zeros(o.shape + (4,), np.float32), col, cov * 0.97)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/trachea.json)
-
-def parts():
-    """3D-модель: примитивы из models/trachea.json"""
-    return load_parts("trachea")

@@ -1,10 +1,7 @@
 """Щитовидная железа: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
 
-import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -30,7 +27,7 @@ def paint(Z, ss, seed=23):
     isth = o.m("isth", 1.2)
     edge, dome = o.cells(3.0, 1, border=0.18)
     fine = o.noise(1.8, 2, 2)
-    alb = np.broadcast_to(hex2rgb("#bd4d48"), o.shape + (3,)).copy()
+    alb = o.fill("#bd4d48")
     alb = alb * (1 + 0.04 * fine + 0.06 * o.noise(9, 2, 3))[..., None]
     alb = alb * (1 - 0.08 * edge[..., None])
     alb = alb * (1 - 0.12 * isth[..., None])                       # перешеек тоньше и темнее
@@ -45,10 +42,3 @@ def paint(Z, ss, seed=23):
     rgba = v.over(rgba, "#4a7bc6", 0.95, amp=1.6, spec=0.3)
     rgba = a.over(rgba, "#d1404a", 0.95, amp=1.6, spec=0.35)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/thyroid.json)
-
-def parts():
-    """3D-модель: примитивы из models/thyroid.json"""
-    return load_parts("thyroid")

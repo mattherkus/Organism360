@@ -4,7 +4,6 @@ import numpy as np
 
 from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -32,17 +31,10 @@ def paint(Z, ss, seed=47):
     edge, dome = o.cells(2.6, 3, border=0.22)                         # дольки
     fine = o.noise(1.6, 2, 1)
     fat = np.clip(o.noise(6, 2, 2) * 0.9 + 0.1, 0, 1)                 # у взрослого - прослойки жира
-    alb = np.broadcast_to(hex2rgb("#d49a98"), o.shape + (3,)).copy()
+    alb = o.fill("#d49a98")
     alb = alb * (1 - 0.35 * fat[..., None]) + hex2rgb("#ecd7a4") * (0.35 * fat[..., None])
     alb = alb * (1 + 0.04 * fine)[..., None] * (1 - 0.12 * edge[..., None])
     alb = alb * (1 - 0.35 * split[..., None])
     bump = 0.1 * dome - 0.18 * edge + 0.03 * fine - 0.8 * split
     rgba = shade(o, alb, bump, mask, spec=0.4, shin=14, amp=(2.4, 3.2), ambient=0.5)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/thymus.json)
-
-def parts():
-    """3D-модель: примитивы из models/thymus.json"""
-    return load_parts("thymus")

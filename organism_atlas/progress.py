@@ -85,9 +85,10 @@ def save(data):
 _store = jsonstore.Cached(_parse)       # тот же файл не разбирается заново
 
 
-def _date(s):
+def iso_day(s):
+    """'2026-10-25' или '2026-10-25T14:03' -> datetime.date; не строка или не дата - None"""
     try:
-        return datetime.date.fromisoformat(s)
+        return datetime.date.fromisoformat(s[:10])
     except (TypeError, ValueError):
         return None
 
@@ -143,7 +144,7 @@ def due(mode, keys, data=None, today=None):
     out = []
     for i, k in enumerate(keys):
         c = cards.get("%s:%s" % (mode, k))
-        d = _date(c.get("due")) if c else None
+        d = iso_day(c.get("due")) if c else None
         if d is not None and d <= today:
             out.append((d, c.get("box", 0), i, k))
     return [k for *_, k in sorted(out)]

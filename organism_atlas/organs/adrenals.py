@@ -1,10 +1,7 @@
 """Надпочечники: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
 
-import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -28,16 +25,9 @@ def paint(Z, ss, seed=47):
     mask = o.m("mask")
     edge, dome = o.cells(2.2, 1, border=0.2)                      # зернистая корковая ткань
     fine = o.noise(1.6, 2, 2)
-    alb = np.broadcast_to(hex2rgb("#dda03a"), o.shape + (3,)).copy()
+    alb = o.fill("#dda03a")
     alb = alb * (1 + 0.05 * fine + 0.06 * o.noise(7, 2, 3))[..., None]
     alb = alb * (1 - 0.1 * edge[..., None])
     bump = 0.08 * dome - 0.12 * edge + 0.03 * fine
     rgba = shade(o, alb, bump, mask, soft=(2.5, 5.0), spec=0.45, shin=16, amp=(2.4, 3.0), ambient=0.5)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/adrenals.json)
-
-def parts():
-    """3D-модель: примитивы из models/adrenals.json"""
-    return load_parts("adrenals")

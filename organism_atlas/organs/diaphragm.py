@@ -4,7 +4,6 @@ import numpy as np
 
 from ..colors import hex2rgb, mixa
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -32,16 +31,9 @@ def paint(Z, ss, seed=59):
     mask = o.m("mask")
     tendon = o.m("tendon", 0.8) * mask
     fib = o.noise(1.6, 3, 1, stretch=(1.8, 0.35))                     # волокна вдоль купола
-    alb = np.broadcast_to(hex2rgb("#b5534d"), o.shape + (3,)).copy()
+    alb = o.fill("#b5534d")
     alb = alb * (1 + 0.1 * fib)[..., None]
     alb = mixa(alb, hex2rgb("#e2d6c8") * (1 + 0.04 * fib)[..., None], np.clip(tendon * 0.9, 0, 1))
     bump = 0.22 * fib * (1 - tendon)
     rgba = shade(o, alb, bump, mask, soft=(2.0, 4.0), amp=(2.6, 3.0), spec=0.45, shin=16, ambient=0.5)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/diaphragm.json)
-
-def parts():
-    """3D-модель: примитивы из models/diaphragm.json"""
-    return load_parts("diaphragm")

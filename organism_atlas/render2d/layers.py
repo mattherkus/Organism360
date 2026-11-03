@@ -29,12 +29,9 @@ class Layer:
         k, ss = self.k, self.ss
         return [((x * k) - self.px0 * ss, (y * k) - self.py0 * ss) for x, y in pts]
 
-    def poly(self, pts, v=255, smooth=True, closed=True):
+    def poly(self, pts, v=255, smooth=True):
         if smooth:
             pts = cr_spline(pts, closed=True)
-        self.d.polygon(self.t(pts), fill=v)
-
-    def raw(self, pts, v=255):
         self.d.polygon(self.t(pts), fill=v)
 
     def ellipse(self, cx, cy, rx, ry, v=255):
@@ -127,13 +124,6 @@ class Ink:
             e = np.clip((1 - gblur(cov, 1.0 * Z)) * cov * 2.0, 0, 1)
             col = col * (1 - edge_dark * e[..., None])
         return cov, np.clip(col, 0, 1)
-
-    def paint(self, base, color, alpha, Z, amp=3.0, spec=0.25, ox=0, oy=0, ambient=0.55, edge_dark=0.0):
-        cov, col = self.shaded(color, amp, spec, ambient, edge_dark)
-        a = (cov * alpha)[..., None]
-        h, w = cov.shape
-        base[oy:oy + h, ox:ox + w] = base[oy:oy + h, ox:ox + w] * (1 - a) + col * a
-        return a[..., 0]                       # непрозрачность: сколько закрыто под рисунком
 
     def over(self, rgba, color, alpha=1.0, **kw):
         """наложить на RGBA-кадр органа (прямая альфа)"""

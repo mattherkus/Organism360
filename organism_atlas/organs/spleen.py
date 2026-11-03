@@ -1,10 +1,7 @@
 """Селезёнка: цвет, рисунок на схеме тела (2D) и модель для 3D-просмотра."""
 
-import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.organ import Org, finish, shade
 
 
@@ -29,16 +26,9 @@ def paint(Z, ss, seed=29):
     notch = o.m("notch", 0.6)
     fine = o.noise(2.0, 2, 1)
     big = o.noise(12, 2, 2)
-    alb = np.broadcast_to(hex2rgb("#7e3253"), o.shape + (3,)).copy()
+    alb = o.fill("#7e3253")
     alb = alb * (1 + 0.035 * fine + 0.07 * big)[..., None]
     alb = alb * (1 - 0.4 * notch[..., None])
     bump = 0.05 * fine + 0.12 * big - 1.4 * notch
     rgba = shade(o, alb, bump, mask, spec=0.55, shin=14, amp=(4.0, 6.5), ambient=0.46)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/spleen.json)
-
-def parts():
-    """3D-модель: примитивы из models/spleen.json"""
-    return load_parts("spleen")

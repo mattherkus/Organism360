@@ -10,6 +10,7 @@
 
 import datetime
 
+from . import progress
 from .quiz import CLASSIC_MODES
 
 LEGACY_ORGANS = 18          # столько органов было на мужской схеме, пока игры не записывали их число
@@ -33,16 +34,9 @@ def _all_organs(r):
     return r.get("total", 0) >= (organs if isinstance(organs, int) and organs > 0 else LEGACY_ORGANS)
 
 
-def _day(r):
-    try:
-        return datetime.date.fromisoformat(str(r.get("date", ""))[:10])
-    except ValueError:
-        return None
-
-
 def play_days(data, mode=None):
     """дни, в которые была хотя бы одна игра (режима mode, если он задан), по возрастанию"""
-    return sorted({d for d in (_day(r) for r in data["results"] if mode is None or r.get("mode") == mode)
+    return sorted({d for d in (progress.iso_day(r.get("date")) for r in data["results"] if mode is None or r.get("mode") == mode)
                    if d is not None})
 
 

@@ -8,9 +8,7 @@
 
 import numpy as np
 
-from ..colors import hex2rgb
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.noise import gblur
 from ..render2d.organ import Org, finish, shade
 
@@ -58,7 +56,7 @@ def paint(Z, ss, seed=67):
     rgba = nerves.over(rgba, "#ecd06a", 0.98, amp=1.8, spec=0.35, edge_dark=0.3)
     cov = cord.cov.get()
     fine = o.noise(1.4, 2, 1, stretch=(0.4, 2.0))
-    alb = np.broadcast_to(hex2rgb("#f1e2b8"), o.shape + (3,)).copy() * (1 + 0.05 * fine)[..., None]
+    alb = o.fill("#f1e2b8") * (1 + 0.05 * fine)[..., None]
     body = shade(o, alb, 0.05 * fine + gblur(cord.hgt.get(), 0.5 * Z) * 0.6, cov, soft=(1.2, 2.6),
                  amp=(1.6, 2.0), spec=0.4, shin=16, ambient=0.5)
     a = body[..., 3:4]
@@ -67,10 +65,3 @@ def paint(Z, ss, seed=67):
     rgba[..., :3] /= np.maximum(rgba[..., 3:4], 1e-5)
     hit = np.clip(gblur(rgba[..., 3], HIT_PAD * Z) * 3.0, 0, 1)          # нервы тонкие: попасть мышью легче
     return finish(o, rgba, np.maximum(rgba[..., 3], hit))
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/spinal_cord.json)
-
-def parts():
-    """3D-модель: примитивы из models/spinal_cord.json"""
-    return load_parts("spinal_cord")

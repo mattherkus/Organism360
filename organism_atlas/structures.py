@@ -62,7 +62,7 @@ class _Cover:
     def ellipse(self, cx, cy, rx, ry, v=255):
         self.rec.add(("ellipse", (cx, cy, rx, ry, v)), [(cx - rx, cy - ry), (cx + rx, cy + ry)])
 
-    def poly(self, pts, v=255, smooth=True, closed=True):
+    def poly(self, pts, v=255, smooth=True):
         self.rec.add(("poly", (list(pts), v, smooth)), pts)
 
     def line(self, pts, width, v=255, smooth=True):

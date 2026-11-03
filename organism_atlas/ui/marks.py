@@ -10,8 +10,7 @@ from PySide6.QtGui import QImage, QPainter
 from .. import i18n
 from ..organs import ORGANS
 from ..structures import STRUCTURES
-from .quiz_controller import timer
-from .widgets import qimage
+from .widgets import qimage, timer
 
 FLASH_MS = 500                  # сколько видна вспышка «верно/ошибка»
 REVEAL_MS = 500                 # сколько на лёгком уровне видна подсказка «верный орган здесь» после ошибки

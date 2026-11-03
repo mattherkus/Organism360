@@ -46,6 +46,12 @@ def close_top(host):
     return False
 
 
+def close_all(host):
+    """закрыть все страницы и панели окна"""
+    while close_top(host):
+        pass
+
+
 class _Center(QObject):
     """держит панель по центру окна, когда то меняет размер"""
 
@@ -107,6 +113,12 @@ class Panel(RoundCard):
         self.show()
         self.raise_()
         changed(host)
+
+    @classmethod
+    def open(cls, host):
+        """открыть панель; если такая уже сверху - просто вернуть её (вторая не открывается)"""
+        p = top(host)
+        return p if isinstance(p, cls) else cls(host)
 
     def build(self):
         """содержимое панели в self.body (панели с title_key)"""

@@ -4,7 +4,6 @@ import numpy as np
 
 from ..colors import hex2rgb, mixa
 from ..geometry import CX, P
-from ..models import load_parts
 from ..render2d.noise import gblur, labyrinth, upsample
 from ..render2d.organ import Org, finish, shade
 
@@ -59,10 +58,3 @@ def paint(Z, ss, seed=19):
     bump = -1.8 * sul + 0.5 * ridge * cerm - 1.2 * fol - 2.6 * fi + 0.08 * o.noise(3, 2, 6)
     rgba = shade(o, alb, bump, mask, spec=0.36, shin=18, amp=(4.0, 6.0), ambient=0.5)
     return finish(o, rgba)
-
-
-# --------------------------------------------------------------- 3D: модель (данные в models/brain.json)
-
-def parts():
-    """3D-модель: примитивы из models/brain.json"""
-    return load_parts("brain")
