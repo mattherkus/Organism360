@@ -1081,6 +1081,26 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(self.app.flash.session)
         self.assertIn(deck_button + "  ·  " + i18n.t("flash_due", n=len(s.keys) - 1), self.button_texts())
 
+    def test_flashcards_search_and_failed_save(self):
+        """поиск в панели слоёв не снимает подсветку органа флеш-карточки; ответ, который не удалось записать,
+        всё равно входит в итог «знал N из M»"""
+        from unittest import mock
+        from organism_atlas import progress
+        a = self.app
+        a.flash.start("latin")
+        s = a.flash.session
+        key = s.current
+        a.on_search("zzz")                                    # ничего не найдено
+        self.assertEqual(a.spot, key)
+        a.on_search("")
+        self.assertEqual(a.spot, key)
+        with mock.patch.object(progress, "mark", side_effect=OSError("диск")), \
+                mock.patch("traceback.print_exc"):
+            a.flash.reveal()
+            a.flash.answer(True)
+        self.assertEqual((s.i, s.knew), (1, [True]))
+        a.flash.end()
+
     def test_notes_and_bookmarks(self):
         """заметка под карточкой сохраняется сама, буквы в ней не нажимают горячие клавиши; закладка - на стартовой
         карточке и в наборе вопросов викторины"""

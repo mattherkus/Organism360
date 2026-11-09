@@ -39,7 +39,7 @@ class KeyboardChoice:
         name = i18n.name(key)
         if app.mode == "study":                        # в викторине название выдало бы ответ
             app.view.set_tip((*app.view.to_screen(*app.atlas.anchor(key)), name))
-            app.set_status(lambda: t("kb_status", name=name))
+            app.set_status(lambda: t("kb_status", name=i18n.name(key)))     # при смене языка - на новом
         app.view.setAccessibleName(name if app.mode == "study" else t("kb_selected"))
 
     def choose(self):

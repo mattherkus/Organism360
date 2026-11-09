@@ -756,7 +756,8 @@ class App(QWidget):
         self.query = text
         found = search(self.organs(), text)
         self.apply_filter()
-        if self.tours.tour is None:
+        # на флеш-карточке подсвечен её орган (или ничего, чтобы не выдать ответ): поиск подсветку не трогает
+        if self.tours.tour is None and not (self.flash.active() and self.card_fn == self.flash.card):
             self.set_spot(found[0] if text.strip() and len(found) == 1 else None, look=False)
 
     def on_search_enter(self, text):

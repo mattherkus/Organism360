@@ -104,6 +104,7 @@ class FlashController:
             s.answer(ok)
         except Exception:                               # запись прогресса - не повод сорвать подход
             traceback.print_exc()
+            s.knew.append(bool(ok))                     # ответ всё равно в счёт: итог - «знал N из M»
             s.i += 1
             s.shown = False
         if s.finished:

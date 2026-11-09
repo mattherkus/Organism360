@@ -358,7 +358,7 @@ class QuizController:
         return t(key, name=self.name_of(organ) if organ is not None else "")
 
     def tick(self):
-        """раз в четверть секунды: обновить остаток времени, а когда он вышел - показать ответ и идти дальше"""
+        """по таймеру tick_timer: обновить остаток времени, а когда он вышел - показать ответ и идти дальше"""
         s = self.session
         if s is None or s.finished or s.remaining() is None:
             return
