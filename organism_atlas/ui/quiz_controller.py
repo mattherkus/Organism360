@@ -15,7 +15,7 @@ from ..quiz import (EXAM_SECONDS, LENGTHS, LEVELS, MODES, NO_CARDS, NOT_ORGANS, 
                     format_time, game_length)
 from ..structures import STRUCTURES
 from .achievements import announce, show_achievements
-from .cards import fill_card, fill_question, fill_setup, mark
+from .cards import fill_question, fill_setup, mark
 from .results import fill_results
 from .turntable import Frames, Turntable, frame_size
 from .widgets import alive, timer
@@ -45,7 +45,6 @@ class QuizController:
         self.frames = None                     # (номер вопроса, Frames) - кадры «Угадай по 3D»
         self.next_timer = timer(app, self.next_question, NEXT_MS)
         self.tick_timer = timer(app, self.tick, 100)
-        self.results_timer = timer(app, self.show_results, 600)
 
     @property
     def mode(self):
@@ -71,7 +70,7 @@ class QuizController:
 
     def stop(self):
         """прервать текущую игру: таймеры, подсветка, кнопки-варианты"""
-        for tm in (self.next_timer, self.tick_timer, self.results_timer):
+        for tm in (self.next_timer, self.tick_timer):
             tm.stop()
         if self.frames:
             self.frames[1].stop()
@@ -510,7 +509,8 @@ class QuizController:
         self.ask(self.feedback if self.exam() else None)        # «Экзамен»: «Ответ принят» - над новым вопросом
 
     def finish(self, last):
-        """игра закончена: сохранить результат, показать карточку последнего органа, а следом - итоги"""
+        """игра закончена: сохранить результат и показать итоги; last - ответ на последний вопрос (уже
+        подсвечен на схеме)"""
         s = self.session
         app = self.app
         self.choices = {}
@@ -524,11 +524,7 @@ class QuizController:
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
         self.ask()
-        if last in ORGANS or last in STRUCTURES:        # сначала карточка последнего органа, следом итоги
-            app.set_card(lambda: fill_card(app.card, last), fade=True)
-            self.results_timer.start()
-        else:                                           # маршрут или ответ экзамена - сразу итоги
-            self.show_results()
+        self.show_results()                             # сразу итоги - без промежуточной карточки органа
 
     def on_key(self, keysym, char):
         """Enter на карточке настройки начинает игру, цифры выбирают вариант ответа"""
@@ -561,7 +557,7 @@ class QuizController:
         review = self.review_lines() if mode == "exam" else ()
         retry = (lambda: again("missed")) if mode not in NO_CARDS else None
         app.marks.show_missed(s.missed)                       # ошибки - красным на схеме, с подписями
-        # итоги - в карточке справа, на месте карточки последнего органа
+        # итоги - в карточке справа
         app.set_card(lambda: fill_results(app.card, s, on_again=again, on_retry=retry,
                                           on_setup=lambda: app.set_mode(mode), due=due, streak=streak, new=new,
                                           on_achievements=lambda: show_achievements(app), name_of=self.name_of,

@@ -213,7 +213,6 @@ class AppTests(unittest.TestCase):
                 self.assertTrue(self.app.quiz.next_timer.isActive())
                 self.app.quiz.next_question()
         self.app.marks.unflash()
-        self.app.quiz.results_timer.stop()
         return s
 
     def test_quiz_length_and_topic(self):
