@@ -16,7 +16,7 @@ from PIL import Image
 from . import atlas_cache, structures
 from .body.base import BG_HI, BODY_LAYERS, DEFAULT_LAYERS, background, build_layers, compose, glow_weight, over
 from .config import BG
-from .config import TARGET_C
+from .config import HOVER_C, TARGET_C
 from .organs import BEHIND, ORDER, PAINT
 from .render2d.noise import gblur
 
@@ -30,7 +30,7 @@ BREATH_DEPTH = (0.015, 0.035)   # насколько лёгкие расширя
 HEART_BASE = 0.35               # где у слоя сердца основание (доля высоты сверху): к нему оно сжимается
 ANIMATED = ("lungs", "heart")
 PAD = 4                         # прозрачная рамка вокруг слоя сердца и лёгких для анимации: хватает до сжатия в 0.75
-HALO = 14                       # запас вокруг органа под свечение подсветки (в пикселях схемы при Z = 1)
+HALO = 18                       # запас вокруг органа под свечение подсветки (в пикселях схемы при Z = 1)
 LIGHT_FROM = 0.6                # с какой средней яркости орган считается светлым (контур подсветки насыщеннее)
 
 
@@ -545,16 +545,19 @@ class Atlas:
         # светлый орган (трахея, мочевой пузырь): почти белый контур на нём не виден - берём насыщенный
         # цвет подсветки и заливку плотнее. light: 0 - орган тёмный или средний, 1 - светлый
         light = float(np.clip((self._lum(key) - LIGHT_FROM) / 0.15, 0, 1))
-        if kind == "hover":
-            a = rim * 0.95 + glow * 0.55 + m * (0.10 + 0.25 * light)
-            glow_c = np.array([0.55, 0.82, 1.0], np.float32)
-            rim_c = np.array([1.0, 1.0, 1.0], np.float32) * (1 - light) + glow_c * 0.85 * light
-            rgb = glow_c[None, None, :] * (1 - rim[..., None]) + rim_c[None, None, :] * rim[..., None]
-        elif kind == "target":                            # орган-вопрос: тёплый контур, орган виден
-            a = rim * 1.0 + glow * (0.75 + 0.2 * light) + m * (0.18 + 0.22 * light)
-            col = np.array(TARGET_C, np.float32)
-            rim_c = (col * 0.4 + 0.6) * (1 - light) + col * 0.85 * light
-            rgb = col[None, None, :] * (1 - rim[..., None]) + rim_c[None, None, :] * rim[..., None]
+        if kind in ("hover", "target"):
+            # заметная подсветка: орган залит цветом подсветки, по краю - яркая широкая обводка, за ней -
+            # тёмная тонкая (видна и на светлом фоне, и на светлом органе) и широкое свечение
+            col = np.array(HOVER_C if kind == "hover" else TARGET_C, np.float32)
+            band = np.clip(gblur(m, 2.4 * Z) * (1 - m) * 3.2, 0, 1)          # яркая полоса снаружи органа
+            dark = np.clip(gblur(m, 3.4 * Z) * (1 - m) * 3.0 - band, 0, 1)   # тонкая тёмная - за ней
+            halo = gblur(m, 5.0 * Z) * (1 - m)
+            edge_c = col * 0.35 + 0.65 * (1 - light)                         # у края - светлее, у светлого органа - цвет
+            fill_a = (0.36 if kind == "hover" else 0.40) + 0.15 * light
+            # доли слоёв: заливка, обводка, тёмная кайма, свечение; цвет пикселя - их смесь по долям
+            parts = ((m * fill_a, col), (rim * 0.95 + band, edge_c), (dark * 0.6, col * 0.18), (halo * 0.85, col))
+            a = sum(w for w, _ in parts)
+            rgb = sum(w[..., None] * c for w, c in parts) / np.maximum(a, 1e-6)[..., None]
         else:
             fill = np.array((0.18, 0.55, 0.34) if kind == "ok" else (0.78, 0.22, 0.19), np.float32)
             a = m * 0.82 + rim * 0.5 + glow * 0.4

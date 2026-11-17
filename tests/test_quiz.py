@@ -135,6 +135,21 @@ class LevelAndTimerTests(unittest.TestCase):
                          (2, 4, 1, 0, [asked], False))
         self.assertIsNone(s.give_up())
 
+    def test_skip(self):
+        """«Пропустить»: вопрос - одна ошибка без ответа (даже после промаха), игра идёт дальше"""
+        s = QuizSession(list(NAMES), rng=random.Random(0), count=3)
+        asked = s.current
+        s.answer(next(k for k in NAMES if k != asked))
+        self.assertEqual(s.skip(), asked)
+        self.assertFalse(s.finished or s.gave_up)
+        self.assertEqual((s.i, s.total, s.errors, s.timeouts, s.missed, s.results[asked]), (1, 3, 1, 0, [asked], False))
+        s.skip()
+        last = s.current
+        self.assertEqual(s.skip(), last)
+        self.assertTrue(s.finished)
+        self.assertEqual((s.errors, s.first_try), (3, 0))
+        self.assertIsNone(s.skip())
+
     def test_no_timer(self):
         s = session()
         s.start_timer()

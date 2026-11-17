@@ -872,6 +872,20 @@ class App(QWidget):
         self.view.set_tip(None)
 
     # --- приближение схемы
+    def view_moved(self):
+        """схему приблизили или сдвинули: под неподвижным курсором теперь другой орган - подсветка и подсказка
+        за ним; орган, выбранный стрелками, остаётся выбранным, а его название в «Изучать» едет вместе с ним"""
+        view = getattr(self, "view", None)
+        if view is None or not self.ready():
+            return
+        key = self.kb.key
+        if key is not None:
+            if self.mode == "study" and view.tip is not None:
+                view.tip = (*view.to_screen(*self.atlas.anchor(key)), view.tip[2])
+            return
+        if view.underMouse() and not view.dragging:
+            self.on_move(*view.to_scheme(view.cursor()))
+
     def zoom_changed(self, animate=False):
         """схему приблизили или вернули: кнопки приближения доступны, когда есть куда;
         с HIDE_FROM интерфейс уезжает к краям окна"""

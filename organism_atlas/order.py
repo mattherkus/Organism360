@@ -180,6 +180,10 @@ class OrderSession:
         self._next(False)
         return key
 
+    def skip(self):
+        """кнопка «Пропустить»: маршрут - ошибка, следующий маршрут. Возвращает орган, который был следующим"""
+        return None if self.finished else self._skip()
+
     def give_up(self):
         if self.finished:
             return None

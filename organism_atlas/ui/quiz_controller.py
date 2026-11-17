@@ -285,14 +285,15 @@ class QuizController:
         card = self.app.card
         fb = self.feedback and (self.feedback_text(*self.feedback), self.feedback[2])
         give_up = (t("exam_finish") if self.exam() else t("give_up"), self.give_up)
+        skip = (t("skip"), self.skip)
         if s.kind == "order":
-            self.render_order(card, fb, give_up)
+            self.render_order(card, fb, give_up, skip)
             return
         if s.kind in ("find", "body"):
             hint = t("find_hint") if s.kind == "find" else t("body_hint_" + structures.kind(s.current))
             self.progress, self.choices = fill_question(
                 card, self.progress_state(), t("find_title", name=i18n.name(s.current)),
-                hint, fb, give_up=give_up)
+                hint, fb, give_up=give_up, skip=skip)
             self.app.marks.show_target()                      # во «Вперемешку» прячет подсветку прошлого вопроса
             return
         opts = s.options()
@@ -318,7 +319,7 @@ class QuizController:
             title, hint = t("name_title"), t("name_hint", n=len(opts))
         self.progress, self.choices = fill_question(
             card, self.progress_state(), title, hint, fb, [(k, s.option_label(k)) for k in opts], self.pick,
-            give_up=give_up, extra=self.turntable() if s.kind == "model" else None)
+            give_up=give_up, extra=self.turntable() if s.kind == "model" else None, skip=skip)
         for k in self.wrong & set(self.choices):
             mark(self.choices[k], "wrong_bg")
         self.app.marks.show_target()
@@ -334,7 +335,7 @@ class QuizController:
             self.frames = (s.i, Frames(ORGANS[s.current]["parts"](), round(w * dpr), round(h * dpr)))
         return Turntable(self.frames[1], w, h, t("model_loading"))
 
-    def render_order(self, card, fb, give_up):
+    def render_order(self, card, fb, give_up, skip):
         """вопрос «Расставь по порядку»: маршрут, уже названные органы цепочкой, кнопки органов"""
         s = self.session
         opts = s.options()
@@ -343,7 +344,7 @@ class QuizController:
         labels = [(k, ("%d. " % (s.placed.index(k) + 1) if k in s.placed else "") + i18n.name(k)) for k in opts]
         self.progress, self.choices = fill_question(card, self.progress_state(),
                                                     t("order_title", route=order.title(s.current)),
-                                                    hint, fb, labels, self.pick, give_up=give_up)
+                                                    hint, fb, labels, self.pick, give_up=give_up, skip=skip)
         for k in s.placed:
             mark(self.choices[k], "right_bg")
             self.choices[k].setEnabled(False)
@@ -353,7 +354,10 @@ class QuizController:
     def feedback_text(self, key, organ, _color, i=None):
         """текст отзыва на текущем языке; i - номер вопроса, ответ на который не орган: назвать верный ответ"""
         if i is not None:
-            return t(key, answer=self.session.answer_text(i))
+            s = self.session
+            if s.kinds[i] == "truth":                   # не «Правильный ответ: Неверно», а «Утверждение неверно»
+                return t(key.replace("_answer", "_truth"), verdict=s.answer_text(i).lower())
+            return t(key, answer=s.answer_text(i))
         return t(key, name=self.name_of(organ) if organ is not None else "")
 
     def tick(self):
@@ -384,8 +388,26 @@ class QuizController:
         key = s.give_up()
         self.skipped(route or key, i, "gave_up", not route)
 
+    def skip(self):
+        """кнопка «Пропустить»: вопрос - ошибка, верный ответ показан (в экзамене - нет), дальше следующий вопрос"""
+        s = self.session
+        if s is None or s.finished or self.next_timer.isActive():
+            return
+        if self.exam():                                 # без ответа и без подсказки, как «Ответ принят»
+            key = s.skip()
+            self.choices = {}
+            if s.finished:
+                self.finish(key)
+                return
+            self.feedback = ("exam_skipped", None, "muted")
+            self.next_timer.start(NEXT_MS // 2)
+            return
+        route = s.current if s.kind == "order" else None
+        key = s.skip()
+        self.skipped(route or key, None, "skipped", not route)      # отзыв - просто «Пропущено.»
+
     def skipped(self, key, i, text, reveal):
-        """вопрос пропущен (время вышло или «Сдаться»): показать, где был нужный орган, и задать следующий;
+        """вопрос пропущен (время вышло, «Пропустить» или «Сдаться»): показать, где был нужный орган, и задать следующий;
         i - номер вопроса, если ответ на него - не орган (тогда отзыв называет ответ словами);
         text - ключ отзыва (с «_answer» - для такого вопроса); reveal - ещё и подписать орган на схеме"""
         s = self.session
@@ -393,6 +415,7 @@ class QuizController:
         if key in ORGANS or key in STRUCTURES:          # маршрут на схеме не подсвечивается
             if not self.exam():                         # в экзамене - без подсказок
                 self.app.marks.flash(key, "ok")
+                self.bring_into_view(key)
             if reveal and not self.exam():
                 self.app.marks.reveal(key)
         if s.finished:
@@ -406,6 +429,13 @@ class QuizController:
         if s is not None and not s.finished and s.level == "easy" and not self.exam() and (
                 s.correct() in ORGANS or s.correct() in STRUCTURES):
             self.app.marks.reveal(s.correct())
+            self.bring_into_view(s.correct())
+
+    def bring_into_view(self, key):
+        """верный ответ - на виду: приближенная схема подводит его к середине, если он за краем окна"""
+        app = self.app
+        if app.ready() and key not in app.hidden_now():
+            app.view.bring_into_view(*app.atlas.center(key))
 
     def answer(self, key):
         """клик по органу в режиме «Найди орган»"""
@@ -524,6 +554,10 @@ class QuizController:
         except Exception:                               # история - не повод сорвать конец игры
             traceback.print_exc()
         self.ask()
+        # итоги - в карточке, а ошибки - подписями по краям схемы: приближенная схема возвращается целиком,
+        # а уехавший интерфейс - на место (иначе после последнего ответа на схеме нечего было бы нажать)
+        if app.view.aim() > 1:
+            app.view.reset_zoom()
         self.show_results()                             # сразу итоги - без промежуточной карточки органа
 
     def on_key(self, keysym, char):

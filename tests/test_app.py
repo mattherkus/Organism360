@@ -286,6 +286,33 @@ class AppTests(unittest.TestCase):
         self.app.quiz.show_results()
         self.assertIn(i18n.t("results_gave_up", n=2, total=5), self.label_texts())
 
+    def test_skip(self):
+        """«Пропустить»: ошибка засчитана, верный орган подписан на схеме, следующий вопрос; на последнем - итоги"""
+        self.app.set_mode("find")
+        self.app.quiz.set_cfg("length", 2)
+        self.app.quiz.start()
+        s = self.app.quiz.session
+        asked = s.current
+        next(b for b in self.buttons(self.app.card) if b.text() == i18n.t("skip")).invoke()
+        self.assertEqual((s.i, s.errors, s.missed), (1, 1, [asked]))
+        self.assertEqual(self.app.view.pin[2], i18n.name(asked))
+        self.assertIn(i18n.t("skipped"), self.label_texts())
+        next(b for b in self.buttons(self.app.card) if b.text() == i18n.t("skip")).invoke()
+        self.assertTrue(s.finished)
+        self.assertEqual((s.total, s.errors), (2, 2))
+
+    def test_exam_skip(self):
+        """«Пропустить» в экзамене: без подсказки на схеме, ответ не назван - «Вопрос пропущен»"""
+        self.app.set_mode("exam")
+        self.app.quiz.set_cfg("length", 5)
+        self.app.quiz.start()
+        s = self.app.quiz.session
+        self.app.quiz.skip()
+        self.assertEqual((s.i, s.errors), (1, 1))
+        self.assertIsNone(self.app.view.pin)
+        self.app.quiz.next_question()
+        self.assertIn(i18n.t("exam_skipped"), self.label_texts())
+
     def label_texts(self):
         from PySide6.QtWidgets import QLabel
         return [w.text() for w in self.app.card.findChildren(QLabel)]
@@ -399,6 +426,115 @@ class AppTests(unittest.TestCase):
         self.assertTrue(wait(lambda: not a.slide.ghosts))
         self.assertTrue(a.header.isVisible() and a.panel.isVisible() and a.card_area.isVisible())
 
+    def zoom_far(self, at=None):
+        """приблизить схему до упора (интерфейс уезжает) и дождаться конца анимаций"""
+        from organism_atlas.ui.scheme_view import ZOOM_STEPS
+        v = self.app.view
+        v.zoom_to(ZOOM_STEPS[-1], at)
+        v.finish()
+        self.assertTrue(self.app.slide.hidden)
+        self.assertTrue(wait(lambda: not self.app.slide.ghosts))
+
+    def on_screen(self, key):
+        """точка органа на экране - внутри окна, не у самого края"""
+        from organism_atlas.ui.scheme_view import IN_VIEW
+        v = self.app.view
+        x, y = v.to_screen(*self.app.atlas.center(key))
+        return (v.width() * IN_VIEW <= x <= v.width() * (1 - IN_VIEW)
+                and v.height() * IN_VIEW <= y <= v.height() * (1 - IN_VIEW))
+
+    def test_zoomed_quiz_end_shows_results(self):
+        """последний ответ щелчком по приближенной схеме: схема возвращается целиком, интерфейс - на место,
+        итоги видны (раньше они оставались в уехавшей карточке, а на схеме нечего было нажать)"""
+        a, v = self.app, self.app.view
+        a.set_mode("find")
+        a.quiz.set_cfg("length", 1)
+        a.quiz.start()
+        self.zoom_far()
+        a.quiz.answer(a.quiz.session.current)
+        self.assertTrue(a.quiz.session.finished)
+        v.finish()
+        self.assertEqual(v.k, 1)
+        self.assertFalse(a.slide.hidden)
+        self.assertTrue(wait(lambda: not a.slide.ghosts))
+        self.assertTrue(a.header.isVisible() and a.card_area.isVisible())
+        self.assertIn(i18n.t("results_again"), [b.text() for b in self.buttons(a.card)])
+
+    def test_zoomed_answer_brought_into_view(self):
+        """приближенная схема: пропущенный орган за краем окна - схема подводит его к середине"""
+        from PySide6.QtCore import QPointF
+        a, v = self.app, self.app.view
+        a.set_mode("find")
+        a.quiz.set_cfg("length", 5)
+        a.quiz.start()
+        s = a.quiz.session
+        s.q[s.i] = "bladder"                                # внизу схемы
+        self.zoom_far(QPointF(*v.to_screen(*a.atlas.center("brain"))))       # а смотрим на голову
+        self.assertFalse(self.on_screen("bladder"))
+        a.quiz.skip()
+        v.finish()
+        self.assertTrue(self.on_screen("bladder"))
+        before = QPointF(v.pan)
+        s.q[s.i] = "kidneys"                                # рядом - уже на виду, схема не дёргается
+        if self.on_screen("kidneys"):
+            a.quiz.skip()
+            v.finish()
+            self.assertEqual(v.pan, before)
+
+    def test_keyboard_choice_brought_into_view(self):
+        """стрелки на приближенной схеме: выбранный орган за краем окна - схема подводит его к середине"""
+        from PySide6.QtCore import QPointF
+        a, v = self.app, self.app.view
+        a.set_mode("find")
+        a.quiz.start()
+        self.zoom_far(QPointF(*v.to_screen(*a.atlas.center("brain"))))
+        for _ in range(len(a.kb.keys())):
+            a.kb.move(1)
+            v.finish()
+            self.assertTrue(self.on_screen(a.kb.key), a.kb.key)
+
+    def test_hover_follows_zoom(self):
+        """приблизили колесом, а мышь не двигали: подсветка - у органа, который теперь под курсором"""
+        from PySide6.QtCore import QPointF
+        a, v = self.app, self.app.view
+        at = QPointF(*v.to_screen(*a.atlas.center("heart")))
+        a.on_move(*v.to_scheme(at))
+        self.assertEqual(a.cur, "heart")
+        far = QPointF(*v.to_screen(*a.atlas.center("bladder")))
+        with mock.patch.object(v, "underMouse", return_value=True), mock.patch.object(v, "cursor", return_value=at):
+            v.zoom_step(3, far)                             # сердце уехало из-под курсора
+            v.finish()
+            self.assertEqual(a.cur, a.thing_at(*v.to_scheme(at)))
+            self.assertNotEqual(a.cur, "heart")
+
+    def test_wheel_while_dragging(self):
+        """колесо, пока схему тянут мышью: приближение сразу (не наперегонки с мышью), тянуть дальше -
+        от нового места, без скачка"""
+        from PySide6.QtCore import QPointF, Qt
+        v = self.app.view
+        v.zoom_step(2)
+        v.finish()
+        cur = QPointF(v.width() / 2, v.height() / 2)
+        v.press, v.dragging = (QPointF(cur.x() - 30, cur.y()), QPointF(v.pan), Qt.LeftButton), True
+        with mock.patch.object(v, "cursor", return_value=cur):
+            v.zoom_step(1, cur)
+        self.assertIsNone(v.goal)                           # без анимации
+        self.assertEqual(v.press[0], cur)
+        self.assertEqual(v.press[1], v.pan)
+        v.press, v.dragging = None, False
+
+    def test_instant_zoom_reset_drops_ghosts(self):
+        """интерфейс ещё уезжает, а схему вернули сразу (новый размер окна): картинки-призраки убираются,
+        интерфейс на месте"""
+        from organism_atlas.ui.scheme_view import ZOOM_STEPS
+        a, v = self.app, self.app.view
+        v.zoom_to(ZOOM_STEPS[-1])
+        v.finish()
+        self.assertTrue(a.slide.ghosts)
+        v.reset_zoom(animate=False)
+        self.assertFalse(a.slide.ghosts)
+        self.assertTrue(a.header.isVisible() and a.card_area.isVisible() and a.panel.isVisible())
+
     def test_zoom_buttons_at_scheme_edge(self):
         """кнопки «+ − ⟲» - у правого края схемы уже при первом запуске (схема ещё без размера, когда окно
         впервые расставляет кнопки), а не посередине поверх неё"""
@@ -477,6 +613,29 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.card.findChildren(QWidget), before)       # обновлена на месте: не мигает
         self.app.set_mode("facts")                                          # другой режим - та же раскладка
         self.assertEqual(self.app.card.findChildren(QWidget), before)
+
+    def test_diseases_list_rows_and_arrows(self):
+        """список справочника: щелчок по строке открывает статью, стрелки в поиске листают найденное"""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        from organism_atlas.ui import diseases as panel_mod
+        panel = panel_mod.show_diseases(self.app, "gastritis")
+        pump()
+        self.assertTrue(panel.items["gastritis"].selected)
+        QTest.mouseClick(panel.items["peptic_ulcer"], Qt.LeftButton)
+        pump()
+        self.assertEqual(panel.key, "peptic_ulcer")
+        self.assertTrue(panel.items["peptic_ulcer"].selected)
+        QTest.keyClick(panel.search, Qt.Key_Up)
+        self.assertEqual(panel.key, "gastritis")
+        panel.search.setText("почк")
+        found = panel_mod.diseases.search("почк")
+        QTest.keyClick(panel.search, Qt.Key_Down)                     # выбранной нет среди найденного - первая
+        self.assertEqual(panel.key, found[0])
+        for _ in found:
+            QTest.keyClick(panel.search, Qt.Key_Down)                 # у края списка - остаётся на последней
+        self.assertEqual(panel.key, found[-1])
+        self.assertEqual(panel.search.text(), "почк")
 
     def test_panels_inside_window(self):
         """справочник болезней, статистика и настройки - страницы-вкладки во всё окно под вкладками, 3D (как и

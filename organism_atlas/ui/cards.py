@@ -13,7 +13,7 @@ from ..i18n import t
 from ..organs import ORGANS, SYSTEM_COLORS, fact_of_day
 from ..structures import STRUCTURES, kind as structure_kind
 from .scaling import px
-from .widgets import (QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, kicker, label, linked,
+from .widgets import (Bar, QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, kicker, label, linked,
                       put, rich_label, rounded_card, section, set_button_bg, spacer, vbox)
 
 TITLE = 19                      # размер заголовка статьи (органа, кости, мышцы)
@@ -271,13 +271,15 @@ def fill_flash(card, progress, title, prompt, answer, c, buttons, extra=(), hint
     spacer(lay, 14)
 
 
-def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None, give_up=None, extra=None):
+def fill_question(card, progress, title, hint, feedback=None, options=(), on_pick=None, give_up=None, extra=None,
+                  skip=None):
     """карточка вопроса викторины.
     progress - (строка «Вопрос N из M · Ошибок: K», доля пройденных вопросов, доля оставшегося времени или None);
     feedback - (текст, роль цвета) после ответа или None;
     options - [(ключ, название)] для кнопок-вариантов, on_pick(ключ) по нажатию; на кнопке - значок
     клавиши-цифры, которая её нажимает; give_up - (текст, функция) кнопки «Сдаться» под вариантами;
-    extra - виджет над вариантами (вращающаяся 3D-модель в «Угадай по 3D»).
+    extra - виджет над вариантами (вращающаяся 3D-модель в «Угадай по 3D»);
+    skip - (текст, функция) кнопки «Пропустить» рядом со «Сдаться».
     Возвращает (шапку QuizProgress, {ключ: кнопка})."""
     lay = card.lay
     clear(lay)
@@ -294,10 +296,18 @@ def fill_question(card, progress, title, hint, feedback=None, options=(), on_pic
         b = put(lay, flat_button(name, lambda k=key: on_pick(k), anchor="w", padx=10), bottom=8)
         b.set_key_hint(str(i + 1))
         buttons[key] = b
-    if give_up:
-        b = flat_button(give_up[0], give_up[1], bg="bg", size=9, padx=10, pady=3)
-        b.fg = "muted"
-        put(lay, b, top=4 if options else 0, bottom=8, align="left")
+    if skip or give_up:
+        # «Пропустить» и «Сдаться» - строкой во всю ширину карточки, отделены от вариантов линией
+        line = Bar("border")
+        line.setFixedHeight(max(1, px(1)))
+        put(lay, line, top=4 if options else 0, bottom=10)
+        row = hbox(spacing=8)
+        for action, fg in ((skip, "text"), (give_up, "bad")):
+            if action:
+                b = flat_button(action[0], action[1], size=9, padx=10, pady=5)
+                set_button_bg(b, "card", fg)        # «Сдаться» - цветом ошибки: игра на этом кончится
+                row.addWidget(b, 1)
+        put(lay, row, bottom=8)
     spacer(lay, 6)
     return prog, buttons
 

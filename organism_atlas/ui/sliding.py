@@ -34,6 +34,7 @@ class UiSlide:
             if not shown:
                 continue
             if not animate:
+                self.drop_ghost(w)                       # картинка, которая ещё едет, больше не нужна
                 w.setVisible(not hide)
                 continue
             at = w.mapTo(app, QPoint(0, 0))
@@ -44,15 +45,19 @@ class UiSlide:
             slide(g, pos or (at if hide else away), away if hide else at, lambda g=g, w=w: self.landed(g, w))
         app.stage.place(animate)
 
+    def drop_ghost(self, w):
+        """убрать картинку виджета, если она ещё едет; возвращает, где она была (или None)"""
+        old = self.ghosts.pop(w, None)
+        if old is None:
+            return None
+        if alive(old._slide):
+            old._slide.stop()
+        old.deleteLater()
+        return old.pos()
+
     def ghost(self, w):
         """картинка виджета для выезда; если прошлая ещё едет - новая начинает с её места"""
-        old = self.ghosts.pop(w, None)
-        pos = None
-        if old is not None:
-            pos = old.pos()
-            if alive(old._slide):
-                old._slide.stop()
-            old.deleteLater()
+        pos = self.drop_ghost(w)
         g = QLabel(self.app)
         g.setAttribute(Qt.WA_TransparentForMouseEvents)
         d = w.devicePixelRatioF()

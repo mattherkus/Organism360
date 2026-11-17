@@ -34,6 +34,7 @@ class KeyboardChoice:
         i = keys.index(self.key) if self.key in keys else (-1 if step > 0 else 0)
         key = self.key = keys[(i + step) % len(keys)]
         app.cur = key
+        app.view.bring_into_view(*app.atlas.center(key))        # приближенная схема - орган за краем окна
         if app.hover_allowed():                        # на сложном уровне и в экзамене контур выдал бы ответ
             app.marks.hover(key)
         name = i18n.name(key)

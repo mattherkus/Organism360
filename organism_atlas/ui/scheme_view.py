@@ -6,7 +6,7 @@ import math
 
 from PySide6.QtCore import (QAbstractAnimation, QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt,
                             QVariantAnimation)
-from PySide6.QtGui import QFontMetrics, QPainter, QPen
+from PySide6.QtGui import QCursor, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from .scaling import px
@@ -18,6 +18,7 @@ HIDE_FROM = ZOOM_STEPS[2]                              # с такого при�
 ZOOM_MS = 220                                          # длительность анимации приближения
 SLIDE_MS = 260                                         # длительность выезда интерфейса
 DRAG_PX = 5                                            # сдвиг мыши, после которого нажатие - перетаскивание
+IN_VIEW = 0.15                                         # точка ближе к краю окна (доля размера) - уже «за краем»
 
 
 def slide(w, start, end, done=None):
@@ -125,6 +126,23 @@ class SchemeView(QWidget):
         pan = QPointF(self.width() / 2 - k * x / d, self.height() / 2 - k * y / d)
         self.move_to(k, self.clamped(pan, self.scheme * k, QSizeF(self.size())))
 
+    def bring_into_view(self, x, y):
+        """приближенная схема плавно подводит точку схемы (x, y) к середине, если та у края окна или за ним
+        (верный ответ, орган, выбранный стрелками); видную точку не двигаем, неприближенную схему - тоже"""
+        sx, sy = self.to_screen(x, y) if self.goal is None else self.at_goal(x, y)
+        mx, my = self.width() * IN_VIEW, self.height() * IN_VIEW
+        if not (mx <= sx <= self.width() - mx and my <= sy <= self.height() - my):
+            self.look_at(x, y)
+
+    def at_goal(self, x, y):
+        """где точка схемы будет на экране, когда анимация приближения дойдёт до конца"""
+        (k, pan), d = self.goal, self.dpr()
+        return pan.x() + k * x / d, pan.y() + k * y / d
+
+    def cursor(self):
+        """где курсор в координатах виджета"""
+        return QPointF(self.mapFromGlobal(QCursor.pos()))
+
     # --- приближение
     def to_screen(self, x, y):
         """точка схемы (пиксели схемы) -> логические пиксели виджета с учётом приближения"""
@@ -190,16 +208,20 @@ class SchemeView(QWidget):
         self.move_to(1.0, self.home(), animate)
 
     def move_to(self, k, pan, animate=True):
-        """плавно (animate) или сразу приблизить в k раз так, чтобы угол схемы был в pan"""
+        """плавно (animate) или сразу приблизить в k раз так, чтобы угол схемы был в pan.
+        Схему тянут мышью - сразу, без анимации: иначе анимация и мышь двигали бы её наперегонки"""
         self.anim.stop()
         self.tip = None
-        if animate and self.isVisible():
+        dragging = self.press is not None
+        if animate and self.isVisible() and not dragging:
             self.start, self.goal = (self.k, QPointF(self.pan)), (k, pan)
             self.anim.start()
         else:
             self.goal = None
             self.apply(k, pan)
-        self.app.zoom_changed(animate)
+            if dragging:                                 # тянуть дальше - от нового места, без скачка
+                self.press = (self.cursor(), QPointF(self.pan), self.press[2])
+        self.app.zoom_changed(animate and not dragging)
 
     def step(self, t):
         """кадр анимации приближения: t от 0 до 1 (уже с замедлением к концу)"""
@@ -218,6 +240,7 @@ class SchemeView(QWidget):
     def apply(self, k, pan):
         self.k, self.pan = k, pan
         self.update()
+        self.app.view_moved()
 
     def paintEvent(self, _e):
         p = QPainter(self)
@@ -344,6 +367,7 @@ class SchemeView(QWidget):
                 self.pan = pan + (pos - start)
                 self.clamp_pan()
                 self.update()
+                self.app.view_moved()
                 return
         self.app.on_move(*self.to_scheme(pos))
 
