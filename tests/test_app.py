@@ -1080,14 +1080,14 @@ class AppTests(unittest.TestCase):
                 mock.patch.object(speech, "stop", side_effect=lambda: state.update(on=False)):
             a = self.app
             a.show_info("heart")
-            self.assertEqual(a.card.read_button.text(), i18n.t("card_read"))
+            self.assertEqual(a.card.read_button.toolTip(), i18n.t("card_read"))
             a.on_key("", "r")
             self.assertEqual(said, [(card_text("heart"), "ru")])
             self.assertIn(i18n.name("heart"), said[0][0])
-            self.assertEqual(a.card.read_button.text(), i18n.t("card_read_stop"))
+            self.assertEqual(a.card.read_button.toolTip(), i18n.t("card_read_stop"))
             a.on_key("", "к")                                           # та же клавиша в русской раскладке
             self.assertFalse(state["on"])
-            self.assertEqual(a.card.read_button.text(), i18n.t("card_read"))
+            self.assertEqual(a.card.read_button.toolTip(), i18n.t("card_read"))
             a.tours.end()                                               # стартовая карточка: читать нечего,
             a.on_key("", "r")                                           # прежняя карточка сердца - не читается
             self.assertEqual(len(said), 1)
@@ -1281,7 +1281,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(a.card.note_box.toPlainText(), "Четыре камеры")
         a.card.star_button.invoke()
         pump(0.1)
-        self.assertEqual(a.card.star_button.text(), i18n.t("card_star_on"))
+        self.assertEqual(a.card.star_button.toolTip(), i18n.t("card_star_on"))
         self.assertEqual(notes.starred(), ["heart"])
         a.set_card(a.empty_card)                             # на стартовой карточке - закладки и викторина по ним
         self.assertIn(i18n.t("home_starred_quiz"), self.button_texts())
@@ -1325,8 +1325,8 @@ class AppTests(unittest.TestCase):
         self.assertIsNone(self.app.coach)
 
     def button_texts(self):
-        """надписи кнопок в карточке справа"""
-        return [b.text() for b in self.buttons(self.app.card)]
+        """надписи кнопок в карточке справа (у кнопок-значков - подсказки)"""
+        return [b.text() or b.toolTip() for b in self.buttons(self.app.card)]
 
     def test_achievements_after_game(self):
         from PySide6.QtWidgets import QLabel

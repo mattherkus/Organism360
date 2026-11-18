@@ -13,7 +13,7 @@ from ..i18n import t
 from ..organs import ORGANS, SYSTEM_COLORS, fact_of_day
 from ..structures import STRUCTURES, kind as structure_kind
 from .scaling import px
-from .widgets import (Bar, QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, kicker, label, linked,
+from .widgets import (Bar, IconButton, QuizProgress, alive, bar, clear, flat_button, hbox, heading, joined, kicker, label, linked,
                       put, rich_label, rounded_card, section, set_button_bg, spacer, vbox)
 
 TITLE = 19                      # размер заголовка статьи (органа, кости, мышцы)
@@ -40,11 +40,25 @@ def nav_row(lay, nav):
     put(lay, row, top=10)
 
 
-def read_button(lay, on_read, top=12):
-    """кнопка «Прочитать вслух» (on_read - (текст, функция)); запоминается на карточке, чтобы менять подпись"""
-    b = put(lay, flat_button(on_read[0], on_read[1], anchor="w", size=9, pady=3), top=top, align="left")
-    lay.parentWidget().read_button = b
-    return b
+def read_icon(speaking):
+    """(значок, подсказка) кнопки чтения вслух: пока читают - «стоп»"""
+    return ("stop", t("card_read_stop")) if speaking else ("speaker", t("card_read"))
+
+
+def tool_buttons(card, on_3d, on_read, note):
+    """значки справа от заголовка: 3D, закладка, чтение вслух. Закладка и чтение запоминаются на карточке,
+    чтобы менять значок на месте. on_read - (читают ли сейчас, функция); note - см. note_block"""
+    from .notes_ui import star_icon
+    row = hbox(spacing=6)
+    if on_3d:
+        row.addWidget(IconButton("3d", t("card_3d"), on_3d, bg="accent"))
+    if note:
+        card.star_button = IconButton(*star_icon(note[0]), note[1])
+        row.addWidget(card.star_button)
+    if on_read:
+        card.read_button = IconButton(*read_icon(on_read[0]), on_read[1])
+        row.addWidget(card.read_button)
+    return row if row.count() else None
 
 
 def card_text(key):
@@ -65,12 +79,20 @@ def details(lay, key, on_link, seen):
         section(lay, t("detail_" + field), text, on_link, seen, serif=True)
 
 
-def article_head(lay, key, items, nav):
-    """начало статьи: строка с системой органов, заголовок с засечками и латинское название курсивом"""
+def article_head(lay, key, items, nav, tools=None):
+    """начало статьи: строка с системой органов, заголовок с засечками (справа от него - значки tools)
+    и латинское название курсивом"""
     if nav:
         nav_row(lay, nav)
     kicker(lay, items, top=8 if nav else 12)
-    put(lay, label(i18n.name(key), size=TITLE, bold=True, serif=True), top=2)
+    title = label(i18n.name(key), size=TITLE, bold=True, serif=True)
+    if tools:
+        row = hbox(spacing=8)
+        row.addWidget(title, 1)
+        row.addLayout(tools)
+        put(lay, row, top=2)
+    else:
+        put(lay, title, top=2)
     put(lay, label(i18n.subtitle(key), "muted", italic=True, serif=True), bottom=8)
 
 
@@ -80,13 +102,12 @@ def system_color(key):
 
 
 def note_block(card, lay, note):
-    """«Моя заметка» и кнопка закладки под карточкой; note - (в закладках ли, переключить, текст, при правке)"""
-    from .notes_ui import NoteBox, star_text
-    starred, on_star, text, on_edit = note
+    """«Моя заметка» под карточкой; note - (в закладках ли, переключить, текст, при правке);
+    кнопка закладки - значком у заголовка (tool_buttons)"""
+    from .notes_ui import NoteBox
+    text, on_edit = note[2], note[3]
     heading(lay, t("card_note"))
     card.note_box = put(lay, NoteBox(text, t("card_note_hint"), on_edit), top=4)
-    card.star_button = put(lay, flat_button(star_text(starred), on_star, anchor="w", size=9, pady=3), top=8,
-                           align="left")
 
 
 def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav=None, on_read=None, note=None):
@@ -95,8 +116,9 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     back - (текст, функция) кнопки под кнопкой 3D: вернуться к экскурсиям;
     on_link(ключ) - упоминания других органов и болезней становятся ссылками на их карточки и статьи,
     а заболевания органа - ссылками на статьи справочника болезней;
-    nav - история просмотренных карточек (см. nav_row); on_read - (текст, функция) кнопки «Прочитать вслух»;
-    note - заметка и закладка (см. note_block). Кость или мышца (structures.py) - своя карточка"""
+    nav - история просмотренных карточек (см. nav_row); on_read - (читают ли сейчас, функция) кнопки чтения вслух;
+    note - заметка и закладка (см. note_block). 3D, закладка и чтение - значками справа от заголовка.
+    Кость или мышца (structures.py) - своя карточка"""
     card.read_button = card.note_box = card.star_button = None
     if key in STRUCTURES:
         fill_structure(card, key, back=back, on_link=on_link, nav=nav, on_read=on_read, note=note)
@@ -106,7 +128,8 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
     c = ORGANS[key]["color"]
     seen = {key}                                                        # на себя ссылок нет
     bar(lay, system_color(key))                                         # полоска цвета системы органа
-    article_head(lay, key, [(SYSTEM_COLORS[x], t("system_" + x)) for x in ORGANS[key]["systems"]], nav)
+    article_head(lay, key, [(SYSTEM_COLORS[x], t("system_" + x)) for x in ORGANS[key]["systems"]], nav,
+                 tool_buttons(card, on_3d, on_read, note))
     put(lay, linked(i18n.organ(key, "desc"), on_link, seen, serif=True), bottom=8)
     section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen, serif=True)
     heading(lay, t("card_facts"))
@@ -122,16 +145,10 @@ def fill_card(card, key, on_3d=None, compact=False, back=None, on_link=None, nav
         put(lay, day, top=12)
     if note:
         note_block(card, lay, note)
-    if on_read:
-        read_button(lay, on_read, top=8 if note else 12)
-    if on_3d:
-        put(lay, flat_button(t("card_3d"), on_3d, bg="accent"), top=8 if on_read else 12, bottom=0 if back else 14,
-            align="left")
     if back:
-        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_3d or on_read else 12, bottom=14,
-            align="left")
-    if not on_3d and not back:
-        spacer(lay, 10)
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=12, bottom=14, align="left")
+    else:
+        spacer(lay, 14)
 
 
 def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None, note=None):
@@ -142,7 +159,7 @@ def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None, n
     seen = {key}
     c = STRUCTURES[key]["color"]
     bar(lay, c)
-    article_head(lay, key, [(c, t("kind_" + structure_kind(key)))], nav)
+    article_head(lay, key, [(c, t("kind_" + structure_kind(key)))], nav, tool_buttons(card, None, on_read, note))
     put(lay, linked(i18n.organ(key, "desc"), on_link, seen, serif=True), bottom=8)
     section(lay, t("card_location"), i18n.organ(key, "location"), on_link, seen, serif=True)
     heading(lay, t("card_facts"))
@@ -151,13 +168,10 @@ def fill_structure(card, key, back=None, on_link=None, nav=None, on_read=None, n
     details(lay, key, on_link, seen)
     if note:
         note_block(card, lay, note)
-    if on_read:
-        read_button(lay, on_read, top=8 if note else 12)
     if back:
-        put(lay, flat_button(back[0], back[1], anchor="w"), top=8 if on_read or note else 12, bottom=14,
-            align="left")
+        put(lay, flat_button(back[0], back[1], anchor="w"), top=12, bottom=14, align="left")
     else:
-        spacer(lay, 10)
+        spacer(lay, 14)
 
 
 def fill_start(card, title, hint, tours_title, tours, review=None, organ=None, knowledge=None, flash=None,

@@ -11,10 +11,11 @@
 задаются у каждого виджета, как pack(padx=..., pady=...) раньше."""
 
 import html
+import math
 
 import shiboken6
-from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QRectF, QSize, Qt, QTimer, QVariantAnimation
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
+from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QPointF, QRectF, QSize, Qt, QTimer, QVariantAnimation
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen, QPolygonF
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout,
                                QWidget)
 
@@ -324,6 +325,64 @@ class RoundButton(QAbstractButton):
 
 def flat_button(text, command, bg="card", anchor="center", size=10, padx=14, pady=6, parent=None):
     return RoundButton(text, command, bg, anchor, size, padx, pady, parent)
+
+
+class IconButton(RoundButton):
+    """квадратная кнопка со значком вместо текста; подпись - во всплывающей подсказке.
+    icon: "3d" (надпись «3D»), "star" / "star_on" (контур и залитая звезда), "speaker" (читать вслух), "stop".
+    set_icon(значок, подсказка) меняет значок на месте"""
+
+    def __init__(self, icon, tip, command, bg="card", size=30):
+        super().__init__("", command, bg, size=10, padx=0, pady=0)
+        self.icon = icon
+        self.side = px(size)
+        self.setFixedSize(self.side, self.side)
+        self.setToolTip(tip)
+
+    def set_icon(self, icon, tip=None):
+        self.icon = icon
+        if tip is not None:
+            self.setToolTip(tip)
+        self.update()
+
+    def sizeHint(self):
+        return QSize(self.side, self.side)
+
+    def paintEvent(self, e):
+        super().paintEvent(e)                    # фон и рамка (текста нет)
+        fg = (self.shown or self.colors())[2]
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        s = self.side
+        c = QColor(fg)
+        pen = QPen(c, max(1.2, px(1.6)))
+        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setCapStyle(Qt.RoundCap)
+        if self.icon == "3d":
+            p.setPen(c)
+            p.setFont(font(9, bold=True))
+            p.drawText(self.rect(), Qt.AlignCenter, "3D")
+        elif self.icon in ("star", "star_on"):
+            r_out, r_in, cx, cy = s * 0.30, s * 0.13, s / 2, s / 2 + s * 0.02
+            pts = [QPointF(cx + (r_out if i % 2 == 0 else r_in) * math.sin(i * math.pi / 5),
+                           cy - (r_out if i % 2 == 0 else r_in) * math.cos(i * math.pi / 5)) for i in range(10)]
+            p.setPen(pen)
+            p.setBrush(c if self.icon == "star_on" else Qt.NoBrush)
+            p.drawPolygon(QPolygonF(pts))
+        elif self.icon == "speaker":
+            k = s / 30
+            body = [(7, 12.5), (11, 12.5), (16, 8.5), (16, 21.5), (11, 17.5), (7, 17.5)]
+            p.setPen(pen)
+            p.setBrush(c)
+            p.drawPolygon(QPolygonF([QPointF(x * k, y * k) for x, y in body]))
+            p.setBrush(Qt.NoBrush)
+            for r in (4.0, 7.5):                 # волны звука
+                p.drawArc(QRectF((16 - r) * k, (15 - r) * k, 2 * r * k, 2 * r * k), -50 * 16, 100 * 16)
+        elif self.icon == "stop":
+            a = s * 0.32
+            p.setPen(Qt.NoPen)
+            p.setBrush(c)
+            p.drawRoundedRect(QRectF((s - a) / 2, (s - a) / 2, a, a), px(2), px(2))
 
 
 def set_button_bg(b, bg, fg=None):
