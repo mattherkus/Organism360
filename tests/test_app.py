@@ -972,6 +972,40 @@ class AppTests(unittest.TestCase):
         self.assertFalse(a.knowledge)
         self.assertIsNone(a.view.layers["knowledge"])
 
+    def test_stats_export_import_reset(self):
+        """страница статистики: экспорт в файл, сброс после подтверждения, импорт возвращает данные"""
+        from unittest import mock
+        from organism_atlas import progress
+        from organism_atlas.ui import stats as panel_mod
+        from organism_atlas.ui.widgets import RoundButton
+        a = self.app
+        progress.mark("find", "heart", True)
+        progress.record(__import__("tests.test_progress", fromlist=["played"]).played(["heart", "liver"]))
+        before = progress.load()
+        out = os.path.join(self.tmp.name, "export.json")
+
+        def press(p, key):
+            next(b for b in p.findChildren(RoundButton) if b.text() == i18n.t(key) and not b.isHidden()).click()
+
+        p = panel_mod.show_stats(a)
+        with mock.patch.object(panel_mod.QFileDialog, "getSaveFileName", return_value=(out, "")):
+            press(p, "stats_export")
+        self.assertTrue(os.path.exists(out))
+        self.assertIn(i18n.t("stats_exported"), self.panel_texts(p))
+        press(p, "stats_reset")
+        self.assertIn(i18n.t("stats_reset_ask"), self.panel_texts(p))
+        press(p, "stats_cancel")                                        # «Отмена» - ничего не стёрто
+        self.assertEqual(progress.load(), before)
+        press(p, "stats_reset")
+        press(p, "stats_reset_yes")
+        self.assertEqual(progress.load(), {"results": [], "cards": {}})
+        self.assertIn(i18n.t("stats_empty"), self.panel_texts(p))
+        with mock.patch.object(panel_mod.QFileDialog, "getOpenFileName", return_value=(out, "")):
+            press(p, "stats_import")
+        press(p, "stats_import_yes")
+        self.assertEqual(progress.load(), before)
+        self.assertTrue(p.findChildren(panel_mod.BarList))
+
     def test_panels_follow_language(self):
         """открытые статистика и клавиши переписываются на новом языке, а не остаются на старом"""
         from organism_atlas.ui import help as help_panel, stats as stats_page

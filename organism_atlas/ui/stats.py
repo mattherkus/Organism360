@@ -6,9 +6,12 @@
 остальное - во всплывающей подсказке при наведении. Цвета уровней знания (карта знаний) - статусные и всегда
 вместе со значком и подписью."""
 
+from datetime import date
+from pathlib import Path
+
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QGridLayout, QSizePolicy, QToolTip, QWidget
+from PySide6.QtWidgets import QFileDialog, QGridLayout, QSizePolicy, QToolTip, QWidget
 
 from .. import i18n, progress, stats
 from ..config import STATUS
@@ -16,11 +19,12 @@ from ..i18n import t
 from .layers_panel import ScrollArea
 from .overlay import Panel
 from .scaling import px
-from .widgets import color, flat_button, font, heading, hbox, label, put, rounded_card, spacer, vbox
+from .widgets import clear, color, flat_button, font, heading, hbox, label, put, rounded_card, spacer, vbox
 
 WIDTH = 700                  # ширина ленты при масштабе 100 %
 BAR = 10                     # толщина полосы, px
 ROW = 26                     # высота строки списка полос
+FILES = "JSON (*.json)"
 ICONS = {"learned": "✓", "learning": "~", "weak": "!"}          # значок уровня знания рядом с цветом
 
 
@@ -184,6 +188,7 @@ class StatsPanel(Panel):
 
     def __init__(self, host):
         super().__init__(host, t(self.title_key), page=True)
+        self.notice = None                         # (ключ текста, цвет) - чем кончились импорт, экспорт или сброс
         self.build()
 
     def build(self):
@@ -199,7 +204,9 @@ class StatsPanel(Panel):
         lay = card.lay
         s = stats.summary(data)
         if not s["games"]:
-            put(lay, label(t("stats_empty"), "muted", 11), top=16, bottom=16)
+            put(lay, label(t("stats_empty"), "muted", 11), top=16)
+            self.data_block(lay, bool(data["cards"]))
+            spacer(lay, 14)
             return
         tiles = QGridLayout()
         tiles.setContentsMargins(0, 0, 0, 0)
@@ -261,7 +268,74 @@ class StatsPanel(Panel):
         on = getattr(host, "knowledge", False)
         put(lay, flat_button(t("knowledge_hide") if on else t("knowledge_show"), self.toggle_map, pady=4),
             top=8, align="left")
+        self.data_block(lay, True)
         spacer(lay, 14)
+
+    def data_block(self, lay, has_data):
+        """«Данные статистики»: экспорт в файл, импорт из файла и сброс; импорт и сброс - после подтверждения
+        прямо здесь, вместо кнопок"""
+        heading(lay, t("stats_data"), top=14)
+        put(lay, label(t("stats_data_hint"), "muted", 9), top=2)
+        holder = QWidget()
+        self.data_lay = vbox(holder)
+        put(lay, holder, top=8, x=0)
+        if self.notice:
+            key, fg = self.notice
+            put(lay, label(t(key), fg, 10), top=6)
+            self.notice = None
+        self.has_data = has_data
+        self.data_buttons()
+
+    def data_buttons(self):
+        clear(self.data_lay)
+        row = hbox(spacing=8)
+        if self.has_data:
+            row.addWidget(flat_button(t("stats_export"), self.export, pady=4))
+        row.addWidget(flat_button(t("stats_import"), self.pick_import, pady=4))
+        if self.has_data:
+            row.addWidget(flat_button(t("stats_reset"), lambda: self.confirm("stats_reset_ask", "stats_reset_yes",
+                                                                             self.reset), pady=4))
+        row.addStretch(1)
+        put(self.data_lay, row)
+
+    def confirm(self, ask_key, yes_key, action):
+        """вместо кнопок - вопрос, «Да, ...» и «Отмена»"""
+        clear(self.data_lay)
+        put(self.data_lay, label(t(ask_key), "text", 10))
+        row = hbox(spacing=8)
+        row.addWidget(flat_button(t(yes_key), action, bg="accent", pady=4))
+        row.addWidget(flat_button(t("stats_cancel"), self.data_buttons, pady=4))
+        row.addStretch(1)
+        put(self.data_lay, row, top=6)
+
+    def export(self):
+        name = "organism_atlas_stats_%s.json" % date.today().isoformat()
+        dest, _ = QFileDialog.getSaveFileName(self, t("stats_export"), str(Path.home() / name), FILES)
+        if dest:
+            ok = progress.export_to(dest)
+            self.done("stats_exported" if ok else "stats_export_failed", "muted" if ok else "bad")
+
+    def pick_import(self):
+        src, _ = QFileDialog.getOpenFileName(self, t("stats_import"), str(Path.home()), FILES)
+        if src:
+            self.confirm("stats_import_ask", "stats_import_yes", lambda: self.load_from(src))
+
+    def load_from(self, src):
+        ok = progress.import_from(src) is not None
+        self.done("stats_imported" if ok else "stats_import_failed", "muted" if ok else "bad")
+
+    def reset(self):
+        ok = progress.reset()
+        self.done("stats_reset_done" if ok else "stats_reset_failed", "muted" if ok else "bad")
+
+    def done(self, key, fg):
+        """статистика поменялась (или нет): страница и карта знаний заново, под кнопками - чем кончилось"""
+        self.notice = (key, fg)
+        self.host.refresh_knowledge()
+        if self.host.card_fn == self.host.empty_card:          # стартовая карточка: повторение, уровни
+            self.host.card_fn()
+        clear(self.body)
+        self.build()
 
     def train(self, keys):
         """«Потренировать слабые места»: «Вперемешку» по этим органам"""

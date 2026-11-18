@@ -84,6 +84,48 @@ def save(data):
 
 _store = jsonstore.Cached(_parse)       # тот же файл не разбирается заново
 
+EXPORT_KIND = "organism_atlas_progress"     # метка файла экспорта: по ней импорт узнаёт свой файл
+
+
+def export_to(dest):
+    """сохранить статистику (историю игр, карточки, достижения) в файл dest; True, если записалось"""
+    return jsonstore.write(dest, dict(load(), kind=EXPORT_KIND))
+
+
+def import_from(src):
+    """заменить статистику данными из файла src (экспорт этой программы или сам progress.json).
+    Чужой или испорченный файл ничего не меняет: None. Иначе прежний файл копируется в progress.json.bak,
+    и возвращаются новые данные"""
+    raw = jsonstore.read_bytes(src)
+    data = jsonstore.decode(raw)
+    if not (isinstance(data.get("results"), list) and isinstance(data.get("cards"), dict)):
+        return None
+    if data.get("kind", EXPORT_KIND) != EXPORT_KIND:
+        return None
+    clean = _parse(raw)
+    _backup()
+    if not jsonstore.write(path(), clean):
+        return None
+    return load()
+
+
+def reset():
+    """стереть статистику: историю игр, карточки повторения и полученные достижения. Прежний файл копируется
+    в progress.json.bak - на случай, если сбросили по ошибке. True, если записалось"""
+    _backup()
+    return jsonstore.write(path(), {"results": [], "cards": {}})
+
+
+def _backup():
+    """копия текущего файла в progress.json.bak (если файла нет - нечего копировать)"""
+    raw = jsonstore.read_bytes(path())
+    if raw is not None:
+        p = path()
+        try:
+            p.with_name(p.name + ".bak").write_bytes(raw)
+        except OSError:
+            pass
+
 
 def iso_day(s):
     """'2026-10-25' или '2026-10-25T14:03' -> datetime.date; не строка или не дата - None"""

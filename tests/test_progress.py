@@ -121,6 +121,25 @@ class ProgressTests(unittest.TestCase):
         self.file.write_text('{"results": [], "cards": {}}', encoding="utf-8")
         self.assertEqual(progress.load(), {"results": [], "cards": {}})
 
+    def test_export_import_reset(self):
+        """экспорт - в файл, сброс стирает всё (прежнее - в .bak), импорт возвращает; чужой файл не трогает данных"""
+        progress.record(played(["a", "b"], wrong=["b"]), today=DAY)
+        before = progress.load()
+        out = Path(self.tmp.name, "export.json")
+        self.assertTrue(progress.export_to(out))
+        self.assertTrue(progress.reset())
+        self.assertEqual(progress.load(), {"results": [], "cards": {}})
+        self.assertTrue(self.file.with_name("progress.json.bak").exists())
+        self.assertEqual(progress.import_from(out), before)
+        self.assertEqual(progress.load(), before)
+        for text in ("not json", '{"theme": "black"}', '{"kind": "other", "results": [], "cards": {}}', "[]"):
+            bad = Path(self.tmp.name, "bad.json")
+            bad.write_text(text, encoding="utf-8")
+            self.assertIsNone(progress.import_from(bad))
+        self.assertIsNone(progress.import_from(Path(self.tmp.name, "missing.json")))
+        self.assertEqual(progress.load(), before)
+        self.file.with_name("progress.json.bad").exists() and self.fail("импорт не должен оставлять .bad")
+
     def test_history_is_trimmed(self):
         for i in range(progress.KEEP + 5):
             progress.record(played(["a"], seed=i), today=DAY)
