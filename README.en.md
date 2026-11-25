@@ -1,4 +1,4 @@
-# Body Atlas
+# Organism 360
 
 **[Русская версия](README.md)** · **[Download](https://github.com/mattherkus/igra/releases/latest)**
 

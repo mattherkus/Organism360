@@ -1,4 +1,4 @@
-# Атлас организма
+# Организм 360
 
 **[English version](README.en.md)** · **[Скачать](https://github.com/mattherkus/igra/releases/latest)**
 

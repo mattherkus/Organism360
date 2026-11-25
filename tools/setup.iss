@@ -1,4 +1,4 @@
-﻿; Установщик «Атласа организма» для Windows (Inno Setup 6.3+).
+﻿; Установщик «Организм 360» для Windows (Inno Setup 6.3+).
 ; Собирается командой  python tools/build_setup.py : она сначала собирает dist/OrganismAtlas (build_exe.py),
 ; потом вызывает ISCC с версией и путями. Вручную:  iscc tools\setup.iss  (после python tools/build_exe.py)
 ;
@@ -27,7 +27,7 @@ AppId={{6F1C2B9E-4D7A-4E5B-9C3F-0A8D2E7B5C41}
 AppName={cm:AppName}
 AppVersion={#AppVersion}
 AppVerName={cm:AppName} {#AppVersion}
-AppPublisher=Organism Atlas
+AppPublisher=Organism 360
 DefaultDirName={autopf}\OrganismAtlas
 DefaultGroupName={cm:AppName}
 DisableProgramGroupPage=yes
@@ -56,8 +56,8 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-russian.AppName=Атлас организма
-english.AppName=Organism Atlas
+russian.AppName=Организм 360
+english.AppName=Organism 360
 russian.DeleteUserData=Удалить также настройки и прогресс (историю игр, достижения)?
 english.DeleteUserData=Also delete settings and progress (game history, achievements)?
 russian.DirNotWritable=В эту папку нельзя установить программу без прав администратора. Выберите другую папку, например предложенную по умолчанию.

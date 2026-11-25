@@ -14,13 +14,13 @@ def main():
     from .ui.widgets import font
 
     app = QApplication.instance() or QApplication(sys.argv)
-    app.setApplicationName("Organism Atlas")
+    app.setApplicationName("Organism 360")
     try:
         i18n.load_all()                 # файлы lang/*.json и questions/*.json правят руками:
         from .organs import ORGANS      # сообщим, в каком файле ошибка
         questions.load_all(known=list(ORGANS))
     except ValueError as e:
-        QMessageBox.critical(None, "Атлас организма", str(e))
+        QMessageBox.critical(None, "Организм 360", str(e))
         sys.exit(str(e))
     saved = settings.load()
     i18n.restore(saved.get("lang"), saved.get("previous_lang"))

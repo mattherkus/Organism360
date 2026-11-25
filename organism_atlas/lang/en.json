@@ -2,7 +2,7 @@
   "_comment": "Words in curly braces, like {name}, are filled in by the program: keep them as they are.",
   "language": "English",
   "ui": {
-    "app_title": "Organism 360°",
+    "app_title": "Organism 360",
     "hint": "Mouse wheel zooms the diagram, F1 shows keyboard shortcuts.",
     "loading": "Drawing the body…",
     "layers_title": "Layers",

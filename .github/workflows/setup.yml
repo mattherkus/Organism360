@@ -1,6 +1,6 @@
 # Сборка программы: установщик OrganismAtlas-Setup-<версия>.exe на Windows (tools/build_setup.py) и архивы
 # для macOS (OrganismAtlas.app в zip) и Linux (папка в tar.gz) - tools/build_exe.py --archive.
-# Каждый запуск кладёт их в «Artifacts» на странице запуска (Actions).
+# Обычные запуски сохраняют файлы в Actions. Релизные запуски загружают файлы в черновик Releases.
 # В Releases (оттуда пользователи скачивают программу) их выкладывают тег v* (например v1.0.0) или
 # ручной запуск: Actions → «Установщик» → Run workflow - тогда тег v<organism_atlas.__version__> ставится сам.
 name: Установщик
@@ -15,6 +15,34 @@ permissions:
   contents: write
 
 jobs:
+  draft:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: tests
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.draft.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Черновик выпуска
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(python3 -c 'import organism_atlas; print(organism_atlas.__version__)')"
+          if [[ "$GITHUB_REF_TYPE" == tag && "$GITHUB_REF_NAME" != "$tag" ]]; then
+            echo "::error::Тег $GITHUB_REF_NAME не совпадает с версией $tag"
+            exit 1
+          fi
+          if release=$(gh release view "$tag" --json isDraft,targetCommitish); then
+            if ! jq -e --arg sha "$GITHUB_SHA" '.isDraft and .targetCommitish == $sha' <<< "$release"; then
+              echo "::error::Для $tag уже существует опубликованный выпуск или черновик другого коммита"
+              exit 1
+            fi
+          else
+            gh release create "$tag" --draft --target "$GITHUB_SHA" --title "Организм 360 $tag" --generate-notes
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   # тесты (окно - без экрана, offscreen): без них сборки не начинаются и выпуск не выкладывается
   tests:
     runs-on: windows-latest
@@ -36,7 +64,8 @@ jobs:
         run: python -m unittest discover -s tests -t .
 
   setup:
-    needs: tests
+    needs: [tests, draft]
+    if: always() && needs.tests.result == 'success' && (needs.draft.result == 'success' || needs.draft.result == 'skipped')
     runs-on: windows-latest
     env:
       PYTHONUTF8: "1"                  # консоль раннера - cp1252, а скрипты пишут по-русски
@@ -53,14 +82,25 @@ jobs:
       - name: Сборка
         run: python tools/build_setup.py
       - uses: actions/upload-artifact@v5
+        if: needs.draft.result == 'skipped'
         with:
           name: OrganismAtlas-Setup
           path: dist/OrganismAtlas-Setup-*.exe
           if-no-files-found: error
+      - name: Загрузить установщик в релиз
+        if: needs.draft.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.draft.outputs.tag }}
+        run: |
+          $files = @(Get-ChildItem -Path dist -Filter 'OrganismAtlas-Setup-*.exe' -File)
+          if ($files.Count -ne 1) { throw "Expected one Windows installer" }
+          gh release upload $env:RELEASE_TAG $files[0].FullName --clobber
 
   # macOS и Linux: та же программа без Python, архивом (установщика нет - распаковать и запустить)
   portable:
-    needs: tests
+    needs: [tests, draft]
+    if: always() && needs.tests.result == 'success' && (needs.draft.result == 'success' || needs.draft.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -82,48 +122,43 @@ jobs:
       - name: Сборка
         run: python tools/build_exe.py --archive
       - uses: actions/upload-artifact@v5
+        if: needs.draft.result == 'skipped'
         with:
           name: OrganismAtlas-${{ runner.os }}
           path: ${{ matrix.files }}
           if-no-files-found: error
 
-  # выпуск - один на все системы, когда собраны все: так сборки не создают его наперегонки
-  release:
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-    needs: [setup, portable]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
-        with:
-          path: dist
-          merge-multiple: true
-      - name: Версия
-        id: ver
+      - name: Загрузить архив в релиз
+        if: needs.draft.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.draft.outputs.tag }}
+          ASSET_PATTERN: ${{ matrix.files }}
+        shell: bash
         run: |
-          tag="v$(python3 -c "import organism_atlas; print(organism_atlas.__version__)")"
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            # тег и версия в программе должны совпадать, иначе файл v1.1.0 окажется в выпуске v1.2.0
-            [ "${{ github.ref_name }}" = "$tag" ] || { echo "::error::тег ${{ github.ref_name }}, а версия $tag"; exit 1; }
-          elif git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
-            # ручной запуск: выпуск с этим тегом уже есть - новые файлы попали бы в старый выпуск
-            echo "::error::выпуск $tag уже есть: поднимите organism_atlas.__version__"; exit 1
-          fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-      - name: Выпуск
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || steps.ver.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: Атлас организма ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || steps.ver.outputs.tag }}
-          body: |
-            **Windows:** скачайте **OrganismAtlas-Setup-*.exe**, откройте его, выберите папку и нажмите «Установить».
-            Первый запуск может занять пару минут — Защитник Windows проверяет новые файлы.
-            **macOS:** скачайте **OrganismAtlas-*-macos.zip**, распакуйте и откройте OrganismAtlas.app
-            (программа не подписана: при первом запуске — правый щелчок → «Открыть»).
-            **Linux:** скачайте **OrganismAtlas-*-linux.tar.gz**, распакуйте и запустите OrganismAtlas/OrganismAtlas.
-            Python не нужен.
-          files: |
-            dist/OrganismAtlas-Setup-*.exe
-            dist/OrganismAtlas-*-macos.zip
-            dist/OrganismAtlas-*-linux.tar.gz
+          shopt -s nullglob
+          files=( $ASSET_PATTERN )
+          [[ ${#files[@]} == 1 ]]
+          gh release upload "$RELEASE_TAG" "${files[0]}" --clobber
+
+  release:
+    needs: [draft, setup, portable]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.draft.outputs.tag }}
+    steps:
+      - name: Проверить файлы и опубликовать выпуск
+        shell: bash
+        run: |
+          version="${RELEASE_TAG#v}"
+          gh release view "$RELEASE_TAG" --json isDraft,assets |
+            jq -e --arg version "$version" '
+              .isDraft and
+              ([.assets[].name] | sort) == ([
+                "OrganismAtlas-Setup-\($version).exe",
+                "OrganismAtlas-\($version)-linux.tar.gz",
+                "OrganismAtlas-\($version)-macos.zip"
+              ] | sort)'
+          gh release edit "$RELEASE_TAG" --draft=false --latest
