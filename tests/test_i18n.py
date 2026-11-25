@@ -278,7 +278,7 @@ class DiseaseTests(unittest.TestCase):
 class BrokenFileTests(unittest.TestCase):
     def test_syntax_error_names_file_and_line(self):
         with tempfile.TemporaryDirectory() as tmp:
-            Path(tmp, "xx.json").write_text('{\n  "ui": {\n    "a": "b",\n  }\n}', encoding="utf-8")
+            Path(tmp, "xx.json").write_text('{\n  "ui": {\n    "a": @\n  }\n}', encoding="utf-8")
             old = i18n.LANG_DIR
             i18n.LANG_DIR = Path(tmp)
             try:
