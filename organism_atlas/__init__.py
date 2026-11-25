@@ -14,4 +14,4 @@
 Нужны: Python 3, numpy, Pillow, PySide6, moderngl (requirements.txt).
 """
 
-__version__ = "1.1.0"                             # версия установщика: tools/build_setup.py
+__version__ = "1.2.0"                             # версия установщика: tools/build_setup.py
