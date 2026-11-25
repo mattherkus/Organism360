@@ -120,9 +120,10 @@ class CrossPlatformBuildTests(unittest.TestCase):
     def test_workflow_builds_every_system_and_releases_once(self):
         text = (ROOT / ".github" / "workflows" / "setup.yml").read_text(encoding="utf-8")
         for needle in ("windows-latest", "ubuntu-latest", "macos-latest", "build_exe.py --archive",
-                       "needs: [setup, portable]"):
+                       "needs: [draft, setup, portable]", "gh release create", "--draft --target"):
             self.assertIn(needle, text)
-        self.assertEqual(text.count("softprops/action-gh-release"), 1)
+        self.assertEqual(text.count("gh release upload"), 2)
+        self.assertEqual(text.count('--draft=false --latest'), 1)
 
 
 if __name__ == "__main__":
